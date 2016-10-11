@@ -1,0 +1,8 @@
+AC_INIT(udis86, 1.6, vivek@sig9.com)
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_CONFIG_HEADER(config.h)
+AC_CONFIG_FILES([Makefile
+                 libudis86/Makefile
+		 udcli/Makefile])
+AC_OUTPUT

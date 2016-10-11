@@ -1,0 +1,6 @@
+Remove malloc from GetOutput
+
+Add function to support "live" midi events
+
+Add midi hardware support in player
+

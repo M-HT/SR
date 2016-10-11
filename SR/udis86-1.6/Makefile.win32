@@ -1,0 +1,15 @@
+# Makefile
+# udis86 - udis86 disassembler for x86(x86-64)
+#
+
+all:
+	cd libudis86 && $(MAKE) -f Makefile.win32
+	cd udcli && $(MAKE) -f Makefile.win32
+	cd tests && $(MAKE) -f Makefile.win32
+clean:
+	cd libudis86 && $(MAKE) clean -f Makefile.win32
+	cd udcli && $(MAKE) clean -f Makefile.win32
+	cd tests && $(MAKE) clean -f Makefile.win32
+test:
+	cd tests && $(MAKE) test16 -f Makefile.win32 && $(MAKE) test32 -f Makefile.win32 && $(MAKE) test64 -f Makefile.win32
+

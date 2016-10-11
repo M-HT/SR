@@ -1,0 +1,537 @@
+<html>
+<head>
+<title>Documentation: Udis86 - Disassembler Library for x86 and AMD64</title>
+<style type="text/css">@import 'style.css';</style>
+<style>
+#api_tab td {
+	vertical-align: top;
+	padding: .4em;
+}
+#api_tab {
+	width: 100%;
+	padding: 0em;
+}
+.func {
+	text-align: center;
+	font-family: monospace;
+}
+
+</style>
+</head>
+<body>
+<div id="topbar"><h1>Udis86 - Disassembler Library for x86 and AMD64</h1></div>
+<div id="wrapper">
+<div id="content">
+
+<a href="index.html">Home</a>
+
+<h1>Documentation</h1>
+<small><i>Dec 19, 2006</i> - Added new API function and Standalone build mode.</small>
+<hr size="1"/>
+<br/>
+<a href="#sec1">1. Using the library - libudis86</a>
+<blockquote>
+	<a href="#sec11">1.1 Compiling and Installing</a> <br/>
+	<blockquote>
+		<a href="#sec111">1.1.1 Standalone Udis86</a> <br/>
+	</blockquote>
+	<a href="#sec12">1.2 Interfacing With Your Program</a> <br/>
+	<a href="#sec13">1.3 A Quick Example</a><br/>
+	<a href="#sec14">1.4 The Udis86 Object</a><br/>
+	<a href="#sec15">1.5 Functions</a><br/>
+	<a href="#sec16">1.6 Examining an Instruction</a>
+</blockquote>
+<a href="#sec2">2. Using the command-line tool - udcli</a>
+<blockquote>
+	<a href="#sec21">2.1 Usage</a> <br/>
+	<a href="#sec22">2.2 Command-line options</a> <br/>
+	<a href="#sec23">2.3 The hexadecimal input mode</a> <br/>
+</blockquote>
+<br/>
+<hr size="1"/>
+
+<a name="sec1"></a>
+<h2>1. Using the library - libudis86</h2>
+
+<p>libudis86 can be used in a variety of situations, and the extent to which you
+need to know the API depends on the functionality you are looking for. At its
+core, libudis86 is a disassembler engine, which when given an input stream of 
+machine code bytes, disassembles them for you to inspect. You could use it,
+simply, to generate assembly language output of the code, or to inspect
+individual instructions, their operands, etc.</p>
+
+<a name="sec11"></a>
+<h3>1.1 Compiling and installing</h3>
+
+<p>libudis86 is developed for Unix-like environments, and steps to installing
+it is very simple. Get the source tarball, unpack it, and,</p>
+<pre>
+$ ./configure
+$ make
+$ make install
+</pre>
+<p>is all you need to do. Ofcourse, you may need to have root privileges to make 
+install. The install scripts copy the necessary header and library files to 
+appropriate locations of in system.
+</p>
+
+<a name="sec111"></a>
+<h4>1.1.1 Standalone Udis86</h4>
+
+<p>Standalone udis86 is (for now) a simple build hack that lets you build
+a single relocatable object file with all of the libudis86 functionality, that you
+could possibly use in any environment, say, a kernel module. The standalone object 
+assumes the availablity of the following functionality in the environment.</p>
+
+<pre>
+- memset()
+- vprintf()
+- sscanf()
+</pre>
+
+<p> To build udis86 in standalone mode, do the following.</p>
+
+<pre>
+$ ./configure
+$ make standalone
+</pre>
+
+which will generate <code>ud_standalone.o</code> in <code>ud/libudis86</code>. This build
+mode is a little hack'ish in nature and hopefully is replaced with better configure scripts
+in the future. If you have ideas, let me know!
+
+<a name="sec12"></a>
+<h3>1.2 Interfacing with your program</h3>
+
+<p>Once you have installed libudis86, to use it with your program, first,
+include in your program the udis86.h header file,
+</p>
+
+<pre>
+#include &lt;udis86.h&gt;
+</pre>
+
+<p>and then, add the following flag to your GCC command-line options.</p>
+
+<pre>
+-ludis86
+</pre>
+
+<a name="sec13"></a>
+<h3>1.3 A Quick Example</h3>
+
+The following code is an example of a program that interfaces with libudis86 and
+uses the API to generate assembly language output for 64-bit code, input from
+STDIN.
+<pre>
+/* simple_example.c */
+
+#include &lt;stdio.h&gt;
+#include &lt;udis86.h&gt;
+
+int main()
+{
+	ud_t ud_obj;
+
+	ud_init(&ud_obj);
+	ud_set_input_file(&ud_obj, stdin);
+	ud_set_mode(&ud_obj, 64);
+	ud_set_syntax(&ud_obj, UD_SYN_INTEL);
+
+	while (ud_disassemble(&ud_obj)) {
+		printf("\t%s\n", ud_insn_asm(&ud_obj));
+	}
+
+ 	return 0;
+}
+</pre>
+To compile the program:
+<pre>
+$ gcc -ludis86 simple_example.c -o simple_example
+</pre>
+
+<p>This example should give you an idea of how this library can
+be used. The following sections describe, in detail, the complete API of 
+libudis86.</p>
+
+<a name="sec14"></a>
+<h3>1.4 The Udis86 Object</h3>
+
+<p>To maintain reentrancy and thread safety, udis86 does not use static data.
+All data related to the disassembly process are stored in a single object, 
+called the udis86 object. So, to use libudis86 you must create an instance of 
+this object,</p>
+
+<pre>
+ud_t my_ud_obj;
+</pre>
+
+and initialize it,
+
+<pre>
+ud_init(&my_ud_obj);
+</pre>
+
+Ofcourse, you can create multiple instances of libudis86 and spawn multiple 
+threads of disassembly. Thats entirely upto how you want to use the library. 
+libudis86 guarantees reentrancy and thread safety.
+
+<a name="sec15"></a>
+<h3>1.5 Functions</h3>
+
+All functions in libudis86 take a pointer to the udis86 object (ud_t) as the first
+argument. The following is a list of all functions available.
+
+
+<ol>
+	<li>
+	<pre>void ud_init (ud_t* ud_obj)</pre>
+	ud_t object initializer. This function must be called on a udis86 object
+	before it can used anywhere else.
+	</li>
+
+	<li>
+	<pre>void ud_set_input_hook(ud_t* ud_obj, int (*hook)())</pre>
+
+	This function sets the input source for the library. To retrieve each 
+	byte in the stream, libudis86 calls back the function pointed to by 
+	"hook".
+
+	The hook function, defined by the user code, must return a single byte
+	of code each time it is called. To signal end-of-input, it must return the 
+	constant, <code>UD_EOI</code>.
+	</li>
+
+	<li>
+	<pre>void ud_set_input_buffer(ud_t* ud_obj, unsigned char* buffer, size_t size);</pre>
+
+	This function sets the input source for the library to a buffer of fixed
+	size.
+	</li>
+
+	<li>
+	<pre>void ud_set_input_file(ud_t* ud_obj, FILE* filep);</pre>
+
+	This function sets the input source for the library to a file pointed to by
+	the passed FILE pointer. Note that the library does not perform any checks,
+	assuming the file pointer to be properly initialized.
+	</li>
+	
+	<li>
+	<pre>void ud_set_mode(ud_t* ud_obj, uint8_t mode_bits);</pre>
+
+	Sets the mode of disassembly. Possible values are 16, 32, and 64. By
+	default, the library works in 32bit mode.
+	</li>
+
+	<li>
+	<pre>void ud_set_pc(ud_t*, uint64_t pc);</pre>
+
+	Sets the program counter (EIP/RIP). This changes the offset of the 
+	assembly output	generated, with direct effect on branch instructions.
+	</li>
+
+	<li>
+	<pre>void ud_set_syntax(ud_t*, void (*translator)(ud_t*));</pre>
+
+	libudis86 disassembles one instruction at a time into an intermediate
+	form that lets you inspect the instruction and its various aspects
+	individually. But to generate the assembly language output, this 
+	intermediate form must be translated. This function sets the translator.
+	There are two inbuilt translators, 
+	<br/>
+	<ul>
+	<li>UD_SYN_INTEL - for INTEL (NASM-like) syntax.</li>
+	<li>UD_SYN_ATT - for AT&amp;T (GAS-like) syntax.</li>
+	</ul>
+	If you do not want libudis86 to translate, you can pass a NULL to the 
+	function, with no more translations thereafter. This is particularily
+	useful for cases when you only want to identify chunks of code and then
+	create the assembly output if needed.
+	<br/><br/>
+	If you want to create your own translator, you must pass a pointer to 
+	function that accepts a pointer to ud_t. This function will be called
+	by libudis86 after each instruction is decoded.
+	</li>
+
+	<li>
+	<pre>void ud_set_vendor(ud_t*, unsigned vendor);</pre>
+
+	Sets the vendor of whose instruction to choose from. This is only useful for
+	selecting the VMX or SVM instruction sets at which point INTEL and AMD have 
+	diverged significantly. At a later stage, support for a more granular 
+	selection of instruction sets maybe added.
+	<br/>
+	<ul>
+	<li>UD_VENDOR_INTEL - for INTEL instruction set.</li>
+	<li>UD_VEDNOR_ATT - for AMD instruction set.</li>
+	</ul>
+	</li>
+
+	<li>
+	<pre>unsigned int ud_disassemble(ud_t*);</pre>
+
+	This function disassembles the next instruction in the input stream.
+	<i>RETURNS</i>, the number of bytes disassembled. A 0 indicates end of 
+	input. 
+	<i>NOTE</i>, to restart disassembly, after the end of input, you must 
+	call one of the input setting functions with the new input source.
+	</li>
+
+	<li>
+	<pre>unsigned int ud_insn_len(ud_t* u);</pre>
+	Returns the number of bytes disassembled.
+	</li>
+
+	
+	<li>
+	<pre>uint64_t ud_insn_off(ud_t*);</pre>
+	Returns the starting offset of the  disassembled instruction relative
+	to the program counter value specified initially.
+	</li>
+
+	<li>
+	<pre>char* ud_insn_hex(ud_t*);</pre>
+	Returns pointer to character string holding the hexadecimal 
+	representation of the disassembled bytes.
+	</li>
+
+	<li>
+	<pre>uint8_t* ud_insn_ptr(ud_t* u);</pre>
+	Returns pointer to the buffer holding the instruction bytes. Use
+	ud_insn_len(), to determine the length of this buffer.
+	</li>
+
+	<li>
+	<pre>char* ud_insn_asm(ud_t* u);</pre>
+	If the syntax is specified, returns pointer to the character string holding
+	assembly language representation of the disassembled instruction.
+	</li>
+
+	<li>
+	<pre>void ud_input_skip(ud_t*, size_t n);</pre>
+	Skips <code>n</code> number of bytes in the input stream.
+	</li>
+</ol>
+
+<a name="sec16"></a>
+<h3>1.6 Examining an Instruction</h3>
+
+After calling ud_disassembly, instructions can be examined by accessing fields 
+of the ud_t object, as described below.
+
+<ol>
+	<li>
+	<pre>ud_mnemonic_code_t ud_obj->mnemonic</pre>
+
+	The mnemonic code for the disassembled instruction. All codes are
+	prefixed by UD_I, such as, <code>UD_Imov, UD_Icall, UD_Ijmp</code>, etc.
+	See a list of mnemonic codes in mnemonics.h.
+	</li>
+
+	<li>
+	<pre>ud_operand_t ud_obj->operand[n]</pre>
+	
+	The array of operands of the disassembled instruction. A maximum of 
+	three operands are allowed, indexed as 0, 1, and 2. Operands can be
+	examined using the their sub-fields as described below.
+	</li>
+
+	<li>
+	<pre>ud_type_t ud_obj->operand[n].type</pre>
+	This field represents the type of the operand n. Possible values are -
+<pre>
+UD_OP_MEM	-	A Memory Addressing Operand.
+UD_OP_REG	-	A Register Operand.
+UD_OP_PTR	-	A Segment:Offset Pointer Operand.
+UD_OP_IMM	-	An Immediate Operand
+UD_OP_JIMM	-	An Immediate Operand for Branch Instructions.
+UD_OP_CONST	-	A Constant Value Operand.
+UD_NONE		-	No Operand.</pre>
+
+	</li>
+
+	<li>
+	<pre>ud_obj->operand[n].size</pre>
+	This field gives the size of operand n. Possible values are - 8, 16, 32, 48, 64.
+	</li>
+
+	<li>
+	<pre>
+ud_obj->operand[n].base
+ud_obj->operand[n].index
+ud_obj->operand[n].scale
+ud_obj->operand[n].offset
+ud_obj->operand[n].lval</pre>
+
+	For operands of type <code>UD_OP_MEM</code>, 
+	<ul>
+	<li><code>ud_obj->operand[n].base</code> is the base register (if any),</li>
+	<li><code>ud_obj->operand[n].index</code> is the index register (if any),</li>
+	<li><code>ud_obj->operand[n].scale</code> is the scale (if any), </li>
+	<li><code>ud_obj->operand[n].offset</code> is the size of displacement/offset to be added (8,16,32,64),</li>
+	<li><code>ud_obj->operand[n].lval</code> is displacement/offset (if any).</li>
+	</ul>
+
+	For operands of type <code>UD_OP_REG</code>, 
+	<ul>
+	<li><code>ud_obj->operand[n].base</code> field gives the register.</li>
+	</ul>
+
+	For operands of type <code>UD_OP_PTR</code>,
+	<ul> 
+	<li><code>ud_obj->operand[n].lval</code> holds the segment:offset.</li>
+	<li><code>ud_obj->operand[n].size</code> can have two values 32 
+		(for 16:16 seg:off) and 48 (for 16:32 seg:off).</li>
+	</ul>
+
+	For operands of type <code>UD_OP_IMM, UD_OP_JIMM, UD_OP_CONST</code>,
+	<ul> 
+	<li><code>ud_obj->operand[n].lval</code> holds the value.</li>
+	</ul>
+
+	Possible values for <code>ud_obj->operand[n].base</code> and <code>ud_obj->operand[n].index</code>.
+  <pre>
+  /* No register */
+  UD_NONE, 
+
+  /* 8 bit GPRs */
+  UD_R_AL,	UD_R_CL,	UD_R_DL,	UD_R_BL,
+  UD_R_AH,	UD_R_CH,	UD_R_DH,	UD_R_BH,
+  UD_R_SPL,	UD_R_BPL,	UD_R_SIL,	UD_R_DIL,
+  UD_R_R8B,	UD_R_R9B,	UD_R_R10B,	UD_R_R11B,
+  UD_R_R12B,	UD_R_R13B,	UD_R_R14B,	UD_R_R15B,
+
+  /* 16 bit GPRs */
+  UD_R_AX,	UD_R_CX,	UD_R_DX,	UD_R_BX,
+  UD_R_SP,	UD_R_BP,	UD_R_SI,	UD_R_DI,
+  UD_R_R8W,	UD_R_R9W,	UD_R_R10W,	UD_R_R11W,
+  UD_R_R12W,	UD_R_R13W,	UD_R_R14W,	UD_R_R15W,
+	
+  /* 32 bit GPRs */
+  UD_R_EAX,	UD_R_ECX,	UD_R_EDX,	UD_R_EBX,
+  UD_R_ESP,	UD_R_EBP,	UD_R_ESI,	UD_R_EDI,
+  UD_R_R8D,	UD_R_R9D,	UD_R_R10D,	UD_R_R11D,
+  UD_R_R12D,	UD_R_R13D,	UD_R_R14D,	UD_R_R15D,
+	
+  /* 64 bit GPRs */
+  UD_R_RAX,	UD_R_RCX,	UD_R_RDX,	UD_R_RBX,
+  UD_R_RSP,	UD_R_RBP,	UD_R_RSI,	UD_R_RDI,
+  UD_R_R8,	UD_R_R9,	UD_R_R10,	UD_R_R11,
+  UD_R_R12,	UD_R_R13,	UD_R_R14,	UD_R_R15,
+
+  /* segment registers */
+  UD_R_ES,	UD_R_CS,	UD_R_SS,	UD_R_DS,
+  UD_R_FS,	UD_R_GS,	
+
+  /* control registers*/
+  UD_R_CR0,	UD_R_CR1,	UD_R_CR2,	UD_R_CR3,
+  UD_R_CR4,	UD_R_CR5,	UD_R_CR6,	UD_R_CR7,
+  UD_R_CR8,	UD_R_CR9,	UD_R_CR10,	UD_R_CR11,
+  UD_R_CR12,	UD_R_CR13,	UD_R_CR14,	UD_R_CR15,
+	
+  /* debug registers */
+  UD_R_DR0,	UD_R_DR1,	UD_R_DR2,	UD_R_DR3,
+  UD_R_DR4,	UD_R_DR5,	UD_R_DR6,	UD_R_DR7,
+  UD_R_DR8,	UD_R_DR9,	UD_R_DR10,	UD_R_DR11,
+  UD_R_DR12,	UD_R_DR13,	UD_R_DR14,	UD_R_DR15,
+
+  /* mmx registers */
+  UD_R_MM0,	UD_R_MM1,	UD_R_MM2,	UD_R_MM3,
+  UD_R_MM4,	UD_R_MM5,	UD_R_MM6,	UD_R_MM7,
+
+  /* x87 registers */
+  UD_R_ST0,	UD_R_ST1,	UD_R_ST2,	UD_R_ST3,
+  UD_R_ST4,	UD_R_ST5,	UD_R_ST6,	UD_R_ST7, 
+
+  /* extended multimedia registers */
+  UD_R_XMM0,	UD_R_XMM1,	UD_R_XMM2,	UD_R_XMM3,
+  UD_R_XMM4,	UD_R_XMM5,	UD_R_XMM6,	UD_R_XMM7,
+  UD_R_XMM8,	UD_R_XMM9,	UD_R_XMM10,	UD_R_XMM11,
+  UD_R_XMM12,	UD_R_XMM13,	UD_R_XMM14,	UD_R_XMM15,
+
+  UD_R_RIP</pre>
+
+  Possible values for <code>ud_obj->operand[n].lval</code> depend on <code>ud_obj->operand[n].size</code>,
+  based on which you could use its sub-fields to access the integer values.
+
+  <pre>
+ud_obj->operand[n].lval.sbyte           - Signed Byte
+ud_obj->operand[n].lval.ubyte           - Unsigned Byte
+ud_obj->operand[n].lval.sword           - Signed Word
+ud_obj->operand[n].lval.uword           - Unsigned Word
+ud_obj->operand[n].lval.sdword          - Signed Double Word
+ud_obj->operand[n].lval.udword          - Unsined Double Word
+ud_obj->operand[n].lval.sqword          - Signed Quad Word
+ud_obj->operand[n].lval.uqword          - Unsigned Quad Word
+ud_obj->operand[n].lval.ptr.seg         - Pointer Segment in Segment:Offset
+ud_obj->operand[n].lval.ptr.off         - Pointer Offset in Segment:Offset </pre>
+
+	<li>Prefix Fields - These fields store prefixes (if found). If a prefix
+	does not exists then the field corresponding to it has the value <code>UD_NONE</code>.
+	<pre>
+ud_obj->pfx_rex                         - 64-bit mode REX prefix
+ud_obj->pfx_seg                         - Segment register prefix
+ud_obj->pfx_opr                         - Operand-size prefix (66h)
+ud_obj->pfx_adr                         - Address-size prefix (67h)
+ud_obj->pfx_lock                        - Lock prefix
+ud_obj->pfx_rep                         - Rep prefix
+ud_obj->pfx_repe                        - Repe prefix
+ud_obj->pfx_repne                       - Repne prefix</pre>
+	</li>
+
+	Possible values for <code>ud_obj->operand[n].pfx_seg</code> are,
+	<pre>
+UD_R_ES,	UD_R_CS,	UD_R_SS,	UD_R_DS,
+UD_R_FS,	UD_R_GS,	UD_NONE</pre>
+	</li>
+
+	<li>
+	<pre>uint4_t ud_obj->pc</pre>
+	The program counter.
+	</li>
+</ol>
+
+<a name="sec2"></a>
+<h2>2. Using the command-line tool - udcli</h2>
+
+A front-end incarnation of this library, udcli is a small command-line tool for 
+your quick disassembly needs.
+
+<a name="sec21"></a>
+<h3>2.1 Usage</h3>
+<pre>$ udcli [-option[s]] file</pre>
+
+<a name="sec22"></a>
+<h3>2.2 Options</h3>
+<pre>
+-16      : Set the disassembly mode to 16 bits.
+-32      : Set the disassembly mode to 32 bits. (default)
+-64      : Set the disassembly mode to 64 bits.
+-intel   : Set the output to INTEL (NASM like) syntax. (default)
+-att     : Set the output to AT&amp;T (GAS like) syntax.
+-v &lt;v&gt;   : Set vendor. &lt;v&gt; = {intel, amd} 
+-o &lt;pc&gt;  : Set the value of program counter to <pc>. (default = 0)
+-s &lt;pc&gt;  : Set the number of bytes to skip before disassembly to <n>.
+-c &lt;pc&gt;  : Set the number of bytes to disassemble to <n>.
+-x       : Set the input mode to whitespace seperated 8-bit numbers in
+           hexadecimal representation. Example: 0f 01 ae 00
+-noff    : Do not display the offset of instructions.
+-nohex   : Do not display the hexadecimal code of instructions.
+-h       : Display help message.</pre>
+
+<a name="sec23"></a>
+<h3>2.3 The hexadecimal input mode</h3>
+
+Noteworthy among the command-line options of the udcli is "-x" which sets the
+input mode to whitespace seperated 8-bit numbers in hexadecimal representation.
+This could come as a handy tool, for quickly disassembling hexadecimal 
+representation of machine code, like those generated during software crashes, etc.
+
+<div style="text-align:center; padding: 1em;">
+<img src="ss.jpg" style="border: 1px double; padding: 2px;"/>
+</div>
+
+<div style="text-align:center"><small>&copy; 2006 Vivek Mohan</small></div>
+</body>
+</html>

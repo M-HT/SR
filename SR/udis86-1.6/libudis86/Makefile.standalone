@@ -1,0 +1,26 @@
+# Udis86 Standalone
+#
+#
+
+LDFLAGS += -r
+CFLAGS += -Wall -O2
+UD_STANDALONE ?= ud_standalone.o
+
+.PHONY: clean
+.SUFFIXES: .c .o
+.c.o:
+	$(CC) -c $(CFLAGS) -D__UD_STANDALONE__ -o $@ $<
+
+OBJS =	mnemonics.o \
+	opcmap.o \
+	input.o \
+	decode.o \
+	syn.o \
+	syn-intel.o \
+	syn-att.o \
+	udis86.o
+
+$(UD_STANDALONE): clean $(OBJS)
+	$(LD) $(LDFLAGS) $(OBJS) -o $@
+clean:
+	$(RM) -f $(OBJS) $(UD_STANDALONE)

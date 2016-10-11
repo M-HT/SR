@@ -1,0 +1,146 @@
+@@
+@@  Copyright (C) 2016 Roman Pauer
+@@
+@@  Permission is hereby granted, free of charge, to any person obtaining a copy of
+@@  this software and associated documentation files (the "Software"), to deal in
+@@  the Software without restriction, including without limitation the rights to
+@@  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+@@  of the Software, and to permit persons to whom the Software is furnished to do
+@@  so, subject to the following conditions:
+@@
+@@  The above copyright notice and this permission notice shall be included in all
+@@  copies or substantial portions of the Software.
+@@
+@@  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+@@  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+@@  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+@@  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+@@  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+@@  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+@@  SOFTWARE.
+@@
+
+.extern Game_ScreenWindow
+.extern Game_Sound
+.extern Game_Music
+.extern Game_VSyncTick
+.extern Game_stdin
+.extern Game_stdout
+.extern Game_stderr
+.extern self_mod_width
+
+
+.extern draw_3dscene_proc
+.extern Game_UseEnhanced3DEngine
+
+.extern SR_Call_Asm_Float1
+
+.extern SR_Sync
+.extern SR_CheckTimer
+.extern SR_RunTimerDelay
+
+@ null procedures
+.extern SR___CHK
+.extern SR___GETDS
+.extern SR_nosound
+.extern SR_sound
+.extern SR__harderr
+@ stack params
+.extern SR_fprintf
+.extern SR_printf
+.extern SR__bprintf
+.extern SR_sprintf
+.extern SR_WaitVerticalRetraceTicks
+.extern SR_open
+
+.extern SR_AIL_allocate_sample_handle
+.extern SR_AIL_end_sample
+.extern SR_AIL_init_sample
+.extern SR_AIL_release_sample_handle
+.extern SR_AIL_sample_status
+.extern SR_AIL_set_digital_master_volume
+.extern SR_AIL_set_sample_address
+.extern SR_AIL_set_sample_loop_count
+.extern SR_AIL_set_sample_pan
+.extern SR_AIL_set_sample_playback_rate
+.extern SR_AIL_set_sample_type
+.extern SR_AIL_set_sample_volume
+.extern SR_AIL_start_sample
+
+.extern SR_AIL_allocate_sequence_handle
+.extern SR_AIL_create_wave_synthesizer
+.extern SR_AIL_destroy_wave_synthesizer
+.extern SR_AIL_end_sequence
+.extern SR_AIL_init_sequence
+.extern SR_AIL_release_sequence_handle
+.extern SR_AIL_resume_sequence
+.extern SR_AIL_set_sequence_loop_count
+.extern SR_AIL_set_sequence_volume
+.extern SR_AIL_start_sequence
+.extern SR_AIL_stop_sequence
+@ 0 params
+.extern SR_fcloseall
+.extern SR_WaitAfterVerticalRetrace
+.extern SR_WaitForVerticalRetrace
+.extern SR_WaitAfter2ndVerticalRetrace
+.extern SR_WaitFor2ndVerticalRetrace
+@ 1 param
+.extern SR_asctime
+.extern SR_chdir
+.extern SR___close
+.extern SR_j___close
+.extern SR_closedir
+.extern SR_ctime
+.extern SR__dos_findclose
+.extern SR__dos_findnext
+.extern SR__dos_getvect
+.extern SR_exit
+.extern SR_fclose
+.extern SR_filelength
+.extern SR__nfree
+.extern SR_ftime
+.extern SR_getenv
+.extern SR_isatty
+.extern SR_localtime
+.extern SR__nmalloc
+.extern SR_opendir
+.extern SR__setjmp
+.extern SR_strlen
+.extern SR_tell
+.extern SR_time
+.extern SR_unlink
+.extern SR_j_unlink
+.extern SR_WaitTimerTicks
+.extern SR_save_screenshot
+@ 2 params
+.extern SR_fopen
+.extern SR_fputs
+.extern SR_getcwd
+.extern SR_longjmp
+.extern SR_outp
+.extern SR_rename
+.extern SR_setbuf
+.extern SR_strchr
+.extern SR_strcmp
+.extern SR_strcpy
+.extern SR_strcspn
+.extern SR_strspn
+@ 2/3 params
+.extern SR__dos_setvect
+@ 3 params
+.extern SR__dos_findfirst
+.extern SR_fgets
+.extern SR_lseek
+.extern SR_memcpy
+.extern SR_memmove
+.extern SR_memset
+.extern SR_read
+.extern SR_strncmp
+.extern SR_strncpy
+.extern SR_strnicmp
+.extern SR_write
+@ 4 params
+.extern SR_int386x
+.extern SR__vbprintf
+@ 5 params
+.extern SR__splitpath

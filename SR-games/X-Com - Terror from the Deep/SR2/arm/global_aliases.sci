@@ -1,0 +1,3 @@
+loc_31530,main_
+loc_A34F4,errno_val
+loc_12548,update_timer

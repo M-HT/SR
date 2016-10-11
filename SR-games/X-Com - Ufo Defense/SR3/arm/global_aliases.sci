@@ -1,0 +1,3 @@
+loc_1004A,main_
+loc_218D0,errno_val
+loc_111A5,update_timer

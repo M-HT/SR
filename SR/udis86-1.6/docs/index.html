@@ -1,0 +1,103 @@
+<html>
+<head>
+<title>Udis86 - Disassembler Library for x86 and AMD64 (x86-64)</title>
+<style type="text/css">@import 'style.css';</style>
+</head>
+<body>
+<div id="topbar"><h1>Udis86 - Disassembler Library for x86 and AMD64</h1></div>
+<div id="wrapper">
+<div id="content">
+
+<a href="doc.html">Documentation</a> &middot;
+<a href="http://sourceforge.net/projects/udis86">Project Page</a> &middot;
+<a href="#author">Author</a> &middot;
+<a href="#changes">Changes</a>
+
+<p>Udis86 is an easy-to-use minimalistic disassembler library (<i>libudis86</i>) 
+for the x86 and AMD64 (x86-64) range of instruction set architectures. The primary
+intent of the design and development of udis86 is to aid software development 
+projects that entail binary code analysis.</p>
+
+<div class="box">
+<a href="http://sourceforge.net/project/showfiles.php?group_id=96233">Download</a>: <a href="http://prdownloads.sourceforge.net/udis86/udis86-1.6.tar.gz?download">udis86-1.6.tar.gz</a>
+</div>
+
+<h2>libudis86</h2>
+	<ol>
+	<li>Full support for the <i>x86 and x86-64 (AMD64)</i> range of instruction set
+	architectures.</li>
+	<li>Full support  for all <i> AMD-V, INTEL-VMX, MMX, SSE, SSE2, SSE3, FPU(x87), and 
+	AMD 3Dnow! </i>	instructions.</li>
+	<li>Supports 16bit, 32bit, and 64bit disassembly modes.</li>
+	<li>Generates output in <i>AT&T</i> or <i>INTEL</i> assembler language syntaxes.</li>
+	<li>Supports flexbile input methods: File, Buffer, and Hooks.</li>
+	<li>Thread-safe and Reentrant.</li>
+	<li>Clean and very easy-to-use API.</li>
+	<li>Builds on *nix systems, Win32, DJGPP (<b><i>new</i></b>), <a href="doc.html#sec111">Standalone</a>, etc.</li>
+	</ol>
+
+	See <a href="doc.html#sec1">Usage</a>.
+
+<h2>udcli</h2>
+
+A front-end incarnation of this library, udcli is a small command-line tool 
+for your quick disassembly needs. 
+<br/>
+<div style="text-align:center; padding: 1em;">
+<img src="ss.jpg" style="border: 1px double; padding: 2px;"/>
+</div>
+See <a href="doc.html#sec2">Usage</a>.
+
+<a name="author"></a>
+<h2>Author</h2>
+
+<p>Udis86 is a creation of <a href="http://sig9.com/vivek/">Vivek Mohan</a>.
+You can reach me at <i>vivek[at]sig9[dot]com</i>. Please let me know if you are
+using udis86, have ideas for it, or would like to comment on it.</p>
+
+<a name="changes"></a>
+<h2>CHANGES</h2>
+<pre>
+ * [Aug/05/07] Patch for DJGPP (Thanks to Robert Riebisch)
+	       Removed "test" Target in tot Makefile (Thanks to Robert Riebisch)
+	       New target:tests.
+	       Misc. clean up top-of-tree Makefile.
+	       Use config.h for package version
+	       Review/cleanup FP Opcode map. 
+ * [Dec/18/06] Fixed: Printf warnings.
+	       Fixed: set_input_buffered to set_input_buffer in documentation.
+	       Added support for INTEL VMX instructions.
+	       API addition: ud_set_vendor(): UD_VENDOR_{INTEL, AMD}.
+	       Fixed: Handling of invalid combination of bytes. No more input re-syncing.
+	       Added Makefiles for win32 build. (Thanks to Xi Hang).
+	       Added Makefile.standalone for "Standalone Udis86".
+	       Fixed: u->inp_end initialization bug.
+	       Fixed: swapgs only in 64bit mode.
+ * [Oct/27/06] 0xF1 is now int1.
+	       Fixed: cast prefix for Group1_op80/82/C0/D0 instructions.
+	       Fixed: lmsw
+	       Added support for Udis86 Standalone.
+ * [Sep/18/06] Fixed: Missing support for o32 for in/out instructions.
+ * [Jul/26/06] Fixed: Missing REX.W in Group1_op83 instructions.
+ * [Jul/16/06] Fixed: rex.b on [rip+disp]
+ * [Jul/15/06] Fixed: Wrongly printing "loopnz" as "loopn" (Thanks to Sanjay Patel)
+ 	       Fixed: Wrongly decoding "out Ib, AL" ((Thanks to Sanjay Patel)
+ * [Jun/8/06]  Missing instructions added. (As per AMD64 Manual Vol3 Rev 3.11 
+               Dec 2005)
+               Fixed minor decoder issues. (Thanks to Sanjay Patel)
+               Fixed issues with input stream buffer. (Thanks to Sanjay Patel)
+ * [May/18/06] Fixed issues with handling of 64-bit values. 
+               Fixed bug in syntax generation for immediate operands in branch
+               instructions.
+               Fixed decoding of (G, W) operands.
+ * [May/12/06] Added support for data types in MS VC++.
+ * [May/11/06] Fixed portability issues concerning inp_uintXX functions in 
+               input.c and 64-bit casting in syn-intel/syn-att.c (Thanks to 
+               Sanjay Patel)
+</pre>
+
+<div style="text-align:center"><small>&copy; 2006,2007 Vivek Mohan</small></div>
+</div>
+</div>
+</body>
+</html>

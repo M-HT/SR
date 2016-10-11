@@ -1,0 +1,93 @@
+#
+#  Copyright (C) 2016 Roman Pauer
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy of
+#  this software and associated documentation files (the "Software"), to deal in
+#  the Software without restriction, including without limitation the rights to
+#  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+#  of the Software, and to permit persons to whom the Software is furnished to do
+#  so, subject to the following conditions:
+#
+#  The above copyright notice and this permission notice shall be included in all
+#  copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#  SOFTWARE.
+#
+
+import os
+
+# set help text
+vars = Variables('custom.py')
+vars.Add(BoolVariable('debug', 'Set to build debug version', False))
+vars.Add(EnumVariable('device', 'Set target device', 'none',
+                                 allowed_values=('none', 'pc-windows', 'pc-linux', 'gp2x', 'pandora'),
+                                 ignorecase=2))
+env = Environment(variables = vars)
+
+debug = env['debug']
+device = env['device']
+
+if device == 'none':
+    device = 'pc-linux'
+    env['device'] = device
+    print "\nYou didn't set any target device (parameter 'device')."
+    print "'" + device + "' will be used for compiling.\n"
+
+Help(vars.GenerateHelpText(env))
+
+arch_obj = []
+if device == 'pc-windows' or device == 'pc-linux':
+    # default settings
+    env = Environment(CCFLAGS      = '-m32 -O2',
+                      LINKFLAGS    = '-m32',
+                      LIBS         = ['SDL', 'pthread']
+                     )
+elif device == 'gp2x':
+    compiler_path = '/opt/open2x/gcc-4.1.1-glibc-2.3.6/'
+    compiler_prefix = 'arm-open2x-linux-'
+
+    env = Environment(CC           = compiler_prefix + 'gcc',
+                      CCFLAGS      = '-Os -DGP2X -march=armv4t -mtune=arm920t',
+                      CPPPATH      = [compiler_path + 'include'],
+                      INCPREFIX    = '-I',
+                      LIBPATH      = [compiler_path + 'lib'],
+                      LIBDIRPREFIX = '-L',
+                      LINKFLAGS    = '-static',
+                      LIBS         = ['SDL', 'pthread', 'armmem'],
+                      ENV          = {'PATH' : compiler_path + 'bin:' + os.environ['PATH']},
+                      AS           = compiler_prefix + 'as',
+                      ASFLAGS      = ' -EL -march=armv4t -mfpu=softfpa -I arm/'
+                     )
+
+    arch_obj = env.Object(Glob('*.s'))
+elif device == 'pandora':
+    compiler_path = os.environ['PNDSDK'] + '/'
+    compiler_prefix = 'arm-none-linux-gnueabi-'
+
+    env = Environment(CC           = compiler_prefix + 'gcc',
+                      CCFLAGS      = '-Os -DPANDORA -pipe -march=armv7-a -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=vfpv3 -mfloat-abi=softfp',
+                      CPPPATH      = [compiler_path + 'usr/include'],
+                      INCPREFIX    = '-I',
+                      LIBPATH      = [compiler_path + 'usr/lib'],
+                      LIBDIRPREFIX = '-L',
+                      LINKFLAGS    = '',
+                      LIBS         = ['SDL', 'ts', 'pthread'],
+                      ENV          = {'PATH' : compiler_path + 'bin:' + os.environ['PATH']},
+                      AS           = compiler_prefix + 'as',
+                      ASFLAGS      = ' -EL -march=armv7-a -mcpu=cortex-a8 -mfpu=vfpv3 -mfloat-abi=softfp -I arm/'
+                     )
+
+# debug settings
+if debug:
+    env.Append(CCFLAGS = ' -g -D__DEBUG__')
+else:
+    env.Append(LINKFLAGS = ' -s')
+
+
+env.Program('smk_play', Glob('*.c') + arch_obj)

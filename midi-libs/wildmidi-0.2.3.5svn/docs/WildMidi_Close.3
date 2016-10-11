@@ -1,0 +1,49 @@
+.TH WildMidi_Close 3 "05 June 2010" "" "WildMidi Programmer's Manual"
+.SH NAME
+WildMidi_Close \- Close an open midi handle
+.SH LIBRARY
+.B libWildMidi
+.SH SYNOPSIS
+.B #include <wildmidi_lib.h>
+.PP
+.B int WildMidi_Close (midi *\fIhandle\fB)
+.PP
+.SH DESCRIPTION
+Finish processing MIDI data or file.
+.PP
+.IP \fIhandle\fP
+The indentifier obtained from opening a midi file with \fBWildMidi_Open\fR(3)\fP or \fBWildMidi_OpenBuffer\fR(3)\fP
+.PP
+.SH "RETURN VALUE"
+returns -1 on error, otherwise returns 0
+.PP
+.SH SEE ALSO
+.BR WildMidi_GetString (3) ,
+.BR WildMidi_Init (3) ,
+.BR WildMidi_MasterVolume (3) ,
+.BR WildMidi_Open (3) ,
+.BR WildMidi_OpenBuffer (3) ,
+.BR WildMidi_SetOption (3) ,
+.BR WildMidi_GetOutput (3) ,
+.BR WildMidi_GetInfo (3) ,
+.BR WildMidi_FastSeek (3) ,
+.BR WildMidi_Shutdown (3) ,
+.BR wildmidi (1) ,
+.BR wildmidi.cfg (5)
+.PP
+.SH AUTHOR
+Chris Ison <wildcode@users.sourceforge.net>
+.SH COPYRIGHT
+Copyright (C) Chris Ison 2001-2010
+.PP
+This file is part of WildMIDI.
+.PP
+WildMIDI is free software: you can redistribute and/or modify the player under the terms of the GNU General Public License and you can redistribute and/or modify the library under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the licenses, or(at your option) any later version.
+.PP
+WildMIDI is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License and the GNU Lesser General Public License for more details.
+.PP
+You should have received a copy of the GNU General Public License and the GNU Lesser General Public License along with WildMIDI. If not, see <http://www.gnu.org/licenses/>.
+.PP
+.PP
+This manpage is licensed under the Creative Commons Attribution-Share Alike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 171 Second Street, Suite 300, San Francisco, California, 94105, USA.
+.PP

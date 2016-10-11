@@ -1,0 +1,44 @@
+# Makefile - libudis86
+#
+#
+
+SHELL		= @SHELL@
+top_srcdir	= @top_srcdir@
+srcdir		= @srcdir@
+CC		= cl
+CFLAGS		= /O2
+AR		= lib
+RM		= del
+PERL		= perl
+
+.SUFFIXES: .c .obj
+.c.obj:
+	$(CC) -c $(CFLAGS) -o $@ $<
+
+OBJS =	mnemonics.obj \
+	opcmap.obj \
+	input.obj \
+	decode.obj \
+	syn.obj \
+	syn-intel.obj \
+	syn-att.obj \
+	udis86.obj
+
+libudis86.a: $(OBJS)
+	$(AR) /out:udis86.lib $(OBJS)
+
+mnemonics.c: mnemonics.dat
+	$(PERL) mnemonics.pl < mnemonics.dat
+mnemonics.h: mnemonics.dat
+	$(PERL) mnemonics.pl < mnemonics.dat
+input.c: input.h types.h
+opcmap.c: opcmap.h input.h types.h
+decode.c: opcmap.h input.h types.h extern.h
+syn-intel.c: syn.h input.h types.h opcmap.h 
+syn-att.c: syn.h input.h types.h opcmap.h 
+syn.c: syn.h types.h opcmap.h 
+udis86.c: input.h syn.h types.h extern.h
+
+clean:
+	$(RM) *.obj *.lib
+

@@ -1,0 +1,10 @@
+*.sci linguist-language=Text
+*/arm/*.inc linguist-language=Unix Assembly
+*/x86/*.inc linguist-language=Assembly
+*/arm-support/*.inc linguist-language=Unix Assembly
+*/x86-support/*.inc linguist-language=Assembly
+midi-libs/wildmidi-0.2.3.5svn/* linguist-vendored
+midi-libs/wildmidiA-0.2.3.5svn/* linguist-vendored
+midi-plugins/xcom12/src/dosbox_opl/* linguist-vendored
+midi-plugins/xcom12/src/munt-1.4.0/* linguist-vendored
+SR/udis86-1.6/* linguist-vendored

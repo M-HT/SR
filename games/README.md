@@ -9,3 +9,5 @@ The games use [SDL](https://libsdl.org/ "Simple DirectMedia Layer"), [SDL_mixer]
 The games can be built using [scons](http://scons.org/ "SCons: A software construction tool"). To control which version of the game should be built, use SCons Build Variables. Use `scons -h` to list available variables.
 
 To play (or play better) music, use also midi plugins (and libraries) from *midi-plugins* subproject (and *midi-libs* subproject or external closed source libraries).
+
+The *release* subdirectories contain startup scripts and example configuration files.

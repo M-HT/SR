@@ -73,7 +73,14 @@ int SR_disassemble_remove_segment(const char *ostr, char *dst, uint8_t pfx_seg)
 
     if (str1 == NULL)
     {
-        strcpy(dst, ostr);
+        if (seg != NULL && ostr[0] == seg[0] && ostr[1] == seg[1] && ostr[2] == ' ')
+        {
+            strcpy(dst, &(ostr[3]));
+        }
+        else
+        {
+            strcpy(dst, ostr);
+        }
 
         return 0;
     }

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2017 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -63,7 +63,8 @@ static pthread_t midi_thread;
 static volatile int midi_quit = 0;
 static volatile int midi_loaded = 0;
 static volatile int midi_playing = 0;
-static volatile int midi_volume = 127;
+static volatile int midi_current_volume = 128;
+static volatile int midi_new_volume = 128;
 static volatile int midi_loop_count = 0;
 static volatile int midi_eof = 0;
 
@@ -633,6 +634,29 @@ static void *midi_thread_proc(void *arg)
             midi_base_time = base_time;
         }
 
+        if ((midi_new_volume != midi_current_volume) && (events[current_event].tick != 0))
+        {
+            int chan;
+
+            midi_current_volume = midi_new_volume;
+
+            snd_seq_ev_set_fixed(&event);
+            event.type = SND_SEQ_EVENT_CONTROLLER;
+            event.time.tick = base_tick + events[current_event - 1].tick;
+            event.dest.client = dst_client_id;
+            event.dest.port = dst_port_id;
+            event.data.control.param = MIDI_CTL_MSB_MAIN_VOLUME;
+            event.data.control.value = midi_current_volume;
+
+            for (chan = 0; chan < 16; chan++)
+            {
+                event.data.control.channel = chan;
+                snd_seq_event_output(midi_seq, &event);
+            }
+
+            snd_seq_drain_output(midi_seq);
+        }
+
         if (0 > snd_seq_get_queue_status(midi_seq, midi_queue, queue_status))
         {
             pthread_mutex_unlock(&midi_mutex);
@@ -667,7 +691,7 @@ static void *midi_thread_proc(void *arg)
                     snd_seq_ev_set_fixed(&event);
                     event.data.note.channel = events[current_event].channel;
                     event.data.note.note = events[current_event].data1;
-                    event.data.note.velocity = (events[current_event].data2 * midi_volume * 517) >> 16; // data2 * midi_volume / 127
+                    event.data.note.velocity = events[current_event].data2;
 
                     channel_notes[event.data.note.channel][event.data.note.note]++;
                     break;
@@ -789,14 +813,14 @@ static void close_midi(void)
         {
             snd_seq_ev_set_fixed(&event);
             event.data.control.channel = chan;
-            event.data.control.param = 123; // All notes off (this message stops all the notes that are currently playing)
+            event.data.control.param = MIDI_CTL_ALL_NOTES_OFF; // All notes off (this message stops all the notes that are currently playing)
             event.data.control.value = 0;
 
             snd_seq_event_output(midi_seq, &event);
 
             snd_seq_ev_set_fixed(&event);
             event.data.control.channel = chan;
-            event.data.control.param = 121; // All controllers off (this message clears all the controller values for this channel, back to their default values)
+            event.data.control.param = MIDI_CTL_RESET_CONTROLLERS; // All controllers off (this message clears all the controller values for this channel, back to their default values)
             event.data.control.value = 0;
 
             snd_seq_event_output(midi_seq, &event);
@@ -952,6 +976,8 @@ static int play(void const *midibuffer, long int size, int loop_count)
         snd_seq_queue_tempo_alloca(&queue_tempo);
 
         pthread_mutex_lock(&midi_mutex);
+
+        midi_current_volume = 128;
 
         snd_seq_queue_tempo_set_tempo(queue_tempo, 500000); // 120 BPM
         snd_seq_queue_tempo_set_ppq(queue_tempo, timediv);
@@ -1142,7 +1168,7 @@ static int set_volume(unsigned char volume) // volume = 0 - 127
 #if !(defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
     if (midi_seq == NULL) return -1;
 
-    midi_volume = volume;
+    midi_new_volume = volume;
 
 #endif
 

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2017 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -27,6 +27,7 @@
 
     #include <windows.h>
 #else
+    #define _FILE_OFFSET_BITS 64
     #include <unistd.h>
     #include <sys/types.h>
     #include <dirent.h>

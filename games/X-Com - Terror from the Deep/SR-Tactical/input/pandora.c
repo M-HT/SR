@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2017 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,6 +22,7 @@
  *
  */
 
+#define _FILE_OFFSET_BITS 64
 #include "../Game_defs.h"
 #include "../Game_vars.h"
 #include "../Tactical-proc-events.h"

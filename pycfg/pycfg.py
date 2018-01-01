@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #
-#  Copyright (C) 2014-2016 Roman Pauer
+#  Copyright (C) 2014-2018 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -165,17 +165,19 @@ class ConfigFile:
         self.AddEntry("Audio_Interpolation", "on/off", ("off" if platform == "gp2x" else "on"))
 
         if platform == "gp2x":
-            self.AddEntry("Audio_MIDI_Subsystem", "wildmidi/sdl_mixer", "sdl_mixer")
+            self.AddEntry("Audio_MIDI_Subsystem", "wildmidi/adlmidi/sdl_mixer", "sdl_mixer")
         else:
             midi_values = "alsa/wildmidi"
             if game != "warcraft":
                 midi_values += "/bassmidi"
+            if game == "albion" or game == "warcraft":
+                midi_values += "/adlmidi"
             midi_values += "/sdl_mixer"
             if game == "xcom1" or game == "xcom2":
                 midi_values += "/adlib-dosbox_opl"
                 if platform == "pc":
                     midi_values += "/mt32-munt"
-            self.AddEntry("Audio_MIDI_Subsystem", midi_values, "wildmidi")
+            self.AddEntry("Audio_MIDI_Subsystem", midi_values, ("adlmidi" if game == "albion" or game == "warcraft" else "wildmidi"))
 
             if "alsa" in midi_values:
                 self.AddEntry("Audio_MIDI_Device", "*", "")
@@ -493,8 +495,12 @@ class ConfigGUI:
             if game == "albion":
                 description += "\nSDL_mixer can only play one MIDI stream simultaneously."
 
+            description += "\nWildMIDI and SDL_mixer use GUS patch files for playback."
             if self.CfgFile.HasEntry("Audio_SoundFont_Path"):
-                description += "\nWildMIDI and SDL_mixer use GUS patch files for playback.\nBASSMIDI uses soundfont for playback."
+                description += "\nBASSMIDI uses soundfont for playback."
+
+            if "adlmidi" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
+                description += "\nADLMIDI uses OPL3 emulator for playback."
 
             if "adlib-dosbox_opl" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
                 description += "\nAdlib music is played using 'compat' OPL emulator from DOSBox.\n(Works only for the DOS game version.)"

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2018 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -600,6 +600,8 @@ int MidiPlugin_Startup(void)
         MP_handle = LoadLibrary(".\\midi-wildmidi.dll");
     } else if (Game_MidiSubsystem == 2) {
         MP_handle = LoadLibrary(".\\midi-bassmidi.dll");
+    } else if (Game_MidiSubsystem == 3) {
+        MP_handle = LoadLibrary(".\\midi-adlmidi.dll");
     } else return 1;
 
     #define free_library FreeLibrary
@@ -609,6 +611,8 @@ int MidiPlugin_Startup(void)
         MP_handle = dlopen("./midi-wildmidi.so", RTLD_LAZY);
     } else if (Game_MidiSubsystem == 2) {
         MP_handle = dlopen("./midi-bassmidi.so", RTLD_LAZY);
+    } else if (Game_MidiSubsystem == 3) {
+        MP_handle = dlopen("./midi-adlmidi.so", RTLD_LAZY);
     } else return 1;
 
     #define free_library dlclose
@@ -626,6 +630,7 @@ int MidiPlugin_Startup(void)
 
     memset(&MP_parameters, 0, sizeof(MP_parameters));
     MP_parameters.soundfont_path = Game_SoundFontPath;
+    MP_parameters.opl3_bank_number = 43; // 43 = AIL (Warcraft)
 
     if (MP_initialize(Game_AudioRate, &MP_parameters, &MP_functions))
     {

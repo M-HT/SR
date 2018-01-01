@@ -10,6 +10,8 @@ To compile the pugins run the *komp-x86.sh* script.
 
 **midi-bassmidi** plays MIDI music using [BASSMIDI](http://www.un4seen.com/bass.html "BASS audio library") library. BASSMIDI uses soundfont (*.sf2*) to play MIDI music.
 
+**midi-adlmidi** plays MIDI music using [ADLMIDI](https://github.com/Wohlstand/libADLMIDI/ "A MIDI play library with OPL3 (YMF262) emulator") library. ADLMIDI uses OPL3 emulator to play MIDI music.
+
 **midi2-windows** plays MIDI music using [Windows API](https://msdn.microsoft.com/en-us/library/vs/alm/dd757277\(v=vs.85\).aspx "MIDI Reference"). Windows API can use hardware or software synth. The default software synth doesn't require additional files to play MIDI music.
 
 **midi2-alsa** plays MIDI music using [ALSA sequencer API](http://www.alsa-project.org/alsa-doc/alsa-lib/group___sequencer.html "MIDI Sequencer"). ALSA sequencer can use hardware or software synth (like [FluidSynth](http://www.fluidsynth.org/ "A SoundFont Synthesizer") or [TiMidity++](http://timidity.sourceforge.net/ "TiMidity++")).

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2018 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -612,6 +612,8 @@ int MidiPlugin_Startup(void)
         MP_handle[0] = LoadLibrary(".\\midi-wildmidi.dll");
     } else if (Game_MidiSubsystem == 2) {
         MP_handle[0] = LoadLibrary(".\\midi-bassmidi.dll");
+    } else if (Game_MidiSubsystem == 3) {
+        MP_handle[0] = LoadLibrary(".\\midi-adlmidi.dll");
     } else return 1;
 
     MP_handle[1] = LoadLibrary(".\\midiA-wildmidi.dll");
@@ -623,6 +625,8 @@ int MidiPlugin_Startup(void)
         MP_handle[0] = dlopen("./midi-wildmidi.so", RTLD_LAZY);
     } else if (Game_MidiSubsystem == 2) {
         MP_handle[0] = dlopen("./midi-bassmidi.so", RTLD_LAZY);
+    } else if (Game_MidiSubsystem == 3) {
+        MP_handle[0] = dlopen("./midi-adlmidi.so", RTLD_LAZY);
     } else return 1;
 
     MP_handle[1] = dlopen("./midiA-wildmidi.so", RTLD_LAZY);
@@ -648,6 +652,7 @@ int MidiPlugin_Startup(void)
 
     memset(&MP_parameters, 0, sizeof(MP_parameters));
     MP_parameters.soundfont_path = Game_SoundFontPath;
+    MP_parameters.opl3_bank_number = 0; // 0 = AIL (Star Control 3, Albion, Empire 2, Sensible Soccer, Settlers 2, many others)
 
     if (MP_initialize(Game_AudioRate, &MP_parameters, &(MP_functions[0])))
     {

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2018 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -121,6 +121,7 @@ EXTERNAL_VARIABLE int Game_MidiSubsystem;			/* MIDI subsystem
                                                        0: SDL_mixer
                                                        1: WildMidi
                                                        2: BASSMIDI
+                                                       3: ADLMIDI
                                                        11: native Windows
                                                        12: ALSA */
 EXTERNAL_VARIABLE char *Game_SoundFontPath;			/* Path to SoundFont file */

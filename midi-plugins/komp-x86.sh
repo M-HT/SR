@@ -1,6 +1,7 @@
 #!/bin/sh
 gcc -shared -Wl,-soname,midi-wildmidi.so -o midi-wildmidi.so -fpic -m32 -O2 -Wall midi-wildmidi.c -I`pwd`/include -lWildMidi -L`pwd`/lib/x86
 gcc -shared -Wl,-soname,midi-bassmidi.so -o midi-bassmidi.so -fpic -m32 -O2 -Wall midi-bassmidi.c -I`pwd`/include -lbassmidi -lbass -L`pwd`/lib/x86
+gcc -shared -Wl,-soname,midi-adlmidi.so -o midi-adlmidi.so -fpic -m32 -O2 -Wall midi-adlmidi.c -I`pwd`/include -lADLMIDI -lstdc++ -L`pwd`/lib/x86
 gcc -shared -Wl,-soname,midi2-windows.so -o midi2-windows.so -fpic -m32 -O2 -Wall midi2-windows.c
 gcc -shared -Wl,-soname,midi2-alsa.so -o midi2-alsa.so -fpic -m32 -O2 -Wall midi2-alsa.c -lasound -lpthread
 

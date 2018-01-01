@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2018 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -30,6 +30,7 @@ typedef struct _midi_plugin_parameters_ {
     char const *soundfont_path;
     char const *drivers_cat_path;
     char const *mt32_roms_path;
+    int opl3_bank_number;
 } midi_plugin_parameters;
 
 typedef struct _midi_plugin_functions_ {

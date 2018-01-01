@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2018 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -188,6 +188,10 @@ void Game_ReadConfig(void)
                 else if ( strcasecmp(param, "bassmidi") == 0 ) // param equals "bassmidi"
                 {
                     Game_MidiSubsystem = 2;
+                }
+                else if ( strcasecmp(param, "adlmidi") == 0 ) // param equals "adlmidi"
+                {
+                    Game_MidiSubsystem = 3;
                 }
                 else if ( strcasecmp(param, "nativewindows") == 0 ) // param equals "nativewindows"
                 {

@@ -207,9 +207,12 @@ class ConfigFile:
         if platform == "pandora":
             self.AddEntry("Input_Mode", "touchscreen_dpad/touchscreen_abxy/keyboard_dpad", "touchscreen_dpad")
 
+        if platform == "pandora" or platform == "pc":
             if game == "warcraft":
+                self.AddEntry("Input_MouseHelper", "on/off", "off")
                 self.AddEntry("Input_SelectGroupTreshold", "0-20", "6")
 
+        if platform == "pandora":
             if game == "xcom1" or game == "xcom2":
                 self.AddEntry("Input_Old_Touchscreen_Mode", "on/off", "off")
 
@@ -600,26 +603,45 @@ class ConfigGUI:
 
             self.CreateRadioSet(vbox, "Screenshot Format", "Screenshot_Format", "Original = original resolution and image format (LBM)\nLBM = image format is LBM\nLBM_pad16 = image format is LBM with lines in file padded to 16 bytes\nTGA = image format is TGA\nBMP = image format is BMP")
 
-        if self.CfgFile.HasEntry("Input_Mode"):
+        if self.CfgFile.HasEntry("Input_Mode") or self.CfgFile.HasEntry("Input_MouseHelper"):
             vbox = self.AddPageFrameVBox(notebook, "Input", "Input")
 
-            description = "Select input mode."
-            if game == "albion":
-                description += "\ntouchscreen_dpad = right-handed touchscreen input\n     (dpad = cursor keys, L+touchscreen = right mouse button)\ntouchscreen_abxy = left-handed touchscreen input\n     (abxy = cursor keys, R+touchscreen = right mouse button)\nkeyboard_dpad = input without touchscreen\n     (dpad = mouse movement / cursor keys,\n       L = switch between mouse movement and cursor keys)"
-            else:
-                description += "\ntouchscreen_dpad = right-handed touchscreen input\n     (dpad = cursor keys, L = shift)\ntouchscreen_abxy = left-handed touchscreen input\n     (abxy = cursor keys, R = shift)\nkeyboard_dpad = input without touchscreen\n     (dpad = mouse movement, L+dpad = cursor keys)"
+            dpad_input_mode = True
+            if self.CfgFile.HasEntry("Input_Mode"):
+                dpad_input_mode = self.CfgFile.GetEntryValue("Input_Mode").lower() == "keyboard_dpad"
 
-            self.CreateRadioSet(vbox, "Input Mode:", "Input_Mode", description, True)
+                description = "Select input mode."
+                if game == "albion":
+                    description += "\ntouchscreen_dpad = right-handed touchscreen input\n     (dpad = cursor keys, L+touchscreen = right mouse button)\ntouchscreen_abxy = left-handed touchscreen input\n     (abxy = cursor keys, R+touchscreen = right mouse button)\nkeyboard_dpad = input without touchscreen\n     (dpad = mouse movement / cursor keys,\n       L = switch between mouse movement and cursor keys)"
+                else:
+                    description += "\ntouchscreen_dpad = right-handed touchscreen input\n     (dpad = cursor keys, L = shift)\ntouchscreen_abxy = left-handed touchscreen input\n     (abxy = cursor keys, R = shift)\nkeyboard_dpad = input without touchscreen\n     (dpad = mouse movement, L+dpad = cursor keys)"
+
+                self.CreateRadioSet(vbox, "Input Mode:", "Input_Mode", description, True)
+
+            mouse_helper = False
+            if dpad_input_mode and self.CfgFile.HasEntry("Input_MouseHelper"):
+                mouse_helper = True
+                if self.CfgFile.HasEntry("Input_Mode"):
+                    vbox = self.AddPageFrameVBox(notebook, "Input2", "Input2")
+
+                description = "Select whether mouse helper is enabled."
+                description += "\nFeatures:"
+                description += "\n* Left click and drag to draw selection boxes around multiple units\n  without having to hold down the CTRL key."
+                description += "\n* Right click to order units to move, attack or harvest/transport goods."
+                description += "\n  (Can also be used to build walls when the town center is selected)"
+                description += "\n* Middle click to order units to repair or stop."
+                description += "\n  (Can also be used to build roads when the town center is selected)"
+                self.CreateRadioSet(vbox, "Mouse Helper:", "Input_MouseHelper", description)
 
             if self.CfgFile.HasEntry("Input_SelectGroupTreshold"):
                 self.CreateSeparator(vbox)
 
-                self.CreateScale(vbox, "Select Group Treshold:", "Input_SelectGroupTreshold", "Select treshold (distance in pixels) in touchscreen input before\nleft mouse click changes to ctrl + left mouse click (select group).", self.CfgFile.GetEntryValue("Input_Mode").lower() == "keyboard_dpad")
+                self.CreateScale(vbox, "Select Group Treshold:", "Input_SelectGroupTreshold", "Select treshold (distance in pixels) in " + ("mouse" if mouse_helper else "touchscreen") + " input before\nleft mouse click changes to ctrl + left mouse click (select group).", dpad_input_mode and not mouse_helper)
 
             if self.CfgFile.HasEntry("Input_Old_Touchscreen_Mode"):
                 self.CreateSeparator(vbox)
 
-                self.CreateRadioSet(vbox, "Old Touchscreen Mode:", "Input_Old_Touchscreen_Mode", "Select whether to use old touchscreen mode.\nOld touchscreen mode emulates left mouse click when pressing the touchscreen\ninstead of when releasing the touchscreen.", self.CfgFile.GetEntryValue("Input_Mode").lower() == "keyboard_dpad")
+                self.CreateRadioSet(vbox, "Old Touchscreen Mode:", "Input_Old_Touchscreen_Mode", "Select whether to use old touchscreen mode.\nOld touchscreen mode emulates left mouse click when pressing the touchscreen\ninstead of when releasing the touchscreen.", dpad_input_mode)
 
         if self.CfgFile.HasEntry("Touchscreen"):
             vbox = self.AddPageFrameVBox(notebook, "Input", "Input")

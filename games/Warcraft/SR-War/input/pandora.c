@@ -75,6 +75,7 @@ typedef int (*Action_function)(int pressed, int key, SDL_Event *event);
 #define SELECT_GROUP_IMPOSSIBLE 4
 
 // variables
+static int Game_MouseHelper, Game_HelperMouseMiddleButton, Game_HelperMouseRightButton;
 static uint32_t Game_SelectGroupOnMove;
 static int Game_SelectGroupX, Game_SelectGroupY, Game_SelectGroupTreshold;
 
@@ -119,15 +120,11 @@ static void EmulateDelay(int delay)
 static void EmulateMouseButton(int type, int button)
 {
     SDL_Event pump_event;
-    int mousex, mousey;
 
-    SDL_GetMouseState(&mousex, &mousey);
-
-    pump_event.type = type;
-    pump_event.button.button = button;
-    pump_event.button.state = (type == SDL_MOUSEBUTTONUP)?SDL_RELEASED:SDL_PRESSED;
-    pump_event.button.x = mousex;
-    pump_event.button.y = mousey;
+    pump_event.type = SDL_USEREVENT;
+    pump_event.user.code = EC_INPUT_MOUSE_BUTTON;
+    pump_event.user.data1 = (void *) button;
+    pump_event.user.data2 = (void *) type;
 
     SDL_PushEvent(&pump_event);
 }
@@ -152,6 +149,44 @@ static void EmulateSelectGroup(void)
 
         EmulateKey(SDL_KEYUP, SDLK_LCTRL);
     }
+}
+
+static void EmulateRepairStop(void)
+{
+    EmulateKey(SDL_KEYDOWN, SDLK_r);
+    EmulateKey(SDL_KEYDOWN, SDLK_s);
+
+    EmulateDelay(30);
+
+    EmulateKey(SDL_KEYUP, SDLK_r);
+    EmulateKey(SDL_KEYUP, SDLK_s);
+
+    EmulateDelay(30);
+
+    EmulateMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT);
+}
+
+static void EmulateHarvestTransportAttackMoveWall(void)
+{
+    EmulateKey(SDL_KEYDOWN, SDLK_h);
+    EmulateKey(SDL_KEYDOWN, SDLK_t);
+    EmulateKey(SDL_KEYDOWN, SDLK_a);
+    EmulateKey(SDL_KEYDOWN, SDLK_m);
+    EmulateKey(SDL_KEYDOWN, SDLK_w);
+
+    EmulateDelay(30);
+
+    EmulateKey(SDL_KEYUP, SDLK_h);
+    EmulateKey(SDL_KEYUP, SDLK_t);
+    EmulateKey(SDL_KEYUP, SDLK_a);
+    EmulateKey(SDL_KEYUP, SDLK_m);
+    EmulateKey(SDL_KEYUP, SDLK_w);
+
+    EmulateDelay(30);
+
+    EmulateMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT);
+
+    EmulateDelay(30);
 }
 
 static void ChangeCursorKeys()
@@ -378,6 +413,11 @@ void Init_Input(void)
 {
     Game_Joystick = 0;
 
+    Game_MouseHelper = 0;
+
+    Game_HelperMouseMiddleButton = 0;
+    Game_HelperMouseRightButton = 0;
+
     Game_SelectGroupOnMove = SELECT_GROUP_INACTIVE;
     Game_SelectGroupTreshold = 6;
 
@@ -445,6 +485,17 @@ int Config_Input(char *str, char *param)
             {
                 // Touchscreen with abxy as direction controls
                 Game_InputMode = GAME_TOUCHSCREEN_ABXY;
+            }
+        }
+        else if ( strcasecmp(str, "MouseHelper") == 0)	// str equals "MouseHelper"
+        {
+            if ( strcasecmp(param, "on") == 0)	// param equals "on"
+            {
+                Game_MouseHelper = 1;
+            }
+            else if ( strcasecmp(param, "off") == 0) // param equals "off"
+            {
+                Game_MouseHelper = 0;
             }
         }
         else if ( strcasecmp(str, "SelectGroupTreshold") == 0)	// str equals "SelectGroupTreshold"
@@ -797,6 +848,8 @@ int Config_Input(char *str, char *param)
 
 void Cleanup_Input(void)
 {
+    Game_HelperMouseMiddleButton = 0;
+    Game_HelperMouseRightButton = 0;
     Game_SelectGroupOnMove = SELECT_GROUP_INACTIVE;
 
 // GAME_JOYSTICK != JOYSTICK_NONE
@@ -1167,42 +1220,91 @@ int Handle_Input_Event(SDL_Event *_event)
                     _event->key.state = (_event->type == SDL_KEYUP)?SDL_RELEASED:SDL_PRESSED;
                     _event->key.keysym.mod = KMOD_NONE;
                     break;
+                case EC_INPUT_MOUSE_BUTTON:
+                    {
+                        int mousex, mousey;
+
+                        SDL_GetMouseState(&mousex, &mousey);
+
+                        _event->type = (int) _event->user.data2;
+                        _event->button.button = (int) _event->user.data1;
+                        _event->button.state = (_event->type == SDL_MOUSEBUTTONUP)?SDL_RELEASED:SDL_PRESSED;
+                        _event->button.x = mousex;
+                        _event->button.y = mousey;
+                    }
+                    break;
             }
             break;
         case SDL_MOUSEBUTTONDOWN:
-            if (_event->button.button == SDL_BUTTON_LEFT)
+            switch (_event->button.button)
             {
-                if (!Game_Paused)
-                {
-                    if (Game_SelectGroupOnMove == SELECT_GROUP_STOPPED)
+                case SDL_BUTTON_LEFT:
+                    if (!Game_Paused)
                     {
-                        Game_SelectGroupOnMove = SELECT_GROUP_IMPOSSIBLE;
+                        if (Game_SelectGroupOnMove == SELECT_GROUP_STOPPED)
+                        {
+                            Game_SelectGroupOnMove = SELECT_GROUP_IMPOSSIBLE;
+                        }
+                        else if (((Game_InputMode == GAME_TOUCHSCREEN_DPAD) && !Game_PButton[BUTTON_L]) ||
+                                 ((Game_InputMode == GAME_TOUCHSCREEN_ABXY) && !Game_PButton[BUTTON_R]) ||
+                                 ((Game_InputMode == GAME_KEYBOARD_DPAD) && Game_MouseHelper)
+                        )
+                        {
+                            Game_SelectGroupOnMove = SELECT_GROUP_POSSIBLE;
+                            Game_SelectGroupX = _event->motion.x;
+                            Game_SelectGroupY = _event->motion.y;
+                        }
                     }
-                    else if (((Game_InputMode == GAME_TOUCHSCREEN_DPAD) && !Game_PButton[BUTTON_L]) ||
-                             ((Game_InputMode == GAME_TOUCHSCREEN_ABXY) && !Game_PButton[BUTTON_R])
-                    )
+                    break;
+                case SDL_BUTTON_MIDDLE:
+                    if (Game_MouseHelper && (Game_InputMode == GAME_KEYBOARD_DPAD) && !Game_Paused)
                     {
-                        Game_SelectGroupOnMove = SELECT_GROUP_POSSIBLE;
-                        Game_SelectGroupX = _event->motion.x;
-                        Game_SelectGroupY = _event->motion.y;
+                        Game_HelperMouseMiddleButton = 1;
+                        EmulateRepairStop();
+                        return 1;
                     }
-                }
+                    break;
+                case SDL_BUTTON_RIGHT:
+                    if (Game_MouseHelper && (Game_InputMode == GAME_KEYBOARD_DPAD) && !Game_Paused)
+                    {
+                        Game_HelperMouseRightButton = 1;
+                        EmulateHarvestTransportAttackMoveWall();
+                        return 1;
+                    }
             }
             break;
         case SDL_MOUSEBUTTONUP:
-            if (_event->button.button == SDL_BUTTON_LEFT)
+            switch (_event->button.button)
             {
-                if (Game_InputMode != GAME_KEYBOARD_DPAD)
-                {
-                    if ((Game_SelectGroupOnMove == SELECT_GROUP_ACTIVE) && !Game_Paused)
+                case SDL_BUTTON_MIDDLE:
+                case SDL_BUTTON_RIGHT:
+                    if ((_event->button.button == SDL_BUTTON_MIDDLE) && Game_HelperMouseMiddleButton)
                     {
-                        Game_SelectGroupOnMove = SELECT_GROUP_STOPPED;
+                        Game_HelperMouseMiddleButton = 0;
+                        _event->button.button = SDL_BUTTON_LEFT;
+                    }
+                    else if ((_event->button.button == SDL_BUTTON_RIGHT) && Game_HelperMouseRightButton)
+                    {
+                        Game_HelperMouseRightButton = 0;
+                        _event->button.button = SDL_BUTTON_LEFT;
                     }
                     else
                     {
-                        Game_SelectGroupOnMove = SELECT_GROUP_INACTIVE;
+                        break;
                     }
-                }
+                case SDL_BUTTON_LEFT:
+                    if (Game_MouseHelper || (Game_InputMode != GAME_KEYBOARD_DPAD))
+                    {
+                        if ((Game_SelectGroupOnMove == SELECT_GROUP_ACTIVE) && !Game_Paused)
+                        {
+                            Game_SelectGroupOnMove = SELECT_GROUP_STOPPED;
+                        }
+                        else
+                        {
+                            Game_SelectGroupOnMove = SELECT_GROUP_INACTIVE;
+                        }
+                    }
+                    break;
             }
             break;
         case SDL_MOUSEMOTION:

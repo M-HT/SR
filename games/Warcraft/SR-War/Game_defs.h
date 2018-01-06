@@ -81,7 +81,8 @@
 #define EC_MOUSE_MOVE			(5)
 #define EC_MOUSE_SET 			(6)
 #define EC_INPUT_KEY 			(7)
-#define EC_DELAY				(8)
+#define EC_INPUT_MOUSE_BUTTON	(8)
+#define EC_DELAY				(9)
 
 
 #pragma pack(4)

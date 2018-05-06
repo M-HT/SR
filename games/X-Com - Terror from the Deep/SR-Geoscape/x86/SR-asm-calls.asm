@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016 Roman Pauer
+;;  Copyright (C) 2016-2018 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -53,6 +53,7 @@
 
     %define Game_ExitMain_Asm _Game_ExitMain_Asm
     %define fclose _fclose
+    %define feof _feof
     %define fflush _fflush
     %define fgetc _fgetc
     %define Game_filelength2 _Game_filelength2
@@ -112,6 +113,7 @@ extern fcloseall
 ; 1 param
 extern Game_ExitMain_Asm
 extern fclose
+extern feof
 extern fflush
 extern fgetc
 extern Game_filelength2
@@ -172,6 +174,7 @@ global SR_fcloseall
 ; 1 param
 global SR_exit
 global SR_fclose
+global SR_feof
 global SR_fflush
 global SR_fgetc
 global SR_filelength2
@@ -469,6 +472,15 @@ SR_fclose:
         Game_Call_Asm_Reg1 fclose,'get_errno_val'
 
 ; end procedure SR_fclose
+
+align 16
+SR_feof:
+
+; eax = FILE *fp
+
+        Game_Call_Asm_Reg1 feof,-1
+
+; end procedure SR_feof
 
 align 16
 SR_fflush:

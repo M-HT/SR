@@ -31,6 +31,8 @@ loc_38975,7,@call SR_RunTimerDelay|ADR tmp1, loc_38975_after_call|stmfd esp!, {t
 loc_38A5D,7,@call SR_RunTimerDelay|ADR tmp1, loc_38A5D_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_38A5D_after_call:|@cmp dword [loc_70C7C], 0|LDR tmpadr, =loc_70C7C|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
 loc_38CEE,7,@call SR_RunTimerDelay|ADR tmp1, loc_38CEE_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_38CEE_after_call:|@cmp dword [loc_70C7C], 0|LDR tmpadr, =loc_70C7C|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
 
+loc_114BE,4,@mov eax, ecx|mov eax, ecx|@call SR_feof|ADR tmp1, loc_114BE_after_call|stmfd esp!, {tmp1}|b SR_feof|LTORG_CALL|loc_114BE_after_call:|@test eax, eax|cmp eax, #0 @ fix reading FILE internals (eof flag) (('test ...' must set flags for 'jnz'))
+
 loc_4D04C,5,@mov edx, [Game_stderr]|LDR tmpadr, =Game_stderr|ldr edx, [tmpadr] @ get stderr
 loc_4D05B,5,@mov edx, [Game_stderr]|LDR tmpadr, =Game_stderr|ldr edx, [tmpadr] @ get stderr
 loc_4D06C,5,@mov edx, [Game_stderr]|LDR tmpadr, =Game_stderr|ldr edx, [tmpadr] @ get stderr

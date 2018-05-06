@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016 Roman Pauer
+#  Copyright (C) 2016-2018 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -26,7 +26,7 @@ import os
 vars = Variables('custom.py')
 vars.Add(BoolVariable('debug', 'Set to build debug version', False))
 vars.Add(EnumVariable('device', 'Set target device', 'none',
-                                 allowed_values=('none', 'pc-windows', 'pc-linux', 'gp2x', 'pandora'),
+                                 allowed_values=('none', 'pc-windows', 'pc-linux', 'arm-linux', 'gp2x', 'pandora'),
                                  ignorecase=2))
 env = Environment(variables = vars)
 
@@ -47,6 +47,12 @@ if device == 'pc-windows' or device == 'pc-linux':
     env = Environment(CCFLAGS      = '-m32 -O2',
                       LINKFLAGS    = '-m32',
                       LIBS         = ['SDL', 'pthread']
+                     )
+elif device == 'arm-linux':
+    env = Environment(CCFLAGS      = '-O2',
+                      LINKFLAGS    = '',
+                      LIBS         = ['SDL', 'pthread'],
+                      ASFLAGS      = ' -I arm/'
                      )
 elif device == 'gp2x':
     compiler_path = '/opt/open2x/gcc-4.1.1-glibc-2.3.6/'

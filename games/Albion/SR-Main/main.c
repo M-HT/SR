@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2018 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -930,7 +930,9 @@ static void Game_Initialize2(void)
     Init_Audio2();
     Init_Input2();
 
+#if !defined(USE_SDL2)
     SDL_EnableUNICODE(1);
+#endif
 
     Game_VideoAspectX = (360 << 16) / Picture_Width;
     Game_VideoAspectY = (240 << 16) / Picture_Height;

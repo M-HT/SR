@@ -34,6 +34,9 @@ loc_10587,7,@call SR_RunTimerDelay|ADR tmp1, loc_10587_after_call|stmfd esp!, {t
 
 loc_105CC,7,@call SR_RunTimerDelay|ADR tmp1, loc_105CC_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_105CC_after_call:|@cmp dword [loc_61010], 0|LDR tmpadr, =loc_61010|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer - wait for ??? in timer interrupt
 
+loc_114BE,4,@mov eax, ecx|mov eax, ecx|@call SR_feof|ADR tmp1, loc_114BE_after_call|stmfd esp!, {tmp1}|b SR_feof|LTORG_CALL|loc_114BE_after_call:|@test eax, eax|cmp eax, #0 @ fix reading FILE internals (eof flag) (('test ...' must set flags for 'jnz'))
+loc_116AC,4,@mov eax, ecx|mov eax, ecx|@call SR_feof|ADR tmp1, loc_116AC_after_call|stmfd esp!, {tmp1}|b SR_feof|LTORG_CALL|loc_116AC_after_call:|@test eax, eax|cmp eax, #0 @ fix reading FILE internals (eof flag) (('test ...' must set flags for 'jnz'))
+
 loc_3ED69,5,@mov eax, [Game_stdout]|LDR tmpadr, =Game_stdout|ldr eax, [tmpadr] @ get stdout
 
 loc_22D1C,8,@call SR_filelength2|ADR tmp1, loc_22D1C_after_call|stmfd esp!, {tmp1}|b SR_filelength2|LTORG_CALL|loc_22D1C_after_call: @ get file length

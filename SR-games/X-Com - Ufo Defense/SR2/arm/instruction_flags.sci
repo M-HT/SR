@@ -81,3 +81,5 @@ loc_4672E,0   ,0x38       ; jle - FL_ZERO | FL_SIGN | FL_OVERFLOW
 loc_46A42,0x30,0          ; jge - FL_SIGN | FL_OVERFLOW
 loc_46A70,0   ,0x30       ; jge - FL_SIGN | FL_OVERFLOW
 
+loc_114C2,0   ,0x08       ; jnz - FL_ZERO
+

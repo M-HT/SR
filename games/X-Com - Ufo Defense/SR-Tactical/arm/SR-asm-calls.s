@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016 Roman Pauer
+@@  Copyright (C) 2016-2018 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -53,6 +53,7 @@
 @ 1 param
 .extern Game_ExitMain_Asm
 .extern fclose
+.extern feof
 .extern fgetc
 .extern Game_filelength2
 .extern Game_free
@@ -106,6 +107,7 @@
 @ 1 param
 .global SR_exit
 .global SR_fclose
+.global SR_feof
 .global SR_fgetc
 .global SR_filelength2
 .global SR__nfree
@@ -339,6 +341,14 @@ SR_fclose:
         Game_Call_Asm_Reg1 fclose,-1000
 
 @ end procedure SR_fclose
+
+SR_feof:
+
+@ eax = FILE *fp
+
+        Game_Call_Asm_Reg1 feof,-1
+
+@ end procedure SR_feof
 
 SR_fgetc:
 

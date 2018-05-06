@@ -31,6 +31,8 @@ loc_38975,7,call SR_RunTimerDelay|cmp dword [loc_70C7C], 0 ; update timer
 loc_38A5D,7,call SR_RunTimerDelay|cmp dword [loc_70C7C], 0 ; update timer
 loc_38CEE,7,call SR_RunTimerDelay|cmp dword [loc_70C7C], 0 ; update timer
 
+loc_114BE,4,mov eax, ecx|call SR_feof|test eax, eax ; fix reading FILE internals (eof flag) (('test ...' must set flags for 'jnz'))
+
 loc_4D04C,5,mov edx, [Game_stderr] ; get stderr
 loc_4D05B,5,mov edx, [Game_stderr] ; get stderr
 loc_4D06C,5,mov edx, [Game_stderr] ; get stderr

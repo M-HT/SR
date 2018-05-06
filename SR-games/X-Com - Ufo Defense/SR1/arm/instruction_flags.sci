@@ -169,3 +169,7 @@ loc_50B30,0x20001,0          ; adc - FL_CARRY | FL_CARRY_SUB_INVERTED
 loc_50B40,0x20001,0          ; adc - FL_CARRY | FL_CARRY_SUB_INVERTED
 loc_50B42,0   ,0x20001       ; adc - FL_CARRY | FL_CARRY_SUB_INVERTED
 
+loc_114C2,0   ,0x08       ; jnz - FL_ZERO
+
+loc_116B0,0   ,0x08       ; jnz - FL_ZERO
+

@@ -39,4 +39,4 @@ Some notes:
 
 * The project supports creating 32-bit, not 64-bit, Windows or Linux versions of the games.
 * The generated arm version is little-endian, not big-endian.
-* The generated arm version uses softfp calling convention.
+* The generated arm version supports softfp and hardfp calling conventions.

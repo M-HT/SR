@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016 Roman Pauer
+#  Copyright (C) 2016-2018 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -28,7 +28,7 @@ vars.Add(EnumVariable('debug', 'Set debug level (0 = release version)', '0',
                                  allowed_values=('0', '1', '2'),
                                  ignorecase=2))
 vars.Add(EnumVariable('device', 'Set target device', 'none',
-                                 allowed_values=('none', 'pc-windows', 'pc-linux', 'gp2x', 'pandora'),
+                                 allowed_values=('none', 'pc-windows', 'pc-linux', 'arm-linux', 'gp2x', 'pandora'),
                                  ignorecase=2))
 vars.Add(EnumVariable('version', 'Set version to compile (floppy/cd)', 'none',
                                  allowed_values=('none', 'floppy', 'cd'),
@@ -59,6 +59,14 @@ if device == 'pc-linux':
                       LINKFLAGS    = '-m32',
                       LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'dl', 'GL']
                      )
+elif device == 'arm-linux':
+    env = Environment(CCFLAGS      = '-O2 -DALLOW_OPENGL',
+                      LINKFLAGS    = '',
+                      LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'dl', 'GL'],
+                      ASFLAGS      = ' -I arm/'
+                     )
+    # see arm/armconf.inc for explanation of these options (and others)
+    env.Append(ASFLAGS = ' --defsym USE_R9=1 --defsym ALLOW_UNALIGNED_MEMORY_ACCESS=1')
 elif device == 'pc-windows':
     env = Environment(CCFLAGS      = '-m32 -O2',
                       LINKFLAGS    = '-m32',

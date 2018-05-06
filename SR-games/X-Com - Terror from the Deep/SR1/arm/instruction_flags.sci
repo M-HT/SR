@@ -164,3 +164,7 @@ loc_5968C,0x20001,0          ; adc - FL_CARRY | FL_CARRY_SUB_INVERTED
 loc_5969C,0x20001,0          ; adc - FL_CARRY | FL_CARRY_SUB_INVERTED
 loc_5969E,0   ,0x20001       ; adc - FL_CARRY | FL_CARRY_SUB_INVERTED
 
+loc_113D0,0   ,0x08       ; jnz - FL_ZERO
+
+loc_115C2,0   ,0x08       ; jnz - FL_ZERO
+

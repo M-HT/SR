@@ -12,6 +12,22 @@ loc_ABCEC,SR_sprintf
 loc_ACA99,SR_WaitVerticalRetraceTicks
 loc_AA8CF,SR_open
 
+loc_8156B,SR_AIL_mem_use_malloc
+loc_8157B,SR_AIL_mem_use_free
+loc_8C0C5,SR_AIL_startup
+loc_8CB2E,SR_AIL_register_timer
+loc_8CD82,SR_AIL_set_timer_frequency
+loc_8CF4C,SR_AIL_start_timer
+loc_8D01B,SR_AIL_stop_timer
+loc_8D0EA,SR_AIL_release_timer_handle
+loc_8C241,SR_AIL_shutdown
+loc_8FDBF,SR_AIL_set_GTL_filename_prefix
+loc_8EF3A,SR_AIL_install_MDI_INI
+loc_8C2D4,SR_AIL_set_preference
+loc_8D3FE,SR_AIL_install_DIG_INI
+loc_8D5DC,SR_AIL_uninstall_DIG_driver
+loc_8F10C,SR_AIL_uninstall_MDI_driver
+
 loc_8D649,SR_AIL_allocate_sample_handle
 loc_8DC58,SR_AIL_end_sample
 loc_8D89A,SR_AIL_init_sample
@@ -33,6 +49,7 @@ loc_8F50B,SR_AIL_end_sequence
 loc_8F2CB,SR_AIL_init_sequence
 loc_8F25E,SR_AIL_release_sequence_handle
 loc_8F49E,SR_AIL_resume_sequence
+loc_8F6F2,SR_AIL_sequence_status
 loc_8F67C,SR_AIL_set_sequence_loop_count
 loc_8F5FA,SR_AIL_set_sequence_volume
 loc_8F3C4,SR_AIL_start_sequence

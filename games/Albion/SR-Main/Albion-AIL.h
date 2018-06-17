@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2018 Roman Pauer
+ *  Copyright (C) 2018 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,26 +22,33 @@
  *
  */
 
-#if !defined(_ALBION_MUSIC_MIDIPLUGIN_H_INCLUDED_)
-#define _ALBION_MUSIC_MIDIPLUGIN_H_INCLUDED_
+#if !defined(_ALBION_AIL_H_INCLUDED_)
+#define _ALBION_AIL_H_INCLUDED_
 
-#include "Albion-music.h"
+#define DIG_DEFAULT_VOLUME 5
+#define MDI_DEFAULT_VOLUME 0x0d
 
-int MidiPlugin_Startup(void);
-void MidiPlugin_Shutdown(void);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void MidiPlugin_AIL_allocate_sequence_handle2(void *mdi, AIL_sequence *S);
-void MidiPlugin_AIL_release_sequence_handle(AIL_sequence *S);
-int32_t MidiPlugin_AIL_init_sequence(AIL_sequence *S, void *start, int32_t sequence_num);
-void MidiPlugin_AIL_start_sequence(AIL_sequence *S);
-void MidiPlugin_AIL_stop_sequence(AIL_sequence *S);
-void MidiPlugin_AIL_resume_sequence(AIL_sequence *S);
-void MidiPlugin_AIL_end_sequence(AIL_sequence *S);
-void MidiPlugin_AIL_set_sequence_volume(AIL_sequence *S, int32_t volume, int32_t ms);
-void MidiPlugin_AIL_set_sequence_loop_count(AIL_sequence *S, int32_t loop_count);
-uint32_t MidiPlugin_AIL_sequence_status(AIL_sequence *S);
-void *MidiPlugin_AIL_create_wave_synthesizer2(void *dig, void *mdi, void *wave_lib, int32_t polyphony);
-void MidiPlugin_AIL_destroy_wave_synthesizer2(void *W);
+extern void *Game_AIL_mem_use_malloc(void * (*fn)(uint32_t));
+extern void *Game_AIL_mem_use_free(void (*fn)(void *));
+extern void Game_AIL_startup(void);
+extern int32_t Game_AIL_register_timer(void (*callback_fn)(uint32_t user));
+extern void Game_AIL_set_timer_frequency(int32_t timer, uint32_t hertz);
+extern void Game_AIL_start_timer(int32_t timer);
+extern void Game_AIL_stop_timer(int32_t timer);
+extern void Game_AIL_release_timer_handle(int32_t timer);
+extern void Game_AIL_shutdown(void);
+extern void Game_AIL_set_GTL_filename_prefix(char *prefix);
+extern int32_t Game_AIL_install_MDI_INI(void *mdi);
+extern int32_t  Game_AIL_set_preference(uint32_t number, int32_t value);
+extern void Game_AIL_uninstall_DIG_driver(void *dig);
+extern void Game_AIL_uninstall_MDI_driver(void *mdi);
 
-#endif /* _ALBION_MUSIC_MIDIPLUGIN_H_INCLUDED_ */
+#ifdef __cplusplus
+}
+#endif
 
+#endif /* _ALBION_AIL_H_INCLUDED_ */

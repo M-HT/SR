@@ -7,6 +7,8 @@ loc_1835F0,timer_value
 loc_183604,mouse_pos
 loc_196D18,errno_val
 
+loc_199480,AIL_error
+
 loc_C6417,orig_C6417
 loc_C9CDD,orig_C9CDD
 loc_CAA67,orig_CAA67

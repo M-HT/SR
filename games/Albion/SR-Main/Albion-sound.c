@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2018 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -27,7 +27,10 @@
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Albion-sound.h"
+#include "Albion-AIL.h"
 
+
+extern int32_t AIL_preference[];
 
 AIL_sample *Game_AIL_allocate_sample_handle(void *dig)
 {
@@ -105,7 +108,7 @@ void Game_AIL_init_sample(AIL_sample *S)
     S->start = NULL;
     S->len = 0;
     S->playback_rate = 22050;
-    S->volume = 127;
+    S->volume = AIL_preference[DIG_DEFAULT_VOLUME];
     S->pan = 64;
     S->loop_count = 0;
 

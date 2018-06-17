@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2018 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -38,6 +38,7 @@
 #include "Albion-music.h"
 #include "Albion-music-midiplugin.h"
 #include "Albion-music-midiplugin2.h"
+#include "Albion-AIL.h"
 #include "xmi2mid.h"
 
 #define STATUS_STOPPED 0
@@ -56,6 +57,9 @@
 
 static AIL_sequence* Game_MainSequence = NULL;      /* main sequence - priority sequence */
 static AIL_sequence* Game_ActiveSequence = NULL;    /* active sequence - sequence being played */
+
+extern int32_t AIL_preference[];
+
 
 static void set_volume(int32_t Svolume)
 {
@@ -211,7 +215,7 @@ int32_t Game_AIL_init_sequence(AIL_sequence *S, void *start, int32_t sequence_nu
 
     release_all(S);
 
-    S->volume = 0;
+    S->volume = AIL_preference[MDI_DEFAULT_VOLUME];
     S->loop_count = 0;
     S->start = start;
     S->sequence_num = sequence_num;
@@ -476,6 +480,54 @@ void Game_AIL_set_sequence_loop_count(AIL_sequence *S, int32_t loop_count)
     }
 }
 
+#define SEQ_FREE          0x0001    // Sequence is available for allocation
+
+#define SEQ_DONE          0x0002    // Sequence has finished playing, or has
+                                    // never been started
+
+#define SEQ_PLAYING       0x0004    // Sequence is playing
+
+#define SEQ_STOPPED       0x0008    // Sequence has been stopped
+
+#define SEQ_PLAYINGBUTRELEASED 0x0010 // Sequence is playing, but MIDI handle
+                                      // has been temporarily released
+
+uint32_t Game_AIL_sequence_status(AIL_sequence *S)
+{
+    if (S == NULL) return SEQ_FREE;
+
+    if (Game_MidiSubsystem)
+    {
+        if (Game_MidiSubsystem <= 10)
+        {
+            return MidiPlugin_AIL_sequence_status(S);
+        }
+        else
+        {
+            return MidiPlugin2_AIL_sequence_status(S);
+        }
+    }
+
+    switch (S->status)
+    {
+        case STATUS_STOPPED:
+            return SEQ_DONE;
+        case STATUS_PLAYING:
+            if ( Mix_PlayingMusic() )
+            {
+                return SEQ_PLAYING;
+            }
+            else
+            {
+                return SEQ_DONE;
+            }
+        case STATUS_PAUSED:
+            return SEQ_STOPPED;
+        default:
+            return SEQ_FREE;
+    }
+}
+
 void *Game_AIL_create_wave_synthesizer(void *dig, void *mdi, void *wave_lib, int32_t polyphony)
 {
     void *ret;
@@ -547,6 +599,7 @@ AIL_end_sequence
 AIL_init_sequence
 AIL_release_sequence_handle
 AIL_resume_sequence
+AIL_sequence_status
 AIL_set_sequence_loop_count
 AIL_set_sequence_volume
 AIL_start_sequence

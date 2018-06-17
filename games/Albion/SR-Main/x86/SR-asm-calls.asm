@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016 Roman Pauer
+;;  Copyright (C) 2016-2018 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -35,6 +35,22 @@
     %define Game_open _Game_open
     %define Game_openFlags _Game_openFlags
 
+    %define Game_AIL_mem_use_malloc _Game_AIL_mem_use_malloc
+    %define Game_AIL_mem_use_free _Game_AIL_mem_use_free
+    %define Game_AIL_startup _Game_AIL_startup
+    %define Game_AIL_register_timer _Game_AIL_register_timer
+    %define Game_AIL_set_timer_frequency _Game_AIL_set_timer_frequency
+    %define Game_AIL_start_timer _Game_AIL_start_timer
+    %define Game_AIL_stop_timer _Game_AIL_stop_timer
+    %define Game_AIL_release_timer_handle _Game_AIL_release_timer_handle
+    %define Game_AIL_shutdown _Game_AIL_shutdown
+    %define Game_AIL_set_GTL_filename_prefix _Game_AIL_set_GTL_filename_prefix
+    %define Game_AIL_install_MDI_INI _Game_AIL_install_MDI_INI
+    %define Game_AIL_set_preference _Game_AIL_set_preference
+    %define Game_AIL_install_DIG_INI _Game_AIL_install_DIG_INI
+    %define Game_AIL_uninstall_DIG_driver _Game_AIL_uninstall_DIG_driver
+    %define Game_AIL_uninstall_MDI_driver _Game_AIL_uninstall_MDI_driver
+
     %define Game_AIL_allocate_sample_handle _Game_AIL_allocate_sample_handle
     %define Game_AIL_end_sample _Game_AIL_end_sample
     %define Game_AIL_init_sample _Game_AIL_init_sample
@@ -56,6 +72,7 @@
     %define Game_AIL_init_sequence _Game_AIL_init_sequence
     %define Game_AIL_release_sequence_handle _Game_AIL_release_sequence_handle
     %define Game_AIL_resume_sequence _Game_AIL_resume_sequence
+    %define Game_AIL_sequence_status _Game_AIL_sequence_status
     %define Game_AIL_set_sequence_loop_count _Game_AIL_set_sequence_loop_count
     %define Game_AIL_set_sequence_volume _Game_AIL_set_sequence_volume
     %define Game_AIL_start_sequence _Game_AIL_start_sequence
@@ -137,6 +154,22 @@ extern Game_WaitVerticalRetraceTicks
 extern Game_open
 extern Game_openFlags
 
+extern Game_AIL_mem_use_malloc
+extern Game_AIL_mem_use_free
+extern Game_AIL_startup
+extern Game_AIL_register_timer
+extern Game_AIL_set_timer_frequency
+extern Game_AIL_start_timer
+extern Game_AIL_stop_timer
+extern Game_AIL_release_timer_handle
+extern Game_AIL_shutdown
+extern Game_AIL_set_GTL_filename_prefix
+extern Game_AIL_install_MDI_INI
+extern Game_AIL_set_preference
+extern Game_AIL_install_DIG_INI
+extern Game_AIL_uninstall_DIG_driver
+extern Game_AIL_uninstall_MDI_driver
+
 extern Game_AIL_allocate_sample_handle
 extern Game_AIL_end_sample
 extern Game_AIL_init_sample
@@ -158,6 +191,7 @@ extern Game_AIL_end_sequence
 extern Game_AIL_init_sequence
 extern Game_AIL_release_sequence_handle
 extern Game_AIL_resume_sequence
+extern Game_AIL_sequence_status
 extern Game_AIL_set_sequence_loop_count
 extern Game_AIL_set_sequence_volume
 extern Game_AIL_start_sequence
@@ -241,6 +275,22 @@ global SR_sprintf
 global SR_WaitVerticalRetraceTicks
 global SR_open
 
+global SR_AIL_mem_use_malloc
+global SR_AIL_mem_use_free
+global SR_AIL_startup
+global SR_AIL_register_timer
+global SR_AIL_set_timer_frequency
+global SR_AIL_start_timer
+global SR_AIL_stop_timer
+global SR_AIL_release_timer_handle
+global SR_AIL_shutdown
+global SR_AIL_set_GTL_filename_prefix
+global SR_AIL_install_MDI_INI
+global SR_AIL_set_preference
+global SR_AIL_install_DIG_INI
+global SR_AIL_uninstall_DIG_driver
+global SR_AIL_uninstall_MDI_driver
+
 global SR_AIL_allocate_sample_handle
 global SR_AIL_end_sample
 global SR_AIL_init_sample
@@ -262,6 +312,7 @@ global SR_AIL_end_sequence
 global SR_AIL_init_sequence
 global SR_AIL_release_sequence_handle
 global SR_AIL_resume_sequence
+global SR_AIL_sequence_status
 global SR_AIL_set_sequence_loop_count
 global SR_AIL_set_sequence_volume
 global SR_AIL_start_sequence
@@ -472,6 +523,156 @@ SR_open:
         retn
 
 ; end procedure SR_open
+
+align 16
+SR_AIL_mem_use_malloc:
+
+; [esp +   4] = void * (*fn)(uint32_t)
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack Game_AIL_mem_use_malloc,-1
+
+; end procedure SR_AIL_mem_use_malloc
+
+align 16
+SR_AIL_mem_use_free:
+
+; [esp +   4] = void (*fn)(void *)
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack Game_AIL_mem_use_free,-1
+
+; end procedure SR_AIL_mem_use_free
+
+align 16
+SR_AIL_startup:
+
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack0 Game_AIL_startup,-1
+
+; end procedure SR_AIL_startup
+
+align 16
+SR_AIL_register_timer:
+
+; [esp +   4] = void (*callback_fn)(uint32_t user)
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack Game_AIL_register_timer,-1
+
+; end procedure SR_AIL_register_timer
+
+align 16
+SR_AIL_set_timer_frequency:
+
+; [esp + 2*4] = uint32_t hertz
+; [esp +   4] = int32_t timer
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack Game_AIL_set_timer_frequency,-1
+
+; end procedure SR_AIL_set_timer_frequency
+
+align 16
+SR_AIL_start_timer:
+
+; [esp +   4] = int32_t timer
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack Game_AIL_start_timer,-1
+
+; end procedure SR_AIL_start_timer
+
+align 16
+SR_AIL_stop_timer:
+
+; [esp +   4] = int32_t timer
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack Game_AIL_stop_timer,-1
+
+; end procedure SR_AIL_stop_timer
+
+align 16
+SR_AIL_release_timer_handle:
+
+; [esp +   4] = int32_t timer
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack Game_AIL_release_timer_handle,-1
+
+; end procedure SR_AIL_release_timer_handle
+
+align 16
+SR_AIL_shutdown:
+
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack0 Game_AIL_shutdown,-1
+
+; end procedure SR_AIL_shutdown
+
+align 16
+SR_AIL_set_GTL_filename_prefix:
+
+; [esp +   4] = char *prefix
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack Game_AIL_set_GTL_filename_prefix,-1
+
+; end procedure SR_AIL_set_GTL_filename_prefix
+
+align 16
+SR_AIL_install_MDI_INI:
+
+; [esp +   4] = void *mdi
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack Game_AIL_install_MDI_INI,-1
+
+; end procedure SR_AIL_install_MDI_INI
+
+align 16
+SR_AIL_set_preference:
+
+; [esp + 2*4] = int32_t value
+; [esp +   4] = uint32_t number
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack Game_AIL_set_preference,-1
+
+; end procedure SR_AIL_set_preference
+
+align 16
+SR_AIL_install_DIG_INI:
+
+; [esp +   4] = void *dig
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack Game_AIL_install_DIG_INI,-1
+
+; end procedure SR_AIL_install_DIG_INI
+
+align 16
+SR_AIL_uninstall_DIG_driver:
+
+; [esp +   4] = void *dig
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack Game_AIL_uninstall_DIG_driver,-1
+
+; end procedure SR_AIL_uninstall_DIG_driver
+
+align 16
+SR_AIL_uninstall_MDI_driver:
+
+; [esp +   4] = void *mdi
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack Game_AIL_uninstall_MDI_driver,-1
+
+; end procedure SR_AIL_uninstall_MDI_driver
 
 align 16
 SR_AIL_allocate_sample_handle:
@@ -689,6 +890,16 @@ SR_AIL_resume_sequence:
         Game_Call_Asm_Stack Game_AIL_resume_sequence,-1
 
 ; end procedure SR_AIL_resume_sequence
+
+align 16
+SR_AIL_sequence_status:
+
+; [esp +   4] = AIL_sequence *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack Game_AIL_sequence_status,-1
+
+; end procedure SR_AIL_sequence_status
 
 align 16
 SR_AIL_set_sequence_loop_count:

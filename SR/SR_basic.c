@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2018 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -136,6 +136,7 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
     Word_t code16_area_index;
     extrn_data *extrn;
     bound_data *bound;
+    replace_data *replace;
     int validenttry;
 
 #define DATA ((Entry_FILE *) data)
@@ -291,6 +292,19 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
                 if (section_nocode_list_CanFindEntryEqual(item->tsec, item->tofs))
                 {
                     validenttry = 0;
+                }
+            }
+
+            if (validenttry)
+            {
+                replace = section_replace_list_FindEntryEqualOrLower(item->tsec, item->tofs);
+                if ((replace != NULL) && (replace->ofs + replace->length > item->tofs)) // target is in replaced area
+                {
+                    replace = section_replace_list_FindEntryEqualOrLower(DATA->Entry, item->sofs);
+                    if ((replace != NULL) && (replace->ofs + replace->length > item->sofs)) // source is in replaced area
+                    {
+                        validenttry = 0;
+                    }
                 }
             }
 

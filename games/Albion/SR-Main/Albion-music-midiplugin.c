@@ -1032,6 +1032,65 @@ void MidiPlugin_AIL_set_sequence_loop_count(AIL_sequence *S, int32_t loop_count)
     SDL_SemPost(mp_sequence->sem);
 }
 
+#define SEQ_FREE          0x0001    // Sequence is available for allocation
+
+#define SEQ_DONE          0x0002    // Sequence has finished playing, or has
+                                    // never been started
+
+#define SEQ_PLAYING       0x0004    // Sequence is playing
+
+#define SEQ_STOPPED       0x0008    // Sequence has been stopped
+
+#define SEQ_PLAYINGBUTRELEASED 0x0010 // Sequence is playing, but MIDI handle
+                                      // has been temporarily released
+
+uint32_t MidiPlugin_AIL_sequence_status(AIL_sequence *S)
+{
+    MP_midi *mp_sequence;
+    uint32_t ret;
+
+    ret = 0;
+
+    mp_sequence = (MP_midi *) S->mp_sequence;
+    if (mp_sequence == NULL)
+    {
+        switch (S->status)
+        {
+            case MP_STOPPED:
+                ret = SEQ_DONE;
+                break;
+            case MP_PLAYING:
+            case MP_STARTED:
+                ret = SEQ_PLAYING;
+                break;
+            case MP_PAUSED:
+                ret = SEQ_STOPPED;
+                break;
+        }
+        return ret;
+    }
+
+    LockSem(mp_sequence->sem);
+
+    switch (mp_sequence->status)
+    {
+        case MP_STOPPED:
+            ret = SEQ_DONE;
+            break;
+        case MP_PLAYING:
+        case MP_STARTED:
+            ret = SEQ_PLAYING;
+            break;
+        case MP_PAUSED:
+            ret = SEQ_STOPPED;
+            break;
+    }
+
+    SDL_SemPost(mp_sequence->sem);
+
+    return ret;
+}
+
 void *MidiPlugin_AIL_create_wave_synthesizer2(void *dig, void *mdi, void *wave_lib, int32_t polyphony)
 {
     int index;

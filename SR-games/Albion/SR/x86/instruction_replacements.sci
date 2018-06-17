@@ -59,14 +59,6 @@ loc_BB033,7183,align 4|loc_BB034:|%rep 399|self_mod_code_4|%endrep ; fix self-mo
 loc_BCC42,18,self_mod_code_4 ; fix self-modifying (and length dependent) code
 loc_BCC7B,13,mov eax, ecx|inc eax|imul eax, byte (- ((loc_BCC54 - loc_BB034) / 400))|add eax, loc_BCC54 ; fix self-modifying (and length dependent) code
 
-loc_8EF99,15,xor esi, esi|cmp dword [Game_Music], 0|jne loc_8EF99_1|inc esi|loc_8EF99_1: ; enable/disable music driver
-
-loc_8F16A,10,push eax ; fix uninstalling music driver
-
-loc_8D45D,15,xor esi, esi|cmp dword [Game_Sound], 0|jne loc_8D45D_1|inc esi|loc_8D45D_1: ; enable/disable sound driver
-
-loc_8D63A,10,push eax ; fix uninstalling sound driver
-
 loc_6562E,3,or eax, eax|je loc_65631|mov al, [eax+0x1b]|loc_65631: ; fix reading from NULL pointer
 loc_657BE,3,or eax, eax|je loc_657C1|mov al, [eax+0x1b]|loc_657C1: ; fix reading from NULL pointer
 
@@ -124,3 +116,59 @@ loc_CE7BD,1,stc ; on ARM swap carry bit after instruction
 loc_CE7BE,2,adc edi, edi ; on ARM swap carry bit before instruction
 
 loc_25156,1,pop ebx|call SR_Sync ; call sync after save
+
+loc_8151C,2454, ; AIL code 1
+loc_81EB2,183, ; CLIB code 1
+
+loc_8326A,63, ; CLIB code 2
+
+loc_836CA,221, ; CLIB code 3.1
+
+loc_837FE,34, ; CLIB code 3.3
+
+loc_8516B,1532, ; CLIB code 4
+
+loc_8BF0B,21323, ; AIL code 2
+loc_91256,842, ; CLIB code 5
+
+loc_92BCD,74, ; CLIB code 6.1
+
+loc_9435A,86, ; CLIB code 7.2
+
+loc_A9B04,2402, ; AIL code 3
+loc_AA466,2448, ; CLIB code
+
+loc_AADF7,4309, ; CLIB code
+
+loc_AC270,176, ; CLIB code
+loc_AC320,2551, ; AIL code 4
+loc_ACD17,201, ; CLIB code
+loc_ACDE0,25586, ; AIL code 5
+loc_B31D2,698, ; CLIB code
+loc_B348C,4,db 48|db 48|db 48|db 0
+
+loc_C1306,763, ; CLIB code
+
+loc_C21DE,2856, ; CLIB code
+
+loc_C2D82,106, ; CLIB code
+loc_C2DEC,8501, ; AIL code 6
+loc_C4F21,79,align 16 ; CLIB code
+
+loc_131DD4,4, ; AIL data
+loc_132ACC,3992, ; AIL data
+loc_133B00,240, ; AIL data
+loc_133BF8,1156, ; AIL data
+loc_13FC3C,12, ; AIL data
+loc_13FF00,4, ; AIL data
+loc_14032C,8, ; AIL data
+loc_1405DC,3284, ; AIL data
+loc_1890FC,68, ; AIL data
+loc_199440,64, ; AIL data
+loc_199580,128, ; AIL data
+loc_199628,600, ; AIL data
+
+loc_13FCE8,12, ; CLIB data
+loc_140420,4, ; CLIB data
+loc_143E54,8, ; CLIB data
+loc_146FA0,56, ; CLIB data

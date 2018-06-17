@@ -63,14 +63,6 @@ loc_BB033,7183,@align 4|.balign 4, 0|loc_BB034:|@%rep 399|.rept 399|self_mod_cod
 loc_BCC42,18,self_mod_code_4 @ fix self-modifying (and length dependent) code
 loc_BCC7B,13,@mov eax, ecx|mov eax, ecx|@inc eax|add eax, eax, #1|@imul eax, byte (- ((loc_BCC54 - loc_BB034) / 400))|mov tmp1, #(- ((loc_BCC54 - loc_BB034) / 400))|smull eax, tmp2, tmp1, eax|@add eax, loc_BCC54|LDR tmp1, =loc_BCC54|add eax, eax, tmp1 @ fix self-modifying (and length dependent) code
 
-loc_8EF99,15,@xor esi, esi|mov esi, #0|@cmp dword [Game_Music], 0|LDR tmp1, =Game_Music|ldr tmp2, [tmp1]|cmp tmp2, #0|@jne loc_8EF99_1|@inc esi|@loc_8EF99_1:|movEQ esi, #1 @ enable/disable music driver
-
-loc_8F16A,10,@push eax|stmfd esp!, {eax} @ fix uninstalling music driver
-
-loc_8D45D,15,@xor esi, esi|mov esi, #0|@cmp dword [Game_Sound], 0|LDR tmp1, =Game_Sound|ldr tmp2, [tmp1]|cmp tmp2, #0|@jne loc_8D45D_1|@inc esi|@loc_8D45D_1:|movEQ esi, #1 @ enable/disable sound driver
-
-loc_8D63A,10,@push eax|stmfd esp!, {eax} @ fix uninstalling sound driver
-
 loc_6562E,3,@or eax, eax|@je loc_65631|@mov al, [eax+0x1b]|@loc_65631:|cmp eax, #0|ldrneb eax, [eax, #27] @ fix reading from NULL pointer
 loc_657BE,3,@or eax, eax|@je loc_657C1|@mov al, [eax+0x1b]|@loc_657C1:|cmp eax, #0|ldrneb eax, [eax, #27] @ fix reading from NULL pointer
 
@@ -127,3 +119,59 @@ loc_CE7BD,1,@stc|mrs tmp1, cpsr|bic tmp1, tmp1, #0x20000000|msr cpsr_f, tmp1 @ o
 loc_CE7BE,2,@adc edi, edi|mrs tmp1, cpsr|eor tmp1, tmp1, #0x20000000|msr cpsr_f, tmp1|adc edi, edi, edi @ on ARM swap carry bit before instruction
 
 loc_25156,1,@pop ebx|ldmfd esp!, {ebx}|@call SR_Sync|ADR tmp1, loc_25156_after_call|stmfd esp!, {tmp1}|b SR_Sync|LTORG_CALL|loc_25156_after_call: @ call sync after save
+
+loc_8151C,2454, @ AIL code 1
+loc_81EB2,183, @ CLIB code 1
+
+loc_8326A,63, @ CLIB code 2
+
+loc_836CA,221, @ CLIB code 3.1
+
+loc_837FE,34, @ CLIB code 3.3
+
+loc_8516B,1532, @ CLIB code 4
+
+loc_8BF0B,21323, @ AIL code 2
+loc_91256,842, @ CLIB code 5
+
+loc_92BCD,74, @ CLIB code 6.1
+
+loc_9435A,86, @ CLIB code 7.2
+
+loc_A9B04,2402, @ AIL code 3
+loc_AA466,2448, @ CLIB code
+
+loc_AADF7,4309, @ CLIB code
+
+loc_AC270,176, @ CLIB code
+loc_AC320,2551, @ AIL code 4
+loc_ACD17,201, @ CLIB code
+loc_ACDE0,25586, @ AIL code 5
+loc_B31D2,698, @ CLIB code
+loc_B348C,4,.byte 48|.byte 48|.byte 48|.byte 0|.balign 4
+
+loc_C1306,763, @ CLIB code
+
+loc_C21DE,2856, @ CLIB code
+
+loc_C2D82,106, @ CLIB code
+loc_C2DEC,8501, @ AIL code 6
+loc_C4F21,79,.balign 4 @ CLIB code
+
+loc_131DD4,4, @ AIL data
+loc_132ACC,3992, @ AIL data
+loc_133B00,240, @ AIL data
+loc_133BF8,1156, @ AIL data
+loc_13FC3C,12, @ AIL data
+loc_13FF00,4, @ AIL data
+loc_14032C,8, @ AIL data
+loc_1405DC,3284, @ AIL data
+loc_1890FC,68, @ AIL data
+loc_199440,64, @ AIL data
+loc_199580,128, @ AIL data
+loc_199628,600, @ AIL data
+
+loc_13FCE8,12, @ CLIB data
+loc_140420,4, @ CLIB data
+loc_143E54,8, @ CLIB data
+loc_146FA0,56, @ CLIB data

@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016 Roman Pauer
+;;  Copyright (C) 2016-2018 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -100,6 +100,22 @@ extern SR_sprintf
 extern SR_WaitVerticalRetraceTicks
 extern SR_open
 
+extern SR_AIL_mem_use_malloc
+extern SR_AIL_mem_use_free
+extern SR_AIL_startup
+extern SR_AIL_register_timer
+extern SR_AIL_set_timer_frequency
+extern SR_AIL_start_timer
+extern SR_AIL_stop_timer
+extern SR_AIL_release_timer_handle
+extern SR_AIL_shutdown
+extern SR_AIL_set_GTL_filename_prefix
+extern SR_AIL_install_MDI_INI
+extern SR_AIL_set_preference
+extern SR_AIL_install_DIG_INI
+extern SR_AIL_uninstall_DIG_driver
+extern SR_AIL_uninstall_MDI_driver
+
 extern SR_AIL_allocate_sample_handle
 extern SR_AIL_end_sample
 extern SR_AIL_init_sample
@@ -121,6 +137,7 @@ extern SR_AIL_end_sequence
 extern SR_AIL_init_sequence
 extern SR_AIL_release_sequence_handle
 extern SR_AIL_resume_sequence
+extern SR_AIL_sequence_status
 extern SR_AIL_set_sequence_loop_count
 extern SR_AIL_set_sequence_volume
 extern SR_AIL_start_sequence

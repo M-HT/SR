@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2018 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -38,6 +38,7 @@ extern void Game_AIL_resume_sequence(AIL_sequence *S);
 extern void Game_AIL_end_sequence(AIL_sequence *S);
 extern void Game_AIL_set_sequence_volume(AIL_sequence *S, int32_t volume, int32_t ms);
 extern void Game_AIL_set_sequence_loop_count(AIL_sequence *S, int32_t loop_count);
+extern uint32_t Game_AIL_sequence_status(AIL_sequence *S);
 extern void *Game_AIL_create_wave_synthesizer(void *dig, void *mdi, void *wave_lib, int32_t polyphony);
 extern void Game_AIL_destroy_wave_synthesizer(void *W);
 

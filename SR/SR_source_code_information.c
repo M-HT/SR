@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2018 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -620,8 +620,6 @@ int SR_LoadSCI(void)
         if (ret) return ret;
     }
 
-#if (OUTPUT_TYPE == OUT_ARM_LINUX)
-
     f = fopen(instruction_replacements_FPU, "rt");
 
     if (f != NULL)
@@ -634,6 +632,8 @@ int SR_LoadSCI(void)
 
         if (ret) return ret;
     }
+
+#if (OUTPUT_TYPE == OUT_ARM_LINUX)
 
     f = fopen(unaligned_ebp_areas, "rt");
 

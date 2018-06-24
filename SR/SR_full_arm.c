@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2018 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -100,6 +100,8 @@ int SR_disassemble_region_arm(unsigned int Entry, region_data *region)
 
             return 2;
         }
+
+        if (output->type == OT_NONE) break;
 
         if (output->str[0] == ';' && strchr(output->str, '\n') == NULL)
         {

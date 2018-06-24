@@ -133,12 +133,28 @@ loc_91256,842, ; CLIB code 5
 
 loc_92BCD,74, ; CLIB code 6.1
 
-loc_9435A,86, ; CLIB code 7.2
+loc_9434A,102, ; CLIB code 7.2
+
+loc_94E5F,315, ; CLIB code 8.1
+
+loc_94FDD,496, ; CLIB code 8.3
+
+loc_952AA,176, ; CLIB code 8.5
+
+loc_95360,6, ; CLIB code 8.7
+
+loc_9665A,41, ; CLIB code 9
+
+loc_9764F,131, ; CLIB code 10.1
+
+loc_976E0,154, ; CLIB code 10.3
 
 loc_A9B04,2402, ; AIL code 3
 loc_AA466,2448, ; CLIB code
 
-loc_AADF7,4309, ; CLIB code
+loc_AADF7,4314, ; CLIB code
+
+loc_ABEDD,894, ; CLIB code
 
 loc_AC270,176, ; CLIB code
 loc_AC320,2551, ; AIL code 4
@@ -147,13 +163,17 @@ loc_ACDE0,25586, ; AIL code 5
 loc_B31D2,698, ; CLIB code
 loc_B348C,4,db 48|db 48|db 48|db 0
 
-loc_C1306,763, ; CLIB code
+loc_C128B,886, ; CLIB code
 
-loc_C21DE,2856, ; CLIB code
-
-loc_C2D82,106, ; CLIB code
+loc_C1629,6083, ; CLIB code
 loc_C2DEC,8501, ; AIL code 6
 loc_C4F21,79,align 16 ; CLIB code
+
+loc_CBD53,535, ; CLIB code
+
+loc_CF192,1074, ; CLIB code
+loc_CF5C4,990, ; DEAD code
+loc_CF9A2,3383, ; CLIB code
 
 loc_131DD4,4, ; AIL data
 loc_132ACC,3992, ; AIL data
@@ -168,7 +188,24 @@ loc_199440,64, ; AIL data
 loc_199580,128, ; AIL data
 loc_199628,600, ; AIL data
 
+loc_133BF0,8, ; CLIB data
+loc_13413C,424, ; CLIB data
+loc_1343E8,208, ; CLIB data
+loc_13FC48,20, ; CLIB data
+loc_13FC86,16, ; CLIB data
 loc_13FCE8,12, ; CLIB data
-loc_140420,4, ; CLIB data
-loc_143E54,8, ; CLIB data
-loc_146FA0,56, ; CLIB data
+loc_13FF04,16, ; CLIB data
+loc_140030,536, ; CLIB data
+loc_140334,72, ; CLIB data
+loc_140384,160, ; CLIB data
+loc_143D94,208, ; CLIB data
+loc_146EA8,92, ; CLIB data
+loc_146F80,88, ; CLIB data
+loc_17E8F0,1024, ; CLIB data
+loc_17F0E4,28, ; CLIB data
+loc_196D14,4, ; CLIB data
+loc_196D1C,4, ; CLIB data
+loc_199600,40, ; CLIB data
+loc_1A5E40,184, ; CLIB data
+loc_1A5EF8,40, ; DEAD data
+loc_1A5F20,16384, ; stack

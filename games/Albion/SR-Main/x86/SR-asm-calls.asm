@@ -78,6 +78,13 @@
     %define Game_AIL_start_sequence _Game_AIL_start_sequence
     %define Game_AIL_stop_sequence _Game_AIL_stop_sequence
 
+    %define ERROR_Init _ERROR_Init
+    %define ERROR_ClearMessages _ERROR_ClearMessages
+    %define ERROR_AddMessageDOS _ERROR_AddMessageDOS
+    %define ERROR_RemoveMessage _ERROR_RemoveMessage
+    %define ERROR_NumMessagesIsZero _ERROR_NumMessagesIsZero
+    %define ERROR_PrintAndClearMessages _ERROR_PrintAndClearMessages
+
     %define fcloseall __fcloseall
     %define Game_WaitAfterVerticalRetrace _Game_WaitAfterVerticalRetrace
     %define Game_WaitForVerticalRetrace _Game_WaitForVerticalRetrace
@@ -196,6 +203,13 @@ extern Game_AIL_set_sequence_loop_count
 extern Game_AIL_set_sequence_volume
 extern Game_AIL_start_sequence
 extern Game_AIL_stop_sequence
+
+extern ERROR_Init
+extern ERROR_ClearMessages
+extern ERROR_AddMessageDOS
+extern ERROR_RemoveMessage
+extern ERROR_NumMessagesIsZero
+extern ERROR_PrintAndClearMessages
 ; 0 params
 extern fcloseall
 extern Game_WaitAfterVerticalRetrace
@@ -317,6 +331,13 @@ global SR_AIL_set_sequence_loop_count
 global SR_AIL_set_sequence_volume
 global SR_AIL_start_sequence
 global SR_AIL_stop_sequence
+
+global SR_ERROR_Init
+global SR_ERROR_ClearMessages
+global SR_ERROR_AddMessage
+global SR_ERROR_RemoveMessage
+global SR_ERROR_NumMessagesIsZero
+global SR_ERROR_PrintAndClearMessages
 ; 0 params
 global SR_fcloseall
 global SR_WaitAfterVerticalRetrace
@@ -943,6 +964,58 @@ SR_AIL_stop_sequence:
         Game_Call_Asm_Stack Game_AIL_stop_sequence,-1
 
 ; end procedure SR_AIL_stop_sequence
+
+
+align 16
+SR_ERROR_Init:
+
+; eax = void *logprint_proc
+
+        Game_Call_Asm_Reg1 ERROR_Init,-1
+
+; end procedure SR_ERROR_Init
+
+align 16
+SR_ERROR_ClearMessages:
+
+        Game_Call_Asm_Reg0 ERROR_ClearMessages,-1
+
+; end procedure SR_ERROR_ClearMessages
+
+align 16
+SR_ERROR_AddMessage:
+
+; eax = void *msg_printdata_proc
+; edx = char *msg_prefix
+; ebx = int msg_data_len
+; ecx = char *msg_data
+
+        Game_Call_Asm_Reg4 ERROR_AddMessageDOS,-1
+
+; end procedure SR_ERROR_AddMessage
+
+align 16
+SR_ERROR_RemoveMessage:
+
+        Game_Call_Asm_Reg0 ERROR_RemoveMessage,-1
+
+; end procedure SR_ERROR_RemoveMessage
+
+align 16
+SR_ERROR_NumMessagesIsZero:
+
+        Game_Call_Asm_Reg0 ERROR_NumMessagesIsZero,-1
+
+; end procedure SR_ERROR_NumMessagesIsZero
+
+align 16
+SR_ERROR_PrintAndClearMessages:
+
+; eax = int flags
+
+        Game_Call_Asm_Reg1 ERROR_PrintAndClearMessages,-1
+
+; end procedure SR_ERROR_PrintAndClearMessages
 
 
 ; 0 params

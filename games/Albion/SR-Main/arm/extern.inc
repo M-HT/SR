@@ -95,6 +95,13 @@
 .extern SR_AIL_set_sequence_volume
 .extern SR_AIL_start_sequence
 .extern SR_AIL_stop_sequence
+
+.extern SR_ERROR_Init
+.extern SR_ERROR_ClearMessages
+.extern SR_ERROR_AddMessage
+.extern SR_ERROR_RemoveMessage
+.extern SR_ERROR_NumMessagesIsZero
+.extern SR_ERROR_PrintAndClearMessages
 @ 0 params
 .extern SR_fcloseall
 .extern SR_WaitAfterVerticalRetrace

@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016 Roman Pauer
+;;  Copyright (C) 2016-2018 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -69,6 +69,13 @@ global Game_RunTimer_Asm
 global _Game_RunTimer_Asm
 global _Z17Game_RunTimer_Asmv
 global __Z17Game_RunTimer_Asmv
+
+global Game_RunProcReg1_Asm
+global _Game_RunProcReg1_Asm
+
+global Game_RunProcReg2_Asm
+global _Game_RunProcReg2_Asm
+
 
 %ifdef ELF
 section .text progbits alloc exec nowrite align=16
@@ -327,3 +334,76 @@ __Z17Game_RunTimer_Asmv:
         retn
 
 ; end procedure Game_RunTimer_Asm
+
+align 16
+Game_RunProcReg1_Asm:
+_Game_RunProcReg1_Asm:
+
+; [esp + 2*4] = proc parameter 1
+; [esp +   4] = proc address
+; [esp      ] = return address
+
+        push ebx
+        push esi
+        push edi
+        push ebp
+
+; [esp + 6*4] = proc parameter 1
+; [esp + 5*4] = proc address
+; [esp + 4*4] = return address
+; [esp + 3*4] = saved ebx
+; [esp + 2*4] = saved esi
+; [esp +   4] = saved edi
+; [esp      ] = saved ebp
+
+        mov ecx, [esp + 5*4]  ; proc address
+        mov eax, [esp + 6*4]  ; proc parameter 1
+
+        call ecx
+
+        pop ebp
+        pop edi
+        pop esi
+        pop ebx
+
+        retn
+
+; end procedure Game_RunProcReg1_Asm
+
+align 16
+Game_RunProcReg2_Asm:
+_Game_RunProcReg2_Asm:
+
+; [esp + 3*4] = proc parameter 2
+; [esp + 2*4] = proc parameter 1
+; [esp +   4] = proc address
+; [esp      ] = return address
+
+        push ebx
+        push esi
+        push edi
+        push ebp
+
+; [esp + 7*4] = proc parameter 2
+; [esp + 6*4] = proc parameter 1
+; [esp + 5*4] = proc address
+; [esp + 4*4] = return address
+; [esp + 3*4] = saved ebx
+; [esp + 2*4] = saved esi
+; [esp +   4] = saved edi
+; [esp      ] = saved ebp
+
+        mov ecx, [esp + 5*4]  ; proc address
+        mov eax, [esp + 6*4]  ; proc parameter 1
+        mov edx, [esp + 7*4]  ; proc parameter 2
+
+        call ecx
+
+        pop ebp
+        pop edi
+        pop esi
+        pop ebx
+
+        retn
+
+; end procedure Game_RunProcReg2_Asm

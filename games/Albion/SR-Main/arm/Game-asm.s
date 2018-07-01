@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016 Roman Pauer
+@@  Copyright (C) 2016-2018 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -64,6 +64,12 @@
 .global _Game_RunTimer_Asm
 .global _Z17Game_RunTimer_Asmv
 .global __Z17Game_RunTimer_Asmv
+
+.global Game_RunProcReg1_Asm
+.global _Game_RunProcReg1_Asm
+
+.global Game_RunProcReg2_Asm
+.global _Game_RunProcReg2_Asm
 
 
 .section .text
@@ -236,3 +242,55 @@ __Z17Game_RunTimer_Asmv:
         ldmfd sp!, {v1-v8,pc}
 
 # end procedure Game_RunTimer_Asm
+
+Game_RunProcReg1_Asm:
+_Game_RunProcReg1_Asm:
+
+#input:
+# r0 = proc address
+# r1 = proc parameter 1
+# lr - return address
+#
+
+        stmfd sp!, {v1-v8,lr}
+
+        mov eax, r1             @ proc parameter 1
+
+        ADR lr, Game_RunProcReg1_Asm_after_call
+        stmfd esp!, {lr}
+        LDR eflags, =0x3202
+        bx r0                  @ proc address
+    Game_RunProcReg1_Asm_after_call:
+
+        mov r0, eax
+
+        ldmfd sp!, {v1-v8,pc}
+
+# end procedure Game_RunProcReg1_Asm
+
+Game_RunProcReg2_Asm:
+_Game_RunProcReg2_Asm:
+
+#input:
+# r0 = proc address
+# r1 = proc parameter 1
+# r2 = proc parameter 2
+# lr - return address
+#
+
+        stmfd sp!, {v1-v8,lr}
+
+        mov eax, r1             @ proc parameter 1
+        mov edx, r2             @ proc parameter 2
+
+        ADR lr, Game_RunProcReg2_Asm_after_call
+        stmfd esp!, {lr}
+        LDR eflags, =0x3202
+        bx r0                  @ proc address
+    Game_RunProcReg2_Asm_after_call:
+
+        mov r0, eax
+
+        ldmfd sp!, {v1-v8,pc}
+
+# end procedure Game_RunProcReg2_Asm

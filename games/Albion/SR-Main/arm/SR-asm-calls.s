@@ -77,6 +77,13 @@
 .extern Game_AIL_set_sequence_volume
 .extern Game_AIL_start_sequence
 .extern Game_AIL_stop_sequence
+
+.extern ERROR_Init
+.extern ERROR_ClearMessages
+.extern ERROR_AddMessageDOS
+.extern ERROR_RemoveMessage
+.extern ERROR_NumMessagesIsZero
+.extern ERROR_PrintAndClearMessages
 @ 0 params
 .extern fcloseall
 .extern Game_WaitAfterVerticalRetrace
@@ -198,6 +205,13 @@
 .global SR_AIL_set_sequence_volume
 .global SR_AIL_start_sequence
 .global SR_AIL_stop_sequence
+
+.global SR_ERROR_Init
+.global SR_ERROR_ClearMessages
+.global SR_ERROR_AddMessage
+.global SR_ERROR_RemoveMessage
+.global SR_ERROR_NumMessagesIsZero
+.global SR_ERROR_PrintAndClearMessages
 @ 0 params
 .global SR_fcloseall
 .global SR_WaitAfterVerticalRetrace
@@ -764,6 +778,52 @@ SR_AIL_stop_sequence:
         Game_Call_Asm_Stack Game_AIL_stop_sequence,-1
 
 @ end procedure SR_AIL_stop_sequence
+
+
+SR_ERROR_Init:
+
+@ eax = void *logprint_proc
+
+        Game_Call_Asm_Reg1 ERROR_Init,-1
+
+@ end procedure SR_ERROR_Init
+
+SR_ERROR_ClearMessages:
+
+        Game_Call_Asm_Reg0 ERROR_ClearMessages,-1
+
+@ end procedure SR_ERROR_ClearMessages
+
+SR_ERROR_AddMessage:
+
+@ eax = void *msg_printdata_proc
+@ edx = char *msg_prefix
+@ ebx = int msg_data_len
+@ ecx = char *msg_data
+
+        Game_Call_Asm_Reg4 ERROR_AddMessageDOS,-1
+
+@ end procedure SR_ERROR_AddMessage
+
+SR_ERROR_RemoveMessage:
+
+        Game_Call_Asm_Reg0 ERROR_RemoveMessage,-1
+
+@ end procedure SR_ERROR_RemoveMessage
+
+SR_ERROR_NumMessagesIsZero:
+
+        Game_Call_Asm_Reg0 ERROR_NumMessagesIsZero,-1
+
+@ end procedure SR_ERROR_NumMessagesIsZero
+
+SR_ERROR_PrintAndClearMessages:
+
+@ eax = int flags
+
+        Game_Call_Asm_Reg1 ERROR_PrintAndClearMessages,-1
+
+@ end procedure SR_ERROR_PrintAndClearMessages
 
 
 @ 0 params

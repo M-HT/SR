@@ -55,6 +55,13 @@ loc_8F5FA,SR_AIL_set_sequence_volume
 loc_8F3C4,SR_AIL_start_sequence
 loc_8F431,SR_AIL_stop_sequence
 
+loc_832A9,SR_ERROR_Init
+loc_832DA,SR_ERROR_ClearMessages
+loc_8332E,SR_ERROR_AddMessage
+loc_8343D,SR_ERROR_RemoveMessage
+loc_8346D,SR_ERROR_NumMessagesIsZero
+loc_834AB,SR_ERROR_PrintAndClearMessages
+
 loc_8520A,SR_fcloseall
 loc_F191E,SR_WaitAfterVerticalRetrace
 loc_F1928,SR_WaitForVerticalRetrace

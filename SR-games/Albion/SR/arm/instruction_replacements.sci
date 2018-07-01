@@ -124,7 +124,7 @@ loc_8151C,2454, @ AIL code 1
 loc_81EB2,183, @ CLIB code 1
 
 loc_8326A,63, @ CLIB code 2
-
+loc_832A9,1057, @ BBERROR code
 loc_836CA,221, @ CLIB code 3.1
 
 loc_837FE,34, @ CLIB code 3.3
@@ -195,7 +195,7 @@ loc_133BF0,8, @ CLIB data
 loc_13413C,424, @ CLIB data
 loc_1343E8,208, @ CLIB data
 loc_13FC48,20, @ CLIB data
-loc_13FC86,16, @ CLIB data
+loc_13FC88,16, @ CLIB data
 loc_13FCE8,12, @ CLIB data
 loc_13FF04,16, @ CLIB data
 loc_140030,536, @ CLIB data
@@ -212,3 +212,7 @@ loc_199600,40, @ CLIB data
 loc_1A5E40,184, @ CLIB data
 loc_1A5EF8,40, @ DEAD data
 loc_1A5F20,16384, @ stack
+
+loc_131DE4,112, @ BBERROR data
+loc_13FC5C,44, @ BBERROR data
+loc_17E578,884, @ BBERROR data

@@ -62,6 +62,19 @@ loc_8343D,SR_ERROR_RemoveMessage
 loc_8346D,SR_ERROR_NumMessagesIsZero
 loc_834AB,SR_ERROR_PrintAndClearMessages
 
+loc_83820,SR_BASEMEM_Init
+loc_83938,SR_BASEMEM_Deinit
+loc_839B0,SR_BASEMEM_GetFreeMemSize
+loc_83CEF,SR_BASEMEM_Alloc
+loc_84297,SR_BASEMEM_Free
+loc_84B3C,SR_BASEMEM_LockRegion
+loc_84C16,SR_BASEMEM_UnlockRegion
+loc_84CF0,SR_BASEMEM_MemSetByte
+loc_84D44,SR_BASEMEM_MemSetDword
+loc_84DC1,SR_BASEMEM_MemMove
+loc_84E1B,SR_BASEMEM_AlignMemptr
+loc_84F87,SR_BASEMEM_PrintReport
+
 loc_8520A,SR_fcloseall
 loc_F191E,SR_WaitAfterVerticalRetrace
 loc_F1928,SR_WaitForVerticalRetrace

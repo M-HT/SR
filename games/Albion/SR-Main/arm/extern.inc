@@ -102,6 +102,19 @@
 .extern SR_ERROR_RemoveMessage
 .extern SR_ERROR_NumMessagesIsZero
 .extern SR_ERROR_PrintAndClearMessages
+
+.extern SR_BASEMEM_Init
+.extern SR_BASEMEM_Deinit
+.extern SR_BASEMEM_GetFreeMemSize
+.extern SR_BASEMEM_Alloc
+.extern SR_BASEMEM_Free
+.extern SR_BASEMEM_LockRegion
+.extern SR_BASEMEM_UnlockRegion
+.extern SR_BASEMEM_MemSetByte
+.extern SR_BASEMEM_MemSetDword
+.extern SR_BASEMEM_MemMove
+.extern SR_BASEMEM_AlignMemptr
+.extern SR_BASEMEM_PrintReport
 @ 0 params
 .extern SR_fcloseall
 .extern SR_WaitAfterVerticalRetrace

@@ -1,7 +1,5 @@
 loc_113c3,5,@mov edx, 10000h|mov edx, #0x10000 @ Use VESA Video mode instead of x-mode
 
-loc_83e4e,9,@mov eax, [ebp-50h]|ldr eax, [ebp, #-80] @ Allocate DOS Memory Block: instead of false real mode address use actual allocated address
-
 loc_8703e,3,@mov [loc_181FD0 + 4], eax|LDR tmpadr, =(loc_181FD0 + 4)|str eax, [tmpadr]|@shr eax, 4|mov eax, eax, lsr #4 @ VESA: Return VBE Controller Information: set esi in call structure to actual address of VbeInfoBlock
 
 loc_87140,3,@mov [loc_181FD0 + 4], eax|LDR tmpadr, =(loc_181FD0 + 4)|str eax, [tmpadr]|@shr eax, 4|mov eax, eax, lsr #4 @ VESA: Return VBE mode Information: set esi in call structure to actual address of VbeInfoBlock
@@ -11,8 +9,6 @@ loc_8743e,17,@mov eax, [Game_ScreenWindow]|LDR tmpadr, =Game_ScreenWindow|ldr ea
 loc_875a9,17,@mov eax, [Game_ScreenWindow]|LDR tmpadr, =Game_ScreenWindow|ldr eax, [tmpadr] @ VESA: Return VBE mode information: store real address of screen window instead of false address
 
 loc_2625D,7,@mov eax, [Game_stdout]|LDR tmpadr, =Game_stdout|ldr tmp1, [tmpadr]|@mov [ebp-0x2c], eax|str tmp1, [ebp, #-44] @ fix stdout
-
-loc_84FA8,7,@mov eax, [Game_stdout]|LDR tmpadr, =Game_stdout|ldr tmp1, [tmpadr]|@mov [ebp-0x4], eax|str tmp1, [ebp, #-4] @ fix stdout
 
 loc_364D9,4,@or eax, eax|cmp eax, #0|@je loc_364DD|beq loc_364DD|@mov ax, [eax+0x1e]|ldrb tmp1, [eax, #30]|ldrb tmp2, [eax, #31]|mov eax, eax, lsr #16|orr eax, tmp2, eax, lsl #8|orr eax, tmp1, eax, lsl #8|loc_364DD: @ fix reading from NULL pointer
 
@@ -128,8 +124,8 @@ loc_832A9,1057, @ BBERROR code
 loc_836CA,221, @ CLIB code 3.1
 
 loc_837FE,34, @ CLIB code 3.3
-
-loc_8516B,1532, @ CLIB code 4
+loc_83820,6476, @ BASEMEM code
+loc_8516C,1531, @ CLIB code 4
 
 loc_8BF0B,21323, @ AIL code 2
 loc_91256,842, @ CLIB code 5
@@ -216,3 +212,7 @@ loc_1A5F20,16384, @ stack
 loc_131DE4,112, @ BBERROR data
 loc_13FC5C,44, @ BBERROR data
 loc_17E578,884, @ BBERROR data
+
+loc_131E54,1284, @ BASEMEM data
+loc_13FC98,80, @ BASEMEM data
+loc_17ECF0,1012, @ BASEMEM data

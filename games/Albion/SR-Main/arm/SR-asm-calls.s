@@ -84,6 +84,19 @@
 .extern ERROR_RemoveMessage
 .extern ERROR_NumMessagesIsZero
 .extern ERROR_PrintAndClearMessages
+
+.extern BASEMEM_Init
+.extern BASEMEM_Deinit
+.extern BASEMEM_GetFreeMemSize
+.extern BASEMEM_Alloc
+.extern BASEMEM_Free
+.extern BASEMEM_LockRegion
+.extern BASEMEM_UnlockRegion
+.extern BASEMEM_MemSetByte
+.extern BASEMEM_MemSetDword
+.extern BASEMEM_MemMove
+.extern BASEMEM_AlignMemptr
+.extern BASEMEM_PrintReport
 @ 0 params
 .extern fcloseall
 .extern Game_WaitAfterVerticalRetrace
@@ -212,6 +225,19 @@
 .global SR_ERROR_RemoveMessage
 .global SR_ERROR_NumMessagesIsZero
 .global SR_ERROR_PrintAndClearMessages
+
+.global SR_BASEMEM_Init
+.global SR_BASEMEM_Deinit
+.global SR_BASEMEM_GetFreeMemSize
+.global SR_BASEMEM_Alloc
+.global SR_BASEMEM_Free
+.global SR_BASEMEM_LockRegion
+.global SR_BASEMEM_UnlockRegion
+.global SR_BASEMEM_MemSetByte
+.global SR_BASEMEM_MemSetDword
+.global SR_BASEMEM_MemMove
+.global SR_BASEMEM_AlignMemptr
+.global SR_BASEMEM_PrintReport
 @ 0 params
 .global SR_fcloseall
 .global SR_WaitAfterVerticalRetrace
@@ -824,6 +850,108 @@ SR_ERROR_PrintAndClearMessages:
         Game_Call_Asm_Reg1 ERROR_PrintAndClearMessages,-1
 
 @ end procedure SR_ERROR_PrintAndClearMessages
+
+
+SR_BASEMEM_Init:
+
+        Game_Call_Asm_Reg0 BASEMEM_Init,-1
+
+@ end procedure SR_BASEMEM_Init
+
+SR_BASEMEM_Deinit:
+
+        Game_Call_Asm_Reg0 BASEMEM_Deinit,-1
+
+@ end procedure SR_BASEMEM_Deinit
+
+SR_BASEMEM_GetFreeMemSize:
+
+@ eax = unsigned int memory_flags
+
+        Game_Call_Asm_Reg1 BASEMEM_GetFreeMemSize,-1
+
+@ end procedure SR_BASEMEM_GetFreeMemSize
+
+SR_BASEMEM_Alloc:
+
+@ eax = unsigned int size
+@ edx = unsigned int memory_flags
+
+        Game_Call_Asm_Reg2 BASEMEM_Alloc,-1
+
+@ end procedure SR_BASEMEM_Alloc
+
+SR_BASEMEM_Free:
+
+@ eax = void *mem_ptr
+
+        Game_Call_Asm_Reg1 BASEMEM_Free,-1
+
+@ end procedure SR_BASEMEM_Free
+
+SR_BASEMEM_LockRegion:
+
+@ eax = void *mem_ptr
+@ edx = unsigned int length
+
+        Game_Call_Asm_Reg2 BASEMEM_LockRegion,-1
+
+@ end procedure SR_BASEMEM_LockRegion
+
+SR_BASEMEM_UnlockRegion:
+
+@ eax = void *mem_ptr
+@ edx = unsigned int length
+
+        Game_Call_Asm_Reg2 BASEMEM_UnlockRegion,-1
+
+@ end procedure SR_BASEMEM_UnlockRegion
+
+SR_BASEMEM_MemSetByte:
+
+@ eax = void *dst
+@ edx = unsigned int length
+@ ebx = int c
+
+        Game_Call_Asm_Reg3 BASEMEM_MemSetByte,-1
+
+@ end procedure SR_BASEMEM_MemSetByte
+
+SR_BASEMEM_MemSetDword:
+
+@ eax = void *dst
+@ edx = unsigned int length
+@ ebx = unsigned int c
+
+        Game_Call_Asm_Reg3 BASEMEM_MemSetDword,-1
+
+@ end procedure SR_BASEMEM_MemSetDword
+
+SR_BASEMEM_MemMove:
+
+@ eax = const void *src
+@ edx = void *dst
+@ ebx = unsigned int length
+
+        Game_Call_Asm_Reg3 BASEMEM_MemMove,-1
+
+@ end procedure SR_BASEMEM_MemMove
+
+SR_BASEMEM_AlignMemptr:
+
+@ eax = void *mem_ptr
+
+        Game_Call_Asm_Reg1 BASEMEM_AlignMemptr,-1
+
+@ end procedure SR_BASEMEM_AlignMemptr
+
+SR_BASEMEM_PrintReport:
+
+@ eax = FILE *fp
+
+        Game_Call_Asm_Reg1 BASEMEM_PrintReport,-1
+
+@ end procedure SR_BASEMEM_PrintReport
 
 
 @ 0 params

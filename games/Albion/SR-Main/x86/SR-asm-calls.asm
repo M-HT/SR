@@ -85,18 +85,30 @@
     %define ERROR_NumMessagesIsZero _ERROR_NumMessagesIsZero
     %define ERROR_PrintAndClearMessages _ERROR_PrintAndClearMessages
 
-    %define BASEMEM_Init, _BASEMEM_Init
-    %define BASEMEM_Deinit, _BASEMEM_Deinit
-    %define BASEMEM_GetFreeMemSize, _BASEMEM_GetFreeMemSize
-    %define BASEMEM_Alloc, _BASEMEM_Alloc
-    %define BASEMEM_Free, _BASEMEM_Free
-    %define BASEMEM_LockRegion, _BASEMEM_LockRegion
-    %define BASEMEM_UnlockRegion, _BASEMEM_UnlockRegion
-    %define BASEMEM_MemSetByte, _BASEMEM_MemSetByte
-    %define BASEMEM_MemSetDword, _BASEMEM_MemSetDword
-    %define BASEMEM_MemMove, _BASEMEM_MemMove
-    %define BASEMEM_AlignMemptr, _BASEMEM_AlignMemptr
-    %define BASEMEM_PrintReport, _BASEMEM_PrintReport,
+    %define BASEMEM_Init _BASEMEM_Init
+    %define BASEMEM_Deinit _BASEMEM_Deinit
+    %define BASEMEM_GetFreeMemSize _BASEMEM_GetFreeMemSize
+    %define BASEMEM_Alloc _BASEMEM_Alloc
+    %define BASEMEM_Free _BASEMEM_Free
+    %define BASEMEM_LockRegion _BASEMEM_LockRegion
+    %define BASEMEM_UnlockRegion _BASEMEM_UnlockRegion
+    %define BASEMEM_MemSetByte _BASEMEM_MemSetByte
+    %define BASEMEM_MemSetDword _BASEMEM_MemSetDword
+    %define BASEMEM_MemMove _BASEMEM_MemMove
+    %define BASEMEM_AlignMemptr _BASEMEM_AlignMemptr
+    %define BASEMEM_PrintReport _BASEMEM_PrintReport
+
+    %define DOS_Init _DOS_Init
+    %define DOS_DeInit _DOS_DeInit
+    %define DOS_Open _DOS_Open
+    %define DOS_Close _DOS_Close
+    %define DOS_Read _DOS_Read
+    %define DOS_Write _DOS_Write
+    %define DOS_Seek _DOS_Seek
+    %define DOS_GetFileLength _DOS_GetFileLength
+    %define DOS_exists _DOS_exists
+    %define DOS_setcurrentdir _DOS_setcurrentdir
+    %define DOS_GetSeekPosition _DOS_GetSeekPosition
 
     %define fcloseall __fcloseall
     %define Game_WaitAfterVerticalRetrace _Game_WaitAfterVerticalRetrace
@@ -236,6 +248,18 @@ extern BASEMEM_MemSetDword
 extern BASEMEM_MemMove
 extern BASEMEM_AlignMemptr
 extern BASEMEM_PrintReport
+
+extern DOS_Init
+extern DOS_DeInit
+extern DOS_Open
+extern DOS_Close
+extern DOS_Read
+extern DOS_Write
+extern DOS_Seek
+extern DOS_GetFileLength
+extern DOS_exists
+extern DOS_setcurrentdir
+extern DOS_GetSeekPosition
 ; 0 params
 extern fcloseall
 extern Game_WaitAfterVerticalRetrace
@@ -377,6 +401,18 @@ global SR_BASEMEM_MemSetDword
 global SR_BASEMEM_MemMove
 global SR_BASEMEM_AlignMemptr
 global SR_BASEMEM_PrintReport
+
+global SR_DOS_Init
+global SR_DOS_DeInit
+global SR_DOS_Open
+global SR_DOS_Close
+global SR_DOS_Read
+global SR_DOS_Write
+global SR_DOS_Seek
+global SR_DOS_GetFileLength
+global SR_DOS_exists
+global SR_DOS_setcurrentdir
+global SR_DOS_GetSeekPosition
 ; 0 params
 global SR_fcloseall
 global SR_WaitAfterVerticalRetrace
@@ -1169,6 +1205,109 @@ SR_BASEMEM_PrintReport:
         Game_Call_Asm_Reg1 BASEMEM_PrintReport,-1
 
 ; end procedure SR_BASEMEM_PrintReport
+
+
+align 16
+SR_DOS_Init:
+
+        Game_Call_Asm_Reg0 DOS_Init,-1
+
+; end procedure SR_DOS_Init
+
+align 16
+SR_DOS_DeInit:
+
+        Game_Call_Asm_Reg0 DOS_DeInit,-1
+
+; end procedure SR_DOS_DeInit
+
+align 16
+SR_DOS_Open:
+
+; eax = const char *path
+; edx = unsigned int mode
+
+        Game_Call_Asm_Reg2 DOS_Open,-1
+
+; end procedure SR_DOS_Open
+
+align 16
+SR_DOS_Close:
+
+; eax = int file_handle
+
+        Game_Call_Asm_Reg1 DOS_Close,-1
+
+; end procedure SR_DOS_Close
+
+align 16
+SR_DOS_Read:
+
+; eax = int file_handle
+; edx = void *buffer
+; ebx = unsigned int length
+
+        Game_Call_Asm_Reg3 DOS_Read,-1
+
+; end procedure SR_DOS_Read
+
+align 16
+SR_DOS_Write:
+
+; eax = int file_handle
+; edx = const void *buffer
+; ebx = unsigned int length
+
+        Game_Call_Asm_Reg3 DOS_Write,-1
+
+; end procedure SR_DOS_Write
+
+align 16
+SR_DOS_Seek:
+
+; eax = int file_handle
+; edx = int origin
+; ebx = int offset
+
+        Game_Call_Asm_Reg3 DOS_Seek,-1
+
+; end procedure SR_DOS_Seek
+
+align 16
+SR_DOS_GetFileLength:
+
+; eax = const char *path
+
+        Game_Call_Asm_Reg1 DOS_GetFileLength,-1
+
+; end procedure SR_DOS_GetFileLength
+
+align 16
+SR_DOS_exists:
+
+; eax = const char *path
+
+        Game_Call_Asm_Reg1 DOS_exists,-1
+
+; end procedure SR_DOS_exists
+
+align 16
+SR_DOS_setcurrentdir:
+
+; eax = const char *path
+
+        Game_Call_Asm_Reg1 DOS_setcurrentdir,-1
+
+; end procedure SR_DOS_setcurrentdir
+
+align 16
+SR_DOS_GetSeekPosition:
+
+; eax = int file_handle
+
+        Game_Call_Asm_Reg1 DOS_GetSeekPosition,-1
+
+; end procedure SR_DOS_GetSeekPosition
 
 
 ; 0 params

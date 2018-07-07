@@ -75,6 +75,18 @@ loc_84DC1,SR_BASEMEM_MemMove
 loc_84E1B,SR_BASEMEM_AlignMemptr
 loc_84F87,SR_BASEMEM_PrintReport
 
+loc_85767,SR_DOS_Init
+loc_85831,SR_DOS_DeInit
+loc_858AE,SR_DOS_Open
+loc_85B27,SR_DOS_Close
+loc_85BCA,SR_DOS_Read
+loc_85D05,SR_DOS_Write
+loc_85E3E,SR_DOS_Seek
+loc_863C3,SR_DOS_GetFileLength
+loc_86527,SR_DOS_exists
+loc_866D7,SR_DOS_setcurrentdir
+loc_868B4,SR_DOS_GetSeekPosition
+
 loc_8520A,SR_fcloseall
 loc_F191E,SR_WaitAfterVerticalRetrace
 loc_F1928,SR_WaitForVerticalRetrace

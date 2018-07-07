@@ -162,6 +162,18 @@ extern SR_BASEMEM_MemSetDword
 extern SR_BASEMEM_MemMove
 extern SR_BASEMEM_AlignMemptr
 extern SR_BASEMEM_PrintReport
+
+extern SR_DOS_Init
+extern SR_DOS_DeInit
+extern SR_DOS_Open
+extern SR_DOS_Close
+extern SR_DOS_Read
+extern SR_DOS_Write
+extern SR_DOS_Seek
+extern SR_DOS_GetFileLength
+extern SR_DOS_exists
+extern SR_DOS_setcurrentdir
+extern SR_DOS_GetSeekPosition
 ; 0 params
 extern SR_fcloseall
 extern SR_WaitAfterVerticalRetrace

@@ -116,6 +116,8 @@ loc_CE7BE,2,@adc edi, edi|mrs tmp1, cpsr|eor tmp1, tmp1, #0x20000000|msr cpsr_f,
 
 loc_25156,1,@pop ebx|ldmfd esp!, {ebx}|@call SR_Sync|ADR tmp1, loc_25156_after_call|stmfd esp!, {tmp1}|b SR_Sync|LTORG_CALL|loc_25156_after_call: @ call sync after save
 
+loc_22F61,83,@mov eax, 1|mov eax, #1 @ skip cdrom check
+
 loc_8151C,2454, @ AIL code 1
 loc_81EB2,183, @ CLIB code 1
 
@@ -126,6 +128,7 @@ loc_836CA,221, @ CLIB code 3.1
 loc_837FE,34, @ CLIB code 3.3
 loc_83820,6476, @ BASEMEM code
 loc_8516C,1531, @ CLIB code 4
+loc_85767,4674, @ BBDOS code
 
 loc_8BF0B,21323, @ AIL code 2
 loc_91256,842, @ CLIB code 5
@@ -134,7 +137,7 @@ loc_92BCD,74, @ CLIB code 6.1
 
 loc_9434A,102, @ CLIB code 7.2
 
-loc_94E5F,315, @ CLIB code 8.1
+loc_94E5F,355, @ CLIB code 8.1
 
 loc_94FDD,496, @ CLIB code 8.3
 
@@ -216,3 +219,7 @@ loc_17E578,884, @ BBERROR data
 loc_131E54,1284, @ BASEMEM data
 loc_13FC98,80, @ BASEMEM data
 loc_17ECF0,1012, @ BASEMEM data
+
+loc_132358,792, @ BBDOS data
+loc_13FCF4,32, @ BBDOS data
+loc_17F100,10840, @ BBDOS data

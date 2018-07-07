@@ -117,7 +117,7 @@ void BASEMEM_Deinit(void)
     {
         for (index = 0; index < MAX_REGIONS; index++)
         {
-            if (BASEMEM_regions[index].flags & 0x80000000)
+            if (BASEMEM_regions[index].flags & BASEMEM_MEMORY_ALLOCATED)
             {
                 BASEMEM_Free(BASEMEM_regions[index].mem_ptr);
             }
@@ -131,9 +131,9 @@ unsigned int BASEMEM_GetFreeMemSize(unsigned int memory_flags)
 {
     switch (memory_flags & 0xff)
     {
-        case 1:     // DPMI memory
+        case BASEMEM_XMS_MEMORY:     // XMS memory
             return GAME_MAX_FREE_MEMORY - 65536;
-        case 2:     // DOS memory
+        case BASEMEM_DOS_MEMORY:     // DOS memory
             return 6570 << 4;
         default:
             BASEMEM_AddErrorMessage(13, 0, 353, "bbbasmem.c");
@@ -181,7 +181,7 @@ void *BASEMEM_Alloc(unsigned int size, unsigned int memory_flags)
 
     switch (memory_flags & 0xff)
     {
-        case 1:     // XMS memory
+        case BASEMEM_XMS_MEMORY:     // XMS memory
             size = (size + 0xFFF) & ~0xFFF;
             mem_ptr = malloc(size);
             if (mem_ptr == NULL)
@@ -190,7 +190,7 @@ void *BASEMEM_Alloc(unsigned int size, unsigned int memory_flags)
                 return NULL;
             }
             break;
-        case 2:     // DOS memory
+        case BASEMEM_DOS_MEMORY:     // DOS memory
             size = (size + 15) & ~15;
             mem_ptr = malloc(size);
             if (mem_ptr == NULL)
@@ -204,12 +204,12 @@ void *BASEMEM_Alloc(unsigned int size, unsigned int memory_flags)
             return NULL;
     }
 
-    memory_flags |= 0x80000000;
+    memory_flags |= BASEMEM_MEMORY_ALLOCATED;
     BASEMEM_regions[free_region_index].flags = memory_flags;
     BASEMEM_regions[free_region_index].mem_ptr = mem_ptr;
     BASEMEM_regions[free_region_index].length = size;
 
-    if (memory_flags & 0x200)
+    if (memory_flags & BASEMEM_LOCK_MEMORY)
     {
         if (!BASEMEM_LockRegion(mem_ptr, size))
         {
@@ -217,10 +217,10 @@ void *BASEMEM_Alloc(unsigned int size, unsigned int memory_flags)
             return NULL;
         }
 
-        BASEMEM_regions[free_region_index].flags |= 0x40000000;
+        BASEMEM_regions[free_region_index].flags |= BASEMEM_MEMORY_LOCKED;
     }
 
-    if (memory_flags & 0x100)
+    if (memory_flags & BASEMEM_ZERO_MEMORY)
     {
         BASEMEM_MemSetByte(mem_ptr, size, 0);
     }
@@ -239,7 +239,7 @@ int BASEMEM_Free(void *mem_ptr)
     found_region_index = -1;
     for (index = 0; index < MAX_REGIONS; index++)
     {
-        if (BASEMEM_regions[index].flags & 0x80000000)
+        if (BASEMEM_regions[index].flags & BASEMEM_MEMORY_ALLOCATED)
         {
             if (BASEMEM_regions[index].mem_ptr == mem_ptr)
             {
@@ -257,16 +257,16 @@ int BASEMEM_Free(void *mem_ptr)
 
     BASEMEM_MemSetByte(BASEMEM_regions[found_region_index].mem_ptr, BASEMEM_regions[found_region_index].length, 0xCC);
 
-    if (BASEMEM_regions[found_region_index].flags & 0x40000000)
+    if (BASEMEM_regions[found_region_index].flags & BASEMEM_MEMORY_LOCKED)
     {
         BASEMEM_UnlockRegion(BASEMEM_regions[found_region_index].mem_ptr, BASEMEM_regions[found_region_index].length);
-        BASEMEM_regions[found_region_index].flags &= ~0x40000000;
+        BASEMEM_regions[found_region_index].flags &= ~BASEMEM_MEMORY_LOCKED;
     }
 
     switch (BASEMEM_regions[found_region_index].flags & 0xff)
     {
-        case 1:     // XMS memory
-        case 2:     // DOS memory
+        case BASEMEM_XMS_MEMORY:     // XMS memory
+        case BASEMEM_DOS_MEMORY:     // DOS memory
             free(BASEMEM_regions[found_region_index].mem_ptr);
             break;
         default:
@@ -288,7 +288,7 @@ static void *BASEMEM_Realloc(void *mem_ptr, unsigned int size)
     found_region_index = -1;
     for (index = 0; index < MAX_REGIONS; index++)
     {
-        if (BASEMEM_regions[index].flags & 0x80000000)
+        if (BASEMEM_regions[index].flags & BASEMEM_MEMORY_ALLOCATED)
         {
             if (BASEMEM_regions[index].mem_ptr == mem_ptr)
             {
@@ -310,15 +310,15 @@ static void *BASEMEM_Realloc(void *mem_ptr, unsigned int size)
         BASEMEM_MemSetByte((void *) (((uintptr_t)BASEMEM_regions[found_region_index].mem_ptr) + size), old_size - size, 0xCC);
     }
 
-    if (BASEMEM_regions[found_region_index].flags & 0x40000000)
+    if (BASEMEM_regions[found_region_index].flags & BASEMEM_MEMORY_LOCKED)
     {
         BASEMEM_UnlockRegion(BASEMEM_regions[found_region_index].mem_ptr, BASEMEM_regions[found_region_index].length);
-        BASEMEM_regions[found_region_index].flags &= ~0x40000000;
+        BASEMEM_regions[found_region_index].flags &= ~BASEMEM_MEMORY_LOCKED;
     }
 
     switch (BASEMEM_regions[found_region_index].flags & 0xff)
     {
-        case 1:     // XMS memory
+        case BASEMEM_XMS_MEMORY:     // XMS memory
             size = (size + 0xFFF) & ~0xFFF;
             new_mem_ptr = realloc(BASEMEM_regions[found_region_index].mem_ptr, size);
             if (new_mem_ptr == NULL)
@@ -327,7 +327,7 @@ static void *BASEMEM_Realloc(void *mem_ptr, unsigned int size)
                 return NULL;
             }
             break;
-        case 2:     // DOS memory
+        case BASEMEM_DOS_MEMORY:     // DOS memory
             size = (size + 15) & ~15;
             new_mem_ptr = realloc(BASEMEM_regions[found_region_index].mem_ptr, size);
             if (new_mem_ptr == NULL)
@@ -341,11 +341,11 @@ static void *BASEMEM_Realloc(void *mem_ptr, unsigned int size)
             return NULL;
     }
 
-    if (BASEMEM_regions[found_region_index].flags & 0x200)
+    if (BASEMEM_regions[found_region_index].flags & BASEMEM_LOCK_MEMORY)
     {
         if (BASEMEM_LockRegion(new_mem_ptr, size))
         {
-            BASEMEM_regions[found_region_index].flags |= 0x40000000;
+            BASEMEM_regions[found_region_index].flags |= BASEMEM_MEMORY_LOCKED;
         }
         else
         {
@@ -355,7 +355,7 @@ static void *BASEMEM_Realloc(void *mem_ptr, unsigned int size)
 
     if (old_size < size)
     {
-        if (BASEMEM_regions[found_region_index].flags & 0x100)
+        if (BASEMEM_regions[found_region_index].flags & BASEMEM_ZERO_MEMORY)
         {
             BASEMEM_MemSetByte((void *) (((uintptr_t)new_mem_ptr) + old_size), size - old_size, 0);
         }

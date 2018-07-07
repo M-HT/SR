@@ -22,41 +22,39 @@
  *
  */
 
-#if !defined(_ALBION_BBBASMEM_H_INCLUDED_)
-#define _ALBION_BBBASMEM_H_INCLUDED_
+#if !defined(_ALBION_BBDOS_H_INCLUDED_)
+#define _ALBION_BBDOS_H_INCLUDED_
 
 #include <stdint.h>
-#include <stdio.h>
 
-#define BASEMEM_XMS_MEMORY 1
-#define BASEMEM_DOS_MEMORY 2
+#define DOS_OPEN_MODE_READ 2
+#define DOS_OPEN_MODE_CREATE 4
+#define DOS_OPEN_MODE_RDWR 8
+#define DOS_OPEN_MODE_APPEND 16
 
-#define BASEMEM_ZERO_MEMORY 0x100
-#define BASEMEM_LOCK_MEMORY 0x200
-
-#define BASEMEM_MEMORY_LOCKED 0x40000000
-#define BASEMEM_MEMORY_ALLOCATED 0x80000000
+#define DOS_SEEK_CUR 0
+#define DOS_SEEK_SET 1
+#define DOS_SEEK_END 2
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int BASEMEM_Init(void);
-void BASEMEM_Deinit(void);
-unsigned int BASEMEM_GetFreeMemSize(unsigned int memory_flags);
-void *BASEMEM_Alloc(unsigned int size, unsigned int memory_flags);
-int BASEMEM_Free(void *mem_ptr);
-int BASEMEM_LockRegion(void *mem_ptr, unsigned int length);
-int BASEMEM_UnlockRegion(void *mem_ptr, unsigned int length);
-void BASEMEM_MemSetByte(void *dst, unsigned int length, int c);
-void BASEMEM_MemSetDword(void *dst, unsigned int length, unsigned int c);
-void BASEMEM_MemMove(const void *src, void *dst, unsigned int length);
-void *BASEMEM_AlignMemptr(void *mem_ptr);
-void BASEMEM_PrintReport(FILE *fp);
+extern int DOS_Init(void);
+extern void DOS_DeInit(void);
+extern int DOS_Open(const char *path, unsigned int mode);
+extern int DOS_Close(int file_handle);
+extern int DOS_Read(int file_handle, void *buffer, unsigned int length);
+extern int DOS_Write(int file_handle, const void *buffer, unsigned int length);
+extern int DOS_Seek(int file_handle, int origin, int offset);
+extern int DOS_GetFileLength(const char *path);
+extern int DOS_exists(const char *path);
+extern int DOS_setcurrentdir(const char *path);
+extern int DOS_GetSeekPosition(int file_handle);
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _ALBION_BBBASMEM_H_INCLUDED_ */
+#endif /* _ALBION_BBDOS_H_INCLUDED_ */

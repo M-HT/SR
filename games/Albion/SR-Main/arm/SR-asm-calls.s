@@ -97,6 +97,18 @@
 .extern BASEMEM_MemMove
 .extern BASEMEM_AlignMemptr
 .extern BASEMEM_PrintReport
+
+.extern DOS_Init
+.extern DOS_DeInit
+.extern DOS_Open
+.extern DOS_Close
+.extern DOS_Read
+.extern DOS_Write
+.extern DOS_Seek
+.extern DOS_GetFileLength
+.extern DOS_exists
+.extern DOS_setcurrentdir
+.extern DOS_GetSeekPosition
 @ 0 params
 .extern fcloseall
 .extern Game_WaitAfterVerticalRetrace
@@ -238,6 +250,18 @@
 .global SR_BASEMEM_MemMove
 .global SR_BASEMEM_AlignMemptr
 .global SR_BASEMEM_PrintReport
+
+.global SR_DOS_Init
+.global SR_DOS_DeInit
+.global SR_DOS_Open
+.global SR_DOS_Close
+.global SR_DOS_Read
+.global SR_DOS_Write
+.global SR_DOS_Seek
+.global SR_DOS_GetFileLength
+.global SR_DOS_exists
+.global SR_DOS_setcurrentdir
+.global SR_DOS_GetSeekPosition
 @ 0 params
 .global SR_fcloseall
 .global SR_WaitAfterVerticalRetrace
@@ -953,6 +977,99 @@ SR_BASEMEM_PrintReport:
 
 @ end procedure SR_BASEMEM_PrintReport
 
+
+SR_DOS_Init:
+
+        Game_Call_Asm_Reg0 DOS_Init,-1
+
+@ end procedure SR_DOS_Init
+
+SR_DOS_DeInit:
+
+        Game_Call_Asm_Reg0 DOS_DeInit,-1
+
+@ end procedure SR_DOS_DeInit
+
+SR_DOS_Open:
+
+@ eax = const char *path
+@ edx = unsigned int mode
+
+        Game_Call_Asm_Reg2 DOS_Open,-1
+
+@ end procedure SR_DOS_Open
+
+SR_DOS_Close:
+
+@ eax = int file_handle
+
+        Game_Call_Asm_Reg1 DOS_Close,-1
+
+@ end procedure SR_DOS_Close
+
+SR_DOS_Read:
+
+@ eax = int file_handle
+@ edx = void *buffer
+@ ebx = unsigned int length
+
+        Game_Call_Asm_Reg3 DOS_Read,-1
+
+@ end procedure SR_DOS_Read
+
+SR_DOS_Write:
+
+@ eax = int file_handle
+@ edx = const void *buffer
+@ ebx = unsigned int length
+
+        Game_Call_Asm_Reg3 DOS_Write,-1
+
+@ end procedure SR_DOS_Write
+
+SR_DOS_Seek:
+
+@ eax = int file_handle
+@ edx = int origin
+@ ebx = int offset
+
+        Game_Call_Asm_Reg3 DOS_Seek,-1
+
+@ end procedure SR_DOS_Seek
+
+SR_DOS_GetFileLength:
+
+@ eax = const char *path
+
+        Game_Call_Asm_Reg1 DOS_GetFileLength,-1
+
+@ end procedure SR_DOS_GetFileLength
+
+SR_DOS_exists:
+
+@ eax = const char *path
+
+        Game_Call_Asm_Reg1 DOS_exists,-1
+
+@ end procedure SR_DOS_exists
+
+SR_DOS_setcurrentdir:
+
+@ eax = const char *path
+
+        Game_Call_Asm_Reg1 DOS_setcurrentdir,-1
+
+@ end procedure SR_DOS_setcurrentdir
+
+SR_DOS_GetSeekPosition:
+
+@ eax = int file_handle
+
+        Game_Call_Asm_Reg1 DOS_GetSeekPosition,-1
+
+@ end procedure SR_DOS_GetSeekPosition
+
+.ltorg
 
 @ 0 params
 SR_fcloseall:

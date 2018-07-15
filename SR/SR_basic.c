@@ -351,46 +351,50 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
 
         if (item->type == FT_SELFREL)
         {
-            output->str = strdup(cbuf2);
-            output->type = OT_OFFSET;
-
-            // insert instruction address after call instruction into list of entries
-            section_entry_list_Insert(DATA->Entry, item->sofs + 4);
-            bound = section_bound_list_Insert(DATA->Entry, item->sofs + 4);
-            if (bound != NULL) bound->begin = 1;
-
-            output = section_output_list_FindEntryEqual(DATA->Entry, item->sofs - 1);
-            if (output != NULL)
+            replace = section_replace_list_FindEntryEqualOrLower(DATA->Entry, item->sofs);
+            if ((replace == NULL) || (replace->ofs + replace->length < item->sofs)) // source is not in replaced area
             {
-                if (output->str != NULL)
-                {
-                    free(output->str);
-                    output->str = NULL;
-                }
+                output->str = strdup(cbuf2);
+                output->type = OT_OFFSET;
 
-                if ( section[DATA->Entry].adr[item->sofs - 1] == 0xe8 )
+                // insert instruction address after call instruction into list of entries
+                section_entry_list_Insert(DATA->Entry, item->sofs + 4);
+                bound = section_bound_list_Insert(DATA->Entry, item->sofs + 4);
+                if (bound != NULL) bound->begin = 1;
+
+                output = section_output_list_FindEntryEqual(DATA->Entry, item->sofs - 1);
+                if (output != NULL)
                 {
+                    if (output->str != NULL)
+                    {
+                        free(output->str);
+                        output->str = NULL;
+                    }
+
+                    if ( section[DATA->Entry].adr[item->sofs - 1] == 0xe8 )
+                    {
 #if (OUTPUT_TYPE == OUT_ARM_LINUX)
-                    // todo: arm
-                    sprintf(cbuf, "@call%s\ncall%s", cbuf2, cbuf2);
+                        // todo: arm
+                        sprintf(cbuf, "@call%s\ncall%s", cbuf2, cbuf2);
 #else
-                    sprintf(cbuf, "call%s", cbuf2);
+                        sprintf(cbuf, "call%s", cbuf2);
 #endif
 
-                    output->str = strdup(cbuf);
+                        output->str = strdup(cbuf);
 
 
-                    bound = section_bound_list_Insert(DATA->Entry, item->sofs - 1);
-                    if (bound != NULL) bound->end = 1;
+                        bound = section_bound_list_Insert(DATA->Entry, item->sofs - 1);
+                        if (bound != NULL) bound->end = 1;
+                    }
+                    else
+                    {
+                        output->str = strdup("chyba");
+                    }
+                    output->type = OT_INSTRUCTION;
+                    output->len = 4;
+
+                    section_output_list_Delete(DATA->Entry, item->sofs);
                 }
-                else
-                {
-                    output->str = strdup("chyba");
-                }
-                output->type = OT_INSTRUCTION;
-                output->len = 4;
-
-                section_output_list_Delete(DATA->Entry, item->sofs);
             }
 
         }

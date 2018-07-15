@@ -174,6 +174,17 @@ extern SR_DOS_GetFileLength
 extern SR_DOS_exists
 extern SR_DOS_setcurrentdir
 extern SR_DOS_GetSeekPosition
+
+extern SR_OPM_New
+extern SR_OPM_Delete
+extern SR_OPM_SetViewClipStart
+extern SR_OPM_NewView
+extern SR_OPM_PutPixel
+extern SR_OPM_DrawHorizontalLine
+extern SR_OPM_DrawVerticalLine
+extern SR_OPM_DrawRectangle
+extern SR_OPM_DrawFilledRectangle
+extern SR_OPM_CopyRectangle
 ; 0 params
 extern SR_fcloseall
 extern SR_WaitAfterVerticalRetrace

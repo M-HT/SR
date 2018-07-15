@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016 Roman Pauer
+@@  Copyright (C) 2016-2018 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -237,6 +237,72 @@
         ldmfd esp!, {eflags}
         ldmfd esp!, {tmp1}
         add esp, esp, #4
+        bx tmp1
+.endm
+
+
+.macro Game_Call_Asm_Reg6 proc_name, errno_val=-1000
+
+        ldmfd esp, {tmp1, tmp2}
+        stmfd esp!, {eflags}
+        stmfd esp!, {tmp1, tmp2}
+
+        mov tmp1, eax
+        mov tmp2, edx
+        mov tmp3, ebx
+        mov tmpadr, ecx
+        bl \proc_name
+        mov eax, tmp1
+
+.ifeq \errno_val + 1000
+        bl Game_errno
+        LDR tmpadr, =errno_val
+        str tmp1, [tmpadr]
+.else
+.ifge \errno_val
+        LDR tmpadr, =errno_val
+        LDR tmp3, =(\errno_val)
+        str tmp3, [tmpadr]
+.endif
+.endif
+
+        add esp, esp, #(2*4)
+        ldmfd esp!, {eflags}
+        ldmfd esp!, {tmp1}
+        add esp, esp, #(2*4)
+        bx tmp1
+.endm
+
+
+.macro Game_Call_Asm_Reg8 proc_name, errno_val=-1000
+
+        ldmfd esp, {tmp1, tmp2, tmp3, tmpadr}
+        stmfd esp!, {eflags}
+        stmfd esp!, {tmp1, tmp2, tmp3, tmpadr}
+
+        mov tmp1, eax
+        mov tmp2, edx
+        mov tmp3, ebx
+        mov tmpadr, ecx
+        bl \proc_name
+        mov eax, tmp1
+
+.ifeq \errno_val + 1000
+        bl Game_errno
+        LDR tmpadr, =errno_val
+        str tmp1, [tmpadr]
+.else
+.ifge \errno_val
+        LDR tmpadr, =errno_val
+        LDR tmp3, =(\errno_val)
+        str tmp3, [tmpadr]
+.endif
+.endif
+
+        add esp, esp, #(4*4)
+        ldmfd esp!, {eflags}
+        ldmfd esp!, {tmp1}
+        add esp, esp, #(4*4)
         bx tmp1
 .endm
 

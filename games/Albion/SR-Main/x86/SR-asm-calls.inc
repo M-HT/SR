@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016 Roman Pauer
+;;  Copyright (C) 2016-2018 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -191,6 +191,60 @@
 		add esp, byte 5*4
 
 		retn 4
+
+%endmacro
+
+
+%macro  Game_Call_Asm_Reg6 1-2 'get_errno_val'
+
+		push dword [esp + 2*4]
+		push dword [esp + 2*4]
+		push ecx
+		push ebx
+		push edx
+		push eax
+
+		call %1
+
+%ifnum %2
+	%if %2 >= 0
+		mov dword [errno_val], %2
+	%endif
+%else
+		call Game_Set_errno_Asm
+%endif
+
+		add esp, byte 6*4
+
+		retn 2*4
+
+%endmacro
+
+
+%macro  Game_Call_Asm_Reg8 1-2 'get_errno_val'
+
+		push dword [esp + 4*4]
+		push dword [esp + 4*4]
+		push dword [esp + 4*4]
+		push dword [esp + 4*4]
+		push ecx
+		push ebx
+		push edx
+		push eax
+
+		call %1
+
+%ifnum %2
+	%if %2 >= 0
+		mov dword [errno_val], %2
+	%endif
+%else
+		call Game_Set_errno_Asm
+%endif
+
+		add esp, byte 8*4
+
+		retn 4*4
 
 %endmacro
 

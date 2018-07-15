@@ -110,6 +110,17 @@
     %define DOS_setcurrentdir _DOS_setcurrentdir
     %define DOS_GetSeekPosition _DOS_GetSeekPosition
 
+    %define OPM_New _OPM_New
+    %define OPM_Delete _OPM_Delete
+    %define OPM_SetViewClipStart _OPM_SetViewClipStart
+    %define OPM_NewView _OPM_NewView
+    %define OPM_PutPixel _OPM_PutPixel
+    %define OPM_DrawHorizontalLine _OPM_DrawHorizontalLine
+    %define OPM_DrawVerticalLine _OPM_DrawVerticalLine
+    %define OPM_DrawRectangle _OPM_DrawRectangle
+    %define OPM_DrawFilledRectangle _OPM_DrawFilledRectangle
+    %define OPM_CopyRectangle _OPM_CopyRectangle
+
     %define fcloseall __fcloseall
     %define Game_WaitAfterVerticalRetrace _Game_WaitAfterVerticalRetrace
     %define Game_WaitForVerticalRetrace _Game_WaitForVerticalRetrace
@@ -260,6 +271,17 @@ extern DOS_GetFileLength
 extern DOS_exists
 extern DOS_setcurrentdir
 extern DOS_GetSeekPosition
+
+extern OPM_New
+extern OPM_Delete
+extern OPM_SetViewClipStart
+extern OPM_NewView
+extern OPM_PutPixel
+extern OPM_DrawHorizontalLine
+extern OPM_DrawVerticalLine
+extern OPM_DrawRectangle
+extern OPM_DrawFilledRectangle
+extern OPM_CopyRectangle
 ; 0 params
 extern fcloseall
 extern Game_WaitAfterVerticalRetrace
@@ -413,6 +435,17 @@ global SR_DOS_GetFileLength
 global SR_DOS_exists
 global SR_DOS_setcurrentdir
 global SR_DOS_GetSeekPosition
+
+global SR_OPM_New
+global SR_OPM_Delete
+global SR_OPM_SetViewClipStart
+global SR_OPM_NewView
+global SR_OPM_PutPixel
+global SR_OPM_DrawHorizontalLine
+global SR_OPM_DrawVerticalLine
+global SR_OPM_DrawRectangle
+global SR_OPM_DrawFilledRectangle
+global SR_OPM_CopyRectangle
 ; 0 params
 global SR_fcloseall
 global SR_WaitAfterVerticalRetrace
@@ -1308,6 +1341,150 @@ SR_DOS_GetSeekPosition:
         Game_Call_Asm_Reg1 DOS_GetSeekPosition,-1
 
 ; end procedure SR_DOS_GetSeekPosition
+
+
+align 16
+SR_OPM_New:
+
+; eax = unsigned int width
+; edx = unsigned int height
+; ebx = unsigned int bytes_per_pixel
+; ecx = OPM_Struct *pixel_map
+; [esp + 4] = uint8_t *buffer
+;
+; [esp    ] = return address
+
+        Game_Call_Asm_Reg5 OPM_New,-1
+
+; end procedure SR_OPM_New
+
+align 16
+SR_OPM_Delete:
+
+; eax = OPM_Struct *pixel_map
+
+        Game_Call_Asm_Reg1 OPM_Delete,-1
+
+; end procedure SR_OPM_Delete
+
+align 16
+SR_OPM_SetViewClipStart:
+
+; eax = OPM_Struct *view_pixel_map
+; edx = int clip_x
+; ebx = int clip_y
+
+        Game_Call_Asm_Reg3 OPM_SetViewClipStart,-1
+
+; end procedure SR_OPM_SetViewClipStart
+
+align 16
+SR_OPM_NewView:
+
+; eax = OPM_Struct *base_pixel_map
+; edx = OPM_Struct *view_pixel_map
+; ebx = int view_x
+; ecx = int view_y
+; [esp +   4] = int view_width
+; [esp + 2*4] = int view_height
+;
+; [esp    ] = return address
+
+        Game_Call_Asm_Reg6 OPM_NewView,-1
+
+; end procedure SR_OPM_NewView
+
+align 16
+SR_OPM_PutPixel:
+
+; eax = OPM_Struct *pixel_map
+; edx = int x
+; ebx = int y
+; ecx = uint8_t color
+
+        Game_Call_Asm_Reg4 OPM_PutPixel,-1
+
+; end procedure SR_OPM_PutPixel
+
+align 16
+SR_OPM_DrawHorizontalLine:
+
+; eax = OPM_Struct *pixel_map
+; edx = int x
+; ebx = int y
+; ecx = int length
+; [esp + 4] = uint8_t color
+;
+; [esp    ] = return address
+
+        Game_Call_Asm_Reg5 OPM_DrawHorizontalLine,-1
+
+; end procedure SR_OPM_DrawHorizontalLine
+
+align 16
+SR_OPM_DrawVerticalLine:
+
+; eax = OPM_Struct *pixel_map
+; edx = int x
+; ebx = int y
+; ecx = int length
+; [esp + 4] = uint8_t color
+;
+; [esp    ] = return address
+
+        Game_Call_Asm_Reg5 OPM_DrawVerticalLine,-1
+
+; end procedure SR_OPM_DrawVerticalLine
+
+align 16
+SR_OPM_DrawRectangle:
+
+; eax = OPM_Struct *pixel_map
+; edx = int x
+; ebx = int y
+; ecx = int width
+; [esp +   4] = int height
+; [esp + 2*4] = uint8_t color
+;
+; [esp    ] = return address
+
+        Game_Call_Asm_Reg6 OPM_DrawRectangle,-1
+
+; end procedure SR_OPM_DrawRectangle
+
+align 16
+SR_OPM_DrawFilledRectangle:
+
+; eax = OPM_Struct *pixel_map
+; edx = int x
+; ebx = int y
+; ecx = int width
+; [esp +   4] = int height
+; [esp + 2*4] = uint8_t color
+;
+; [esp    ] = return address
+
+        Game_Call_Asm_Reg6 OPM_DrawFilledRectangle,-1
+
+; end procedure SR_OPM_DrawFilledRectangle
+
+align 16
+SR_OPM_CopyRectangle:
+
+; eax = OPM_Struct *src_pixel_map
+; edx = OPM_Struct *dst_pixel_map
+; ebx = int src_x
+; ecx = int src_y
+; [esp +   4] = int src_width
+; [esp + 2*4] = int src_height
+; [esp + 3*4] = int dst_x
+; [esp + 4*4] = int dst_y
+;
+; [esp    ] = return address
+
+        Game_Call_Asm_Reg8 OPM_CopyRectangle,-1
+
+; end procedure SR_OPM_CopyRectangle
 
 
 ; 0 params

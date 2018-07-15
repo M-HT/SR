@@ -87,6 +87,17 @@ loc_86527,SR_DOS_exists
 loc_866D7,SR_DOS_setcurrentdir
 loc_868B4,SR_DOS_GetSeekPosition
 
+loc_915A0,SR_OPM_New
+loc_91708,SR_OPM_Delete
+loc_91750,SR_OPM_SetViewClipStart
+loc_91869,SR_OPM_NewView
+loc_91AA4,SR_OPM_PutPixel
+loc_91C1E,SR_OPM_DrawHorizontalLine
+loc_91D42,SR_OPM_DrawVerticalLine
+loc_91E66,SR_OPM_DrawRectangle
+loc_920F5,SR_OPM_DrawFilledRectangle
+loc_9251D,SR_OPM_CopyRectangle
+
 loc_8520A,SR_fcloseall
 loc_F191E,SR_WaitAfterVerticalRetrace
 loc_F1928,SR_WaitForVerticalRetrace

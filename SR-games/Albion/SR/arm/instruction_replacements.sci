@@ -132,7 +132,7 @@ loc_85767,4674, @ BBDOS code
 
 loc_8BF0B,21323, @ AIL code 2
 loc_91256,842, @ CLIB code 5
-
+loc_915A0,5677, @ BBOPM code
 loc_92BCD,74, @ CLIB code 6.1
 
 loc_9434A,102, @ CLIB code 7.2
@@ -176,6 +176,12 @@ loc_CBD53,535, @ CLIB code
 loc_CF192,1074, @ CLIB code
 loc_CF5C4,990, @ DEAD code
 loc_CF9A2,3383, @ CLIB code
+
+loc_E0000,5307, @ ASM code 2.1
+
+loc_E14D2,512, @ ASM code 2.3
+
+loc_110000,745, @ ASM code 5
 
 loc_131DD4,4, @ AIL data
 loc_132ACC,3992, @ AIL data
@@ -223,3 +229,8 @@ loc_17ECF0,1012, @ BASEMEM data
 loc_132358,792, @ BBDOS data
 loc_13FCF4,32, @ BBDOS data
 loc_17F100,10840, @ BBDOS data
+
+loc_133A64,116, @ BBOPM data
+
+loc_1B0000,76, @ ASM data
+loc_1B0050,7776, @ ASM data

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2017 Roman Pauer
+ *  Copyright (C) 2016-2018 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -39,6 +39,7 @@ static char *midi_address = NULL;
 typedef struct {
     const uint8_t *ptr;
     unsigned int len, delta;
+    uint8_t event_status;
     int eot;
 } midi_track_info;
 
@@ -233,6 +234,8 @@ static int readmidi(const uint8_t *midi, unsigned int midilen, unsigned int *num
 
         tracks[index].len = track_len;
         tracks[index].ptr = cur_position + 8;
+        tracks[index].event_status = 0;
+        tracks[index].eot = (track_len == 0)?1:0;
 
         cur_position = cur_position + 8 + track_len;
     }
@@ -348,25 +351,32 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
 
         eventextralen = -1;
 
-        switch ((*curtrack->ptr) >> 4)
+        if (*curtrack->ptr & 0x80)
+        {
+            curtrack->event_status = *curtrack->ptr;
+            curtrack->ptr += 1;
+            curtrack->len -= 1;
+        }
+
+        switch (curtrack->event_status >> 4)
         {
             case MIDI_STATUS_NOTE_OFF:
             case MIDI_STATUS_NOTE_ON:
             case MIDI_STATUS_AFTERTOUCH:
             case MIDI_STATUS_CONTROLLER:
             case MIDI_STATUS_PITCH_WHEEL:
-                if (curtrack->len >= 3)
+                if (curtrack->len >= 2)
                 {
-                    event.type = alsa_event_types[((*curtrack->ptr) >> 4) - 8];
-                    event.channel = curtrack->ptr[0] & 0x0f;
-                    event.data1 = curtrack->ptr[1];
-                    event.data2 = curtrack->ptr[2];
-                    if (((*curtrack->ptr) >> 4) == MIDI_STATUS_PITCH_WHEEL)
+                    event.type = alsa_event_types[(curtrack->event_status >> 4) - 8];
+                    event.channel = curtrack->event_status & 0x0f;
+                    event.data1 = curtrack->ptr[0];
+                    event.data2 = curtrack->ptr[1];
+                    if ((curtrack->event_status >> 4) == MIDI_STATUS_PITCH_WHEEL)
                     {
-                        event.pitch = ( ((int32_t)curtrack->ptr[1]) | (((int32_t)curtrack->ptr[2]) << 7) ) - 0x2000;
+                        event.pitch = ( ((int32_t)curtrack->ptr[0]) | (((int32_t)curtrack->ptr[1]) << 7) ) - 0x2000;
                     }
-                    curtrack->ptr += 3;
-                    curtrack->len -= 3;
+                    curtrack->ptr += 2;
+                    curtrack->len -= 2;
                     eventextralen = 0;
                 }
                 else
@@ -379,13 +389,13 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
 
             case MIDI_STATUS_PROG_CHANGE:
             case MIDI_STATUS_PRESSURE:
-                if (curtrack->len >= 2)
+                if (curtrack->len >= 1)
                 {
-                    event.type = alsa_event_types[((*curtrack->ptr) >> 4) - 8];
-                    event.channel = curtrack->ptr[0] & 0x0f;
-                    event.data1 = curtrack->ptr[1];
-                    curtrack->ptr += 2;
-                    curtrack->len -= 2;
+                    event.type = alsa_event_types[(curtrack->event_status >> 4) - 8];
+                    event.channel = curtrack->event_status & 0x0f;
+                    event.data1 = curtrack->ptr[0];
+                    curtrack->ptr += 1;
+                    curtrack->len -= 1;
                     eventextralen = 0;
                 }
                 else
@@ -396,26 +406,26 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
                 break;
 
             case MIDI_STATUS_SYSEX:
-                if ((*curtrack->ptr) == 0xff) // meta events
+                if (curtrack->event_status == 0xff) // meta events
                 {
-                    if (curtrack->len >= 3)
+                    if (curtrack->len >= 2)
                     {
-                        if (curtrack->ptr[1] == 0x2f) // end of track
+                        if (curtrack->ptr[0] == 0x2f) // end of track
                         {
                             curtrack->len = 0;
                             curtrack->eot = 1;
                         }
                         else
                         {
-                            if ((curtrack->ptr[1] == 0x51) && (curtrack->ptr[2] == 3) && (curtrack->len >= 6)) // set tempo
+                            if ((curtrack->ptr[0] == 0x51) && (curtrack->ptr[1] == 3) && (curtrack->len >= 5)) // set tempo
                             {
                                 // time_division is assumed to be positive (ticks per beat / PPQN - Pulses (i.e. clocks) Per Quarter Note)
 
                                 event.type = SND_SEQ_EVENT_TEMPO;
-                                event.channel = curtrack->ptr[3];
-                                event.data1 = curtrack->ptr[4];
-                                event.data2 = curtrack->ptr[5];
-                                event.tempo = (((uint32_t)(curtrack->ptr[3])) << 16) | (((uint32_t)(curtrack->ptr[4])) << 8) | ((uint32_t)(curtrack->ptr[5]));
+                                event.channel = curtrack->ptr[2];
+                                event.data1 = curtrack->ptr[3];
+                                event.data2 = curtrack->ptr[4];
+                                event.tempo = (((uint32_t)(curtrack->ptr[2])) << 16) | (((uint32_t)(curtrack->ptr[3])) << 8) | ((uint32_t)(curtrack->ptr[4]));
                                 eventextralen = 0;
 
                                 tempo = event.tempo;
@@ -424,8 +434,8 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
                             }
 
                             // read length and skip event
-                            curtrack->ptr += 2;
-                            curtrack->len -= 2;
+                            curtrack->ptr += 1;
+                            curtrack->len -= 1;
                             varlen = read_varlen(curtrack);
                             if (varlen <= curtrack->len)
                             {
@@ -445,19 +455,17 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
                         curtrack->eot = 1;
                     }
                 }
-                else if (((*curtrack->ptr) == 0xf0) || ((*curtrack->ptr) == 0xf7)) // sysex
+                else if ((curtrack->event_status == 0xf0) || (curtrack->event_status == 0xf7)) // sysex
                 {
                     const uint8_t *startevent;
 
                     startevent = curtrack->ptr;
 
-                    curtrack->ptr++;
-                    curtrack->len--;
                     varlen = read_varlen(curtrack);
                     if (varlen <= curtrack->len)
                     {
                         event.type = SND_SEQ_EVENT_SYSEX;
-                        event.len = varlen + (*startevent == 0xf0)?1:0;
+                        event.len = varlen + ((curtrack->event_status == 0xf0)?1:0);
                         if (event.len)
                         {
                             event.sysex = (uint8_t *) malloc(event.len);
@@ -467,7 +475,7 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
                                 goto midi_error_2;
                             }
 
-                            if ((*startevent == 0xf0))
+                            if ((curtrack->event_status == 0xf0))
                             {
                                 event.sysex[0] = 0xf0;
                                 memcpy(event.sysex + 1, curtrack->ptr, varlen);
@@ -480,7 +488,7 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
                             curtrack->ptr += varlen;
                             curtrack->len -= varlen;
 
-                            eventextralen = curtrack->ptr - startevent;
+                            eventextralen = 1 + curtrack->ptr - startevent;
                         }
                     }
                     else

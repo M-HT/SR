@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2018 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -72,6 +72,7 @@ static CRITICAL_SECTION midi_critical_section;
 typedef struct {
 	const uint8_t *ptr;
 	unsigned int len, delta;
+	uint8_t event_status;
 	int eot;
 } midi_track_info;
 
@@ -200,6 +201,8 @@ static int readmidi(const uint8_t *midi, unsigned int midilen, unsigned int *num
 
 		tracks[index].len = track_len;
 		tracks[index].ptr = cur_position + 8;
+		tracks[index].event_status = 0;
+		tracks[index].eot = (track_len == 0)?1:0;
 
 		cur_position = cur_position + 8 + track_len;
 	}
@@ -290,18 +293,25 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
 
 		eventextralen = -1;
 
-		switch ((*curtrack->ptr) >> 4)
+		if (*curtrack->ptr & 0x80)
+		{
+			curtrack->event_status = *curtrack->ptr;
+			curtrack->ptr += 1;
+			curtrack->len -= 1;
+		}
+
+		switch (curtrack->event_status >> 4)
 		{
 			case MIDI_STATUS_NOTE_OFF:
 			case MIDI_STATUS_NOTE_ON:
 			case MIDI_STATUS_AFTERTOUCH:
 			case MIDI_STATUS_CONTROLLER:
 			case MIDI_STATUS_PITCH_WHEEL:
-				if (curtrack->len >= 3)
+				if (curtrack->len >= 2)
 				{
-					event.dwEvent = MEVT_F_SHORT | (curtrack->ptr[0]) | (((uint32_t)(curtrack->ptr[1])) << 8) | (((uint32_t)(curtrack->ptr[2])) << 16);
-					curtrack->ptr += 3;
-					curtrack->len -= 3;
+					event.dwEvent = MEVT_F_SHORT | (curtrack->event_status) | (((uint32_t)(curtrack->ptr[0])) << 8) | (((uint32_t)(curtrack->ptr[1])) << 16);
+					curtrack->ptr += 2;
+					curtrack->len -= 2;
 					eventextralen = 0;
 				}
 				else
@@ -314,11 +324,11 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
 
 			case MIDI_STATUS_PROG_CHANGE:
 			case MIDI_STATUS_PRESSURE:
-				if (curtrack->len >= 2)
+				if (curtrack->len >= 1)
 				{
-					event.dwEvent = MEVT_F_SHORT | (curtrack->ptr[0]) | (((uint32_t)(curtrack->ptr[1])) << 8);
-					curtrack->ptr += 2;
-					curtrack->len -= 2;
+					event.dwEvent = MEVT_F_SHORT | (curtrack->event_status) | (((uint32_t)(curtrack->ptr[0])) << 8);
+					curtrack->ptr += 1;
+					curtrack->len -= 1;
 					eventextralen = 0;
 				}
 				else
@@ -329,26 +339,26 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
 				break;
 
 			case MIDI_STATUS_SYSEX:
-				if ((*curtrack->ptr) == 0xff)
+				if (curtrack->event_status == 0xff)
 				{
-					if (curtrack->len >= 3)
+					if (curtrack->len >= 2)
 					{
-						if (curtrack->ptr[1] == 0x2f) // end of track
+						if (curtrack->ptr[0] == 0x2f) // end of track
 						{
 							curtrack->len = 0;
 							curtrack->eot = 1;
 						}
 						else
 						{
-							if ((curtrack->ptr[1] == 0x51) && (curtrack->ptr[2] == 3) && (curtrack->len >= 6)) // set tempo
+							if ((curtrack->ptr[0] == 0x51) && (curtrack->ptr[1] == 3) && (curtrack->len >= 5)) // set tempo
 							{
-								event.dwEvent = (((uint32_t)MEVT_TEMPO) << 24) | (((uint32_t)(curtrack->ptr[3])) << 16) | (((uint32_t)(curtrack->ptr[4])) << 8) | ((uint32_t)(curtrack->ptr[5]));
+								event.dwEvent = (((uint32_t)MEVT_TEMPO) << 24) | (((uint32_t)(curtrack->ptr[2])) << 16) | (((uint32_t)(curtrack->ptr[3])) << 8) | ((uint32_t)(curtrack->ptr[4]));
 								eventextralen = 0;
 							}
 
 							// read length and skip event
-							curtrack->ptr += 2;
-							curtrack->len -= 2;
+							curtrack->ptr += 1;
+							curtrack->len -= 1;
 							varlen = read_varlen(curtrack);
 							if (varlen <= curtrack->len)
 							{
@@ -368,21 +378,19 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
 						curtrack->eot = 1;
 					}
 				}
-				else if (((*curtrack->ptr) == 0xf0) || ((*curtrack->ptr) == 0xf7))
+				else if ((curtrack->event_status == 0xf0) || (curtrack->event_status == 0xf7))
 				{
 					const uint8_t *startevent;
 
 					startevent = curtrack->ptr;
 
-					curtrack->ptr++;
-					curtrack->len--;
 					varlen = read_varlen(curtrack);
 					if (varlen <= curtrack->len)
 					{
 						curtrack->ptr += varlen;
 						curtrack->len -= varlen;
 
-						eventextralen = curtrack->ptr - startevent;
+						eventextralen = 1 + curtrack->ptr - startevent;
 						event.dwEvent = MEVT_F_LONG | (eventextralen & 0xffffff);
 					}
 					else
@@ -434,7 +442,8 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
 
 			if (eventextralen > 0)
 			{
-				memcpy(&(curdata[curinfo->len]), curtrack->ptr - eventextralen, eventextralen);
+				curdata[curinfo->len] = curtrack->event_status;
+				memcpy(&(curdata[curinfo->len + 1]), 1 + curtrack->ptr - eventextralen, eventextralen - 1);
 				curinfo->len += (eventextralen + 3) & ~3;
 			}
 

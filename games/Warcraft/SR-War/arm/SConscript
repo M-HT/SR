@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016 Roman Pauer
+#  Copyright (C) 2016-2019 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -37,14 +37,18 @@ SourceFileScanner.add_scanner('.s', asmscan)
 
 Import('device', 'version', 'env')
 
-if version == 'cd':
+if version == 'cdgog':
+    obj = env.Object('war-asm-cdgog.s')
+elif version == 'cd':
     obj = env.Object('war-asm-cd.s')
 else:
     obj = env.Object('war-asm.s')
 
 asm_sources = Glob('*.s', strings = True)
-asm_sources.remove('war-asm.s')
+if 'war-asm.s' in asm_sources:
+    asm_sources.remove('war-asm.s')
 asm_sources.remove('war-asm-cd.s')
+asm_sources.remove('war-asm-cdgog.s')
 
 obj = obj + env.Object(asm_sources + Glob('*.c'))
 

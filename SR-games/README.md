@@ -104,3 +104,16 @@ The generated *.inc* files should be moved to *Warcraft/SR-War/x86/cdver* (or *a
 
 The generated *.asm* (or *.s*) files should be modified (change the path to *.inc* files) according to existing files and then moved to *Warcraft/SR-War/x86* (or *arm*) subdirectory in *games* subproject.
 
+#### SR-cd-gog
+
+The original executable is *WAR.EXE* from the DOS CD English version 1.22 (from GOG.com).
+
+* file size: 319291 bytes
+* md5: 03c8e5bff6772eca8d4be8a22c243fd2
+* sha1: b32ef7d87d1e51f3f0b20ce7911053f32a0d509a
+* sha256: 1e966220bf09ab007c49c5ea5ebc42eb494f5cf2f74f894d3969b6115df8d8a9
+
+The generated *.inc* files should be moved to *Warcraft/SR-War/x86/cdgogver* (or *arm/cdgogver*) subdirectory in *games* subproject.
+
+The generated *.asm* (or *.s*) files should be modified (change the path to *.inc* files) according to existing files and then moved to *Warcraft/SR-War/x86* (or *arm*) subdirectory in *games* subproject.
+

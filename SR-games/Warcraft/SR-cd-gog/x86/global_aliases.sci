@@ -1,0 +1,8 @@
+loc_1E158,main_
+loc_3846E,update_timer
+loc_31104,keyboard_interrupt
+
+loc_5AA84,errno_val
+loc_557E4,argv_val
+loc_62ACC,default_sample_volume
+loc_62AE8,default_sequence_volume

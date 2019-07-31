@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016 Roman Pauer
+;;  Copyright (C) 2016-2019 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -22,7 +22,7 @@
 
 %include "misc.inc"
 
-%ifndef ELF
+%ifidn __OUTPUT_FORMAT__, win32
     %define Game_TimerTick _Game_TimerTick
     %define Game_TimerRun _Game_TimerRun
 
@@ -47,7 +47,7 @@ global _SR_CheckTimer
 global SR_RunTimerDelay
 global _SR_RunTimerDelay
 
-%ifdef ELF
+%ifidn __OUTPUT_FORMAT__, elf32
 section .text progbits alloc exec nowrite align=16
 %else
 section .text code align=16

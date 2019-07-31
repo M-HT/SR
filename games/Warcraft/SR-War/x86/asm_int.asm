@@ -1,7 +1,7 @@
 ;part of static recompiler -- do not edit
 
 ;;
-;;  Copyright (C) 2016 Roman Pauer
+;;  Copyright (C) 2016-2019 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -22,13 +22,13 @@
 ;;  SOFTWARE.
 ;;
 
-%ifndef ELF
+%ifidn __OUTPUT_FORMAT__, win32
     %define X86_InterruptProcedure _X86_InterruptProcedure
 %endif
 
 extern X86_InterruptProcedure
 
-%ifdef ELF
+%ifidn __OUTPUT_FORMAT__, elf32
 section .text progbits alloc exec nowrite align=16
 %else
 section .text code align=16

@@ -38,8 +38,8 @@ nasmscan = Scanner(function = nasmfile_scan,
 SourceFileScanner.add_scanner('.asm', nasmscan)
 
 if device == 'pc-linux':
-    env = Environment(tools=['nasm'], ASFLAGS = ' -felf -dELF -Ox -w+orphan-labels -w-number-overflow -ix86/')
-    env2 = Environment(tools=['nasm'], ASFLAGS = ' -felf -dELF -O1 -w+orphan-labels -w-number-overflow -ix86/')
+    env = Environment(tools=['nasm'], ASFLAGS = ' -felf32 -Ox -w+orphan-labels -w-number-overflow -ix86/')
+    env2 = Environment(tools=['nasm'], ASFLAGS = ' -felf32 -O1 -w+orphan-labels -w-number-overflow -ix86/')
 
     if version == 'cdgog':
         obj = env2.Object('war-asm-cdgog_linux.asm')

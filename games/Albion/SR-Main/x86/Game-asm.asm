@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2018 Roman Pauer
+;;  Copyright (C) 2016-2019 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -23,7 +23,7 @@
 %include "misc.inc"
 %include "asm_xti.inc"
 
-%ifndef ELF
+%ifidn __OUTPUT_FORMAT__, win32
     %define Game_ESP_Original_Value _Game_ESP_Original_Value
     %define Game_MouseTable _Game_MouseTable
     %define Game_Palette_Or _Game_Palette_Or
@@ -77,7 +77,7 @@ global Game_RunProcReg2_Asm
 global _Game_RunProcReg2_Asm
 
 
-%ifdef ELF
+%ifidn __OUTPUT_FORMAT__, elf32
 section .text progbits alloc exec nowrite align=16
 %else
 section .text code align=16

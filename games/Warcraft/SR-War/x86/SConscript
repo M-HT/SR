@@ -40,33 +40,22 @@ SourceFileScanner.add_scanner('.asm', nasmscan)
 if device == 'pc-linux':
     env = Environment(tools=['nasm'], ASFLAGS = ' -felf32 -Ox -w+orphan-labels -w-number-overflow -ix86/')
     env2 = Environment(tools=['nasm'], ASFLAGS = ' -felf32 -O1 -w+orphan-labels -w-number-overflow -ix86/')
-
-    if version == 'cdgog':
-        obj = env2.Object('war-asm-cdgog_linux.asm')
-    elif version == 'cd':
-        obj = env2.Object('war-asm-cd_linux.asm')
-    else:
-        obj = env2.Object('war-asm_linux.asm')
 else:
     env = Environment(tools=['nasm'], ASFLAGS = ' -fwin32 -Ox -w+orphan-labels -w-number-overflow -ix86/')
     env2 = Environment(tools=['nasm'], ASFLAGS = ' -fwin32 -O1 -w+orphan-labels -w-number-overflow -ix86/')
 
-    if version == 'cdgog':
-        obj = env2.Object('war-asm-cdgog.asm')
-    elif version == 'cd':
-        obj = env2.Object('war-asm-cd.asm')
-    else:
-        obj = env2.Object('war-asm.asm')
+if version == 'cdgog':
+    obj = env2.Object('war-asm-cdgog.asm')
+elif version == 'cd':
+    obj = env2.Object('war-asm-cd.asm')
+else:
+    obj = env2.Object('war-asm.asm')
 
 asm_sources = Glob('*.asm', strings = True)
 if 'war-asm.asm' in asm_sources:
     asm_sources.remove('war-asm.asm')
-if 'war-asm_linux.asm' in asm_sources:
-    asm_sources.remove('war-asm_linux.asm')
 asm_sources.remove('war-asm-cd.asm')
-asm_sources.remove('war-asm-cd_linux.asm')
 asm_sources.remove('war-asm-cdgog.asm')
-asm_sources.remove('war-asm-cdgog_linux.asm')
 
 obj = obj + env.Object(asm_sources)
 

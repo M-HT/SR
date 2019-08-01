@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -159,7 +159,7 @@ static void SR_write_output_line(output_data *item, void *data)
 #undef DATA
 }
 
-int SR_write_output(const char *fname, int x86linux)
+int SR_write_output(const char *fname)
 {
     Entry_FILE EF;
     int first_data, first_code;
@@ -234,36 +234,39 @@ int SR_write_output(const char *fname, int x86linux)
                 break;
 #elif (OUTPUT_TYPE == OUT_X86)
             case ST_CODE:
-                if (x86linux)
-                {
-                    fprintf(EF.fout, "\nsection %s progbits alloc exec nowrite align=16\n", section[EF.Entry].name);
-                }
-                else
-                {
-                    fprintf(EF.fout, "\nsection %s code align=16\n", section[EF.Entry].name);
-                }
+                fprintf(EF.fout, "\n%%ifidn __OUTPUT_FORMAT__, elf32\n");
+                fprintf(EF.fout, "section %s progbits alloc exec nowrite align=16\n", section[EF.Entry].name);
+                fprintf(EF.fout, "%%else\n");
+                fprintf(EF.fout, "section %s code align=16\n", section[EF.Entry].name);
+                fprintf(EF.fout, "%%endif\n");
                 break;
             case ST_DATA:
             case ST_STACK:
+                fprintf(EF.fout, "\n%%ifidn __OUTPUT_FORMAT__, elf32\n");
+                fprintf(EF.fout, "section %s progbits alloc noexec write align=4\n", section[EF.Entry].name);
+                fprintf(EF.fout, "%%else\n");
+                fprintf(EF.fout, "section %s data align=4\n", section[EF.Entry].name);
+                fprintf(EF.fout, "%%endif\n");
+                break;
             case ST_UDATA:
-                if (x86linux)
-                {
-                    fprintf(EF.fout, "\nsection %s progbits alloc noexec write align=4\n", section[EF.Entry].name);
-                }
-                else
-                {
-                    fprintf(EF.fout, "\nsection %s data align=4\n", section[EF.Entry].name);
-                }
+                fprintf(EF.fout, "\n%%ifidn __OUTPUT_FORMAT__, elf32\n");
+                fprintf(EF.fout, "section %s nobits alloc noexec write align=4\n", section[EF.Entry].name);
+                fprintf(EF.fout, "%%else\n");
+                fprintf(EF.fout, "section %s bss align=4\n", section[EF.Entry].name);
+                fprintf(EF.fout, "%%endif\n");
                 break;
 #else
             case ST_CODE:
-/*				fprintf(EF.fout, "\n.section %s, \"x\", %%progbits\n", section[EF.Entry].name);*/
+/*				fprintf(EF.fout, "\n.section %s, \"ax\", %%progbits\n", section[EF.Entry].name);*/
                 fprintf(EF.fout, "\n.section %s\n", section[EF.Entry].name);
                 break;
             case ST_DATA:
             case ST_STACK:
+/*				fprintf(EF.fout, "\n.section %s, \"aw\", %%progbits\n", section[EF.Entry].name);*/
+                fprintf(EF.fout, "\n.section %s\n", section[EF.Entry].name);
+                break;
             case ST_UDATA:
-/*				fprintf(EF.fout, "\n.section %s, \"w\", %%progbits\n", section[EF.Entry].name);*/
+/*				fprintf(EF.fout, "\n.section %s, \"aw\", %%nobits\n", section[EF.Entry].name);*/
                 fprintf(EF.fout, "\n.section %s\n", section[EF.Entry].name);
                 break;
 #endif
@@ -282,22 +285,17 @@ int SR_write_output(const char *fname, int x86linux)
             fprintf(EF.fout, "%%include \"%s\"\n", (char *) &(incname[0]));
         #endif
 
-        #if (OUTPUT_TYPE == OUT_X86)
-            if (!x86linux)
-        #endif
-            {
-                fmain = EF.fout;
+            fmain = EF.fout;
 
-                EF.fout = fopen((char *) &(incname[0]), "wt");
+            EF.fout = fopen((char *) &(incname[0]), "wt");
 
-                if ( EF.fout == NULL ) return -1;
+            if ( EF.fout == NULL ) return -1;
 
-                section_output_list_ForEach(EF.Entry, &SR_write_output_line, (void *) &EF);
+            section_output_list_ForEach(EF.Entry, &SR_write_output_line, (void *) &EF);
 
-                fclose(EF.fout);
+            fclose(EF.fout);
 
-                EF.fout = fmain;
-            }
+            EF.fout = fmain;
         }
 
 #if (OUTPUT_TYPE != OUT_ORIG)
@@ -360,14 +358,11 @@ int SR_write_output(const char *fname, int x86linux)
             fprintf(EF.fout, "%s\n", "%include \"code_dos.inc\"");
         #endif
         #if (OUTPUT_TYPE == OUT_X86)
-            if (x86linux)
-            {
-                fprintf(EF.fout, "%s\n", "%include \"code_linux.inc\"");
-            }
-            else
-            {
-                fprintf(EF.fout, "%s\n", "%include \"code_win32.inc\"");
-            }
+            fprintf(EF.fout, "%%ifidn __OUTPUT_FORMAT__, elf32\n");
+            fprintf(EF.fout, "%s\n", "%include \"code_linux.inc\"");
+            fprintf(EF.fout, "%%else\n");
+            fprintf(EF.fout, "%s\n", "%include \"code_win32.inc\"");
+            fprintf(EF.fout, "%%endif\n");
         #endif
             fprintf(EF.fout, "%s\n", "%endif");
     #endif

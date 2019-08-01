@@ -40,17 +40,14 @@ SourceFileScanner.add_scanner('.asm', nasmscan)
 if device == 'pc-linux':
     env = Environment(tools=['nasm'], ASFLAGS = ' -felf32 -Ox -w+orphan-labels -w-number-overflow -ix86/')
     env2 = Environment(tools=['nasm'], ASFLAGS = ' -felf32 -O1 -w+orphan-labels -w-number-overflow -ix86/')
-
-    obj = env2.Object('geoscape-asm_linux.asm')
 else:
     env = Environment(tools=['nasm'], ASFLAGS = ' -fwin32 -Ox -w+orphan-labels -w-number-overflow -ix86/')
     env2 = Environment(tools=['nasm'], ASFLAGS = ' -fwin32 -O1 -w+orphan-labels -w-number-overflow -ix86/')
 
-    obj = env2.Object('geoscape-asm.asm')
+obj = env2.Object('geoscape-asm.asm')
 
 asm_sources = Glob('*.asm', strings = True)
 asm_sources.remove('geoscape-asm.asm')
-asm_sources.remove('geoscape-asm_linux.asm')
 
 obj = obj + env.Object(asm_sources)
 

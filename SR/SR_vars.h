@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -69,7 +69,7 @@ int SR_LoadSCI(void);
 int SR_initial_disassembly(void);
 int SR_apply_fixup_info(void);
 int SR_full_disassembly(void);
-int SR_write_output(const char *fname, int x86linux);
+int SR_write_output(const char *fname);
 
 
 

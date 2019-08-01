@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -406,7 +406,7 @@ int main (int argc, char *argv[])
 	fprintf(stderr, "Writing output...\n");
 
 //	ret = SR_write_output("Albion-main.asm");
-	ret = SR_write_output(output_name, 0);
+	ret = SR_write_output(output_name);
 
 	if (ret != 0)
 	{
@@ -414,41 +414,6 @@ int main (int argc, char *argv[])
 		deinitialize_values();
 		return 7;
 	}
-
-#if (OUTPUT_TYPE == OUT_X86)
-	write_log_time(stderr);
-	fprintf(stderr, "Writing linux output...\n");
-
-    {
-        char *x86linuxname, *dotptr;
-
-        x86linuxname = (char *) malloc(strlen(output_name) + 7);
-
-        strcpy(x86linuxname, output_name);
-
-        dotptr = strrchr(output_name, '.');
-        if (dotptr != NULL)
-        {
-            strcpy((char *) &(x86linuxname[dotptr - output_name]), "_linux");
-            strcpy((char *) &(x86linuxname[6 + dotptr - output_name]), dotptr);
-        }
-        else
-        {
-            strcat(x86linuxname, "_linux");
-        }
-
-        ret = SR_write_output(x86linuxname, 1);
-
-        free(x86linuxname);
-    }
-
-	if (ret != 0)
-	{
-		fprintf(stderr, "Error: %i\n", ret);
-		deinitialize_values();
-		return 8;
-	}
-#endif
 
 	write_log_time(stderr);
 	fprintf(stderr, "Finishing...\n");

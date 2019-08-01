@@ -20,6 +20,10 @@ global stack_start
 global _stack_start
 
 %ifidn __OUTPUT_FORMAT__, elf32
+section .note.GNU-stack noalloc noexec nowrite progbits
+%endif
+
+%ifidn __OUTPUT_FORMAT__, elf32
 section cseg01 progbits alloc exec nowrite align=16
 %else
 section cseg01 code align=16

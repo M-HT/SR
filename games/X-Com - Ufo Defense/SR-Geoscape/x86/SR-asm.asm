@@ -53,6 +53,7 @@ global SR_RunTimerDelay
 global _SR_RunTimerDelay
 
 %ifidn __OUTPUT_FORMAT__, elf32
+section .note.GNU-stack noalloc noexec nowrite progbits
 section .text progbits alloc exec nowrite align=16
 %else
 section .text code align=16

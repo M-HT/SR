@@ -37,6 +37,7 @@ global sub_8B6BB
 global _sub_8B6BB
 
 %ifidn __OUTPUT_FORMAT__, elf32
+section .note.GNU-stack noalloc noexec nowrite progbits
 section .text progbits alloc exec nowrite align=16
 %else
 section .text code align=16

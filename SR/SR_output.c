@@ -217,6 +217,14 @@ int SR_write_output(const char *fname)
     #endif
 #endif
 
+#if (OUTPUT_TYPE == OUT_X86)
+    fprintf(EF.fout, "\n%%ifidn __OUTPUT_FORMAT__, elf32\n");
+    fprintf(EF.fout, "section .note.GNU-stack noalloc noexec nowrite progbits\n");
+    fprintf(EF.fout, "%%endif\n");
+#elif (OUTPUT_TYPE == OUT_ARM_LINUX)
+    fprintf(EF.fout, "\n.section .note.GNU-stack,\"\",%%progbits\n");
+#endif
+
     for (EF.Entry = 0; EF.Entry < num_sections; EF.Entry++)
     {
         switch (section[EF.Entry].type)

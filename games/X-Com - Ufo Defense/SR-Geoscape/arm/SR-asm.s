@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016 Roman Pauer
+@@  Copyright (C) 2016-2019 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -54,6 +54,7 @@
 .global SR_RunTimerDelay
 .global _SR_RunTimerDelay
 
+.section .note.GNU-stack,"",%progbits
 .section .text
 
 SR_SlowDownMainLoop:

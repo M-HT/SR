@@ -18,6 +18,10 @@
 .global _default_sample_volume
 .global default_sequence_volume
 .global _default_sequence_volume
+.global stack_start
+.global _stack_start
+
+.section .note.GNU-stack,"",%progbits
 
 .section .text
 .include "cdver/seg01.inc"

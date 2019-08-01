@@ -53,6 +53,7 @@ global _Z17Game_RunTimer_Asmv
 global __Z17Game_RunTimer_Asmv
 
 %ifidn __OUTPUT_FORMAT__, elf32
+section .note.GNU-stack noalloc noexec nowrite progbits
 section .text progbits alloc exec nowrite align=16
 %else
 section .text code align=16

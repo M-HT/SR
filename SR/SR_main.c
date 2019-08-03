@@ -83,7 +83,17 @@ int SR_get_section_reladr(uint_fast32_t Address, uint_fast32_t *SecNum, uint_fas
 	for (Entry = 0; Entry < num_sections; Entry++)
 	{
 		if (Address >= section[Entry].start &&
-			Address <= section[Entry].start + section[Entry].size)
+			Address < section[Entry].start + section[Entry].size)
+		{
+			*SecNum = Entry;
+			*RelAdr = Address - section[Entry].start;
+
+			return 1;
+		}
+	}
+	for (Entry = 0; Entry < num_sections; Entry++)
+	{
+		if (Address == section[Entry].start + section[Entry].size)
 		{
 			*SecNum = Entry;
 			*RelAdr = Address - section[Entry].start;

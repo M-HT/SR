@@ -18,6 +18,8 @@ def Compact (cFile):
             else:
                 if iNum == 1:
                     fOut.write(cRepStr)
+                elif cRepStr.startswith(".skip"):
+                    fOut.write(".skip " + str(iNum) + "\n")
                 elif iNum == 2:
                     fOut.write(cRepStr)
                     fOut.write(cRepStr)
@@ -30,12 +32,17 @@ def Compact (cFile):
             if cLine.startswith(".byte "):
                 iNum = 1
                 cRepStr = cLine
+            elif cLine.strip() == ".skip 1":
+                iNum = 1
+                cRepStr = cLine
             else:
                 fOut.write(cLine)
 
     if iNum != 0:
         if iNum == 1:
             fOut.write(cRepStr)
+        elif cRepStr.startswith(".skip"):
+            fOut.write(".skip " + str(iNum) + "\n")
         elif iNum == 2:
             fOut.write(cRepStr)
             fOut.write(cRepStr)
@@ -57,3 +64,4 @@ Compact(cPath + "seg05.inc")
 Compact(cPath + "seg06.inc")
 Compact(cPath + "seg07.inc")
 Compact(cPath + "seg08.inc")
+Compact(cPath + "seg09.inc")

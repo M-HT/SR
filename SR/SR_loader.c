@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -293,6 +293,85 @@ static void unload_file(memory_file *mem_file)
 }
 
 
+static int LoadBssBorder(void)
+{
+    char buf[8192];
+    char *str1;
+    FILE *file;
+    uint_fast32_t BssObject, BssOffset;
+    int length, BssAlignMinus;
+    unsigned int BssAddress;
+
+    file = fopen("bssborder.csv", "rt");
+    if (file == NULL) return 0;
+
+    while (!feof(file))
+    {
+        // read enters
+        fscanf(file, "%8192[\n]", buf);
+        // read line
+        buf[0] = 0;
+        fscanf(file, "%8192[^\n]", buf);
+        length = strlen(buf);
+        if (length != 0 && buf[length - 1] == '\r')
+        {
+            length--;
+            buf[length] = 0;
+        }
+
+        if (length == 0) continue;
+
+        str1 = strchr(buf, ',');
+
+        if (str1 != NULL)
+        {
+            *str1 = 0;
+            str1++;
+
+            sscanf(str1, "%i", &BssAlignMinus);
+        }
+        else
+        {
+            BssAlignMinus = 0;
+        }
+
+        sscanf(buf, "%i", &BssAddress);
+
+        if (!SR_get_section_reladr(BssAddress, &BssObject, &BssOffset))
+        {
+            fprintf(stderr, "Error: wrong bss address: 0x%x\n", BssAddress);
+            return 1;
+        }
+
+        if ((section[BssObject].type != ST_DATA) && (section[BssObject].type != ST_STACK))
+        {
+            fprintf(stderr, "Error: wrong bss section type: 0x%x - %i\n", BssAddress, section[BssObject].type);
+            return 2;
+        }
+
+        section[num_sections] = section[BssObject];
+        section[num_sections].size -= BssOffset;
+        section[num_sections].size_in_file = 0;
+        section[num_sections].start += BssOffset;
+        section[num_sections].adr += BssOffset;
+        section[num_sections].type = ST_UDATA;
+#if (OUTPUT_TYPE == OUT_ARM_LINUX)
+        strcpy(section[num_sections].name, ".bss");
+#else
+        sprintf(section[num_sections].name, "useg%.2i", num_sections + 1);
+#endif
+        num_sections++;
+
+        section[BssObject].size = BssOffset + BssAlignMinus;
+        if (section[BssObject].size_in_file > BssOffset + BssAlignMinus)
+        {
+            section[BssObject].size_in_file = BssOffset + BssAlignMinus;
+        }
+    }
+
+    return 0;
+}
+
 static int add_fixup(unsigned int Entry, uint_fast32_t SourceOffset, uint_fast32_t TargetObject, int_fast32_t TargetOffset, fixup_type FixupType)
 {
     fixup_data *fixup;
@@ -529,6 +608,26 @@ int SR_LoadFile(const char *fname)
 		}
 	}
 
+#if ((OUTPUT_TYPE != OUT_ORIG) && (OUTPUT_TYPE != OUT_DOS))
+    // try to split uninitialized data into bss section
+    if (LoadBssBorder())
+    {
+        unload_file(&mf);
+        fprintf(stderr, "Error: error loading bss border\n");
+        return -1;
+    }
+
+    if (ESP >= section[ESPObjectNum].size)
+    {
+        uint_fast32_t SecNum, RelAdr;
+        if (SR_get_section_reladr(section[ESPObjectNum].start + ESP, &SecNum, &RelAdr))
+        {
+            ESPObjectNum = SecNum;
+            ESP = RelAdr;
+        }
+    }
+#endif
+
 	// create fixup table
 	{
 		unsigned int Entry, CurPage, RemainingPages, TargetIs32Bit;
@@ -608,6 +707,19 @@ int SR_LoadFile(const char *fname)
 						TargetOffset = *((uint16_t *) &(FixupRecordTable[CurIndex + 5]));
 						CurIndex += 7;
 					}
+
+                    if (TargetOffset != 0x80000000)
+                    {
+                        if (TargetOffset >= section[TargetObject - 1].size)
+                        {
+                            uint_fast32_t SecNum, RelAdr;
+                            if (SR_get_section_reladr(section[TargetObject - 1].start + TargetOffset, &SecNum, &RelAdr))
+                            {
+                                TargetObject = SecNum + 1;
+                                TargetOffset = RelAdr;
+                            }
+                        }
+                    }
 
                     if (FixupType == FT_SEGOFS32)
                     {

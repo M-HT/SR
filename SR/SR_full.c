@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -41,6 +41,19 @@ output_data *SR_disassemble_offset_init_output(unsigned int SecNum, uint_fast32_
 {
     output_data *output;
     unsigned int index;
+
+    if (offset + length == section[SecNum].size)
+    {
+        output = section_output_list_FindEntryEqual(SecNum, offset + length);
+        if (output != NULL)
+        {
+            if (NULL == section_alias_list_FindEntryEqual(SecNum, offset + length))
+            {
+                output->has_label = 0;
+                output->align = 0;
+            }
+        }
+    }
 
     for (index = length - 1; index != 0; index--)
     {

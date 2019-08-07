@@ -34,3 +34,6 @@
 .ifdef DEBUG
 .include "data_all.inc"
 .endif
+
+.section .bss
+.include "cdver/seg03.inc"

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -318,9 +318,13 @@ static void SR_get_fixup_label(char *cResult, const fixup_data *fixup, const ext
     {
         output = section_output_list_FindEntryEqualOrLower(fixup->tsec, fixup->tofs + *label_value);
     }
-    else
+    else if (fixup->tofs >= 0)
     {
         output = section_output_list_FindEntryEqualOrLower(fixup->tsec, fixup->tofs);
+    }
+    else
+    {
+        output = section_output_list_FindEntryEqualOrHigher(fixup->tsec, 0);
     }
 
     // set label to target address

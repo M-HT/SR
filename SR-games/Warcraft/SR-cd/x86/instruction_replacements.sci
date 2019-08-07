@@ -60,3 +60,39 @@ loc_38995,3,xor ecx, ecx ; skip loading selector access rights
 loc_389E6,3,xor ecx, ecx ; skip loading selector access rights
 loc_38A49,3,xor ecx, ecx ; skip loading selector access rights
 loc_38AAC,3,xor ecx, ecx ; skip loading selector access rights
+
+
+loc_318B3,45, ; CLIB code
+loc_31CEA,72, ; CLIB code
+loc_31E0F,31, ; CLIB code
+loc_31E34,44, ; CLIB code
+loc_320A2,30, ; CLIB code
+loc_320E7,57, ; CLIB code
+loc_33877,425, ; CLIB code
+loc_33B32,26, ; CLIB code
+loc_33B94,1052, ; CLIB code
+loc_34045,203, ; CLIB code
+loc_3416A,438, ; CLIB code
+loc_34617,729, ; CLIB code
+loc_349C3,139, ; CLIB code
+loc_34A52,14, ; CLIB code
+loc_3AD3B,227, ; CLIB code
+loc_3AE1E,1570, ; CLIB code
+loc_3B4D0,1328, ; CLIB code
+loc_3BA2D,4227, ; CLIB code
+loc_3CD5F,865, ; CLIB code
+loc_3D3D7,503, ; CLIB code
+loc_3D62E,2802, ; CLIB code
+loc_4018A,2182, ; CLIB code
+loc_40A41,2911, ; CLIB code
+loc_41885,2322, ; CLIB code
+
+loc_555C4,544, ; CLIB data
+loc_565E4,100, ; CLIB data
+loc_5666C,272, ; CLIB data
+loc_56780,596, ; CLIB data
+loc_5861A,102, ; CLIB data
+
+loc_632C4,1100, ; CLIB data
+loc_63718,12, ; CLIB data
+loc_63724,8204, ; stack

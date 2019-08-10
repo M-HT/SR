@@ -63,3 +63,21 @@ loc_58A45,2,@jnb short loc_58A4E|bhs loc_58A4E|mrs tmp1, cpsr|eor tmp1, tmp1, #0
 
 loc_58D92,2,@adc edi, edi|mrs tmp1, cpsr|eor tmp1, tmp1, #0x20000000|msr cpsr_f, tmp1|adc edi, edi, edi @ on ARM swap carry bit before instruction
 
+
+loc_51DB9,2323, @ CLIB code
+loc_52723,45, @ CLIB code
+loc_5278A,1614, @ CLIB code
+loc_52DF5,1110, @ CLIB code
+loc_5324C,13043, @ CLIB code
+loc_568B8,148, @ CLIB code
+loc_59766,4842, @ CLIB code
+
+loc_6100C,380, @ CLIB data
+loc_6128C,208, @ CLIB data
+loc_74E88,656, @ CLIB data
+loc_75120,360, @ CLIB data
+loc_75304,192, @ CLIB data
+
+loc_7D5DC,16, @ CLIB data
+loc_7D5F0,176, @ CLIB data
+loc_7D6A0,4096, @ stack

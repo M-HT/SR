@@ -73,3 +73,23 @@ loc_4FEE9,2,@jnb short loc_4FEF2|bhs loc_4FEF2|mrs tmp1, cpsr|eor tmp1, tmp1, #0
 loc_50236,2,@adc edi, edi|mrs tmp1, cpsr|eor tmp1, tmp1, #0x20000000|msr cpsr_f, tmp1|adc edi, edi, edi @ on ARM swap carry bit before instruction
 
 loc_20D5B,5,.ltorg @ insert .ltorg after retn
+
+
+loc_476BA,2195, @ CLIB code
+loc_49538,264, @ CLIB code
+loc_49697,45, @ CLIB code
+loc_496FE,2106, @ CLIB code
+loc_49F55,124, @ CLIB code
+loc_49FD2,2484, @ CLIB code
+loc_4AF0A,10969, @ CLIB code
+loc_50C0A,4828, @ CLIB code
+
+loc_60A9C,368, @ CLIB data
+loc_60D10,208, @ CLIB data
+loc_690BC,636, @ CLIB data
+loc_69340,380, @ CLIB data
+loc_69538,192, @ CLIB data
+
+loc_6C9FC,16, @ CLIB data
+loc_6CA10,176, @ CLIB data
+loc_6CAC0,4096, @ stack

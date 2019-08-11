@@ -69,3 +69,19 @@ loc_23BEB,2,xor ch, ch|or edx, edx|jne loc_23BEB|mov edx, [Zero_Segment]|loc_23B
 loc_2E276,2,add edx, ecx|movsx eax, word [loc_8D0F6]|movsx ecx, word [loc_8D0F8]|imul eax, ecx|cmp edx, eax|jb loc_2E278|mov eax, [Zero_Segment]|mov dword [eax], 0|jmp short loc_2E286|loc_2E278: ; fix out of bounds access
 loc_2E286,1,loc_2E286:|pop esi ; fix out of bounds access
 
+
+loc_4AE5E,2195, ; CLIB code
+loc_4CE4E,500, ; CLIB code
+loc_4D08C,661, ; CLIB code
+loc_4D3B2,3416, ; CLIB code
+loc_4E68E,2037, ; CLIB code
+loc_4EE89,6, ; CLIB code
+loc_4EEA6,8600, ; CLIB code
+
+loc_74FB8,24, ; CLIB data
+loc_75020,564, ; CLIB data
+loc_75290,340, ; CLIB data
+
+loc_937C4,16, ; CLIB data
+loc_937D8,48, ; CLIB data
+loc_93808,4104, ; stack

@@ -71,3 +71,19 @@ loc_2E286,1,loc_2E286:|@pop esi|POP_REG esi| @ fix out of bounds access
 
 loc_3E4F0,3376,.ltorg @ insert .ltorg after retn
 
+
+loc_4AE5E,2195, @ CLIB code
+loc_4CE4E,500, @ CLIB code
+loc_4D08C,661, @ CLIB code
+loc_4D3B2,3416, @ CLIB code
+loc_4E68E,2037, @ CLIB code
+loc_4EE89,6, @ CLIB code
+loc_4EEA6,8600, @ CLIB code
+
+loc_74FB8,24, @ CLIB data
+loc_75020,564, @ CLIB data
+loc_75290,340, @ CLIB data
+
+loc_937C4,16, @ CLIB data
+loc_937D8,48, @ CLIB data
+loc_93808,4104, @ stack

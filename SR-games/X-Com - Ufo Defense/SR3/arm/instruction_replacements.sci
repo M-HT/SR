@@ -19,3 +19,17 @@ loc_10922,4,@call SR_RunTimerDelay|ADR tmp1, loc_10922_after_call|stmfd esp!, {t
 loc_10B31,2,@call SR_RunTimerDelay|ADR tmp1, loc_10B31_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_10B31_after_call:|@cmp edx, eax|cmp edx, eax @ update timer
 
 loc_11B11,220,@lea eax, [ebp-0x40]|sub eax, ebp, #0x40|@mov edx, [ebp-8]|ldr edx, [ebp, #(-8)]|@mov ebx, [loc_21774]|LDR tmpadr, =loc_21774|ldr ebx, [tmpadr]|@call SR_ReadSong|ADR tmp1, loc_11B11_after_call|stmfd esp!, {tmp1}|b SR_ReadSong|LTORG_CALL|loc_11B11_after_call:|@or eax, eax|cmp eax, #0|@jz loc_11C21|beq loc_11C21 @ music - load midi or song from catalog
+
+
+loc_111E8,72, @ CLIB code
+loc_12B02,258, @ CLIB code
+loc_12C1F,2409, @ CLIB code
+loc_13AB2,2312, @ CLIB code
+loc_143E2,8452, @ CLIB code
+
+loc_20BC8,96, @ CLIB data
+loc_20C3C,712, @ CLIB data
+
+loc_218BC,20, @ CLIB data
+loc_218D4,8, @ CLIB data
+loc_218DC,4100, @ stack

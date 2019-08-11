@@ -32,6 +32,10 @@ extern Game_stdin
 extern Game_stdout
 extern Game_stderr
 
+extern SR_acos2
+extern SR_asin2
+extern SR_asin2_2
+
 extern SR_SlowDownMainLoop
 extern SR_Sync
 extern SR_CheckTimer

@@ -19,3 +19,17 @@ loc_10922,4,call SR_RunTimerDelay|cmp ax, [ebp-8] ; update timer
 loc_10B31,2,call SR_RunTimerDelay|cmp edx, eax ; update timer
 
 loc_11B11,220,lea eax, [ebp-0x40]|mov edx, [ebp-8]|mov ebx, [loc_21774]|call SR_ReadSong|or eax, eax|jz loc_11C21 ; music - load midi or song from catalog
+
+
+loc_111E8,72, ; CLIB code
+loc_12B02,258, ; CLIB code
+loc_12C1F,2409, ; CLIB code
+loc_13AB2,2312, ; CLIB code
+loc_143E2,8452, ; CLIB code
+
+loc_20BC8,96, ; CLIB data
+loc_20C3C,712, ; CLIB data
+
+loc_218BC,20, ; CLIB data
+loc_218D4,8, ; CLIB data
+loc_218DC,4100, ; stack

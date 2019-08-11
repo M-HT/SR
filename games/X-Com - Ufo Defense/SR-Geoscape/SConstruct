@@ -144,7 +144,7 @@ audio_objs = SConscript('audio/SConscript', exports='device env')
 input_objs = SConscript('input/SConscript', exports='device env')
 
 if device == 'pc-windows' or device == 'pc-linux':
-    arch_objs = SConscript('x86/SConscript', exports='device')
+    arch_objs = SConscript('x86/SConscript', exports='device env')
 else:
     arch_objs = SConscript('arm/SConscript', exports='device env')
 

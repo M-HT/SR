@@ -84,7 +84,6 @@ extern SR_Call_Asm_Float1
 
 extern SR_Sync
 extern SR_CheckTimer
-extern SR_RunTimerDelay
 
 ; null procedures
 extern SR___CHK

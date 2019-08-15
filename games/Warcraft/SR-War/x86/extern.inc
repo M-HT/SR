@@ -41,7 +41,6 @@ extern Game_stderr
 
 extern SR_Sync
 extern SR_CheckTimer
-extern SR_RunTimerDelay
 
 ; null procedures
 extern SR___GETDS

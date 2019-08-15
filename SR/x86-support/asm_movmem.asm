@@ -57,14 +57,28 @@ x86_mov_reg_mem_8:
 ; [esp + 10*4] = address
 ; [esp +  9*4] = return address
 
+    ; remember original esp value
+        mov eax, esp
+    ; reserve 12 bytes on stack
+        sub esp, byte 12
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        mov [esp + 2*4], eax
+    ; adjust stack for function arguments, so that stack is aligned to 16 bytes before call
+        add esp, byte 8
+
+    ; push function arguments to stack
         push byte 1             ; register length
-        push dword [esp + 4*11] ; address
+        push dword [eax + 10*4] ; address
+    ; stack is aligned to 16 bytes
 
         call X86_ReadMemProcedure
 
-        add esp, byte 4*2
+    ; restore original esp value from stack
+        mov esp, [esp + 2*4]
 
-        mov [esp + 4*10], al
+        mov [esp + 10*4], al
 
         popad
         popfd
@@ -85,14 +99,28 @@ x86_mov_reg_mem_16:
 ; [esp + 10*4] = address
 ; [esp +  9*4] = return address
 
+    ; remember original esp value
+        mov eax, esp
+    ; reserve 12 bytes on stack
+        sub esp, byte 12
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        mov [esp + 2*4], eax
+    ; adjust stack for function arguments, so that stack is aligned to 16 bytes before call
+        add esp, byte 8
+
+    ; push function arguments to stack
         push byte 2             ; register length
-        push dword [esp + 4*11] ; address
+        push dword [eax + 10*4] ; address
+    ; stack is aligned to 16 bytes
 
         call X86_ReadMemProcedure
 
-        add esp, byte 4*2
+    ; restore original esp value from stack
+        mov esp, [esp + 2*4]
 
-        mov [esp + 4*10], ax
+        mov [esp + 10*4], ax
 
         popad
         popfd
@@ -113,14 +141,28 @@ x86_mov_reg_mem_32:
 ; [esp + 10*4] = address
 ; [esp +  9*4] = return address
 
+    ; remember original esp value
+        mov eax, esp
+    ; reserve 12 bytes on stack
+        sub esp, byte 12
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        mov [esp + 2*4], eax
+    ; adjust stack for function arguments, so that stack is aligned to 16 bytes before call
+        add esp, byte 8
+
+    ; push function arguments to stack
         push byte 4             ; register length
-        push dword [esp + 4*11] ; address
+        push dword [eax + 10*4] ; address
+    ; stack is aligned to 16 bytes
 
         call X86_ReadMemProcedure
 
-        add esp, byte 4*2
+    ; restore original esp value from stack
+        mov esp, [esp + 2*4]
 
-        mov [esp + 4*10], eax
+        mov [esp + 10*4], eax
 
         popad
         popfd
@@ -144,13 +186,23 @@ x86_mov_mem_reg_8:
 ; [esp + 10*4] = address
 ; [esp +  9*4] = return address
 
-        push dword [esp + 4*11] ; value
+    ; remember original esp value
+        mov eax, esp
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        push eax
+
+    ; push function arguments to stack
+        push dword [eax + 11*4] ; value
         push byte 1             ; register length
-        push dword [esp + 4*12] ; address
+        push dword [eax + 10*4] ; address
+    ; stack is aligned to 16 bytes
 
         call X86_WriteMemProcedure
 
-        add esp, byte 4*3
+    ; restore original esp value from stack
+        mov esp, [esp + 3*4]
 
         popad
         popfd
@@ -173,13 +225,23 @@ x86_mov_mem_reg_16:
 ; [esp + 10*4] = address
 ; [esp +  9*4] = return address
 
-        push dword [esp + 4*11] ; value
+    ; remember original esp value
+        mov eax, esp
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        push eax
+
+    ; push function arguments to stack
+        push dword [eax + 11*4] ; value
         push byte 2             ; register length
-        push dword [esp + 4*12] ; address
+        push dword [eax + 10*4] ; address
+    ; stack is aligned to 16 bytes
 
         call X86_WriteMemProcedure
 
-        add esp, byte 4*3
+    ; restore original esp value from stack
+        mov esp, [esp + 3*4]
 
         popad
         popfd
@@ -202,13 +264,23 @@ x86_mov_mem_reg_32:
 ; [esp + 10*4] = address
 ; [esp +  9*4] = return address
 
-        push dword [esp + 4*11] ; value
+    ; remember original esp value
+        mov eax, esp
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        push eax
+
+    ; push function arguments to stack
+        push dword [eax + 11*4] ; value
         push byte 4             ; register length
-        push dword [esp + 4*12] ; address
+        push dword [eax + 10*4] ; address
+    ; stack is aligned to 16 bytes
 
         call X86_WriteMemProcedure
 
-        add esp, byte 4*3
+    ; restore original esp value from stack
+        mov esp, [esp + 3*4]
 
         popad
         popfd

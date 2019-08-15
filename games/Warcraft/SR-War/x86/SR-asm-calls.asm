@@ -24,12 +24,9 @@
 
 %ifidn __OUTPUT_FORMAT__, win32
     %define Game_errno _Game_errno
-    %define Game_ReturnAddress _Game_ReturnAddress
-    %define Game_Registers _Game_Registers
 
-    %define Game_fprintf _Game_fprintf
-    %define Game_printf _Game_printf
-    %define Game_sprintf _Game_sprintf
+    %define vfprintf _vfprintf
+    %define vsprintf _vsprintf
     %define Game_open _Game_open
     %define Game_openFlags _Game_openFlags
 
@@ -115,14 +112,11 @@
 %endif
 
 extern Game_errno
-extern Game_ReturnAddress
-extern Game_Registers
 
 
 ; stack params
-extern Game_fprintf
-extern Game_printf
-extern Game_sprintf
+extern vfprintf
+extern vsprintf
 extern Game_open
 extern Game_openFlags
 
@@ -317,9 +311,23 @@ Game_Set_errno_Asm:
         push ecx
         push edx
 
+    ; remember original esp value
+        mov eax, esp
+    ; reserve 4 bytes on stack
+        sub esp, byte 4
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        mov [esp], eax
+
+    ; stack is aligned to 16 bytes
+
         call Game_errno
 
         mov [errno_val], eax
+
+    ; restore original esp value from stack
+        mov esp, [esp]
 
         pop edx
         pop ecx
@@ -348,8 +356,7 @@ SR_fprintf:
 ; [esp +   4] = FILE *fp
 ; [esp      ] = return address
 
-        ;Game_Call_Asm_Stack fprintf,'get_errno_val'
-        Game_Call_Asm_Stack0 Game_fprintf,'get_errno_val'
+        Call_Asm_VariableStack2 vfprintf,-1
 
 ; end procedure SR_fprintf
 
@@ -360,8 +367,7 @@ SR_printf:
 ; [esp +   4] = const char *format
 ; [esp      ] = return address
 
-        ;Game_Call_Asm_Stack printf,'get_errno_val'
-        Game_Call_Asm_Stack0 Game_printf,'get_errno_val'
+        Call_Asm_VariableStack1 vprintf,-1
 
 ; end procedure SR_printf
 
@@ -373,8 +379,7 @@ SR_sprintf:
 ; [esp +   4] = char *buf
 ; [esp      ] = return address
 
-        ;Game_Call_Asm_Stack sprintf,'get_errno_val'
-        Game_Call_Asm_Stack0 Game_sprintf,'get_errno_val'
+        Call_Asm_VariableStack2 vsprintf,-1
 
 ; end procedure SR_sprintf
 
@@ -389,15 +394,49 @@ SR_open:
 
 ; errno_val is set inside Game_open
 
-        push dword [esp + 2*4]				; access (flags)
+        push ecx
+        push edx
 
-        call Game_openFlags
+; [esp + 5*4] = ...
+; [esp + 4*4] = int access
+; [esp + 3*4] = const char *path
+; [esp +   4] = return address
 
-        mov [esp + 3*4], eax				; access (flags)
+    ; remember original esp value
+        mov eax, esp
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        push eax
 
-        add esp, byte 4
+    ; push function arguments to stack
+        push dword [eax + 5*4]				; ...
+        sub esp, byte 4
+        push dword [eax + 4*4]				; access (flags)
+    ; stack is aligned to 16 bytes
 
-        jmp Game_open
+        call Game_openFlags ; function has one argument
+
+    ; put function argument to stack
+        mov [esp + 1*4], eax				; access (flags)
+
+    ; get original esp value from stack
+        mov edx, [esp + 3*4]
+
+    ; get function argument from original stack
+        mov eax, [edx + 3*4]				; path
+    ; put function argument to stack
+        mov [esp], eax						; path
+
+        call Game_open ; function has three arguments
+
+    ; restore original esp value from stack
+        mov esp, [esp + 3*4]
+
+        pop edx
+        pop ecx
+
+        retn
 
 ; end procedure SR_open
 
@@ -407,7 +446,7 @@ SR_AIL_active_sample_count:
 ; [esp +   4] = void *dig
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_active_sample_count,-1
+        Game_Call_Asm_Stack1 Game_AIL_active_sample_count,-1
 
 ; end procedure SR_AIL_active_sample_count
 
@@ -417,7 +456,7 @@ SR_AIL_allocate_sample_handle:
 ; [esp +   4] = void *dig
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_allocate_sample_handle,-1
+        Game_Call_Asm_Stack1 Game_AIL_allocate_sample_handle,-1
 
 ; end procedure SR_AIL_allocate_sample_handle
 
@@ -427,7 +466,7 @@ SR_AIL_end_sample:
 ; [esp +   4] = AIL_sample *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_end_sample,-1
+        Game_Call_Asm_Stack1 Game_AIL_end_sample,-1
 
 ; end procedure SR_AIL_end_sample
 
@@ -437,7 +476,7 @@ SR_AIL_init_sample:
 ; [esp +   4] = AIL_sample *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_init_sample,-1
+        Game_Call_Asm_Stack1 Game_AIL_init_sample,-1
 
 ; end procedure SR_AIL_init_sample
 
@@ -448,7 +487,7 @@ SR_AIL_register_EOS_callback:
 ; [esp +   4] = AIL_sample *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_register_EOS_callback,-1
+        Game_Call_Asm_Stack2 Game_AIL_register_EOS_callback,-1
 
 ; end procedure SR_AIL_register_EOS_callback
 
@@ -458,7 +497,7 @@ SR_AIL_release_sample_handle:
 ; [esp +   4] = AIL_sample *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_release_sample_handle,-1
+        Game_Call_Asm_Stack1 Game_AIL_release_sample_handle,-1
 
 ; end procedure SR_AIL_release_sample_handle
 
@@ -468,7 +507,7 @@ SR_AIL_sample_status:
 ; [esp +   4] = AIL_sample *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_sample_status,-1
+        Game_Call_Asm_Stack1 Game_AIL_sample_status,-1
 
 ; end procedure SR_AIL_sample_status
 
@@ -479,7 +518,7 @@ SR_AIL_set_digital_master_volume:
 ; [esp +   4] = void *dig
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_set_digital_master_volume,-1
+        Game_Call_Asm_Stack2 Game_AIL_set_digital_master_volume,-1
 
 ; end procedure SR_AIL_set_digital_master_volume
 
@@ -491,7 +530,7 @@ SR_AIL_set_sample_address:
 ; [esp +   4] = AIL_sample *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_set_sample_address,-1
+        Game_Call_Asm_Stack3 Game_AIL_set_sample_address,-1
 
 ; end procedure SR_AIL_set_sample_address
 
@@ -502,7 +541,7 @@ SR_AIL_set_sample_loop_count:
 ; [esp +   4] = AIL_sample *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_set_sample_loop_count,-1
+        Game_Call_Asm_Stack2 Game_AIL_set_sample_loop_count,-1
 
 ; end procedure SR_AIL_set_sample_loop_count
 
@@ -513,7 +552,7 @@ SR_AIL_set_sample_pan:
 ; [esp +   4] = AIL_sample *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_set_sample_pan,-1
+        Game_Call_Asm_Stack2 Game_AIL_set_sample_pan,-1
 
 ; end procedure SR_AIL_set_sample_pan
 
@@ -524,7 +563,7 @@ SR_AIL_set_sample_playback_rate:
 ; [esp +   4] = AIL_sample *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_set_sample_playback_rate,-1
+        Game_Call_Asm_Stack2 Game_AIL_set_sample_playback_rate,-1
 
 ; end procedure SR_AIL_set_sample_playback_rate
 
@@ -536,7 +575,7 @@ SR_AIL_set_sample_type:
 ; [esp +   4] = AIL_sample *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_set_sample_type,-1
+        Game_Call_Asm_Stack3 Game_AIL_set_sample_type,-1
 
 ; end procedure SR_AIL_set_sample_type
 
@@ -547,7 +586,7 @@ SR_AIL_set_sample_volume:
 ; [esp +   4] = AIL_sample *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_set_sample_volume,-1
+        Game_Call_Asm_Stack2 Game_AIL_set_sample_volume,-1
 
 ; end procedure SR_AIL_set_sample_volume
 
@@ -557,7 +596,7 @@ SR_AIL_start_sample:
 ; [esp +   4] = AIL_sample *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_start_sample,-1
+        Game_Call_Asm_Stack1 Game_AIL_start_sample,-1
 
 ; end procedure SR_AIL_start_sample
 
@@ -568,7 +607,7 @@ SR_AIL_allocate_sequence_handle:
 ; [esp +   4] = void *mdi
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_allocate_sequence_handle,-1
+        Game_Call_Asm_Stack1 Game_AIL_allocate_sequence_handle,-1
 
 ; end procedure SR_AIL_allocate_sequence_handle
 
@@ -578,7 +617,7 @@ SR_AIL_end_sequence:
 ; [esp +   4] = AIL_sequence *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_end_sequence,-1
+        Game_Call_Asm_Stack1 Game_AIL_end_sequence,-1
 
 ; end procedure SR_AIL_end_sequence
 
@@ -590,7 +629,7 @@ SR_AIL_init_sequence:
 ; [esp +   4] = AIL_sequence *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_init_sequence,-1
+        Game_Call_Asm_Stack3 Game_AIL_init_sequence,-1
 
 ; end procedure SR_AIL_init_sequence
 
@@ -600,7 +639,7 @@ SR_AIL_release_sequence_handle:
 ; [esp +   4] = AIL_sequence *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_release_sequence_handle,-1
+        Game_Call_Asm_Stack1 Game_AIL_release_sequence_handle,-1
 
 ; end procedure SR_AIL_release_sequence_handle
 
@@ -610,7 +649,7 @@ SR_AIL_resume_sequence:
 ; [esp +   4] = AIL_sequence *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_resume_sequence,-1
+        Game_Call_Asm_Stack1 Game_AIL_resume_sequence,-1
 
 ; end procedure SR_AIL_resume_sequence
 
@@ -620,7 +659,7 @@ SR_AIL_sequence_status:
 ; [esp +   4] = AIL_sequence *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_sequence_status,-1
+        Game_Call_Asm_Stack1 Game_AIL_sequence_status,-1
 
 ; end procedure SR_AIL_sequence_status
 
@@ -631,7 +670,7 @@ SR_AIL_set_sequence_loop_count:
 ; [esp +   4] = AIL_sequence *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_set_sequence_loop_count,-1
+        Game_Call_Asm_Stack2 Game_AIL_set_sequence_loop_count,-1
 
 ; end procedure SR_AIL_set_sequence_loop_count
 
@@ -643,7 +682,7 @@ SR_AIL_set_sequence_volume:
 ; [esp +   4] = AIL_sequence *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_set_sequence_volume,-1
+        Game_Call_Asm_Stack3 Game_AIL_set_sequence_volume,-1
 
 ; end procedure SR_AIL_set_sequence_volume
 
@@ -653,7 +692,7 @@ SR_AIL_start_sequence:
 ; [esp +   4] = AIL_sequence *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_start_sequence,-1
+        Game_Call_Asm_Stack1 Game_AIL_start_sequence,-1
 
 ; end procedure SR_AIL_start_sequence
 
@@ -663,7 +702,7 @@ SR_AIL_stop_sequence:
 ; [esp +   4] = AIL_sequence *S
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack Game_AIL_stop_sequence,-1
+        Game_Call_Asm_Stack1 Game_AIL_stop_sequence,-1
 
 ; end procedure SR_AIL_stop_sequence
 

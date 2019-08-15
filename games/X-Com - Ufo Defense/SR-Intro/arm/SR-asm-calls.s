@@ -23,7 +23,6 @@
 .include "arm.inc"
 
 .extern Game_errno
-.extern Game_ReturnAddress
 .extern Game_Registers
 .extern Game_dlseek
 .extern Game_dopen

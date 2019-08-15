@@ -56,7 +56,21 @@ _draw_3dscene_proc:
 
 ; [esp + 3*4] = return address
 
+    ; remember original esp value
+        mov eax, esp
+    ; reserve 4 bytes on stack
+        sub esp, byte 4
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        mov [esp], eax
+
+    ; stack is aligned to 16 bytes
+
         call draw_3dscene
+
+    ; restore original esp value from stack
+        mov esp, [esp]
 
         pop edx
         pop ecx

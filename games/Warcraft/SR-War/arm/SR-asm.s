@@ -39,16 +39,12 @@
 
 .extern Game_Sync
 .extern Game_RunTimer
-.extern Game_RunTimerDelay
 
 .global SR_Sync
 .global _SR_Sync
 
 .global SR_CheckTimer
 .global _SR_CheckTimer
-
-.global SR_RunTimerDelay
-.global _SR_RunTimerDelay
 
 .section .note.GNU-stack,"",%progbits
 .section .text
@@ -101,23 +97,4 @@ _SR_CheckTimer:
         bx lr
 
 @ end procedure SR_CheckTimer
-
-SR_RunTimerDelay:
-_SR_RunTimerDelay:
-
-@ [esp       ] = return address
-
-        pushfd2
-
-@ [esp +  2*4] = return address
-
-        @call Game_RunTimerDelay
-        bl Game_RunTimerDelay
-
-        popfd2
-
-        @retn
-        ldmfd esp!, {eip}
-
-@ end procedure SR_RunTimerDelay
 

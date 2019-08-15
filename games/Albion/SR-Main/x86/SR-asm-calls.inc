@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2018 Roman Pauer
+;;  Copyright (C) 2016-2019 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -20,42 +20,32 @@
 ;;  SOFTWARE.
 ;;
 
-%macro  Game_Call_Asm_Stack 1-2 'get_errno_val'
-
-		pop eax
-		mov [Game_ReturnAddress], eax
-
-		mov [Game_Registers], ebx
-		mov [Game_Registers + 4], ecx
-		mov [Game_Registers + 8], edx
-
-		call %1
-
-%ifnum %2
-	%if %2 >= 0
-		mov dword [errno_val], %2
-	%endif
-%else
-		call Game_Set_errno_Asm
-%endif
-
-		mov ebx, [Game_Registers]
-		mov ecx, [Game_Registers + 4]
-		mov edx, [Game_Registers + 8]
-
-		jmp [Game_ReturnAddress]
-
-%endmacro
-
-%define Game_Call_Asm_Stack0 Game_Call_Asm_Stack
-
-
-%macro  Game_Call_Asm_Reg0 1-2 'get_errno_val'
+%macro  Call_Asm_VariableStack1 1-2 'get_errno_val'
 
 		push ecx
 		push edx
 
+	; remember original esp value
+		mov ecx, esp
+	; reserve 12 bytes on stack
+		sub esp, byte 12
+	; align stack to 16 bytes
+		and esp, 0FFFFFFF0h
+	; save original esp value on stack
+		mov [esp + 2*4], ecx
+	; adjust stack for function argument, so that stack is aligned to 16 bytes before call
+		add esp, byte 8
+
+	; push function arguments to stack
+		lea edx, [ecx + 4*4]
+		push edx
+		push dword [ecx + 3*4]
+	; stack is aligned to 16 bytes
+
 		call %1
+
+	; restore original esp value from stack
+		mov esp, [esp + 2*4]
 
 %ifnum %2
 	%if %2 >= 0
@@ -69,16 +59,33 @@
 		pop ecx
 
 		retn
+
 %endmacro
 
 
-%macro  Game_Call_Asm_Reg1 1-2 'get_errno_val'
+%macro  Call_Asm_VariableStack2 1-2 'get_errno_val'
 
 		push ecx
 		push edx
-		push eax
+
+	; remember original esp value
+		mov ecx, esp
+	; align stack to 16 bytes
+		and esp, 0FFFFFFF0h
+	; save original esp value on stack
+		push ecx
+
+	; push function arguments to stack
+		lea edx, [ecx + 5*4]
+		push edx
+		push dword [ecx + 4*4]
+		push dword [ecx + 3*4]
+	; stack is aligned to 16 bytes
 
 		call %1
+
+	; restore original esp value from stack
+		mov esp, [esp + 3*4]
 
 %ifnum %2
 	%if %2 >= 0
@@ -88,7 +95,293 @@
 		call Game_Set_errno_Asm
 %endif
 
+		pop edx
+		pop ecx
+
+		retn
+
+%endmacro
+
+
+%macro  Call_Asm_VariableStack3 1-2 'get_errno_val'
+
+		push ecx
+		push edx
+
+	; remember original esp value
+		mov ecx, esp
+	; reserve 4 bytes on stack
+		sub esp, byte 4
+	; align stack to 16 bytes
+		and esp, 0FFFFFFF0h
+	; save original esp value on stack
+		mov [esp], ecx
+
+	; push function arguments to stack
+	; stack is aligned to 16 bytes
+		lea edx, [ecx + 6*4]
+		push edx
+		push dword [ecx + 5*4]
+		push dword [ecx + 4*4]
+		push dword [ecx + 3*4]
+	; stack is aligned to 16 bytes
+
+		call %1
+
+	; restore original esp value from stack
+		mov esp, [esp + 4*4]
+
+%ifnum %2
+	%if %2 >= 0
+		mov dword [errno_val], %2
+	%endif
+%else
+		call Game_Set_errno_Asm
+%endif
+
+		pop edx
+		pop ecx
+
+		retn
+
+%endmacro
+
+
+%macro  Game_Call_Asm_Stack1 1-2 'get_errno_val'
+
+		push ecx
+		push edx
+
+	; remember original esp value
+		mov ecx, esp
+	; reserve 8 bytes on stack
+		sub esp, byte 8
+	; align stack to 16 bytes
+		and esp, 0FFFFFFF0h
+	; save original esp value on stack
+		mov [esp + 1*4], ecx
+	; adjust stack for function argument, so that stack is aligned to 16 bytes before call
 		add esp, byte 4
+
+	; push function arguments to stack
+		push dword [ecx + 3*4]
+	; stack is aligned to 16 bytes
+
+		call %1
+
+	; restore original esp value from stack
+		mov esp, [esp + 1*4]
+
+%ifnum %2
+	%if %2 >= 0
+		mov dword [errno_val], %2
+	%endif
+%else
+		call Game_Set_errno_Asm
+%endif
+
+		pop edx
+		pop ecx
+
+		retn
+
+%endmacro
+
+
+%macro  Game_Call_Asm_Stack2 1-2 'get_errno_val'
+
+		push ecx
+		push edx
+
+	; remember original esp value
+		mov ecx, esp
+	; reserve 12 bytes on stack
+		sub esp, byte 12
+	; align stack to 16 bytes
+		and esp, 0FFFFFFF0h
+	; save original esp value on stack
+		mov [esp + 2*4], ecx
+	; adjust stack for function argument, so that stack is aligned to 16 bytes before call
+		add esp, byte 8
+
+	; push function arguments to stack
+		push dword [ecx + 4*4]
+		push dword [ecx + 3*4]
+	; stack is aligned to 16 bytes
+
+		call %1
+
+	; restore original esp value from stack
+		mov esp, [esp + 2*4]
+
+%ifnum %2
+	%if %2 >= 0
+		mov dword [errno_val], %2
+	%endif
+%else
+		call Game_Set_errno_Asm
+%endif
+
+		pop edx
+		pop ecx
+
+		retn
+
+%endmacro
+
+
+%macro  Game_Call_Asm_Stack3 1-2 'get_errno_val'
+
+		push ecx
+		push edx
+
+	; remember original esp value
+		mov ecx, esp
+	; align stack to 16 bytes
+		and esp, 0FFFFFFF0h
+	; save original esp value on stack
+		push ecx
+
+	; push function arguments to stack
+		push dword [ecx + 5*4]
+		push dword [ecx + 4*4]
+		push dword [ecx + 3*4]
+	; stack is aligned to 16 bytes
+
+		call %1
+
+	; restore original esp value from stack
+		mov esp, [esp + 3*4]
+
+%ifnum %2
+	%if %2 >= 0
+		mov dword [errno_val], %2
+	%endif
+%else
+		call Game_Set_errno_Asm
+%endif
+
+		pop edx
+		pop ecx
+
+		retn
+
+%endmacro
+
+
+%macro  Game_Call_Asm_Stack4 1-2 'get_errno_val'
+
+		push ecx
+		push edx
+
+	; remember original esp value
+		mov ecx, esp
+	; reserve 4 bytes on stack
+		sub esp, byte 4
+	; align stack to 16 bytes
+		and esp, 0FFFFFFF0h
+	; save original esp value on stack
+		mov [esp], ecx
+
+	; push function arguments to stack
+	; stack is aligned to 16 bytes
+		push dword [ecx + 6*4]
+		push dword [ecx + 5*4]
+		push dword [ecx + 4*4]
+		push dword [ecx + 3*4]
+	; stack is aligned to 16 bytes
+
+		call %1
+
+	; restore original esp value from stack
+		mov esp, [esp + 4*4]
+
+%ifnum %2
+	%if %2 >= 0
+		mov dword [errno_val], %2
+	%endif
+%else
+		call Game_Set_errno_Asm
+%endif
+
+		pop edx
+		pop ecx
+
+		retn
+
+%endmacro
+
+
+%macro  Game_Call_Asm_Reg0 1-2 'get_errno_val'
+
+		push ecx
+		push edx
+
+	; remember original esp value
+		mov ecx, esp
+	; reserve 4 bytes on stack
+		sub esp, byte 4
+	; align stack to 16 bytes
+		and esp, 0FFFFFFF0h
+	; save original esp value on stack
+		mov [esp], ecx
+
+	; stack is aligned to 16 bytes
+
+		call %1
+
+	; restore original esp value from stack
+		mov esp, [esp]
+
+%ifnum %2
+	%if %2 >= 0
+		mov dword [errno_val], %2
+	%endif
+%else
+		call Game_Set_errno_Asm
+%endif
+
+		pop edx
+		pop ecx
+
+		retn
+
+%endmacro
+
+
+%macro  Game_Call_Asm_Reg1 1-2 'get_errno_val'
+
+		push ecx
+		push edx
+
+	; remember original esp value
+		mov ecx, esp
+	; reserve 8 bytes on stack
+		sub esp, byte 8
+	; align stack to 16 bytes
+		and esp, 0FFFFFFF0h
+
+	; put function argument to stack
+		mov [esp], eax
+
+	; save original esp value on stack
+		mov [esp + 1*4], ecx
+
+	; stack is aligned to 16 bytes
+
+		call %1
+
+	; restore original esp value from stack
+		mov esp, [esp + 1*4]
+
+%ifnum %2
+	%if %2 >= 0
+		mov dword [errno_val], %2
+	%endif
+%else
+		call Game_Set_errno_Asm
+%endif
+
 		pop edx
 		pop ecx
 
@@ -100,10 +393,27 @@
 %macro  Game_Call_Asm_Reg2 1-2 'get_errno_val'
 
 		push ecx
-		push edx
-		push eax
+
+	; remember original esp value
+		mov ecx, esp
+	; reserve 12 bytes on stack
+		sub esp, byte 12
+	; align stack to 16 bytes
+		and esp, 0FFFFFFF0h
+
+	; put function arguments to stack
+		mov [esp], eax
+		mov [esp + 1*4], edx
+
+	; save original esp value on stack
+		mov [esp + 2*4], ecx
+
+	; stack is aligned to 16 bytes
 
 		call %1
+
+	; restore original esp value from stack
+		mov esp, [esp + 2*4]
 
 %ifnum %2
 	%if %2 >= 0
@@ -113,7 +423,6 @@
 		call Game_Set_errno_Asm
 %endif
 
-		add esp, byte 2*4
 		pop ecx
 
 		retn
@@ -124,11 +433,28 @@
 %macro  Game_Call_Asm_Reg3 1-2 'get_errno_val'
 
 		push ecx
-		push ebx
-		push edx
-		push eax
+
+	; remember original esp value
+		mov ecx, esp
+	; reserve 16 bytes on stack
+		sub esp, byte 16
+	; align stack to 16 bytes
+		and esp, 0FFFFFFF0h
+
+	; put function arguments to stack
+		mov [esp], eax
+		mov [esp + 1*4], edx
+		mov [esp + 2*4], ebx
+
+	; save original esp value on stack
+		mov [esp + 3*4], ecx
+
+	; stack is aligned to 16 bytes
 
 		call %1
+
+	; restore original esp value from stack
+		mov esp, [esp + 3*4]
 
 %ifnum %2
 	%if %2 >= 0
@@ -138,7 +464,6 @@
 		call Game_Set_errno_Asm
 %endif
 
-		add esp, byte 3*4
 		pop ecx
 
 		retn
@@ -148,12 +473,35 @@
 
 %macro  Game_Call_Asm_Reg4 1-2 'get_errno_val'
 
+	; save original ecx value on stack
 		push ecx
-		push ebx
-		push edx
-		push eax
+	; remember original esp value
+		lea ecx, [esp + 4]
+	; reserve 16 bytes on stack
+		sub esp, byte 16
+	; align stack to 16 bytes
+		and esp, 0FFFFFFF0h
+
+	; put function arguments to stack
+		mov [esp], eax
+		mov [esp + 1*4], edx
+		mov [esp + 2*4], ebx
+
+	; read original ecx value from stack
+		mov eax, [ecx - 4]
+
+	; put function argument to stack
+		mov [esp + 3*4], eax
+
+	; save original esp value on stack
+		mov [esp + 4*4], ecx
+
+	; stack is aligned to 16 bytes
 
 		call %1
+
+	; restore original esp value from stack
+		mov esp, [esp + 4*4]
 
 %ifnum %2
 	%if %2 >= 0
@@ -162,8 +510,6 @@
 %else
 		call Game_Set_errno_Asm
 %endif
-
-		add esp, byte 4*4
 
 		retn
 
@@ -172,13 +518,39 @@
 
 %macro  Game_Call_Asm_Reg5 1-2 'get_errno_val'
 
-		push dword [esp + 4]
+	; save original ecx value on stack
 		push ecx
-		push ebx
-		push edx
-		push eax
+	; remember original esp value
+		lea ecx, [esp + 4]
+	; reserve 20 bytes on stack
+		sub esp, byte 20
+	; align stack to 16 bytes
+		and esp, 0FFFFFFF0h
+
+	; put function arguments to stack
+		mov [esp], eax
+		mov [esp + 1*4], edx
+		mov [esp + 2*4], ebx
+
+	; read original ecx value from stack
+		mov eax, [ecx - 4]
+
+	; read original function argument from stack
+		mov edx, [ecx + 4]
+
+	; put function arguments to stack
+		mov [esp + 3*4], eax
+		mov [esp + 4*4], edx
+
+	; save original esp value on stack
+		mov [esp + 5*4], ecx
+
+	; stack is aligned to 16 bytes
 
 		call %1
+
+	; restore original esp value from stack
+		mov esp, [esp + 5*4]
 
 %ifnum %2
 	%if %2 >= 0
@@ -187,8 +559,6 @@
 %else
 		call Game_Set_errno_Asm
 %endif
-
-		add esp, byte 5*4
 
 		retn 4
 
@@ -197,14 +567,41 @@
 
 %macro  Game_Call_Asm_Reg6 1-2 'get_errno_val'
 
-		push dword [esp + 2*4]
-		push dword [esp + 2*4]
+	; save original ecx value on stack
 		push ecx
-		push ebx
-		push edx
-		push eax
+	; remember original esp value
+		lea ecx, [esp + 4]
+	; reserve 24 bytes on stack
+		sub esp, byte 24
+	; align stack to 16 bytes
+		and esp, 0FFFFFFF0h
+
+	; put function arguments to stack
+		mov [esp], eax
+		mov [esp + 1*4], edx
+		mov [esp + 2*4], ebx
+
+	; read original ecx value from stack
+		mov eax, [ecx - 4]
+
+	; read original function arguments from stack
+		mov edx, [ecx + 1*4]
+		mov ebx, [ecx + 2*4]
+
+	; put function arguments to stack
+		mov [esp + 3*4], eax
+		mov [esp + 4*4], edx
+		mov [esp + 5*4], ebx
+
+	; save original esp value on stack
+		mov [esp + 6*4], ecx
+
+	; stack is aligned to 16 bytes
 
 		call %1
+
+	; restore original esp value from stack
+		mov esp, [esp + 6*4]
 
 %ifnum %2
 	%if %2 >= 0
@@ -213,8 +610,6 @@
 %else
 		call Game_Set_errno_Asm
 %endif
-
-		add esp, byte 6*4
 
 		retn 2*4
 
@@ -223,16 +618,42 @@
 
 %macro  Game_Call_Asm_Reg8 1-2 'get_errno_val'
 
-		push dword [esp + 4*4]
-		push dword [esp + 4*4]
-		push dword [esp + 4*4]
-		push dword [esp + 4*4]
+	; save original ecx value on stack
 		push ecx
-		push ebx
-		push edx
-		push eax
+	; remember original esp value
+		lea ecx, [esp + 4]
+	; align stack to 16 bytes
+		and esp, 0FFFFFFF0h
+
+	; push function arguments to stack
+		push dword [ecx + 4*4]
+		push dword [ecx + 3*4]
+		push dword [ecx + 2*4]
+		push dword [ecx + 1*4]
+
+	; reserve 16 bytes on stack
+		sub esp, byte 16
+
+	; put function arguments to stack
+		mov [esp], eax
+		mov [esp + 1*4], edx
+		mov [esp + 2*4], ebx
+
+	; read original ecx value from stack
+		mov eax, [ecx - 4]
+
+	; put function argument to stack
+		mov [esp + 3*4], eax
+
+	; save original esp value on stack
+		mov [esp + 8*4], ecx
+
+	; stack is aligned to 16 bytes
 
 		call %1
+
+	; restore original esp value from stack
+		mov esp, [esp + 8*4]
 
 %ifnum %2
 	%if %2 >= 0
@@ -241,8 +662,6 @@
 %else
 		call Game_Set_errno_Asm
 %endif
-
-		add esp, byte 8*4
 
 		retn 4*4
 

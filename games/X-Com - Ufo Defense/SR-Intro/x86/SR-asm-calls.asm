@@ -24,8 +24,6 @@
 
 %ifidn __OUTPUT_FORMAT__, win32
     %define Game_errno _Game_errno
-    %define Game_ReturnAddress _Game_ReturnAddress
-    %define Game_Registers _Game_Registers
     %define Game_dlseek _Game_dlseek
     %define Game_dopen _Game_dopen
     %define Game_dread _Game_dread
@@ -43,7 +41,7 @@
     %define Game_FillSoundCfg _Game_FillSoundCfg
     %define Game_RealPtr _Game_RealPtr
 
-    %define Game_printf _Game_printf
+    %define vprintf _vprintf
     %define Game_WaitVerticalRetraceTicks _Game_WaitVerticalRetraceTicks
 
     %define Game_checkch _Game_checkch
@@ -68,8 +66,6 @@
 %endif
 
 extern Game_errno
-extern Game_ReturnAddress
-extern Game_Registers
 extern Game_dlseek
 extern Game_dopen
 extern Game_dread
@@ -90,7 +86,7 @@ extern Game_RealPtr
 
 
 ; stack params
-extern Game_printf
+extern vprintf
 extern Game_WaitVerticalRetraceTicks
 ; 0 params
 extern Game_checkch
@@ -176,9 +172,23 @@ Game_Set_errno_Asm:
         push ecx
         push edx
 
+    ; remember original esp value
+        mov eax, esp
+    ; reserve 4 bytes on stack
+        sub esp, byte 4
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        mov [esp], eax
+
+    ; stack is aligned to 16 bytes
+
         call Game_errno
 
         mov [errno_val], eax
+
+    ; restore original esp value from stack
+        mov esp, [esp]
 
         pop edx
         pop ecx
@@ -206,8 +216,7 @@ SR_printf:
 ; [esp +   4] = const char *format
 ; [esp      ] = return address
 
-        ;Game_Call_Asm_Stack printf,'get_errno_val'
-        Game_Call_Asm_Stack0 Game_printf,'get_errno_val'
+        Call_Asm_VariableStack1 vprintf,-1
 
 ; end procedure SR_printf
 
@@ -219,7 +228,7 @@ SR_dlseek:
 ; [esp +   4] = int fd
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_dlseek,-1
+        Game_Call_Asm_Stack3 Game_dlseek,-1
 
 ; end procedure SR_dlseek
 
@@ -230,7 +239,7 @@ SR_dopen:
 ; [esp +   4] = const char *path
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_dopen,-1
+        Game_Call_Asm_Stack2 Game_dopen,-1
 
 ; end procedure SR_dopen
 
@@ -242,7 +251,7 @@ SR_dread:
 ; [esp +   4] = void *buf
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_dread,-1
+        Game_Call_Asm_Stack3 Game_dread,-1
 
 ; end procedure SR_dread
 
@@ -252,7 +261,7 @@ SR_dclose:
 ; [esp +   4] = int fd
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_dclose,-1
+        Game_Call_Asm_Stack1 Game_dclose,-1
 
 ; end procedure SR_dclose
 
@@ -262,7 +271,7 @@ SR_DigPlay:
 ; [esp +   4] = SNDSTRUC *sndplay
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_DigPlay,-1
+        Game_Call_Asm_Stack1 Game_DigPlay,-1
 
 ; end procedure SR_DigPlay
 
@@ -286,7 +295,7 @@ SR_PostAudioPending:
 ; [esp +   4] = SNDSTRUC *sndplay
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_PostAudioPending,-1
+        Game_Call_Asm_Stack1 Game_PostAudioPending,-1
 
 ; end procedure SR_PostAudioPending
 
@@ -296,7 +305,7 @@ SR_SetPlayMode:
 ; [esp +   4] = short mode
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_SetPlayMode,-1
+        Game_Call_Asm_Stack1 Game_SetPlayMode,-1
 
 ; end procedure SR_SetPlayMode
 
@@ -320,7 +329,7 @@ SR_SetBackFillMode:
 ; [esp +   4] = short mode
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_SetBackFillMode,-1
+        Game_Call_Asm_Stack1 Game_SetBackFillMode,-1
 
 ; end procedure SR_SetBackFillMode
 
@@ -331,7 +340,7 @@ SR_VerifyDMA:
 ; [esp +   4] = char *data
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_VerifyDMA,-1
+        Game_Call_Asm_Stack2 Game_VerifyDMA,-1
 
 ; end procedure SR_VerifyDMA
 
@@ -341,7 +350,7 @@ SR_SetDPMIMode:
 ; [esp +   4] = short mode
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_SetDPMIMode,-1
+        Game_Call_Asm_Stack1 Game_SetDPMIMode,-1
 
 ; end procedure SR_SetDPMIMode
 
@@ -352,7 +361,7 @@ SR_FillSoundCfg:
 ; [esp +   4] = void *buf
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_FillSoundCfg,-1
+        Game_Call_Asm_Stack2 Game_FillSoundCfg,-1
 
 ; end procedure SR_FillSoundCfg
 
@@ -362,7 +371,7 @@ SR_RealPtr:
 ; [esp +   4] = char *real
 ; [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_RealPtr,-1
+        Game_Call_Asm_Stack1 Game_RealPtr,-1
 
 ; end procedure SR_RealPtr
 

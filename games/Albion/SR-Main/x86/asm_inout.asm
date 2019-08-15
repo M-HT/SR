@@ -63,14 +63,28 @@ x86_in_al_imm:
 ; [esp + 10*4] = port number
 ; [esp +  9*4] = return address
 
+    ; remember original esp value
+        mov eax, esp
+    ; reserve 12 bytes on stack
+        sub esp, byte 12
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        mov [esp + 2*4], eax
+    ; adjust stack for function arguments, so that stack is aligned to 16 bytes before call
+        add esp, byte 8
+
+    ; push function arguments to stack
         push byte 1				; register length
-        push dword [esp + 4*11]	; port number
+        push dword [eax + 10*4]	; port number
+    ; stack is aligned to 16 bytes
 
         call X86_InPortProcedure
 
-        add esp, byte 4*2
+    ; restore original esp value from stack
+        mov esp, [esp + 2*4]
 
-        mov [esp + 4*7], al
+        mov [esp + 7*4], al
 
         popad
         popfd
@@ -91,14 +105,28 @@ x86_in_ax_imm:
 ; [esp + 10*4] = port number
 ; [esp +  9*4] = return address
 
+    ; remember original esp value
+        mov eax, esp
+    ; reserve 12 bytes on stack
+        sub esp, byte 12
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        mov [esp + 2*4], eax
+    ; adjust stack for function arguments, so that stack is aligned to 16 bytes before call
+        add esp, byte 8
+
+    ; push function arguments to stack
         push byte 2				; register length
-        push dword [esp + 4*11]	; port number
+        push dword [eax + 10*4]	; port number
+    ; stack is aligned to 16 bytes
 
         call X86_InPortProcedure
 
-        add esp, byte 4*2
+    ; restore original esp value from stack
+        mov esp, [esp + 2*4]
 
-        mov [esp + 4*7], ax
+        mov [esp + 7*4], ax
 
         popad
         popfd
@@ -119,14 +147,28 @@ x86_in_eax_imm:
 ; [esp + 10*4] = port number
 ; [esp +  9*4] = return address
 
+    ; remember original esp value
+        mov eax, esp
+    ; reserve 12 bytes on stack
+        sub esp, byte 12
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        mov [esp + 2*4], eax
+    ; adjust stack for function arguments, so that stack is aligned to 16 bytes before call
+        add esp, byte 8
+
+    ; push function arguments to stack
         push byte 4				; register length
-        push dword [esp + 4*11]	; port number
+        push dword [eax + 10*4]	; port number
+    ; stack is aligned to 16 bytes
 
         call X86_InPortProcedure
 
-        add esp, byte 4*2
+    ; restore original esp value from stack
+        mov esp, [esp + 2*4]
 
-        mov [esp + 4*7], eax
+        mov [esp + 7*4], eax
 
         popad
         popfd
@@ -145,14 +187,28 @@ x86_in_al_dx:
 
 ; [esp +  9*4] = return address
 
+    ; remember original esp value
+        mov eax, esp
+    ; reserve 12 bytes on stack
+        sub esp, byte 12
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        mov [esp + 2*4], eax
+    ; adjust stack for function arguments, so that stack is aligned to 16 bytes before call
+        add esp, byte 8
+
+    ; push function arguments to stack
         push byte 1				; register length
         push edx				; port number
+    ; stack is aligned to 16 bytes
 
         call X86_InPortProcedure
 
-        add esp, byte 4*2
+    ; restore original esp value from stack
+        mov esp, [esp + 2*4]
 
-        mov [esp + 4*7], al
+        mov [esp + 7*4], al
 
         popad
         popfd
@@ -171,14 +227,28 @@ x86_in_ax_dx:
 
 ; [esp +  9*4] = return address
 
+    ; remember original esp value
+        mov eax, esp
+    ; reserve 12 bytes on stack
+        sub esp, byte 12
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        mov [esp + 2*4], eax
+    ; adjust stack for function arguments, so that stack is aligned to 16 bytes before call
+        add esp, byte 8
+
+    ; push function arguments to stack
         push byte 2				; register length
         push edx				; port number
+    ; stack is aligned to 16 bytes
 
         call X86_InPortProcedure
 
-        add esp, byte 4*2
+    ; restore original esp value from stack
+        mov esp, [esp + 2*4]
 
-        mov [esp + 4*7], ax
+        mov [esp + 7*4], ax
 
         popad
         popfd
@@ -197,14 +267,28 @@ x86_in_eax_dx:
 
 ; [esp +  9*4] = return address
 
+    ; remember original esp value
+        mov eax, esp
+    ; reserve 12 bytes on stack
+        sub esp, byte 12
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        mov [esp + 2*4], eax
+    ; adjust stack for function arguments, so that stack is aligned to 16 bytes before call
+        add esp, byte 8
+
+    ; push function arguments to stack
         push byte 4				; register length
         push edx				; port number
+    ; stack is aligned to 16 bytes
 
         call X86_InPortProcedure
 
-        add esp, byte 4*2
+    ; restore original esp value from stack
+        mov esp, [esp + 2*4]
 
-        mov [esp + 4*7], eax
+        mov [esp + 7*4], eax
 
         popad
         popfd
@@ -225,13 +309,23 @@ x86_out_imm_al:
 ; [esp + 10*4] = port number
 ; [esp +  9*4] = return address
 
+    ; remember original esp value
+        mov ecx, esp
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        push ecx
+
+    ; push function arguments to stack
         push eax
         push byte 1				; register length
-        push dword [esp + 4*12]	; port number
+        push dword [ecx + 10*4]	; port number
+    ; stack is aligned to 16 bytes
 
         call X86_OutPortProcedure
 
-        add esp, byte 4*3
+    ; restore original esp value from stack
+        mov esp, [esp + 3*4]
 
         popad
         popfd
@@ -252,13 +346,23 @@ x86_out_imm_ax:
 ; [esp + 10*4] = port number
 ; [esp +  9*4] = return address
 
+    ; remember original esp value
+        mov ecx, esp
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        push ecx
+
+    ; push function arguments to stack
         push eax
         push byte 2				; register length
-        push dword [esp + 4*12]	; port number
+        push dword [ecx + 10*4]	; port number
+    ; stack is aligned to 16 bytes
 
         call X86_OutPortProcedure
 
-        add esp, byte 4*3
+    ; restore original esp value from stack
+        mov esp, [esp + 3*4]
 
         popad
         popfd
@@ -279,13 +383,23 @@ x86_out_imm_eax:
 ; [esp + 10*4] = port number
 ; [esp +  9*4] = return address
 
+    ; remember original esp value
+        mov ecx, esp
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        push ecx
+
+    ; push function arguments to stack
         push eax
         push byte 4				; register length
-        push dword [esp + 4*12]	; port number
+        push dword [ecx + 10*4]	; port number
+    ; stack is aligned to 16 bytes
 
         call X86_OutPortProcedure
 
-        add esp, byte 4*3
+    ; restore original esp value from stack
+        mov esp, [esp + 3*4]
 
         popad
         popfd
@@ -304,13 +418,23 @@ x86_out_dx_al:
 
 ; [esp +  9*4] = return address
 
+    ; remember original esp value
+        mov ecx, esp
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        push ecx
+
+    ; push function arguments to stack
         push eax
         push byte 1				; register length
         push edx				; port number
+    ; stack is aligned to 16 bytes
 
         call X86_OutPortProcedure
 
-        add esp, byte 4*3
+    ; restore original esp value from stack
+        mov esp, [esp + 3*4]
 
         popad
         popfd
@@ -329,13 +453,23 @@ x86_out_dx_ax:
 
 ; [esp    9*4] = return address
 
+    ; remember original esp value
+        mov ecx, esp
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        push ecx
+
+    ; push function arguments to stack
         push eax
         push byte 2				; register length
         push edx				; port number
+    ; stack is aligned to 16 bytes
 
         call X86_OutPortProcedure
 
-        add esp, byte 4*3
+    ; restore original esp value from stack
+        mov esp, [esp + 3*4]
 
         popad
         popfd
@@ -354,13 +488,23 @@ x86_out_dx_eax:
 
 ; [esp +  9*4] = return address
 
+    ; remember original esp value
+        mov ecx, esp
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        push ecx
+
+    ; push function arguments to stack
         push eax
         push byte 4				; register length
         push edx				; port number
+    ; stack is aligned to 16 bytes
 
         call X86_OutPortProcedure
 
-        add esp, byte 4*3
+    ; restore original esp value from stack
+        mov esp, [esp + 3*4]
 
         popad
         popfd

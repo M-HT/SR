@@ -72,7 +72,21 @@ _SR_SlowDownMainLoop:
 
 ; [esp +  4*4] = return address
 
+    ; remember original esp value
+        mov eax, esp
+    ; reserve 4 bytes on stack
+        sub esp, byte 4
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        mov [esp], eax
+
+    ; stack is aligned to 16 bytes
+
         call Game_SlowDownMainLoop
+
+    ; restore original esp value from stack
+        mov esp, [esp]
 
         pop edx
         pop ecx
@@ -96,7 +110,21 @@ _SR_Sync:
 
 ; [esp +  4*4] = return address
 
+    ; remember original esp value
+        mov eax, esp
+    ; reserve 4 bytes on stack
+        sub esp, byte 4
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        mov [esp], eax
+
+    ; stack is aligned to 16 bytes
+
         call Game_Sync
+
+    ; restore original esp value from stack
+        mov esp, [esp]
 
         pop edx
         pop ecx
@@ -129,7 +157,21 @@ _SR_CheckTimer:
         push ecx
         push edx
 
+    ; remember original esp value
+        mov eax, esp
+    ; reserve 4 bytes on stack
+        sub esp, byte 4
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        mov [esp], eax
+
+    ; stack is aligned to 16 bytes
+
         call Game_RunTimer
+
+    ; restore original esp value from stack
+        mov esp, [esp]
 
         pop edx
         pop ecx
@@ -153,7 +195,21 @@ _SR_RunTimerDelay:
 
 ; [esp +  4*4] = return address
 
+    ; remember original esp value
+        mov eax, esp
+    ; reserve 4 bytes on stack
+        sub esp, byte 4
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; save original esp value on stack
+        mov [esp], eax
+
+    ; stack is aligned to 16 bytes
+
         call Game_RunTimerDelay
+
+    ; restore original esp value from stack
+        mov esp, [esp]
 
         pop edx
         pop ecx

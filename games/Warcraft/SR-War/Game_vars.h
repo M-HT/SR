@@ -50,7 +50,6 @@ EXTERNAL_VARIABLE void *Game_AllocatedMemory[256];	/* dos allocated memory table
 EXTERNAL_VARIABLE pixel_format_orig Game_Palette_Or[256];	/* original palette (rgba) */
 EXTERNAL_VARIABLE uint32_t Game_ESP_Original_Value;	/* original value of ESP */
 EXTERNAL_VARIABLE uint32_t Game_NextMemory;			/* next memory place to allocate in memory table */
-EXTERNAL_VARIABLE uint32_t Game_ReturnAddress;		/* used to save return address when replacing stack call based procedures */
 EXTERNAL_VARIABLE SDL_Cursor *Game_OldCursor;		/* original cursor */
 EXTERNAL_VARIABLE SDL_Cursor *Game_NoCursor;		/* invisible cursor */
 EXTERNAL_VARIABLE SDL_Cursor *Game_MinCursor;		/* minimal cursor */

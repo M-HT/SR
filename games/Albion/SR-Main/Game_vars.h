@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2018 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -62,7 +62,6 @@ EXTERNAL_VARIABLE uint32_t Game_ScreenWindowNum;	/* screen number in video bank 
 EXTERNAL_VARIABLE volatile uint32_t Game_DisplayStart;		/* offset in video memory where display starts */
 EXTERNAL_VARIABLE uint32_t Game_ESP_Original_Value;	/* original value of ESP */
 EXTERNAL_VARIABLE uint32_t Game_NextMemory;			/* next memory place to allocate in memory table */
-EXTERNAL_VARIABLE uint32_t Game_ReturnAddress;		/* used to save return address when replacing stack call based procedures */
 EXTERNAL_VARIABLE SDL_Cursor *Game_OldCursor;		/* original cursor */
 EXTERNAL_VARIABLE SDL_Cursor *Game_NoCursor;		/* invisible cursor */
 EXTERNAL_VARIABLE SDL_Cursor *Game_MinCursor;		/* minimal cursor */

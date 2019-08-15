@@ -49,13 +49,23 @@ x86_int:
 ; [esp + 10*4] = interrupt number
 ; [esp +  9*4] = return address
 
+    ; remember original esp value
         mov eax, esp
+    ; reserve 8 bytes on stack
+        sub esp, byte 8
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+    ; adjust stack for function arguments, so that stack is aligned to 16 bytes before call
+        add esp, byte 8
+    ; push function arguments to stack
         push eax
-        push dword [esp + 4*11] ; interrupt number
+        push dword [eax + 10*4] ; interrupt number
+    ; stack is aligned to 16 bytes
 
         call X86_InterruptProcedure
 
-        add esp, byte 8
+    ; restore original esp value from stack
+        mov esp, [esp + 1*4]
 
         popad
         popfd

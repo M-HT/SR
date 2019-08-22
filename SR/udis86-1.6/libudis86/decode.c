@@ -837,7 +837,6 @@ static int do_prefixes( struct ud* u )
 {
   int have_pfx = 1;
   int i;
-  uint8_t last_pfx = -1;
   if ( u->error ) return -1; /* if in error state, bail out */
 
   for ( i = 0; have_pfx ; ++i ) {
@@ -914,8 +913,6 @@ static int do_prefixes( struct ud* u )
 		u->error = 1;
 		break;
 	}
-	/* we keep the last prefix for checking 0x66 insn modifier. */	
-	last_pfx = curr;
   }
 
   /* return status */

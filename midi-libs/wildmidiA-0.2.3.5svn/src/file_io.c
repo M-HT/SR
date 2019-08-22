@@ -57,8 +57,8 @@ WM_BufferFile (const char *filename, unsigned long int *size) {
 	char *buffer_file = malloc(strlen(filename) + 1);
 
 	if (buffer_file == NULL) {
-		WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, NULL, errno);
-		WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD, filename, errno);
+		WM_ERROR(__func__, __LINE__, WM_ERR_MEM, NULL, errno);
+		WM_ERROR(__func__, __LINE__, WM_ERR_LOAD, filename, errno);
 		return NULL;
 	}
 
@@ -80,8 +80,8 @@ WM_BufferFile (const char *filename, unsigned long int *size) {
 
 		data = malloc(*size);
 		if (data == NULL) {
-			WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, NULL, errno);
-			WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD, name_ptr, errno);
+			WM_ERROR(__func__, __LINE__, WM_ERR_MEM, NULL, errno);
+			WM_ERROR(__func__, __LINE__, WM_ERR_LOAD, name_ptr, errno);
 			free(buffer_file);
 			return NULL;
 		}
@@ -101,8 +101,8 @@ WM_BufferFile (const char *filename, unsigned long int *size) {
 		if (home) {
 			buffer_file = realloc(buffer_file,(strlen(buffer_file) + strlen(home) + 1));
 			if (buffer_file == NULL) {
-				WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, NULL, errno);
-				WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD, filename, errno);
+				WM_ERROR(__func__, __LINE__, WM_ERR_MEM, NULL, errno);
+				WM_ERROR(__func__, __LINE__, WM_ERR_LOAD, filename, errno);
 				free(buffer_file);
 				return NULL;
 			}
@@ -117,8 +117,8 @@ WM_BufferFile (const char *filename, unsigned long int *size) {
 		}
 		buffer_file = realloc(buffer_file,(strlen(buffer_file) + strlen(buffer_dir) + 1));
 		if (buffer_file == NULL || cwdresult == NULL) {
-			WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, NULL, errno);
-			WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD, filename, errno);
+			WM_ERROR(__func__, __LINE__, WM_ERR_MEM, NULL, errno);
+			WM_ERROR(__func__, __LINE__, WM_ERR_LOAD, filename, errno);
 			free(buffer_file);
 			return NULL;
 		}
@@ -127,15 +127,15 @@ WM_BufferFile (const char *filename, unsigned long int *size) {
 	}
 #endif
 	if (stat(buffer_file,&buffer_stat)) {
-		WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_STAT, filename, errno);
+		WM_ERROR(__func__, __LINE__, WM_ERR_STAT, filename, errno);
 		free(buffer_file);
 		return NULL;
 	}
 	*size = buffer_stat.st_size;
 	data = malloc(*size);
 	if (data == NULL) {
-		WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, NULL, errno);
-		WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD, filename, errno);
+		WM_ERROR(__func__, __LINE__, WM_ERR_MEM, NULL, errno);
+		WM_ERROR(__func__, __LINE__, WM_ERR_LOAD, filename, errno);
 		free(buffer_file);
 		return NULL;
 	}
@@ -144,13 +144,13 @@ WM_BufferFile (const char *filename, unsigned long int *size) {
 #else
 	if ((buffer_fd = open(buffer_file,O_RDONLY)) == -1) {
 #endif
-		WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_OPEN, filename, errno);
+		WM_ERROR(__func__, __LINE__, WM_ERR_OPEN, filename, errno);
 		free(buffer_file);
 		free(data);
 		return NULL;
 	}
 	if (read(buffer_fd,data,*size) != buffer_stat.st_size) {
-		WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_READ, filename, errno);
+		WM_ERROR(__func__, __LINE__, WM_ERR_READ, filename, errno);
 		free(buffer_file);
 		free(data);
 		close(buffer_fd);

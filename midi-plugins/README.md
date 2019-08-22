@@ -2,7 +2,7 @@
 
 Plugins used by the games to play MIDI (and other types) music.
 
-To compile the pugins run the *komp-x86.sh* script.
+To compile the plugins run the *komp-x86.sh* script (or the *komp-arm.sh* script, if compiling on ARM).
 
 ## General plugins
 

@@ -37,6 +37,9 @@ clean = env.GetOption('clean')
 
 if device == 'none':
     device = 'pc-linux'
+    if env['PLATFORM'] == 'posix':
+        if os.uname()[4].startswith('arm'):
+            device = 'arm-linux'
     env['device'] = device
     print "\nYou didn't set any target device (parameter 'device')."
     print "'" + device + "' will be used for compiling.\n"

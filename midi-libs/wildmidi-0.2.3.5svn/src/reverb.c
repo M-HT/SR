@@ -206,36 +206,36 @@ init_reverb(int rate, float room_x, float room_y, float listen_x, float listen_y
         double RFN_YOFS = listen_y - RFN[j].y;
         RFN_DST[j] = sqrtf((RFN_XOFS * RFN_XOFS) + (RFN_YOFS * RFN_YOFS));
 
-		SPL_RFL_XOFS = SPL.x - RFN[i].x;
-		SPL_RFL_YOFS = SPL.y - RFN[i].y;
-		SPR_RFL_XOFS = SPR.x - RFN[i].x;
-		SPR_RFL_YOFS = SPR.y - RFN[i].y;
-		SPL_DST[i] = sqrtf((SPL_RFL_XOFS * SPL_RFL_XOFS) + (SPL_RFL_YOFS * SPL_RFL_YOFS));
-		SPR_DST[i] = sqrtf((SPR_RFL_XOFS * SPR_RFL_XOFS) + (SPR_RFL_YOFS * SPR_RFL_YOFS));
+		SPL_RFL_XOFS = SPL.x - RFN[j].x;
+		SPL_RFL_YOFS = SPL.y - RFN[j].y;
+		SPR_RFL_XOFS = SPR.x - RFN[j].x;
+		SPR_RFL_YOFS = SPR.y - RFN[j].y;
+		SPL_DST[j] = sqrtf((SPL_RFL_XOFS * SPL_RFL_XOFS) + (SPL_RFL_YOFS * SPL_RFL_YOFS));
+		SPR_DST[j] = sqrtf((SPR_RFL_XOFS * SPR_RFL_XOFS) + (SPR_RFL_YOFS * SPR_RFL_YOFS));
 		/*
 			add the 2 distances together and remove the speaker to listener distance
 			so we dont have to delay the initial output
 		*/
-		SPL_DST[i] += RFN_DST[i];
+		SPL_DST[j] += RFN_DST[j];
 
 		/* so i dont have to delay speaker output */
-		SPL_DST[i] -= SPL_LSN_DST;
+		SPL_DST[j] -= SPL_LSN_DST;
 
-		if (i < 4) {
-			if (SPL_DST[i] > MAXL_DST) MAXL_DST = SPL_DST[i];
+		if (j < 4) {
+			if (SPL_DST[j] > MAXL_DST) MAXL_DST = SPL_DST[j];
 		} else {
-			if (SPL_DST[i] > MAXR_DST) MAXR_DST = SPL_DST[i];
+			if (SPL_DST[j] > MAXR_DST) MAXR_DST = SPL_DST[j];
 		}
 
-		SPR_DST[i] += RFN_DST[i];
+		SPR_DST[j] += RFN_DST[j];
 
 		/* so i dont have to delay speaker output */
-        SPR_DST[i] -= SPR_LSN_DST;
+        SPR_DST[j] -= SPR_LSN_DST;
 
-		if (i < 4) {
-			if (SPR_DST[i] > MAXL_DST) MAXL_DST = SPR_DST[i];
+		if (j < 4) {
+			if (SPR_DST[j] > MAXL_DST) MAXL_DST = SPR_DST[j];
 		} else {
-			if (SPR_DST[i] > MAXR_DST) MAXR_DST = SPR_DST[i];
+			if (SPR_DST[j] > MAXR_DST) MAXR_DST = SPR_DST[j];
 		}
 
         RFN_DST[j] *= 2.0;

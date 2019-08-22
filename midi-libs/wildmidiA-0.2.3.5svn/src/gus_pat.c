@@ -67,7 +67,7 @@ convert_8s (unsigned char *data, struct _sample *gus_sample ) {
 	unsigned char *read_end = data + gus_sample->data_length;
 	signed short int *write_data = NULL;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	gus_sample->data = calloc((gus_sample->data_length + 1), sizeof(signed short int));
 	if (__builtin_expect((gus_sample->data != NULL),1)) {
 		write_data = gus_sample->data;
@@ -77,8 +77,8 @@ convert_8s (unsigned char *data, struct _sample *gus_sample ) {
 		return 0;
 	}
 
-    WM_ERROR_NEW("(%s:%i) ERROR: calloc failed (%s)", __FUNCTION__, __LINE__, strerror(errno));
-//	WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
+    WM_ERROR_NEW("(%s:%i) ERROR: calloc failed (%s)", __func__, __LINE__, strerror(errno));
+//	WM_ERROR(__func__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
 	return -1;
 }
 
@@ -94,7 +94,7 @@ convert_8sp (unsigned char *data, struct _sample *gus_sample ) {
 	signed short int *write_data_a = NULL;
 	signed short int *write_data_b = NULL;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	gus_sample->data = calloc((new_length + 1), sizeof(signed short int));
 	if (__builtin_expect((gus_sample->data != NULL),1)) {
 		write_data = gus_sample->data;
@@ -130,7 +130,7 @@ convert_8sp (unsigned char *data, struct _sample *gus_sample ) {
 		return 0;
 	}
 
-	WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
+	WM_ERROR(__func__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
 	return -1;
 }
 
@@ -142,7 +142,7 @@ convert_8sr (unsigned char *data, struct _sample *gus_sample ) {
 	signed short int *write_data = NULL;
 	unsigned long int tmp_loop = 0;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	gus_sample->data = calloc((gus_sample->data_length + 1), sizeof(signed short int));
 	if (__builtin_expect((gus_sample->data != NULL),1)) {
 		write_data = gus_sample->data + gus_sample->data_length - 1;
@@ -156,7 +156,7 @@ convert_8sr (unsigned char *data, struct _sample *gus_sample ) {
 		gus_sample->modes ^= SAMPLE_REVERSE;
 		return 0;
 	}
-	WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
+	WM_ERROR(__func__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
 	return -1;
 }
 
@@ -173,7 +173,7 @@ convert_8srp (unsigned char *data, struct _sample *gus_sample ) {
 	signed short int *write_data_a = NULL;
 	signed short int *write_data_b = NULL;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	gus_sample->data = calloc((new_length + 1), sizeof(signed short int));
 	if (__builtin_expect((gus_sample->data != NULL),1)) {
 		write_data = gus_sample->data;
@@ -208,7 +208,7 @@ convert_8srp (unsigned char *data, struct _sample *gus_sample ) {
 		return 0;
 	}
 
-	WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
+	WM_ERROR(__func__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
 	return -1;
 }
 
@@ -219,7 +219,7 @@ convert_8u (unsigned char *data, struct _sample *gus_sample ) {
 	unsigned char *read_end = data + gus_sample->data_length;
 	signed short int *write_data = NULL;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	gus_sample->data = calloc((gus_sample->data_length + 1), sizeof(signed short int));
 	if (__builtin_expect((gus_sample->data != NULL),1)) {
 		write_data = gus_sample->data;
@@ -229,7 +229,7 @@ convert_8u (unsigned char *data, struct _sample *gus_sample ) {
 		gus_sample->modes ^= SAMPLE_UNSIGNED;
 		return 0;
 	}
-	WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
+	WM_ERROR(__func__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
 	return -1;
 }
 
@@ -245,7 +245,7 @@ convert_8up (unsigned char *data, struct _sample *gus_sample ) {
 	signed short int *write_data_a = NULL;
 	signed short int *write_data_b = NULL;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	gus_sample->data = calloc((new_length + 1), sizeof(signed short int));
 	if (__builtin_expect((gus_sample->data != NULL),1)) {
 		write_data = gus_sample->data;
@@ -281,7 +281,7 @@ convert_8up (unsigned char *data, struct _sample *gus_sample ) {
 		return 0;
 	}
 
-	WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
+	WM_ERROR(__func__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
 	return -1;
 }
 
@@ -293,7 +293,7 @@ convert_8ur (unsigned char *data, struct _sample *gus_sample ) {
 	signed short int *write_data = NULL;
 	unsigned long int tmp_loop = 0;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	gus_sample->data = calloc((gus_sample->data_length + 1), sizeof(signed short int));
 	if (__builtin_expect((gus_sample->data != NULL),1)) {
 		write_data = gus_sample->data + gus_sample->data_length - 1;
@@ -307,7 +307,7 @@ convert_8ur (unsigned char *data, struct _sample *gus_sample ) {
 		gus_sample->modes ^= SAMPLE_REVERSE | SAMPLE_UNSIGNED;
 		return 0;
 	}
-	WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
+	WM_ERROR(__func__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
 	return -1;
 }
 
@@ -323,7 +323,7 @@ convert_8urp (unsigned char *data, struct _sample *gus_sample ) {
 	signed short int *write_data_a = NULL;
 	signed short int *write_data_b = NULL;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	gus_sample->data = calloc((new_length + 1), sizeof(signed short int));
 	if (__builtin_expect((gus_sample->data != NULL),1)) {
 		write_data = gus_sample->data;
@@ -357,7 +357,7 @@ convert_8urp (unsigned char *data, struct _sample *gus_sample ) {
 		return 0;
 	}
 
-	WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
+	WM_ERROR(__func__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
 	return -1;
 }
 
@@ -368,7 +368,7 @@ convert_16s (unsigned char *data, struct _sample *gus_sample ) {
 	unsigned char *read_end = data + gus_sample->data_length;
 	signed short int *write_data = NULL;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	gus_sample->data = calloc(((gus_sample->data_length >> 1) + 1),sizeof(signed short int));
 	if (__builtin_expect((gus_sample->data != NULL),1)) {
 		write_data = gus_sample->data;
@@ -382,7 +382,7 @@ convert_16s (unsigned char *data, struct _sample *gus_sample ) {
 		gus_sample->data_length >>= 1;
 		return 0;
 	}
-	WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
+	WM_ERROR(__func__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
 	return -1;
 }
 
@@ -398,7 +398,7 @@ convert_16sp (unsigned char *data, struct _sample *gus_sample ) {
 	signed short int *write_data_a = NULL;
 	signed short int *write_data_b = NULL;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	gus_sample->data = calloc(((new_length >> 1) + 1), sizeof(signed short int));
 	if (__builtin_expect((gus_sample->data != NULL),1)) {
 		write_data = gus_sample->data;
@@ -442,7 +442,7 @@ convert_16sp (unsigned char *data, struct _sample *gus_sample ) {
 		return 0;
 	}
 
-	WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
+	WM_ERROR(__func__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
 	return -1;
 }
 
@@ -454,7 +454,7 @@ convert_16sr (unsigned char *data, struct _sample *gus_sample ) {
 	signed short int *write_data = NULL;
 	unsigned long int tmp_loop = 0;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	gus_sample->data = calloc(((gus_sample->data_length >> 1) + 1), sizeof(signed short int));
 	if (__builtin_expect((gus_sample->data != NULL),1)) {
 		write_data = gus_sample->data + (gus_sample->data_length >> 1) - 1;
@@ -472,7 +472,7 @@ convert_16sr (unsigned char *data, struct _sample *gus_sample ) {
 		gus_sample->modes ^= SAMPLE_REVERSE;
 		return 0;
 	}
-	WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
+	WM_ERROR(__func__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
 	return -1;
 }
 
@@ -489,7 +489,7 @@ convert_16srp (unsigned char *data, struct _sample *gus_sample ) {
 	signed short int *write_data_a = NULL;
 	signed short int *write_data_b = NULL;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	gus_sample->data = calloc(((new_length >> 1) + 1), sizeof(signed short int));
 	if (__builtin_expect((gus_sample->data != NULL),1)) {
 		write_data = gus_sample->data;
@@ -529,7 +529,7 @@ convert_16srp (unsigned char *data, struct _sample *gus_sample ) {
 		return 0;
 	}
 
-	WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
+	WM_ERROR(__func__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
 	return -1;
 }
 
@@ -540,7 +540,7 @@ convert_16u (unsigned char *data, struct _sample *gus_sample ) {
 	unsigned char *read_end = data + gus_sample->data_length;
 	signed short int *write_data = NULL;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	gus_sample->data = calloc(((gus_sample->data_length >> 1) + 1),sizeof(signed short int));
 	if (__builtin_expect((gus_sample->data != NULL),1)) {
 		write_data = gus_sample->data;
@@ -554,7 +554,7 @@ convert_16u (unsigned char *data, struct _sample *gus_sample ) {
 		gus_sample->modes ^= SAMPLE_UNSIGNED;
 		return 0;
 	}
-	WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
+	WM_ERROR(__func__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
 	return -1;
 }
 
@@ -570,7 +570,7 @@ convert_16up (unsigned char *data, struct _sample *gus_sample ) {
 	signed short int *write_data_a = NULL;
 	signed short int *write_data_b = NULL;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	gus_sample->data = calloc(((new_length >> 1) + 1), sizeof(signed short int));
 	if (__builtin_expect((gus_sample->data != NULL),1)) {
 		write_data = gus_sample->data;
@@ -614,7 +614,7 @@ convert_16up (unsigned char *data, struct _sample *gus_sample ) {
 		return 0;
 	}
 
-	WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
+	WM_ERROR(__func__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
 	return -1;
 }
 
@@ -626,7 +626,7 @@ convert_16ur (unsigned char *data, struct _sample *gus_sample ) {
 	signed short int *write_data = NULL;
 	unsigned long int tmp_loop = 0;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	gus_sample->data = calloc(((gus_sample->data_length >> 1) + 1), sizeof(signed short int));
 	if (__builtin_expect((gus_sample->data != NULL),1)) {
 		write_data = gus_sample->data + (gus_sample->data_length >> 1) - 1;
@@ -644,7 +644,7 @@ convert_16ur (unsigned char *data, struct _sample *gus_sample ) {
 		gus_sample->modes ^= SAMPLE_REVERSE | SAMPLE_UNSIGNED;
 		return 0;
 	}
-	WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
+	WM_ERROR(__func__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
 	return -1;
 }
 
@@ -660,7 +660,7 @@ convert_16urp (unsigned char *data, struct _sample *gus_sample ) {
 	signed short int *write_data_a = NULL;
 	signed short int *write_data_b = NULL;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	gus_sample->data = calloc(((new_length >> 1) + 1), sizeof(signed short int));
 	if (__builtin_expect((gus_sample->data != NULL),1)) {
 		write_data = gus_sample->data;
@@ -699,7 +699,7 @@ convert_16urp (unsigned char *data, struct _sample *gus_sample ) {
 		return 0;
 	}
 
-	WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
+	WM_ERROR(__func__, __LINE__, WM_ERR_MEM, "to parse sample", errno);
 	return -1;
 }
 
@@ -737,33 +737,33 @@ struct _sample * load_gus_pat (char * filename, int fix_release) {
 	};
 	unsigned long int tmp_loop;
 
-	SAMPLE_CONVERT_DEBUG(__FUNCTION__);
+	SAMPLE_CONVERT_DEBUG(__func__);
 	SAMPLE_CONVERT_DEBUG(filename);
 
 	if ((gus_patch = WM_BufferFile(filename,&gus_size)) == NULL) {
 		return NULL;
 	}
 	if (gus_size < 239) {
-		WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_CORUPT, "(too short)", 0);
-		WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD, filename, 0);
+		WM_ERROR(__func__, __LINE__, WM_ERR_CORUPT, "(too short)", 0);
+		WM_ERROR(__func__, __LINE__, WM_ERR_LOAD, filename, 0);
 		free(gus_patch);
 		return NULL;
 	}
 	if (memcmp(gus_patch, "GF1PATCH110\0ID#000002", 22) && memcmp(gus_patch, "GF1PATCH100\0ID#000002", 22)) {
-		WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID,"(unsupported format)", 0);
-		WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD, filename, 0);
+		WM_ERROR(__func__, __LINE__, WM_ERR_INVALID,"(unsupported format)", 0);
+		WM_ERROR(__func__, __LINE__, WM_ERR_LOAD, filename, 0);
 		free(gus_patch);
 		return NULL;
 	}
 	if (gus_patch[82] > 1) {
-		WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID,"(unsupported format)", 0);
-		WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD, filename, 0);
+		WM_ERROR(__func__, __LINE__, WM_ERR_INVALID,"(unsupported format)", 0);
+		WM_ERROR(__func__, __LINE__, WM_ERR_LOAD, filename, 0);
 		free(gus_patch);
 		return NULL;
 	}
 	if (gus_patch[151] > 1) {
-		WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID,"(unsupported format)", 0);
-		WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD, filename, 0);
+		WM_ERROR(__func__, __LINE__, WM_ERR_INVALID,"(unsupported format)", 0);
+		WM_ERROR(__func__, __LINE__, WM_ERR_LOAD, filename, 0);
 		free(gus_patch);
 		return NULL;
 	}
@@ -783,8 +783,8 @@ struct _sample * load_gus_pat (char * filename, int fix_release) {
 			gus_sample = gus_sample->next;
 		}
 		if (gus_sample == NULL) {
-			WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, NULL, 0);
-			WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD, filename, 0);
+			WM_ERROR(__func__, __LINE__, WM_ERR_MEM, NULL, 0);
+			WM_ERROR(__func__, __LINE__, WM_ERR_LOAD, filename, 0);
 			free(gus_patch);
 			return NULL;
 		}
@@ -851,7 +851,7 @@ struct _sample * load_gus_pat (char * filename, int fix_release) {
 				gus_sample->env_rate[i]  = (unsigned long int)(4194303.0 / ((float)WM_SampleRate * env_time_table[env_rate]));
 
 					if (gus_sample->env_rate[i] == 0) {
-						fprintf(stderr,"\rWarning: libWildMidi %s found invalid envelope(%lu) rate setting in %s. Using %f instead.\n",__FUNCTION__, i, filename, env_time_table[63]);
+						fprintf(stderr,"\rWarning: libWildMidi %s found invalid envelope(%lu) rate setting in %s. Using %f instead.\n",__func__, i, filename, env_time_table[63]);
 						gus_sample->env_rate[i]  = (unsigned long int)(4194303.0 / ((float)WM_SampleRate * env_time_table[63]));
                 GUSPAT_FLOAT_DEBUG("Envelope Time",env_time_table[63]);
 					}

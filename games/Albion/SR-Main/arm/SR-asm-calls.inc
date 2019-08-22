@@ -243,7 +243,8 @@
 
 .macro Game_Call_Asm_Reg6 proc_name, errno_val=-1000
 
-        ldmfd esp, {tmp1, tmp2}
+        add tmpadr, esp, #4
+        ldmfd tmpadr, {tmp1, tmp2}
         stmfd esp!, {eflags}
         stmfd esp!, {tmp1, tmp2}
 
@@ -276,8 +277,9 @@
 
 .macro Game_Call_Asm_Reg8 proc_name, errno_val=-1000
 
-        ldmfd esp, {tmp1, tmp2, tmp3, tmpadr}
         stmfd esp!, {eflags}
+        add eflags, esp, #(2*4)
+        ldmfd eflags, {tmp1, tmp2, tmp3, tmpadr}
         stmfd esp!, {tmp1, tmp2, tmp3, tmpadr}
 
         mov tmp1, eax

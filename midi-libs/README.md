@@ -8,7 +8,14 @@ Libraries that are used by plugins in *midi-plugins* subproject to play MIDI mus
 
 The directory *wildmidi-0.2.3.5svn* contains modified wildmidi library version 0.2.3.5svn.
 
-When compiling, first run `./bootstrap`, then `./configure` and `make`.
+To compile:
+
+* run `./bootstrap`
+* on 32-bit linux:
+  * run `./configure`
+* on 64-bit linux (x64 / x86_64):
+  * run `./configure --build=i686-pc-linux-gnu "CFLAGS=-m32" "LDFLAGS=-m32"`
+* run `make`
 
 ## wildmidiA
 
@@ -16,4 +23,11 @@ WildMidiA is a library that's used in Albion to play background effects, that ar
 
 The directory *wildmidiA-0.2.3.5svn* contains the library, which is a modification of wildmidi library.
 
-When compiling, first run `./bootstrap`, then `./configure` and `make`.
+To compile:
+
+* run `./bootstrap`
+* on 32-bit linux:
+  * run `./configure`
+* on 64-bit linux (x64 / x86_64):
+  * run `./configure --build=i686-pc-linux-gnu "CFLAGS=-m32" "LDFLAGS=-m32"`
+* run `make`

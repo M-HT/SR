@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016 Roman Pauer
+@@  Copyright (C) 2016-2019 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -31,3 +31,7 @@
 @allow unaligned memory access
 @should be commented out, when unaligned memory access is not allowed
 @.set ALLOW_UNALIGNED_MEMORY_ACCESS, 1
+
+@allow unaligned stack (to 8 bytes)
+@should be commented out, when unaligned stack is not allowed
+@.set ALLOW_UNALIGNED_STACK, 1

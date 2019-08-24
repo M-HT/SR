@@ -35,6 +35,36 @@
     msr cpsr_f, tmpadr
 .endm
 
+.ifdef ALLOW_UNALIGNED_STACK
+
+.macro ALIGN_STACK
+    @ do nothing
+.endm
+
+.macro RESTORE_STACK
+    @ do nothing
+.endm
+
+.else
+
+.macro ALIGN_STACK
+    @ remember original esp value
+        mov eflags, esp
+    @ reserve 4 bytes on stack
+        sub lr, esp, #4
+    @ align stack to 8 bytes
+        bic esp, lr, #7
+    @ save original esp value on stack
+        str eflags, [esp]
+.endm
+
+.macro RESTORE_STACK
+    @ restore original esp value from stack
+        ldr esp, [esp]
+.endm
+
+.endif
+
 
 .extern X86_InPortProcedure
 .extern X86_OutPortProcedure
@@ -67,7 +97,11 @@ x86_in_al_imm:
         mov tmp2, #1				@ register length
         bic tmp1, tmp1, #0x00ff0000
 
+        ALIGN_STACK
+
         bl X86_InPortProcedure
+
+        RESTORE_STACK
 
         bic eax, eax, #0x00ff
         and tmp1, tmp1, #0x00ff
@@ -90,7 +124,11 @@ x86_in_ax_imm:
         mov tmp2, #2				@ register length
         bic tmp1, tmp1, #0x00ff0000
 
+        ALIGN_STACK
+
         bl X86_InPortProcedure
+
+        RESTORE_STACK
 
         bic eax, eax, #0x00ff
         mov tmp1, tmp1, lsl #16
@@ -114,7 +152,11 @@ x86_in_eax_imm:
         mov tmp2, #4				@ register length
         bic tmp1, tmp1, #0x00ff0000
 
+        ALIGN_STACK
+
         bl X86_InPortProcedure
+
+        RESTORE_STACK
 
         mov eax, tmp1
 
@@ -134,7 +176,11 @@ x86_in_al_dx:
         mov tmp2, #1				@ register length
         mov tmp1, tmp1, lsr #16
 
+        ALIGN_STACK
+
         bl X86_InPortProcedure
+
+        RESTORE_STACK
 
         bic eax, eax, #0x00ff
         and tmp1, tmp1, #0x00ff
@@ -156,7 +202,11 @@ x86_in_ax_dx:
         mov tmp2, #2				@ register length
         mov tmp1, tmp1, lsr #16
 
+        ALIGN_STACK
+
         bl X86_InPortProcedure
+
+        RESTORE_STACK
 
         bic eax, eax, #0x00ff
         mov tmp1, tmp1, lsl #16
@@ -179,7 +229,11 @@ x86_in_eax_dx:
         mov tmp2, #4				@ register length
         mov tmp1, tmp1, lsr #16
 
+        ALIGN_STACK
+
         bl X86_InPortProcedure
+
+        RESTORE_STACK
 
         mov eax, tmp1
 
@@ -201,7 +255,11 @@ x86_out_imm_al:
         bic tmp1, tmp1, #0x00ff0000
         mov tmp3, eax
 
+        ALIGN_STACK
+
         bl X86_OutPortProcedure
+
+        RESTORE_STACK
 
         popfd3lr
 
@@ -221,7 +279,11 @@ x86_out_imm_ax:
         bic tmp1, tmp1, #0x00ff0000
         mov tmp3, eax
 
+        ALIGN_STACK
+
         bl X86_OutPortProcedure
+
+        RESTORE_STACK
 
         popfd3lr
 
@@ -241,7 +303,11 @@ x86_out_imm_eax:
         bic tmp1, tmp1, #0x00ff0000
         mov tmp3, eax
 
+        ALIGN_STACK
+
         bl X86_OutPortProcedure
+
+        RESTORE_STACK
 
         popfd3lr
 
@@ -260,7 +326,11 @@ x86_out_dx_al:
         mov tmp1, tmp1, lsr #16
         mov tmp3, eax
 
+        ALIGN_STACK
+
         bl X86_OutPortProcedure
+
+        RESTORE_STACK
 
         popfd3lr
 
@@ -279,7 +349,11 @@ x86_out_dx_ax:
         mov tmp1, tmp1, lsr #16
         mov tmp3, eax
 
+        ALIGN_STACK
+
         bl X86_OutPortProcedure
+
+        RESTORE_STACK
 
         popfd3lr
 
@@ -298,7 +372,11 @@ x86_out_dx_eax:
         mov tmp1, tmp1, lsr #16
         mov tmp3, eax
 
+        ALIGN_STACK
+
         bl X86_OutPortProcedure
+
+        RESTORE_STACK
 
         popfd3lr
 

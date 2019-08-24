@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -30,20 +30,19 @@ extern "C" {
 #endif
 
 typedef struct {
-    volatile Game_register _edi;
-    volatile Game_register _esi;
+    Game_register _edi;
+    Game_register _esi;
     const Game_register _ebp;
     const Game_register _esp;
-    volatile Game_register _ebx;
-    volatile Game_register _edx;
-    volatile Game_register _ecx;
-    volatile Game_register _eax;
-    volatile Game_register _eflags;
+    Game_register _ebx;
+    Game_register _edx;
+    Game_register _ecx;
+    Game_register _eax;
+    Game_register _eflags;
     const Game_register _eip;
 } _cpu_regs;
 
 extern void X86_InterruptProcedure(
-    CALL_PARAMS1
     const uint8_t IntNum,
     _cpu_regs *regs
 );

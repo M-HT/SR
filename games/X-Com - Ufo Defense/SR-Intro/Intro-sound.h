@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -32,18 +32,18 @@ extern void Game_ProcessAudio(void);
 extern "C" {
 #endif
 
-extern int16_t Game_DigPlay(CALL_PARAMS1 DIGPAK_SNDSTRUC *sndplay);
+extern int16_t Game_DigPlay(DIGPAK_SNDSTRUC *sndplay);
 extern int16_t Game_AudioCapabilities(void);
 extern void Game_StopSound(void);
-extern int16_t Game_PostAudioPending(CALL_PARAMS1 DIGPAK_SNDSTRUC *sndplay);
-extern int16_t Game_SetPlayMode(CALL_PARAMS1 int16_t playmode);
+extern int16_t Game_PostAudioPending(DIGPAK_SNDSTRUC *sndplay);
+extern int16_t Game_SetPlayMode(int16_t playmode);
 extern int16_t *Game_PendingAddress(void);
 extern int16_t *Game_ReportSemaphoreAddress(void);
-extern int16_t Game_SetBackFillMode(CALL_PARAMS1 int16_t mode);
-extern int16_t Game_VerifyDMA(CALL_PARAMS1 char *data, int16_t length);
-extern void Game_SetDPMIMode(CALL_PARAMS1 int16_t mode);
-extern int Game_FillSoundCfg(CALL_PARAMS1 void *buf, int count);
-extern uint32_t Game_RealPtr(CALL_PARAMS1 uint32_t ptr);
+extern int16_t Game_SetBackFillMode(int16_t mode);
+extern int16_t Game_VerifyDMA(char *data, int16_t length);
+extern void Game_SetDPMIMode(int16_t mode);
+extern int Game_FillSoundCfg(void *buf, int count);
+extern uint32_t Game_RealPtr(uint32_t ptr);
 
 #ifdef __cplusplus
 }

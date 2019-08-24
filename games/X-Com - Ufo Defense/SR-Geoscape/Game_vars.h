@@ -141,8 +141,6 @@ EXTERNAL_VARIABLE FILE *Game_stdin;					/* stdin */
 EXTERNAL_VARIABLE FILE *Game_stdout;				/* stdout */
 EXTERNAL_VARIABLE FILE *Game_stderr;				/* stderr */
 
-EXTERNAL_VARIABLE uint32_t Game_Registers[8];		/* used to save registers when replacing stack call based procedures */
-
 EXTERNAL_VARIABLE uint8_t *UFO_Font;				/* ufo font data */
 EXTERNAL_VARIABLE uint8_t *Temp_Font_Data;			/* temporary font data */
 

@@ -23,7 +23,6 @@
 .include "arm.inc"
 
 .extern Game_errno
-.extern Game_Registers
 .extern Game_dlseek
 .extern Game_dopen
 .extern Game_dread
@@ -42,7 +41,7 @@
 .extern Game_RealPtr
 
 @ stack params
-.extern Game_printf
+.extern vprintf
 @ 0 params
 .extern Game_checkch
 .extern Game_getch
@@ -142,8 +141,7 @@ SR_printf:
 @ [esp +   4] = const char *format
 @ [esp      ] = return address
 
-        @Game_Call_Asm_Stack printf,-1000
-        Game_Call_Asm_Stack0 Game_printf,-1000
+        Game_Call_Asm_VariableStack1 vprintf,-1000
 
 @ end procedure SR_printf
 
@@ -154,7 +152,7 @@ SR_dlseek:
 @ [esp +   4] = int fd
 @ [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_dlseek,-1
+        Game_Call_Asm_Stack3 Game_dlseek,-1
 
 @ end procedure SR_dlseek
 
@@ -164,7 +162,7 @@ SR_dopen:
 @ [esp +   4] = const char *path
 @ [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_dopen,-1
+        Game_Call_Asm_Stack2 Game_dopen,-1
 
 @ end procedure SR_dopen
 
@@ -175,7 +173,7 @@ SR_dread:
 @ [esp +   4] = void *buf
 @ [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_dread,-1
+        Game_Call_Asm_Stack3 Game_dread,-1
 
 @ end procedure SR_dread
 
@@ -184,7 +182,7 @@ SR_dclose:
 @ [esp +   4] = int fd
 @ [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_dclose,-1
+        Game_Call_Asm_Stack1 Game_dclose,-1
 
 @ end procedure SR_dclose
 
@@ -193,7 +191,7 @@ SR_DigPlay:
 @ [esp +   4] = SNDSTRUC *sndplay
 @ [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_DigPlay,-1
+        Game_Call_Asm_Stack1 Game_DigPlay,-1
 
 @ end procedure SR_DigPlay
 
@@ -214,7 +212,7 @@ SR_PostAudioPending:
 @ [esp +   4] = SNDSTRUC *sndplay
 @ [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_PostAudioPending,-1
+        Game_Call_Asm_Stack1 Game_PostAudioPending,-1
 
 @ end procedure SR_PostAudioPending
 
@@ -223,7 +221,7 @@ SR_SetPlayMode:
 @ [esp +   4] = short mode
 @ [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_SetPlayMode,-1
+        Game_Call_Asm_Stack1 Game_SetPlayMode,-1
 
 @ end procedure SR_SetPlayMode
 
@@ -244,7 +242,7 @@ SR_SetBackFillMode:
 @ [esp +   4] = short mode
 @ [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_SetBackFillMode,-1
+        Game_Call_Asm_Stack1 Game_SetBackFillMode,-1
 
 @ end procedure SR_SetBackFillMode
 
@@ -254,7 +252,7 @@ SR_VerifyDMA:
 @ [esp +   4] = char *data
 @ [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_VerifyDMA,-1
+        Game_Call_Asm_Stack2 Game_VerifyDMA,-1
 
 @ end procedure SR_VerifyDMA
 
@@ -263,7 +261,7 @@ SR_SetDPMIMode:
 @ [esp +   4] = short mode
 @ [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_SetDPMIMode,-1
+        Game_Call_Asm_Stack1 Game_SetDPMIMode,-1
 
 @ end procedure SR_SetDPMIMode
 
@@ -273,7 +271,7 @@ SR_FillSoundCfg:
 @ [esp +   4] = void *buf
 @ [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_FillSoundCfg,-1
+        Game_Call_Asm_Stack2 Game_FillSoundCfg,-1
 
 @ end procedure SR_FillSoundCfg
 
@@ -282,7 +280,7 @@ SR_RealPtr:
 @ [esp +   4] = char *real
 @ [esp      ] = return address
 
-        Game_Call_Asm_Stack0 Game_RealPtr,-1
+        Game_Call_Asm_Stack1 Game_RealPtr,-1
 
 @ end procedure SR_RealPtr
 

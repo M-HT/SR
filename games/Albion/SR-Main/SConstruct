@@ -102,7 +102,7 @@ elif device == 'gp2x':
                       ASFLAGS      = ' -EL -march=armv4t -mfpu=softfpa -I arm/'
                      )
     # see arm/armconf.inc for explanation of these options (and others)
-    env.Append(ASFLAGS = ' --defsym USE_R9=1 --defsym ALLOW_UNALIGNED_PC=1')
+    env.Append(ASFLAGS = ' --defsym USE_R9=1 --defsym ALLOW_UNALIGNED_PC=1 --defsym ALLOW_UNALIGNED_STACK=1')
 elif device == 'pandora':
     compiler_path = os.environ['PNDSDK'] + '/'
     compiler_prefix = 'pandora-'

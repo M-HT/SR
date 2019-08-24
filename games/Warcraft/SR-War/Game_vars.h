@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2018 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -130,8 +130,6 @@ EXTERNAL_VARIABLE uint32_t Game_LastClockValue;		/* last value returned by clock
 EXTERNAL_VARIABLE FILE *Game_stdin;					/* stdin */
 EXTERNAL_VARIABLE FILE *Game_stdout;				/* stdout */
 EXTERNAL_VARIABLE FILE *Game_stderr;				/* stderr */
-
-EXTERNAL_VARIABLE uint32_t Game_Registers[8];		/* used to save registers when replacing stack call based procedures */
 
 EXTERNAL_VARIABLE uint8_t *Warcraft_Font;			/* warcraft font data */
 EXTERNAL_VARIABLE uint8_t *Temp_Font_Data;			/* temporary font data */

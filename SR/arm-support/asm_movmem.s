@@ -35,6 +35,36 @@
     msr cpsr_f, tmpadr
 .endm
 
+.ifdef ALLOW_UNALIGNED_STACK
+
+.macro ALIGN_STACK
+    @ do nothing
+.endm
+
+.macro RESTORE_STACK
+    @ do nothing
+.endm
+
+.else
+
+.macro ALIGN_STACK
+    @ remember original esp value
+        mov eflags, esp
+    @ reserve 4 bytes on stack
+        sub lr, esp, #4
+    @ align stack to 8 bytes
+        bic esp, lr, #7
+    @ save original esp value on stack
+        str eflags, [esp]
+.endm
+
+.macro RESTORE_STACK
+    @ restore original esp value from stack
+        ldr esp, [esp]
+.endm
+
+.endif
+
 
 .extern X86_ReadMemProcedure
 .extern X86_WriteMemProcedure
@@ -59,7 +89,11 @@ x86_mov_reg_mem_8:
 
         mov tmp2, #1                @ register length
 
+        ALIGN_STACK
+
         bl X86_ReadMemProcedure
+
+        RESTORE_STACK
 
         and tmp1, tmp1, #0x00ff
 
@@ -78,7 +112,11 @@ x86_mov_reg_mem_16:
 
         mov tmp2, #2                @ register length
 
+        ALIGN_STACK
+
         bl X86_ReadMemProcedure
+
+        RESTORE_STACK
 
         mov tmp1, tmp1, lsl #16
         mov tmp1, tmp1, lsr #16
@@ -98,7 +136,11 @@ x86_mov_reg_mem_32:
 
         mov tmp2, #4                @ register length
 
+        ALIGN_STACK
+
         bl X86_ReadMemProcedure
+
+        RESTORE_STACK
 
         popfd3lr
 
@@ -118,7 +160,11 @@ x86_mov_mem_reg_8:
         and tmp3, tmp2, #0xff
         mov tmp2, #1                @ register length
 
+        ALIGN_STACK
+
         bl X86_WriteMemProcedure
+
+        RESTORE_STACK
 
         popfd3lr
 
@@ -138,7 +184,11 @@ x86_mov_mem_reg_16:
         mov tmp3, tmp3, lsr #16
         mov tmp2, #2                @ register length
 
+        ALIGN_STACK
+
         bl X86_WriteMemProcedure
+
+        RESTORE_STACK
 
         popfd3lr
 
@@ -157,7 +207,11 @@ x86_mov_mem_reg_32:
         mov tmp3, tmp2
         mov tmp2, #4                @ register length
 
+        ALIGN_STACK
+
         bl X86_WriteMemProcedure
+
+        RESTORE_STACK
 
         popfd3lr
 

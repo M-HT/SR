@@ -20,7 +20,7 @@
 ;;  SOFTWARE.
 ;;
 
-%macro  Call_Asm_VariableStack1 1-2 'get_errno_val'
+%macro  Game_Call_Asm_VariableStack1 1-2 'get_errno_val'
 
         push ecx
         push edx
@@ -63,7 +63,7 @@
 %endmacro
 
 
-%macro  Call_Asm_VariableStack2 1-2 'get_errno_val'
+%macro  Game_Call_Asm_VariableStack2 1-2 'get_errno_val'
 
         push ecx
         push edx

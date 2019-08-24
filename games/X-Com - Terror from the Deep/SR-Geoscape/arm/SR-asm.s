@@ -21,6 +21,7 @@
 @@
 
 .include "arm.inc"
+.include "armconf.inc"
 
 .arm
 
@@ -33,6 +34,37 @@
     ldmfd esp!, {tmp1, eflags}
     msr cpsr_f, tmp1
 .endm
+
+.ifdef ALLOW_UNALIGNED_STACK
+
+.macro ALIGN_STACK
+    @ do nothing
+.endm
+
+.macro RESTORE_STACK
+    @ do nothing
+.endm
+
+.else
+
+.macro ALIGN_STACK
+    @ remember original esp value
+        mov eflags, esp
+    @ reserve 4 bytes on stack
+        sub lr, esp, #4
+    @ align stack to 8 bytes
+        bic esp, lr, #7
+    @ save original esp value on stack
+        str eflags, [esp]
+.endm
+
+.macro RESTORE_STACK
+    @ restore original esp value from stack
+        ldr esp, [esp]
+.endm
+
+.endif
+
 
 .extern Game_SDLTicks
 .extern Game_LastAudio
@@ -66,8 +98,12 @@ _SR_SlowDownMainLoop:
 
 @ [esp +  2*4] = return address
 
+        ALIGN_STACK
+
         @call Game_SlowDownMainLoop
         bl Game_SlowDownMainLoop
+
+        RESTORE_STACK
 
         popfd2
 
@@ -85,8 +121,12 @@ _SR_Sync:
 
 @ [esp +  2*4] = return address
 
+        ALIGN_STACK
+
         @call Game_Sync
         bl Game_Sync
+
+        RESTORE_STACK
 
         popfd2
 
@@ -116,7 +156,11 @@ _SR_CheckTimer:
     SR_CheckTimer_RunTimer:
         stmfd esp!, {tmp1, eflags, lr}
 
+        ALIGN_STACK
+
         bl Game_RunTimer
+
+        RESTORE_STACK
 
         ldmfd esp!, {tmp1, eflags, lr}
         msr cpsr_f, tmp1
@@ -134,8 +178,12 @@ _SR_RunTimerDelay:
 
 @ [esp +  2*4] = return address
 
+        ALIGN_STACK
+
         @call Game_RunTimerDelay
         bl Game_RunTimerDelay
+
+        RESTORE_STACK
 
         popfd2
 

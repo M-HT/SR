@@ -579,7 +579,7 @@ SR_fprintf:
 ; [esp +   4] = FILE *fp
 ; [esp      ] = return address
 
-        Call_Asm_VariableStack2 vfprintf,-1
+        Game_Call_Asm_VariableStack2 vfprintf,-1
 
 ; end procedure SR_fprintf
 
@@ -590,7 +590,7 @@ SR_printf:
 ; [esp +   4] = const char *format
 ; [esp      ] = return address
 
-        Call_Asm_VariableStack1 vprintf,-1
+        Game_Call_Asm_VariableStack1 vprintf,-1
 
 ; end procedure SR_printf
 
@@ -603,7 +603,7 @@ SR__bprintf:
 ; [esp +   4] = char *buf
 ; [esp      ] = return address
 
-        Call_Asm_VariableStack3 vsnprintf,-1
+        Game_Call_Asm_VariableStack3 vsnprintf,-1
 
 ; end procedure SR__bprintf
 
@@ -615,7 +615,7 @@ SR_sprintf:
 ; [esp +   4] = char *buf
 ; [esp      ] = return address
 
-        Call_Asm_VariableStack2 vsprintf,-1
+        Game_Call_Asm_VariableStack2 vsprintf,-1
 
 ; end procedure SR_sprintf
 

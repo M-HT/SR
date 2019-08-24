@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -29,13 +29,6 @@
 #include <inttypes.h>
 #include <SDL/SDL.h>
 #include <SDL/SDL_mixer.h>
-
-
-#if defined(__arm__) || defined(_ARM)
-    #define CALL_PARAMS1 uint32_t tmpreg1 __attribute__ ((__unused__)), uint32_t tmpreg2 __attribute__ ((__unused__)), uint32_t tmpreg3 __attribute__ ((__unused__)), uint32_t tmpreg4 __attribute__ ((__unused__)),
-#else
-    #define CALL_PARAMS1
-#endif
 
 
 /* Maximum available memory = 16MiB */

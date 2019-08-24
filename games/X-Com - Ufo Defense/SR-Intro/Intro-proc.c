@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -75,12 +75,12 @@ int Game_getch(void)
     return ret;
 }
 
-int Game_dlseek(CALL_PARAMS1 int fd, int offset, int whence)
+int Game_dlseek(int fd, int offset, int whence)
 {
     return lseek(fd, offset, ( (whence == 0)?(SEEK_SET):( (whence == 1)?(SEEK_CUR):( (whence == 2)?(SEEK_END):(whence) ) ) ));
 }
 
-int Game_dread(CALL_PARAMS1 void *buf, int count, int fd)
+int Game_dread(void *buf, int count, int fd)
 {
     ssize_t rcount;
 
@@ -90,7 +90,7 @@ int Game_dread(CALL_PARAMS1 void *buf, int count, int fd)
 }
 
 
-void Game_dclose(CALL_PARAMS1 int fd)
+void Game_dclose(int fd)
 {
     close(fd);
 }

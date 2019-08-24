@@ -25,6 +25,36 @@
 .include "arm.inc"
 .include "armconf.inc"
 
+.ifdef ALLOW_UNALIGNED_STACK
+
+.macro ALIGN_STACK
+    @ do nothing
+.endm
+
+.macro RESTORE_STACK
+    @ do nothing
+.endm
+
+.else
+
+.macro ALIGN_STACK
+    @ remember original esp value
+        mov eflags, esp
+    @ reserve 4 bytes on stack
+        sub lr, esp, #4
+    @ align stack to 8 bytes
+        bic esp, lr, #7
+    @ save original esp value on stack
+        str eflags, [esp]
+.endm
+
+.macro RESTORE_STACK
+    @ restore original esp value from stack
+        ldr esp, [esp]
+.endm
+
+.endif
+
 
 .extern div_64
 .extern div_32
@@ -58,11 +88,15 @@ x86_div_64:
 
         mov a1, eax
 
+        ALIGN_STACK
+
         cmp edx, #0
         bne x86_div_64_div64
 
         mov a2, tmp3
         bl div_32
+
+        RESTORE_STACK
 
         ldmfd esp!, {eflags, lr}
 
@@ -75,6 +109,8 @@ x86_div_64:
 
         mov a2, edx
         bl div_64
+
+        RESTORE_STACK
 
         ldmfd esp!, {eflags, lr}
 
@@ -100,7 +136,11 @@ x86_div_32:
 
         stmfd esp!, {eflags, lr}
 
+        ALIGN_STACK
+
         bl div_32
+
+        RESTORE_STACK
 
         ldmfd esp!, {eflags, lr}
         bx lr
@@ -125,7 +165,12 @@ x86_div_16:
         stmfd esp!, {eflags, lr}
 
         mov a1, a1, lsr #16
+
+        ALIGN_STACK
+
         bl div_32
+
+        RESTORE_STACK
 
         ldmfd esp!, {eflags, lr}
         bx lr
@@ -149,11 +194,15 @@ x86_idiv_64:
 
         mov a1, eax
 
+        ALIGN_STACK
+
         cmp edx, eax, asr #31
         bne x86_idiv_64_div64
 
         mov a2, tmp3
         bl idiv_32
+
+        RESTORE_STACK
 
         ldmfd esp!, {eflags, lr}
 
@@ -166,6 +215,8 @@ x86_idiv_64:
 
         mov a2, edx
         bl idiv_64
+
+        RESTORE_STACK
 
         ldmfd esp!, {eflags, lr}
 
@@ -192,7 +243,11 @@ x86_idiv_32:
 
         stmfd esp!, {eflags, lr}
 
+        ALIGN_STACK
+
         bl idiv_32
+
+        RESTORE_STACK
 
         ldmfd esp!, {eflags, lr}
         bx lr
@@ -217,7 +272,12 @@ x86_idiv_16:
         stmfd esp!, {eflags, lr}
 
         mov a1, a1, asr #16
+
+        ALIGN_STACK
+
         bl idiv_32
+
+        RESTORE_STACK
 
         ldmfd esp!, {eflags, lr}
         bx lr

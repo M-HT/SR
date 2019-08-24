@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -34,9 +34,9 @@ extern "C" {
 extern int Game_errno(void);
 extern int Game_checkch(void);
 extern int Game_getch(void);
-extern int Game_dlseek(CALL_PARAMS1 int fd, int offset, int whence);
-extern int Game_dread(CALL_PARAMS1 void *buf, int count, int fd);
-extern void Game_dclose(CALL_PARAMS1 int fd);
+extern int Game_dlseek(int fd, int offset, int whence);
+extern int Game_dread(void *buf, int count, int fd);
+extern void Game_dclose(int fd);
 
 #ifdef __cplusplus
 }

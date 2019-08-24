@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -589,7 +589,7 @@ static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
 }
 
 
-int16_t Game_DigPlay(CALL_PARAMS1 DIGPAK_SNDSTRUC *sndplay)
+int16_t Game_DigPlay(DIGPAK_SNDSTRUC *sndplay)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: Playing sound:\n\tsample length: %i\n\tfrequency: %i\n", sndplay->sndlen, sndplay->frequency);
@@ -651,7 +651,7 @@ void Game_StopSound(void)
     }
 }
 
-int16_t Game_PostAudioPending(CALL_PARAMS1 DIGPAK_SNDSTRUC *sndplay)
+int16_t Game_PostAudioPending(DIGPAK_SNDSTRUC *sndplay)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: posting audio pending:\n\tsample length: %i\n\tfrequency: %i\n", sndplay->sndlen, sndplay->frequency);
@@ -676,7 +676,7 @@ int16_t Game_PostAudioPending(CALL_PARAMS1 DIGPAK_SNDSTRUC *sndplay)
     }
 }
 
-int16_t Game_SetPlayMode(CALL_PARAMS1 int16_t playmode)
+int16_t Game_SetPlayMode(int16_t playmode)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: Set Play mode: %i - ", playmode);
@@ -732,7 +732,7 @@ int16_t *Game_ReportSemaphoreAddress(void)
     return &Game_AudioSemaphore;
 }
 
-int16_t Game_SetBackFillMode(CALL_PARAMS1 int16_t mode)
+int16_t Game_SetBackFillMode(int16_t mode)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: DMA BackFill mode: %i - %s\n", mode, (mode)?"off":"on");
@@ -740,7 +740,7 @@ int16_t Game_SetBackFillMode(CALL_PARAMS1 int16_t mode)
     return 0; // command ignored
 }
 
-int16_t Game_VerifyDMA(CALL_PARAMS1 char *data, int16_t length)
+int16_t Game_VerifyDMA(char *data, int16_t length)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: verifying dma block\n");
@@ -748,20 +748,20 @@ int16_t Game_VerifyDMA(CALL_PARAMS1 char *data, int16_t length)
     return 1;
 }
 
-void Game_SetDPMIMode(CALL_PARAMS1 int16_t mode)
+void Game_SetDPMIMode(int16_t mode)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: Setting DPMI mode: %i - %s\n", mode, (mode)?"32 bit addressing":"16 bit addressing");
 #endif
 }
 
-int Game_FillSoundCfg(CALL_PARAMS1 void *buf, int count)
+int Game_FillSoundCfg(void *buf, int count)
 {
     memcpy(buf, &Game_SoundCfg, count);
     return count;
 }
 
-uint32_t Game_RealPtr(CALL_PARAMS1 uint32_t ptr)
+uint32_t Game_RealPtr(uint32_t ptr)
 {
     return ptr;
 }

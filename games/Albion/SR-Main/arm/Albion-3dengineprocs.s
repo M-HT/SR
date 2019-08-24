@@ -21,6 +21,38 @@
 @@
 
 .include "arm.inc"
+.include "armconf.inc"
+
+.ifdef ALLOW_UNALIGNED_STACK
+
+.macro ALIGN_STACK
+    @ do nothing
+.endm
+
+.macro RESTORE_STACK
+    @ do nothing
+.endm
+
+.else
+
+.macro ALIGN_STACK
+    @ remember original esp value
+        mov eflags, esp
+    @ reserve 4 bytes on stack
+        sub lr, esp, #4
+    @ align stack to 8 bytes
+        bic esp, lr, #7
+    @ save original esp value on stack
+        str eflags, [esp]
+.endm
+
+.macro RESTORE_STACK
+    @ restore original esp value from stack
+        ldr esp, [esp]
+.endm
+
+.endif
+
 
 .extern draw_3dscene
 
@@ -42,8 +74,12 @@ _draw_3dscene_proc:
 
         stmfd esp!, {eflags}
 
+        ALIGN_STACK
+
         @call draw_3dscene
         bl draw_3dscene
+
+        RESTORE_STACK
 
         ldmfd esp!, {eflags}
 

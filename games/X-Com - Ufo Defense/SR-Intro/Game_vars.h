@@ -131,8 +131,6 @@ EXTERNAL_VARIABLE char *Game_MidiDevice;			/* MIDI device name */
 EXTERNAL_VARIABLE uint32_t Game_Joystick;			/* is joystick used ? */
 
 
-EXTERNAL_VARIABLE uint32_t Game_Registers[8];		/* used to save registers when replacing stack call based procedures */
-
 EXTERNAL_VARIABLE volatile uint32_t Game_TimerRunning;	/* is timer interrupt running ? */
 EXTERNAL_VARIABLE volatile uint32_t Game_TimerTick;	/* Timer tick counter */
 EXTERNAL_VARIABLE volatile uint32_t Game_TimerRun;	/* Timer "number of runs" counter */

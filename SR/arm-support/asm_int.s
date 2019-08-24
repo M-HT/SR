@@ -41,14 +41,26 @@ x86_int:
         PUSHFD
         PUSHAD
 
-        mov tmp2, esp
-        str tmp2, [esp, #-4]!
-        and tmp1, tmp1, #0xff
-        str tmp1, [esp, #-4]!
+        and a1, tmp1, #0xff
+
+    @ remember original esp value
+        mov a2, esp
+
+.ifndef ALLOW_UNALIGNED_STACK
+    @ reserve 4 bytes on stack
+        sub lr, esp, #4
+    @ align stack to 8 bytes
+        bic esp, lr, #7
+    @ save original esp value on stack
+        str a2, [esp]
+.endif
 
         bl X86_InterruptProcedure
 
-        add esp, esp, #8
+.ifndef ALLOW_UNALIGNED_STACK
+    @ restore original esp value from stack
+        ldr esp, [esp]
+.endif
 
         POPAD
         POPFD

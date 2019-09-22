@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2018 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -148,6 +148,12 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
        )
     {
         *((uint32_t *) &(section[DATA->Entry].adr[item->sofs])) = section[item->tsec].start + item->tofs;
+    }
+
+    replace = section_replace_list_FindEntryEqualOrLower(DATA->Entry, item->sofs);
+    if ((replace != NULL) && (replace->empty) && (replace->ofs + replace->length >= item->sofs + 4)) // source is in empty replaced area
+    {
+        return;
     }
 #endif
 
@@ -373,7 +379,7 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
 
                     if ( section[DATA->Entry].adr[item->sofs - 1] == 0xe8 )
                     {
-#if (OUTPUT_TYPE == OUT_ARM_LINUX)
+#if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
                         // todo: arm
                         sprintf(cbuf, "@call%s\ncall%s", cbuf2, cbuf2);
 #else
@@ -400,7 +406,9 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
         }
         else if (item->type == FT_SEGMENT || item->type == FT_16BITOFS)
         {
-#if (OUTPUT_TYPE == OUT_ARM_LINUX)
+#if (OUTPUT_TYPE == OUT_LLASM)
+            sprintf(cbuf, "dseg%s", cbuf2);
+#elif (OUTPUT_TYPE == OUT_ARM_LINUX)
             sprintf(cbuf, ".hword%s", cbuf2);
 #else
             sprintf(cbuf, "dw%s", cbuf2);
@@ -411,7 +419,9 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
         }
         else
         {
-#if (OUTPUT_TYPE == OUT_ARM_LINUX)
+#if (OUTPUT_TYPE == OUT_LLASM)
+            sprintf(cbuf, "daddr%s", cbuf2);
+#elif (OUTPUT_TYPE == OUT_ARM_LINUX)
             sprintf(cbuf, ".int%s", cbuf2);
 #else
             sprintf(cbuf, "dd%s", cbuf2);

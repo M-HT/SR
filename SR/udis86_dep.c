@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -82,6 +82,7 @@ int init_udis86_dep(void)
 	SET_FLAGS(UD_Ifadd, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifaddp, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifchs, FL_NONE, FL_NONE);
+	SET_FLAGS(UD_Ifcom, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifcomp, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifcompp, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifcos, FL_NONE, FL_NONE);
@@ -89,11 +90,18 @@ int init_udis86_dep(void)
 	SET_FLAGS(UD_Ifdivp, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifdivr, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifdivrp, FL_NONE, FL_NONE);
+	SET_FLAGS(UD_Ifiadd, FL_NONE, FL_NONE);
+	SET_FLAGS(UD_Ifidiv, FL_NONE, FL_NONE);
+	SET_FLAGS(UD_Ifidivr, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifild, FL_NONE, FL_NONE);
+	SET_FLAGS(UD_Ifimul, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifistp, FL_NONE, FL_NONE);
+	SET_FLAGS(UD_Ifisub, FL_NONE, FL_NONE);
+	SET_FLAGS(UD_Ifisubr, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifld, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifld1, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifldcw, FL_NONE, FL_NONE);
+	SET_FLAGS(UD_Ifldlg2, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifldln2, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifldz, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifmul, FL_NONE, FL_NONE);
@@ -109,6 +117,9 @@ int init_udis86_dep(void)
 	SET_FLAGS(UD_Ifsubp, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifsubr, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifsubrp, FL_NONE, FL_NONE);
+	SET_FLAGS(UD_Ifucom, FL_NONE, FL_NONE);
+	SET_FLAGS(UD_Ifucomp, FL_NONE, FL_NONE);
+	SET_FLAGS(UD_Ifucompp, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifxch, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifyl2x, FL_NONE, FL_NONE);
 
@@ -138,6 +149,8 @@ int init_udis86_dep(void)
 	SET_FLAGS(UD_Ijnc, FL_CARRY | FL_CARRY_SUB_ORIGINAL, FL_NONE);
 	SET_FLAGS(UD_Ijnl, FL_SIGN | FL_OVERFLOW, FL_NONE);
 	SET_FLAGS(UD_Ijnle, FL_ZERO | FL_SIGN | FL_OVERFLOW, FL_NONE);
+	SET_FLAGS(UD_Ijp, FL_PARITY, FL_NONE);
+	SET_FLAGS(UD_Ijnp, FL_PARITY, FL_NONE);
 	SET_FLAGS(UD_Ijns, FL_SIGN, FL_NONE);
 	SET_FLAGS(UD_Ijnz, FL_ZERO, FL_NONE);
 	SET_FLAGS(UD_Ijs, FL_SIGN, FL_NONE);
@@ -215,7 +228,9 @@ int init_udis86_dep(void)
 	SET_FLAGS(UD_Isetnbe, FL_ZERO | FL_CARRY | FL_CARRY_SUB_ORIGINAL, FL_NONE);
 	SET_FLAGS(UD_Isetnl, FL_SIGN | FL_OVERFLOW, FL_NONE);
 	SET_FLAGS(UD_Isetnle, FL_ZERO | FL_SIGN | FL_OVERFLOW, FL_NONE);
+	SET_FLAGS(UD_Isetns, FL_SIGN, FL_NONE);
 	SET_FLAGS(UD_Isetnz, FL_ZERO, FL_NONE);
+	SET_FLAGS(UD_Isets, FL_SIGN, FL_NONE);
 	SET_FLAGS(UD_Isetz, FL_ZERO, FL_NONE);
 	SET_FLAGS(UD_Ishl, FL_NONE, FL_COND);
 	SET_FLAGS(UD_Ishld, FL_NONE, FL_COND);

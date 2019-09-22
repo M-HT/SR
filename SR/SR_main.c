@@ -284,8 +284,8 @@ static void initialize_values(void)
 	SR_CodeBase = NULL;
 	list_invalid_code_fixups = 0;
 	invalid_code_fixups_name = NULL;
-    list_data_to_code_fixups = 0;
-    data_to_code_fixups_name = NULL;
+	list_data_to_code_fixups = 0;
+	data_to_code_fixups_name = NULL;
 
 	esp_dword_aligned = 0;
 	ebp_dword_aligned = 0;
@@ -314,6 +314,8 @@ int main (int argc, char *argv[])
 	fprintf(stderr, "Output type: X86 version(s)\n");
 #elif (OUTPUT_TYPE == OUT_ARM_LINUX)
 	fprintf(stderr, "Output type: ARM Linux version\n");
+#elif (OUTPUT_TYPE == OUT_LLASM)
+	fprintf(stderr, "Output type: LLasm version\n");
 #else
 	#error unknown output type
 #endif
@@ -360,7 +362,6 @@ int main (int argc, char *argv[])
 	write_log_time(stderr);
 	fprintf(stderr, "Loading EXE file...\n");
 
-//	ret = SR_LoadFile("MAIN.EXE");
 	ret = SR_LoadFile(input_name);
 	if (ret != 0)
 	{
@@ -415,7 +416,6 @@ int main (int argc, char *argv[])
 	write_log_time(stderr);
 	fprintf(stderr, "Writing output...\n");
 
-//	ret = SR_write_output("Albion-main.asm");
 	ret = SR_write_output(output_name);
 
 	if (ret != 0)

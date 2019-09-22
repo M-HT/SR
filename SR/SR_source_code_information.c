@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2018 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -275,7 +275,7 @@ static int SR_LoadSCI_instruction_replacements(FILE *file)
     char *str1, *str2, *str3;
     replace_data *replace, **replace_value;
     uint_fast32_t SecNum, RelAdr;
-    int length;
+    int length, instr_empty;
     unsigned int address, instr_len;
 
     while (!feof(file))
@@ -306,13 +306,27 @@ static int SR_LoadSCI_instruction_replacements(FILE *file)
         *str2 = 0;
         str2++;
 
-        str3 = strchr(str2, '|');
-        while (str3 != NULL)
-        {
-            *str3 = '\n';
-            str3++;
+        instr_empty = 0;
 
-            str3 = strchr(str3, '|');
+        str3 = strchr(str2, '|');
+        if (str3 == NULL)
+        {
+            str3 = str2;
+            while (*str3 == ' ') str3++;
+            if ((*str3 == ';') || (*str3 == '@'))
+            {
+                instr_empty = 1;
+            }
+        }
+        else
+        {
+            while (str3 != NULL)
+            {
+                *str3 = '\n';
+                str3++;
+
+                str3 = strchr(str3, '|');
+            }
         }
 
         sscanf(buf, "loc_%X", &address);
@@ -320,7 +334,7 @@ static int SR_LoadSCI_instruction_replacements(FILE *file)
 
         if (SR_get_section_reladr(address, &SecNum, &RelAdr))
         {
-            replace = section_replace_list_Insert(SecNum, RelAdr, str2, instr_len);
+            replace = section_replace_list_Insert(SecNum, RelAdr, str2, instr_len, instr_empty);
             if (replace == NULL) return 1;
         }
     }
@@ -515,8 +529,8 @@ int SR_LoadSCI(void)
     FILE *f;
     int ret;
 
-    f = fopen(fixup_interpret_as_code, "rt");
 
+    f = fopen(fixup_interpret_as_code, "rt");
     if (f != NULL)
     {
         fprintf(stderr, "\tLoading %s...\n", fixup_interpret_as_code);
@@ -528,8 +542,8 @@ int SR_LoadSCI(void)
         if (ret) return ret;
     }
 
-    f = fopen(displaced_labels, "rt");
 
+    f = fopen(displaced_labels, "rt");
     if (f != NULL)
     {
         fprintf(stderr, "\tLoading %s...\n", displaced_labels);
@@ -541,8 +555,8 @@ int SR_LoadSCI(void)
         if (ret) return ret;
     }
 
-    f = fopen(noret_procedures, "rt");
 
+    f = fopen(noret_procedures, "rt");
     if (f != NULL)
     {
         fprintf(stderr, "\tLoading %s...\n", noret_procedures);
@@ -554,8 +568,8 @@ int SR_LoadSCI(void)
         if (ret) return ret;
     }
 
-    f = fopen(code16_areas, "rt");
 
+    f = fopen(code16_areas, "rt");
     if (f != NULL)
     {
         fprintf(stderr, "\tLoading %s...\n", code16_areas);
@@ -567,8 +581,8 @@ int SR_LoadSCI(void)
         if (ret) return ret;
     }
 
-    f = fopen(fixup_do_not_interpret_as_code, "rt");
 
+    f = fopen(fixup_do_not_interpret_as_code, "rt");
     if (f != NULL)
     {
         fprintf(stderr, "\tLoading %s...\n", fixup_do_not_interpret_as_code);
@@ -580,9 +594,9 @@ int SR_LoadSCI(void)
         if (ret) return ret;
     }
 
+
 #if (OUTPUT_TYPE != OUT_DOS)
     f = fopen(external_procedures, "rt");
-
     if (f != NULL)
     {
         fprintf(stderr, "\tLoading %s...\n", external_procedures);
@@ -594,8 +608,8 @@ int SR_LoadSCI(void)
         if (ret) return ret;
     }
 
-    f = fopen(global_aliases, "rt");
 
+    f = fopen(global_aliases, "rt");
     if (f != NULL)
     {
         fprintf(stderr, "\tLoading %s...\n", global_aliases);
@@ -607,8 +621,8 @@ int SR_LoadSCI(void)
         if (ret) return ret;
     }
 
-    f = fopen(instruction_replacements, "rt");
 
+    f = fopen(instruction_replacements, "rt");
     if (f != NULL)
     {
         fprintf(stderr, "\tLoading %s...\n", instruction_replacements);
@@ -620,8 +634,8 @@ int SR_LoadSCI(void)
         if (ret) return ret;
     }
 
-    f = fopen(instruction_replacements_FPU, "rt");
 
+    f = fopen(instruction_replacements_FPU, "rt");
     if (f != NULL)
     {
         fprintf(stderr, "\tLoading %s...\n", instruction_replacements_FPU);
@@ -633,10 +647,10 @@ int SR_LoadSCI(void)
         if (ret) return ret;
     }
 
-#if (OUTPUT_TYPE == OUT_ARM_LINUX)
+
+#if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
 
     f = fopen(unaligned_ebp_areas, "rt");
-
     if (f != NULL)
     {
         fprintf(stderr, "\tLoading %s...\n", unaligned_ebp_areas);
@@ -648,8 +662,8 @@ int SR_LoadSCI(void)
         if (ret) return ret;
     }
 
-    f = fopen(unaligned_esp_areas, "rt");
 
+    f = fopen(unaligned_esp_areas, "rt");
     if (f != NULL)
     {
         fprintf(stderr, "\tLoading %s...\n", unaligned_esp_areas);
@@ -665,7 +679,6 @@ int SR_LoadSCI(void)
 #endif
 
     f = fopen(instruction_flags, "rt");
-
     if (f != NULL)
     {
         fprintf(stderr, "\tLoading %s...\n", instruction_flags);

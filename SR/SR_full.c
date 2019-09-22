@@ -140,8 +140,11 @@ static void SR_disassemble_create_aligns_data(output_data *item, void *data)
             {
                 if (item->has_label)
                 {
-                    item->align = 4;
-                    DATA->isregion = -1;
+                    if (item->type != OT_NONE)
+                    {
+                        item->align = 4;
+                        DATA->isregion = -1;
+                    }
                 }
                 else
                 {
@@ -234,7 +237,7 @@ int SR_full_disassembly(void)
     }
 #endif
 
-#if (OUTPUT_TYPE == OUT_ARM_LINUX)
+#if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
     ret = init_udis86_dep();
 
     if (ret) return ret;
@@ -261,7 +264,7 @@ int SR_full_disassembly(void)
 #if (OUTPUT_TYPE == OUT_DOS)
                 ret = SR_disassemble_offset_dos(index, offset);
 #endif
-#if ((OUTPUT_TYPE == OUT_X86) || (OUTPUT_TYPE == OUT_ARM_LINUX))
+#if ((OUTPUT_TYPE == OUT_X86) || (OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
                 ret = SR_disassemble_offset_win32(index, offset);
 #endif
 
@@ -270,7 +273,7 @@ int SR_full_disassembly(void)
         }
     }
 
-#if ((OUTPUT_TYPE == OUT_X86) || (OUTPUT_TYPE == OUT_ARM_LINUX))
+#if ((OUTPUT_TYPE == OUT_X86) || (OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
     // align code and data in code segments
     for (index = 0; index < num_sections; index++)
     {
@@ -289,7 +292,7 @@ int SR_full_disassembly(void)
     }
 #endif
 
-#if (OUTPUT_TYPE == OUT_ARM_LINUX)
+#if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
     // create regions from bounds
     for (index = 0; index < num_sections; index++)
     {
@@ -327,7 +330,11 @@ int SR_full_disassembly(void)
 
             if (replace == NULL)
             {
+#if (OUTPUT_TYPE == OUT_ARM_LINUX)
                 ret = SR_disassemble_region_arm(index, region);
+#elif (OUTPUT_TYPE == OUT_LLASM)
+                ret = SR_disassemble_region_llasm(index, region);
+#endif
 
                 if (ret) return ret;
             }

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -136,7 +136,7 @@ void section_alias_list_ForEach(unsigned int SecNum, void (*proc)(alias_data *al
 
 
 /* replace_list */
-replace_data *section_replace_list_Insert(unsigned int SecNum, Word_t Index, const char *instr, unsigned int instr_len)
+replace_data *section_replace_list_Insert(unsigned int SecNum, Word_t Index, const char *instr, unsigned int instr_len, int instr_empty)
 {
     replace_data *replace, **replace_value;
 
@@ -145,6 +145,7 @@ replace_data *section_replace_list_Insert(unsigned int SecNum, Word_t Index, con
 
     replace->ofs = Index;
     replace->length = instr_len;
+    replace->empty = instr_empty;
     strcpy(replace->instr, instr);
 
     JLI(replace_value, section[SecNum].replace_list, Index);

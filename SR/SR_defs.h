@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -34,6 +34,7 @@
 #define OUT_DOS 1
 #define OUT_X86 2
 #define OUT_ARM_LINUX 4
+#define OUT_LLASM 7
 
 #define OUTPUT_TYPE  OUT_X86
 
@@ -45,6 +46,8 @@
 
 #if (OUTPUT_TYPE == OUT_ARM_LINUX)
     //#define EMULATE_FPU 0
+    #define EMULATE_FPU 1
+#elif (OUTPUT_TYPE == OUT_LLASM)
     #define EMULATE_FPU 1
 #endif
 
@@ -97,6 +100,7 @@ typedef struct _extrn_data_ {
 typedef struct _replace_data_ {
     uint_fast32_t ofs;          // instructions offset
     uint_fast32_t length;       // instructions length (bytes)
+    int           empty;        // replacement code is empty ?
     char          instr[1];     // replacement code
 } replace_data;
 

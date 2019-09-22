@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -30,8 +30,12 @@
 
 #undef DISPLAY_DISASSEMBLY
 
+#if (OUTPUT_TYPE == OUT_LLASM)
+#include "udis86_dep.h"
+#else
 // from udis86
 extern const char* ud_reg_tab[];
+#endif
 
 int SR_disassemble_remove_segment(const char *ostr, char *dst, uint8_t pfx_seg)
 {
@@ -188,6 +192,62 @@ extrn_data *SR_disassemble_find_proc(unsigned int Entry, uint_fast32_t address)
     return extrn;
 }
 
+#if (OUTPUT_TYPE == OUT_LLASM)
+static int SR_disassemble_change_cjump_iflags(unsigned int Entry, uint_fast32_t offset, int prev_cjump_length, enum ud_mnemonic_code mnemonic)
+{
+    bound_data *iflags;
+    uint_fast32_t flags;
+
+    flags = flags_needed[mnemonic];
+
+    iflags = section_iflags_list_FindEntryEqual(Entry, offset);
+    if (iflags == NULL)
+    {
+        section_iflags_list_Insert(Entry, offset, 0, flags);
+    }
+    else
+    {
+        if (iflags->end == 0)
+        {
+            iflags->end = flags;
+        }
+        else
+        {
+            if (iflags->end != (iflags->end | flags))
+            {
+                fprintf(stderr, "Error: iflags->end conflict - %i - %i\n", Entry, offset);
+
+                return 0;
+            }
+        }
+    }
+
+    iflags = section_iflags_list_FindEntryEqual(Entry, offset - prev_cjump_length);
+    if (iflags == NULL)
+    {
+        section_iflags_list_Insert(Entry, offset - prev_cjump_length, flags, 0);
+    }
+    else
+    {
+        if (iflags->begin == 0)
+        {
+            iflags->begin = flags;
+        }
+        else
+        {
+            if (iflags->begin != (iflags->begin | flags))
+            {
+                fprintf(stderr, "Error: iflags->begin conflict - %i - %i\n", Entry, offset);
+
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
+#endif
+
 int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
 {
     output_data *output;
@@ -198,6 +258,12 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
     char cLabel[32];
     char cResult[128];
     char cResPart[128];
+#if (OUTPUT_TYPE == OUT_LLASM)
+    int prev_cjump_length, cur_cjump_length;
+
+    prev_cjump_length = 0;
+    cur_cjump_length = 0;
+#endif
 
     ud_set_input_buffer(&ud_obj, &(section[Entry].adr[offset]), section[Entry].size - offset);
     ud_set_pc(&ud_obj, section[Entry].start + offset);
@@ -210,7 +276,7 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
 
         if (output == NULL)
         {
-            fprintf(stderr, "Error: output not found - %i - %i\n", Entry, offset);
+            fprintf(stderr, "Error: output not found - %i - 0x%x\n", Entry, offset);
 
             return 1;
         }
@@ -236,6 +302,11 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
             finished = 2;
             break;
         }
+
+#if (OUTPUT_TYPE == OUT_LLASM)
+        prev_cjump_length = cur_cjump_length;
+        cur_cjump_length = 0;
+#endif
 
 #ifdef DISPLAY_DISASSEMBLY
         printf("loc_%X: %s\n", section[Entry].start + offset, ud_insn_asm(&ud_obj));
@@ -374,6 +445,7 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
                         }
                     }
 
+
 #ifdef DISPLAY_DISASSEMBLY
                     printf("\t%s\n", output->str);
 #endif
@@ -497,9 +569,28 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
             case UD_Ijge:
             case UD_Ijc:
             case UD_Ijnc:
+            #if (OUTPUT_TYPE == OUT_LLASM)
+                cur_cjump_length = decoded_length;
+
+                if (prev_cjump_length)
+                {
+                    if (!SR_disassemble_change_cjump_iflags(Entry, offset, prev_cjump_length, ud_obj.mnemonic))
+                    {
+                        return 3;
+                    }
+                }
+            #endif
+                // fallthrough
             case UD_Ijcxz:
             case UD_Ijecxz:
             case UD_Ijrcxz:
+            #if (OUTPUT_TYPE == OUT_LLASM)
+                bound = section_bound_list_Insert(Entry, offset);
+                if (bound != NULL) bound->end = 1;
+                bound = section_bound_list_Insert(Entry, offset + decoded_length);
+                if (bound != NULL) bound->begin = 1;
+            #endif
+
                 if (fixup == NULL &&
                     ud_obj.operand[0].type == UD_OP_JIMM &&
                     (ud_obj.operand[0].size == 32 || ud_obj.operand[0].size == 8)
@@ -685,6 +776,13 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
             case UD_Iloopne:
             case UD_Iloopnz:
             case UD_Iloopz:
+            #if (OUTPUT_TYPE == OUT_LLASM)
+                bound = section_bound_list_Insert(Entry, offset);
+                if (bound != NULL) bound->end = 1;
+                bound = section_bound_list_Insert(Entry, offset + decoded_length);
+                if (bound != NULL) bound->begin = 1;
+            #endif
+
                 if (fixup == NULL &&
                     ud_obj.operand[0].type == UD_OP_JIMM &&
                     ud_obj.operand[0].size == 8
@@ -936,6 +1034,35 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
                 return 3;
                 break;
 
+        #if (OUTPUT_TYPE == OUT_LLASM)
+            case UD_Iseto:
+            case UD_Isetno:
+            case UD_Isetb:
+            case UD_Isetnb:
+            case UD_Isetz:
+            case UD_Isetnz:
+            case UD_Isetbe:
+            case UD_Isetnbe:
+            case UD_Isets:
+            case UD_Isetns:
+            case UD_Isetp:
+            case UD_Isetnp:
+            case UD_Isetl:
+            case UD_Isetnl:
+            case UD_Isetle:
+            case UD_Isetnle:
+            case UD_Iseta:
+            case UD_Isetge:
+            case UD_Isetg:
+                if (prev_cjump_length)
+                {
+                    if (!SR_disassemble_change_cjump_iflags(Entry, offset, prev_cjump_length, ud_obj.mnemonic))
+                    {
+                        return 3;
+                    }
+                }
+        #endif
+                // fallthrough to default
             default:
                 // mov reg, [] - memory access with constant address
                 if (ud_obj.mnemonic == UD_Imov &&

@@ -1,0 +1,124 @@
+macro Game_Call_Asm_Return _errno_val, _numpop
+    mov tmp0, \_errno_val
+    cmovslt tmp0, 0, tmp0, 0, 1
+    ifnz tmp0
+        store \_errno_val, errno_val, 4
+    endif
+
+    mov tmp0, \_errno_val + 1000
+    ifz tmp0
+        call Game_errno
+        store tmp0, errno_val, 4
+    endif
+
+    load tmp0, esp, 4
+    add esp, esp, 4 + (\_numpop * 4)
+    tcall tmp0
+endm
+
+
+macro Game_Call_Asm_VariableStack1 proc_name, _errno_val
+    add tmp0, esp, 4
+    load tmp0, tmp0, 4
+    add tmp1, esp, 2*4
+    call \proc_name tmp0, tmp1
+    mov eax, tmp0
+    Game_Call_Asm_Return \_errno_val, 0
+endm
+
+macro Game_Call_Asm_VariableStack2 proc_name, _errno_val
+    add tmp0, esp, 4
+    load tmp0, tmp0, 4
+    add tmp1, esp, 2*4
+    load tmp1, tmp1, 4
+    add tmp2, esp, 3*4
+    call \proc_name tmp0, tmp1, tmp2
+    mov eax, tmp0
+    Game_Call_Asm_Return \_errno_val, 0
+endm
+
+
+macro Game_Call_Asm_Stack1 proc_name, _errno_val
+    add tmp0, esp, 4
+    load tmp0, tmp0, 4
+    call \proc_name tmp0
+    mov eax, tmp0
+    Game_Call_Asm_Return \_errno_val, 0
+endm
+
+macro Game_Call_Asm_Stack2 proc_name, _errno_val
+    add tmp0, esp, 4
+    load tmp0, tmp0, 4
+    add tmp1, esp, 2*4
+    load tmp1, tmp1, 4
+    call \proc_name tmp0, tmp1
+    mov eax, tmp0
+    Game_Call_Asm_Return \_errno_val, 0
+endm
+
+macro Game_Call_Asm_Stack3 proc_name, _errno_val
+    add tmp0, esp, 4
+    load tmp0, tmp0, 4
+    add tmp1, esp, 2*4
+    load tmp1, tmp1, 4
+    add tmp2, esp, 3*4
+    load tmp2, tmp2, 4
+    call \proc_name tmp0, tmp1, tmp2
+    mov eax, tmp0
+    Game_Call_Asm_Return \_errno_val, 0
+endm
+
+macro Game_Call_Asm_Stack4 proc_name, _errno_val
+    add tmp0, esp, 4
+    load tmp0, tmp0, 4
+    add tmp1, esp, 2*4
+    load tmp1, tmp1, 4
+    add tmp2, esp, 3*4
+    load tmp2, tmp2, 4
+    add tmp3, esp, 4*4
+    load tmp3, tmp3, 4
+    call \proc_name tmp0, tmp1, tmp2, tmp3
+    mov eax, tmp0
+    Game_Call_Asm_Return \_errno_val, 0
+endm
+
+
+
+macro Game_Call_Asm_Reg0 proc_name, _errno_val
+    call \proc_name
+    mov eax, tmp0
+    Game_Call_Asm_Return \_errno_val, 0
+endm
+
+macro Game_Call_Asm_Reg1 proc_name, _errno_val
+    call \proc_name eax
+    mov eax, tmp0
+    Game_Call_Asm_Return \_errno_val, 0
+endm
+
+macro Game_Call_Asm_Reg2 proc_name, _errno_val
+    call \proc_name eax, edx
+    mov eax, tmp0
+    Game_Call_Asm_Return \_errno_val, 0
+endm
+
+macro Game_Call_Asm_Reg3 proc_name, _errno_val
+    call \proc_name eax, edx, ebx
+    mov eax, tmp0
+    Game_Call_Asm_Return \_errno_val, 0
+endm
+
+macro Game_Call_Asm_Reg4 proc_name, _errno_val
+    call \proc_name eax, edx, ebx, ecx
+    mov eax, tmp0
+    Game_Call_Asm_Return \_errno_val, 0
+endm
+
+macro Game_Call_Asm_Reg5 proc_name, _errno_val
+    add tmp0, esp, 4
+    load tmp0, tmp0, 4
+    call \proc_name eax, edx, ebx, ecx, tmp0
+    mov eax, tmp0
+    Game_Call_Asm_Return \_errno_val, 1
+endm
+

@@ -1,0 +1,48 @@
+extern Game_ScreenWindow
+
+funcv SR_CheckTimer
+funcv SR_RunTimerDelay
+
+; null procedures
+proc SR___CHK external
+; stack params
+proc SR_printf external
+
+proc SR_dlseek external
+proc SR_dopen external
+proc SR_dread external
+proc SR_dclose external
+
+proc SR_DigPlay external
+proc SR_AudioCapabilities external
+proc SR_StopSound external
+proc SR_PostAudioPending external
+proc SR_SetPlayMode external
+proc SR_PendingAddress external
+proc SR_ReportSemaphoreAddress external
+proc SR_SetBackFillMode external
+proc SR_VerifyDMA external
+proc SR_SetDPMIMode external
+proc SR_FillSoundCfg external
+proc SR_RealPtr external
+; 0 params
+proc SR_checkch external
+proc SR_getch external
+; 1 param
+proc SR_fclose external
+proc SR__nfree external
+proc SR_inp external
+proc SR__nmalloc external
+proc SR_strlen external
+; 2 params
+proc SR_fopen external
+proc SR_outp external
+proc SR_strcat external
+proc SR_strcpy external
+proc SR_stricmp external
+; 3 params
+proc SR_ReadSong external
+; 4 params
+proc SR_fread external
+proc SR_int386x external
+; 5 params

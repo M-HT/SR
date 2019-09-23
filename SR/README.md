@@ -1,8 +1,8 @@
 # SR
 
-The static recompiler itself.
+The static recompiler (for DOS executables) itself.
 
-This utility takes an original executable and information about the original executable as an input and produces x86 / arm / llasm assembler version of the executable.
+This utility takes an original DOS executable and information about the original executable as an input and produces x86 / arm / llasm assembler version of the executable.
 
 The generated assembler version requires additional files to compile and run. The non-specific files are in the *x86-support*, *arm-support* and *llasm-support* subdirectories.
 

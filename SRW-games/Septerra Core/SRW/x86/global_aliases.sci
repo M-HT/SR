@@ -1,0 +1,4 @@
+loc_412B80,WinMain_
+loc_4A4BC0,security_cookie_
+loc_4106E0,GetRecordName_
+loc_4F11E0,hWritePipe

@@ -1,0 +1,463 @@
+;;
+;;  Copyright (C) 2019 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+include llasm.llinc
+include asm-calls.llinc
+
+func Beep_c dwFreq, dwDuration
+func CloseHandle_c *hObject
+func CreateDirectoryA_c *lpPathName, *lpSecurityAttributes
+func CreateFileA_c *lpFileName, dwDesiredAccess, dwShareMode, *lpSecurityAttributes, dwCreationDistribution, dwFlagsAndAttributes, *hTemplateFile
+func CreateMutexA_c *lpMutexAttributes, bInitialOwner, *lpName
+func CreatePipe_c *hReadPipe, *hWritePipe, *lpPipeAttributes, nSize
+funcv DeleteCriticalSection_c *lpCriticalSection
+func DeleteFileA_c *lpFileName
+funcv EnterCriticalSection_c *lpCriticalSection
+funcv ExitProcess_c uExitCode
+func FileTimeToLocalFileTime_c *lpFileTime, *lpLocalFileTime
+func FileTimeToSystemTime_c *lpFileTime, *lpSystemTime
+func FindClose_c *hFindFile
+func FindFirstFileA_c *lpFileName, *lpFindFileData
+func FindNextFileA_c *hFindFile, *lpFindFileData
+func GetCurrentProcess_c
+func GetCurrentThread_c
+func GetFullPathNameA_c *lpFileName, nBufferLength, *lpBuffer, *lpFilePart
+func GetLastError_c
+func GetPrivateProfileStringA_c *lpAppName, *lpKeyName, *lpDefault, *lpReturnedString, nSize, *lpFileName
+funcv InitializeCriticalSection_c *lpCriticalSection
+funcv LeaveCriticalSection_c *lpCriticalSection
+func QueryPerformanceCounter_c *lpPerformanceCount
+func QueryPerformanceFrequency_c *lpFrequency
+func ReadFile_c *hFile, *lpBuffer, nNumberOfBytesToRead, *lpNumberOfBytesRead, *lpOverlapped
+func SetErrorMode_c uMode
+func SetFilePointer_c *hFile, lDistanceToMove, *lpDistanceToMoveHigh, dwMoveMethod
+func SetPriorityClass_c *hProcess, fdwPriority
+func SetThreadPriority_c *hThread, nPriority
+funcv Sleep_c cMilliseconds
+func WriteFile_c *hFile, *lpBuffer, nNumberOfBytesToWrite, *lpNumberOfBytesWritten, *lpOverlapped
+
+proc Beep_asm2c public
+
+; [esp + 2*4] = DWORD dwDuration
+; [esp +   4] = DWORD dwFreq
+; [esp      ] = return address
+
+        Call_Asm_Stack2 Beep_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure Beep_asm2c
+
+
+proc CloseHandle_asm2c public
+
+; [esp +   4] = HANDLE hObject
+; [esp      ] = return address
+
+        Call_Asm_Stack1 CloseHandle_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure CloseHandle_asm2c
+
+
+proc CreateDirectoryA_asm2c public
+
+; [esp + 2*4] = LPSECURITY_ATTRIBUTES lpSecurityAttributes
+; [esp +   4] = LPCSTR                lpPathName
+; [esp      ] = return address
+
+        Call_Asm_Stack2 CreateDirectoryA_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure CreateDirectoryA_asm2c
+
+
+proc CreateFileA_asm2c public
+
+; [esp + 7*4] = HANDLE                hTemplateFile
+; [esp + 6*4] = DWORD                 dwFlagsAndAttributes
+; [esp + 5*4] = DWORD                 dwCreationDisposition
+; [esp + 4*4] = LPSECURITY_ATTRIBUTES lpSecurityAttributes
+; [esp + 3*4] = DWORD                 dwShareMode
+; [esp + 2*4] = DWORD                 dwDesiredAccess
+; [esp +   4] = LPCSTR                lpFileName
+; [esp      ] = return address
+
+        Call_Asm_Stack7 CreateFileA_c
+
+        Call_Asm_Return 7
+
+endp ; end procedure CreateFileA_asm2c
+
+
+proc CreateMutexA_asm2c public
+
+; [esp + 3*4] = LPCSTR                lpName
+; [esp + 2*4] = BOOL                  bInitialOwner
+; [esp +   4] = LPSECURITY_ATTRIBUTES lpMutexAttributes
+; [esp      ] = return address
+
+        Call_Asm_Stack3 CreateMutexA_c
+
+        Call_Asm_Return 3
+
+endp ; end procedure CreateMutexA_asm2c
+
+
+proc CreatePipe_asm2c public
+
+; [esp + 4*4] = LPCSTR lpString
+; [esp + 3*4] = int    y
+; [esp + 2*4] = int    x
+; [esp +   4] = HDC    hdc
+; [esp      ] = return address
+
+        Call_Asm_Stack4 CreatePipe_c
+
+        Call_Asm_Return 4
+
+endp ; end procedure CreatePipe_asm2c
+
+
+proc DeleteCriticalSection_asm2c public
+
+; [esp +   4] = LPCRITICAL_SECTION lpCriticalSection
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void DeleteCriticalSection_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure DeleteCriticalSection_asm2c
+
+
+proc DeleteFileA_asm2c public
+
+; [esp +   4] = LPCSTR lpFileName
+; [esp      ] = return address
+
+        Call_Asm_Stack1 DeleteFileA_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure DeleteFileA_asm2c
+
+
+proc EnterCriticalSection_asm2c public
+
+; [esp +   4] = HDC   hdc
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void EnterCriticalSection_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure EnterCriticalSection_asm2c
+
+
+proc ExitProcess_asm2c public
+
+; [esp +   4] = UINT uExitCode
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void ExitProcess_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure ExitProcess_asm2c
+
+
+proc FileTimeToLocalFileTime_asm2c public
+
+; [esp + 2*4] = LPFILETIME     lpLocalFileTime
+; [esp +   4] = const FILETIME *lpFileTime
+; [esp      ] = return address
+
+        Call_Asm_Stack2 FileTimeToLocalFileTime_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure FileTimeToLocalFileTime_asm2c
+
+
+proc FileTimeToSystemTime_asm2c public
+
+; [esp + 2*4] = LPSYSTEMTIME   lpSystemTime
+; [esp +   4] = const FILETIME *lpFileTime
+; [esp      ] = return address
+
+        Call_Asm_Stack2 FileTimeToSystemTime_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure FileTimeToSystemTime_asm2c
+
+
+proc FindClose_asm2c public
+
+; [esp +   4] = HANDLE hFindFile
+; [esp      ] = return address
+
+        Call_Asm_Stack1 FindClose_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure FindClose_asm2c
+
+
+proc FindFirstFileA_asm2c public
+
+; [esp + 2*4] = LPWIN32_FIND_DATAA lpFindFileData
+; [esp +   4] = LPCSTR             lpFileName
+; [esp      ] = return address
+
+        Call_Asm_Stack2 FindFirstFileA_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure FindFirstFileA_asm2c
+
+
+proc FindNextFileA_asm2c public
+
+; [esp + 2*4] = LPWIN32_FIND_DATAA lpFindFileData
+; [esp +   4] = HANDLE             hFindFile
+; [esp      ] = return address
+
+        Call_Asm_Stack2 FindNextFileA_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure FindNextFileA_asm2c
+
+
+proc GetCurrentProcess_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 GetCurrentProcess_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure GetCurrentProcess_asm2c
+
+
+proc GetCurrentThread_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 GetCurrentThread_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure GetCurrentThread_asm2c
+
+
+proc GetFullPathNameA_asm2c public
+
+; [esp + 4*4] = LPSTR  *lpFilePart
+; [esp + 3*4] = LPSTR  lpBuffer
+; [esp + 2*4] = DWORD  nBufferLength
+; [esp +   4] = LPCSTR lpFileName
+; [esp      ] = return address
+
+        Call_Asm_Stack4 GetFullPathNameA_c
+
+        Call_Asm_Return 4
+
+endp ; end procedure GetFullPathNameA_asm2c
+
+
+proc GetLastError_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 GetLastError_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure GetLastError_asm2c
+
+
+proc GetPrivateProfileStringA_asm2c public
+
+; [esp + 6*4] = HDC   hdcSrc
+; [esp + 5*4] = int   cy
+; [esp + 4*4] = int   cx
+; [esp + 3*4] = int   y
+; [esp + 2*4] = int   x
+; [esp +   4] = HDC   hdc
+; [esp      ] = return address
+
+        Call_Asm_Stack6 GetPrivateProfileStringA_c
+
+        Call_Asm_Return 6
+
+endp ; end procedure GetPrivateProfileStringA_asm2c
+
+
+proc InitializeCriticalSection_asm2c public
+
+; [esp +   4] = LPCRITICAL_SECTION lpCriticalSection
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void InitializeCriticalSection_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure InitializeCriticalSection_asm2c
+
+
+proc LeaveCriticalSection_asm2c public
+
+; [esp +   4] = LPCRITICAL_SECTION lpCriticalSection
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void LeaveCriticalSection_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure LeaveCriticalSection_asm2c
+
+
+proc QueryPerformanceCounter_asm2c public
+
+; [esp +   4] = LARGE_INTEGER *lpPerformanceCount
+; [esp      ] = return address
+
+        Call_Asm_Stack1 QueryPerformanceCounter_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure QueryPerformanceCounter_asm2c
+
+
+proc QueryPerformanceFrequency_asm2c public
+
+; [esp +   4] = LARGE_INTEGER *lpFrequency
+; [esp      ] = return address
+
+        Call_Asm_Stack1 QueryPerformanceFrequency_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure QueryPerformanceFrequency_asm2c
+
+
+proc ReadFile_asm2c public
+
+; [esp + 5*4] = LPOVERLAPPED lpOverlapped
+; [esp + 4*4] = LPDWORD      lpNumberOfBytesRead
+; [esp + 3*4] = DWORD        nNumberOfBytesToRead
+; [esp + 2*4] = LPVOID       lpBuffer
+; [esp +   4] = HANDLE       hFile
+; [esp      ] = return address
+
+        Call_Asm_Stack5 ReadFile_c
+
+        Call_Asm_Return 5
+
+endp ; end procedure ReadFile_asm2c
+
+
+proc SetErrorMode_asm2c public
+
+; [esp +   4] = UINT uMode
+; [esp      ] = return address
+
+        Call_Asm_Stack1 SetErrorMode_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure SetErrorMode_asm2c
+
+
+proc SetFilePointer_asm2c public
+
+; [esp + 4*4] = DWORD  dwMoveMethod
+; [esp + 3*4] = PLONG  lpDistanceToMoveHigh
+; [esp + 2*4] = LONG   lDistanceToMove
+; [esp +   4] = HANDLE hFile
+; [esp      ] = return address
+
+        Call_Asm_Stack4 SetFilePointer_c
+
+        Call_Asm_Return 4
+
+endp ; end procedure SetFilePointer_asm2c
+
+
+proc SetPriorityClass_asm2c public
+
+; [esp + 2*4] = DWORD  dwPriorityClass
+; [esp +   4] = HANDLE hProcess
+; [esp      ] = return address
+
+        Call_Asm_Stack2 SetPriorityClass_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure SetPriorityClass_asm2c
+
+
+proc SetThreadPriority_asm2c public
+
+; [esp + 2*4] = int    nPriority
+; [esp +   4] = HANDLE hThread
+; [esp      ] = return address
+
+        Call_Asm_Stack2 SetThreadPriority_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure SetThreadPriority_asm2c
+
+
+proc Sleep_asm2c public
+
+; [esp +   4] = DWORD dwMilliseconds
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void Sleep_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure Sleep_asm2c
+
+
+proc WriteFile_asm2c public
+
+; [esp + 5*4] = LPOVERLAPPED lpOverlapped
+; [esp + 4*4] = LPDWORD      lpNumberOfBytesWritten
+; [esp + 3*4] = DWORD        nNumberOfBytesToWrite
+; [esp + 2*4] = LPCVOID      lpBuffer
+; [esp +   4] = HANDLE       hFile
+; [esp      ] = return address
+
+        Call_Asm_Stack5 WriteFile_c
+
+        Call_Asm_Return 5
+
+endp ; end procedure WriteFile_asm2c
+

@@ -1,0 +1,187 @@
+;;
+;;  Copyright (C) 2019 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+include llasm.llinc
+include asm-calls.llinc
+
+funcv OpenGameDataFiles *ManifestFilePath, *_SourcePath, *_MessageProc
+funcv CloseGameDataFiles
+func RecordOpen RecordKey
+func RecordTryOpen RecordKey
+func RecordGetDataFilePathAndOffset RecordKey, *Offset
+funcv RecordSeek RecordHandle, Offset, Whence
+func RecordRead RecordHandle, *ReadBuffer, NumberOfBytes
+funcv RecordClose RecordHandle
+func RecordGetSize RecordHandle
+func GetFirstLevelRecordKey
+func GetNextLevelRecordKey
+
+proc MessageProc_c2asm global c_MessageProc_c2asm
+
+; [esp + 4*4] = uint32_t (*MessageProc)(const char *, uint32_t, uint32_t)
+; [esp + 3*4] = uint32_t MessageCode
+; [esp + 2*4] = uint32_t MessageType
+; [esp +   4] = const char *MessageText
+; [esp      ] = return address
+
+        add tmp0, esp, 4*4
+        load tmp0, tmp0, 4
+        tcall tmp0
+
+endp ; end procedure MessageProc_c2asm
+
+
+proc OpenGameDataFiles_asm2c public
+
+; [esp + 3*4] = uint32_t (*_MessageProc)(const char *, uint32_t, uint32_t)
+; [esp + 2*4] = const char *_SourcePath
+; [esp +   4] = const char *ManifestFilePath
+; [esp      ] = return address
+
+        Call_Asm_Stack3_void OpenGameDataFiles
+
+        Call_Asm_Return 0
+
+endp ; end procedure OpenGameDataFiles_asm2c
+
+
+proc CloseGameDataFiles_asm2c public
+
+; [esp] = return address
+
+        Call_Asm_Stack0_void CloseGameDataFiles
+
+        Call_Asm_Return 0
+
+endp ; end procedure CloseGameDataFiles_asm2c
+
+
+proc RecordOpen_asm2c public
+
+; [esp + 4] = uint32_t RecordKey
+; [esp    ] = return address
+
+        Call_Asm_Stack1 RecordOpen
+
+        Call_Asm_Return 0
+
+endp ; end procedure RecordOpen_asm2c
+
+
+proc RecordTryOpen_asm2c public
+
+; [esp + 4] = uint32_t RecordKey
+; [esp    ] = return address
+
+        Call_Asm_Stack1 RecordTryOpen
+
+        Call_Asm_Return 0
+
+endp ; end procedure RecordTryOpen_asm2c
+
+
+proc RecordGetDataFilePathAndOffset_asm2c public
+
+; [esp + 2*4] = uint32_t *Offset
+; [esp +   4] = uint32_t RecordKey
+; [esp      ] = return address
+
+        Call_Asm_Stack2 RecordGetDataFilePathAndOffset
+
+        Call_Asm_Return 0
+
+endp ; end procedure RecordGetDataFilePathAndOffset_asm2c
+
+
+proc RecordSeek_asm2c public
+
+; [esp + 3*4] = int32_t Whence
+; [esp + 2*4] = int32_t Offset
+; [esp +   4] = int32_t RecordHandle
+; [esp      ] = return address
+
+        Call_Asm_Stack3_void RecordSeek
+
+        Call_Asm_Return 0
+
+endp ; end procedure RecordSeek_asm2c
+
+
+proc RecordRead_asm2c public
+
+; [esp + 3*4] = uint32_t NumberOfBytes
+; [esp + 2*4] = uint8_t *ReadBuffer
+; [esp +   4] = int32_t RecordHandle
+; [esp      ] = return address
+
+        Call_Asm_Stack3 RecordRead
+
+        Call_Asm_Return 0
+
+endp ; end procedure RecordRead_asm2c
+
+
+proc RecordClose_asm2c public
+
+; [esp + 4] = int32_t RecordHandle
+; [esp    ] = return address
+
+        Call_Asm_Stack1_void RecordClose
+
+        Call_Asm_Return 0
+
+endp ; end procedure RecordClose_asm2c
+
+
+proc RecordGetSize_asm2c public
+
+; [esp + 4] = int32_t RecordHandle
+; [esp    ] = return address
+
+        Call_Asm_Stack1 RecordGetSize
+
+        Call_Asm_Return 0
+
+endp ; end procedure RecordGetSize_asm2c
+
+
+proc GetFirstLevelRecordKey_asm2c public
+
+; [esp] = return address
+
+        Call_Asm_Stack0 GetFirstLevelRecordKey
+
+        Call_Asm_Return 0
+
+endp ; end procedure GetFirstLevelRecordKey_asm2c
+
+
+proc GetNextLevelRecordKey_asm2c public
+
+; [esp] = return address
+
+        Call_Asm_Stack0 GetNextLevelRecordKey
+
+        Call_Asm_Return 0
+
+endp ; end procedure GetNextLevelRecordKey_asm2c
+

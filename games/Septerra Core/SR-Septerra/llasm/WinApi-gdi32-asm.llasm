@@ -1,0 +1,228 @@
+;;
+;;  Copyright (C) 2019 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+include llasm.llinc
+include asm-calls.llinc
+
+func BitBlt_c *hdcDest, nXDest, nYDest, nWidth, nHeight, *hdcSrc, nXSrc, nYSrc, dwRop
+func CreateCompatibleDC_c *hdc
+func CreateFontIndirectA_c *lplf
+func CreatePolygonRgn_c *lppt, cPoints, fnPolyFillMode
+func CreateSolidBrush_c crColor
+func DeleteDC_c *hdc
+func DeleteObject_c *hObject
+func FillRgn_c *hdc, *hrgn, *hbr
+func GetStockObject_c fnObject
+func OffsetRgn_c *hrgn, nXOffset, nYOffset
+func SelectObject_c *hdc, *hgdiobj
+func SetBkMode_c *hdc, iBkMode
+func SetTextColor_c *hdc, crColor
+func TextOutA_c *hdc, nXStart, nYStart, *lpString, cbString
+
+proc BitBlt_asm2c public
+
+; [esp + 9*4] = DWORD rop
+; [esp + 8*4] = int   y1
+; [esp + 7*4] = int   x1
+; [esp + 6*4] = HDC   hdcSrc
+; [esp + 5*4] = int   cy
+; [esp + 4*4] = int   cx
+; [esp + 3*4] = int   y
+; [esp + 2*4] = int   x
+; [esp +   4] = HDC   hdc
+; [esp      ] = return address
+
+        Call_Asm_Stack9 BitBlt_c
+
+        Call_Asm_Return 9
+
+endp ; end procedure BitBlt_asm2c
+
+
+proc CreateCompatibleDC_asm2c public
+
+; [esp +   4] = HDC   hdc
+; [esp      ] = return address
+
+        Call_Asm_Stack1 CreateCompatibleDC_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure CreateCompatibleDC_asm2c
+
+
+proc CreateFontIndirectA_asm2c public
+
+; [esp +   4] = const LOGFONTA *lplf
+; [esp      ] = return address
+
+        Call_Asm_Stack1 CreateFontIndirectA_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure CreateFontIndirectA_asm2c
+
+
+proc CreatePolygonRgn_asm2c public
+
+; [esp + 3*4] = int         iMode
+; [esp + 2*4] = int         cPoint
+; [esp +   4] = const POINT *pptl
+; [esp      ] = return address
+
+        Call_Asm_Stack3 CreatePolygonRgn_c
+
+        Call_Asm_Return 3
+
+endp ; end procedure CreatePolygonRgn_asm2c
+
+
+proc CreateSolidBrush_asm2c public
+
+; [esp +   4] = COLORREF color
+; [esp      ] = return address
+
+        Call_Asm_Stack1 CreateSolidBrush_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure CreateSolidBrush_asm2c
+
+
+proc DeleteDC_asm2c public
+
+; [esp +   4] = HDC hdc
+; [esp      ] = return address
+
+        Call_Asm_Stack1 DeleteDC_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure DeleteDC_asm2c
+
+
+proc DeleteObject_asm2c public
+
+; [esp +   4] = HGDIOBJ ho
+; [esp      ] = return address
+
+        Call_Asm_Stack1 DeleteObject_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure DeleteObject_asm2c
+
+
+proc FillRgn_asm2c public
+
+; [esp + 3*4] = HBRUSH hbr
+; [esp + 2*4] = HRGN   hrgn
+; [esp +   4] = HDC    hdc
+; [esp      ] = return address
+
+        Call_Asm_Stack3 FillRgn_c
+
+        Call_Asm_Return 3
+
+endp ; end procedure FillRgn_asm2c
+
+
+proc GetStockObject_asm2c public
+
+; [esp +   4] = int i
+; [esp      ] = return address
+
+        Call_Asm_Stack1 GetStockObject_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure GetStockObject_asm2c
+
+
+proc OffsetRgn_asm2c public
+
+; [esp + 3*4] = int  y
+; [esp + 2*4] = int  x
+; [esp +   4] = HRGN hrgn
+; [esp      ] = return address
+
+        Call_Asm_Stack3 OffsetRgn_c
+
+        Call_Asm_Return 3
+
+endp ; end procedure OffsetRgn_asm2c
+
+
+proc SelectObject_asm2c public
+
+; [esp + 2*4] = HGDIOBJ h
+; [esp +   4] = HDC     hdc
+; [esp      ] = return address
+
+        Call_Asm_Stack2 SelectObject_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure SelectObject_asm2c
+
+
+proc SetBkMode_asm2c public
+
+; [esp + 2*4] = int mode
+; [esp +   4] = HDC hdc
+; [esp      ] = return address
+
+        Call_Asm_Stack2 SetBkMode_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure SetBkMode_asm2c
+
+
+proc SetTextColor_asm2c public
+
+; [esp + 2*4] = COLORREF color
+; [esp +   4] = HDC      hdc
+; [esp      ] = return address
+
+        Call_Asm_Stack2 SetTextColor_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure SetTextColor_asm2c
+
+
+proc TextOutA_asm2c public
+
+; [esp + 5*4] = int    c
+; [esp + 4*4] = LPCSTR lpString
+; [esp + 3*4] = int    y
+; [esp + 2*4] = int    x
+; [esp +   4] = HDC    hdc
+; [esp      ] = return address
+
+        Call_Asm_Stack5 TextOutA_c
+
+        Call_Asm_Return 5
+
+endp ; end procedure TextOutA_asm2c
+

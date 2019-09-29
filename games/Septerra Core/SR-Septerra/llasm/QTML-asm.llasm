@@ -1,0 +1,464 @@
+;;
+;;  Copyright (C) 2019 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+include llasm.llinc
+include asm-calls.llinc
+
+func InitializeQTML_c flag
+funcv TerminateQTML_c
+
+func CreatePortAssociation_c *theWnd, *storage, flags
+funcv DestroyPortAssociation_c *cgp
+
+funcv SetGWorld_c *port, *gdh
+func c2pstr_c *aStr
+func PtrToHand_c *srcPtr, *dstHndl, size
+
+func FSMakeFSSpec_c vRefNum, dirID, *fileName, *spec
+func QTSetDDPrimarySurface_c *lpNewDDSurface, flags
+func NativeEventToMacEvent_c *nativeEvent, *macEvent
+
+func EnterMovies_c
+funcv ExitMovies_c
+funcv StartMovie_c *theMovie
+funcv StopMovie_c *theMovie
+func IsMovieDone_c *theMovie
+funcv DisposeMovie_c *theMovie
+func OpenMovieFile_c *fileSpec, *resRefNum, permission
+func CloseMovieFile_c resRefNum
+func NewMovieFromFile_c *theMovie, resRefNum, *resId, *resName, newMovieFlags, *dataRefWasChanged
+funcv GetMovieBox_c *theMovie, *boxRect
+func NewMovieController_c *theMovie, *movieRect, someFlags
+funcv DisposeMovieController_c *mc
+func QTRegisterAccessKey_c *accessKeyType, flags, *accessKey
+func QTUnregisterAccessKey_c *accessKeyType, flags, *accessKey
+func MCIsPlayerEvent_c *mc, *e
+func MCDoAction_c *mc, action, *params
+
+proc InitializeQTML_asm2c public
+
+; [esp + 4] = int32_t flag
+; [esp    ] = return address
+
+        Call_Asm_Stack1_void InitializeQTML_c
+
+        ; return value is int16_t
+        ext16s eax, tmp0
+
+        Call_Asm_Return 0
+
+endp ; end procedure InitializeQTML_asm2c
+
+
+proc TerminateQTML_asm2c public
+
+; [esp] = return address
+
+        Call_Asm_Stack0_void TerminateQTML_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure TerminateQTML_asm2c
+
+
+proc CreatePortAssociation_asm2c public
+
+; [esp + 3*4] = int32_t flags
+; [esp + 2*4] = void *storage
+; [esp +   4] = void *theWnd
+; [esp      ] = return address
+
+        Call_Asm_Stack3 CreatePortAssociation_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure CreatePortAssociation_asm2c
+
+
+proc DestroyPortAssociation_asm2c public
+
+; [esp + 4] = void *cgp
+; [esp    ] = return address
+
+        Call_Asm_Stack1_void DestroyPortAssociation_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DestroyPortAssociation_asm2c
+
+
+proc SetGWorld_asm2c public
+
+; [esp + 2*4] = void *gdh
+; [esp +   4] = void *port
+; [esp      ] = return address
+
+        Call_Asm_Stack2_void SetGWorld_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure SetGWorld_asm2c
+
+
+proc c2pstr_asm2c public
+
+; [esp + 4] = char *aStr
+; [esp    ] = return address
+
+        Call_Asm_Stack1 c2pstr_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure c2pstr_asm2c
+
+
+proc PtrToHand_asm2c public
+
+; [esp + 3*4] = int32_t size
+; [esp + 2*4] = void ***dstHndl
+; [esp +   4] = const void *srcPtr
+; [esp      ] = return address
+
+        Call_Asm_Stack3_void PtrToHand_c
+
+        ; return value is int16_t
+        ext16s eax, tmp0
+
+        Call_Asm_Return 0
+
+endp ; end procedure PtrToHand_asm2c
+
+
+proc FSMakeFSSpec_asm2c public
+
+; [esp + 4*4] = void *spec
+; [esp + 3*4] = char *fileName
+; [esp + 2*4] = int32_t dirID
+; [esp +   4] = int16_t vRefNum
+; [esp      ] = return address
+
+        ;Call_Asm_Stack4_void FSMakeFSSpec_c
+        add tmp0, esp, 4
+        load16s tmp0, tmp0, 4
+        add tmp1, esp, 2*4
+        load tmp1, tmp1, 4
+        add tmp2, esp, 3*4
+        load tmp2, tmp2, 4
+        add tmp3, esp, 4*4
+        load tmp3, tmp3, 4
+        call FSMakeFSSpec_c tmp0, tmp1, tmp2, tmp3
+
+        ; return value is int16_t
+        ext16s eax, tmp0
+
+        Call_Asm_Return 0
+
+endp ; end procedure FSMakeFSSpec_asm2c
+
+
+proc QTSetDDPrimarySurface_asm2c public
+
+; [esp + 2*4] = uint32_t flags
+; [esp +   4] = void *lpNewDDSurface
+; [esp      ] = return address
+
+        Call_Asm_Stack2_void QTSetDDPrimarySurface_c
+
+        ; return value is int16_t
+        ext16s eax, tmp0
+
+        Call_Asm_Return 0
+
+endp ; end procedure QTSetDDPrimarySurface_asm2c
+
+
+proc NativeEventToMacEvent_asm2c public
+
+; [esp + 2*4] = void *macEvent
+; [esp +   4] = void *nativeEvent
+; [esp      ] = return address
+
+        Call_Asm_Stack2 NativeEventToMacEvent_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure NativeEventToMacEvent_asm2c
+
+
+proc EnterMovies_asm2c public
+
+; [esp] = return address
+
+        Call_Asm_Stack0_void EnterMovies_c
+
+        ; return value is int16_t
+        ext16s eax, tmp0
+
+        Call_Asm_Return 0
+
+endp ; end procedure EnterMovies_asm2c
+
+
+proc ExitMovies_asm2c public
+
+; [esp] = return address
+
+        Call_Asm_Stack0_void ExitMovies_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ExitMovies_asm2c
+
+
+proc StartMovie_asm2c public
+
+; [esp + 4] = void *theMovie
+; [esp    ] = return address
+
+        Call_Asm_Stack1_void StartMovie_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure StartMovie_asm2c
+
+
+proc StopMovie_asm2c public
+
+; [esp + 4] = void *theMovie
+; [esp    ] = return address
+
+        Call_Asm_Stack1_void StopMovie_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure StopMovie_asm2c
+
+
+proc IsMovieDone_asm2c public
+
+; [esp + 4] = void *theMovie
+; [esp    ] = return address
+
+        Call_Asm_Stack1_void IsMovieDone_c
+
+        ; return value is uint8_t
+        and eax, tmp0, 0xff
+
+        Call_Asm_Return 0
+
+endp ; end procedure IsMovieDone_asm2c
+
+
+proc DisposeMovie_asm2c public
+
+; [esp + 4] = void *theMovie
+; [esp    ] = return address
+
+        Call_Asm_Stack1_void DisposeMovie_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DisposeMovie_asm2c
+
+
+proc OpenMovieFile_asm2c public
+
+; [esp + 3*4] = int8_t permission
+; [esp + 2*4] = int16_t *resRefNum
+; [esp +   4] = const void *fileSpec
+; [esp      ] = return address
+
+        ;Call_Asm_Stack3_void OpenMovieFile_c
+        add tmp0, esp, 4
+        load tmp0, tmp0, 4
+        add tmp1, esp, 2*4
+        load tmp1, tmp1, 4
+        add tmp2, esp, 3*4
+        load8s tmp2, tmp2, 4
+        call OpenMovieFile_c tmp0, tmp1, tmp2
+
+        ; return value is int16_t
+        ext16s eax, tmp0
+
+        Call_Asm_Return 0
+
+endp ; end procedure OpenMovieFile_asm2c
+
+
+proc CloseMovieFile_asm2c public
+
+; [esp + 4] = int16_t resRefNum
+; [esp    ] = return address
+
+        ;Call_Asm_Stack1_void CloseMovieFile_c
+        add tmp0, esp, 4
+        load16s tmp0, tmp0, 4
+        call CloseMovieFile_c tmp0
+
+        ; return value is int16_t
+        ext16s eax, tmp0
+
+        Call_Asm_Return 0
+
+endp ; end procedure CloseMovieFile_asm2c
+
+
+proc NewMovieFromFile_asm2c public
+
+; [esp + 6*4] = uint8_t *dataRefWasChanged
+; [esp + 5*4] = int16_t newMovieFlags
+; [esp + 4*4] = unsigned char *resName
+; [esp + 3*4] = int16_t *resId
+; [esp + 2*4] = int16_t resRefNum
+; [esp +   4] = void **theMovie
+; [esp      ] = return address
+
+        ;Call_Asm_Stack6_void NewMovieFromFile_c
+        add tmp0, esp, 4
+        load tmp0, tmp0, 4
+        add tmp1, esp, 2*4
+        load16s tmp1, tmp1, 4
+        add tmp2, esp, 3*4
+        load tmp2, tmp2, 4
+        add tmp3, esp, 4*4
+        load tmp3, tmp3, 4
+        add tmp4, esp, 5*4
+        load16s tmp4, tmp4, 4
+        add tmp5, esp, 6*4
+        load tmp5, tmp5, 4
+        call NewMovieFromFile_c tmp0, tmp1, tmp2, tmp3, tmp4, tmp5
+
+        ; return value is int16_t
+        ext16s eax, tmp0
+
+        Call_Asm_Return 0
+
+endp ; end procedure NewMovieFromFile_asm2c
+
+
+proc GetMovieBox_asm2c public
+
+; [esp + 2*4] = void *boxRect
+; [esp +   4] = void *theMovie
+; [esp      ] = return address
+
+        Call_Asm_Stack2_void GetMovieBox_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure GetMovieBox_asm2c
+
+
+proc NewMovieController_asm2c public
+
+; [esp + 3*4] = int32_t someFlags
+; [esp + 2*4] = const void *movieRect
+; [esp +   4] = void *theMovie
+; [esp      ] = return address
+
+        Call_Asm_Stack3 NewMovieController_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure NewMovieController_asm2c
+
+
+proc DisposeMovieController_asm2c public
+
+; [esp + 4] = void *mc
+; [esp    ] = return address
+
+        Call_Asm_Stack1_void DisposeMovieController_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DisposeMovieController_asm2c
+
+
+proc QTRegisterAccessKey_asm2c public
+
+; [esp + 3*4] = void *accessKey
+; [esp + 2*4] = int32_t flags
+; [esp +   4] = unsigned char *accessKeyType
+; [esp      ] = return address
+
+        Call_Asm_Stack3_void QTRegisterAccessKey_c
+
+        ; return value is int16_t
+        ext16s eax, tmp0
+
+        Call_Asm_Return 0
+
+endp ; end procedure QTRegisterAccessKey_asm2c
+
+
+proc QTUnregisterAccessKey_asm2c public
+
+; [esp + 3*4] = void *accessKey
+; [esp + 2*4] = int32_t flags
+; [esp +   4] = unsigned char *accessKeyType
+; [esp      ] = return address
+
+        Call_Asm_Stack3_void QTUnregisterAccessKey_c
+
+        ; return value is int16_t
+        ext16s eax, tmp0
+
+        Call_Asm_Return 0
+
+endp ; end procedure QTUnregisterAccessKey_asm2c
+
+
+proc MCIsPlayerEvent_asm2c public
+
+; [esp + 2*4] = const void *e
+; [esp +   4] = void *mc
+; [esp      ] = return address
+
+        Call_Asm_Stack2 MCIsPlayerEvent_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure MCIsPlayerEvent_asm2c
+
+
+proc MCDoAction_asm2c public
+
+; [esp + 3*4] = void *params
+; [esp + 2*4] = int16_t action
+; [esp +   4] = void *mc
+; [esp      ] = return address
+
+        ;Call_Asm_Stack3 MCDoAction_c
+        add tmp0, esp, 4
+        load tmp0, tmp0, 4
+        add tmp1, esp, 2*4
+        load16s tmp1, tmp1, 4
+        add tmp2, esp, 3*4
+        load tmp2, tmp2, 4
+        call MCDoAction_c tmp0, tmp1, tmp2
+        mov eax, tmp0
+
+        Call_Asm_Return 0
+
+endp ; end procedure MCDoAction_asm2c
+

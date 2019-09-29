@@ -558,14 +558,14 @@ int SR_write_output(const char *fname)
     #if (OUTPUT_TYPE == OUT_LLASM)
             //fprintf(EF.fout, "%s\n", ".ifdef DEBUG");
     #else
-            fprintf(EF.fout, "%s\n", "%ifdef DEBUG");
-            fprintf(EF.fout, "%s\n", "%include \"data_all.inc\"");
+            //fprintf(EF.fout, "%s\n", "%ifdef DEBUG");
+            //fprintf(EF.fout, "%s\n", "%include \"data_all.inc\"");
     #endif
 
     #if (OUTPUT_TYPE == OUT_LLASM)
             //fprintf(EF.fout, "%s\n", ".endif");
     #else
-            fprintf(EF.fout, "%s\n", "%endif");
+            //fprintf(EF.fout, "%s\n", "%endif");
     #endif
         }
         if (first_code && section[EF.Entry].type == ST_CODE)
@@ -575,18 +575,18 @@ int SR_write_output(const char *fname)
             //fprintf(EF.fout, "%s\n", ".ifdef DEBUG");
             //fprintf(EF.fout, "%s\n", ".endif");
     #else
-            fprintf(EF.fout, "%s\n", "%ifdef DEBUG");
+            //fprintf(EF.fout, "%s\n", "%ifdef DEBUG");
         #if (OUTPUT_TYPE == OUT_WINDOWS)
-            fprintf(EF.fout, "%s\n", "%include \"code_window.inc\"");
+            //fprintf(EF.fout, "%s\n", "%include \"code_window.inc\"");
         #endif
         #if (OUTPUT_TYPE == OUT_X86)
-            fprintf(EF.fout, "%%ifidn __OUTPUT_FORMAT__, elf32\n");
-            fprintf(EF.fout, "%s\n", "%include \"code_linux.inc\"");
-            fprintf(EF.fout, "%%else\n");
-            fprintf(EF.fout, "%s\n", "%include \"code_win32.inc\"");
-            fprintf(EF.fout, "%%endif\n");
+            //fprintf(EF.fout, "%%ifidn __OUTPUT_FORMAT__, elf32\n");
+            //fprintf(EF.fout, "%s\n", "%include \"code_linux.inc\"");
+            //fprintf(EF.fout, "%%else\n");
+            //fprintf(EF.fout, "%s\n", "%include \"code_win32.inc\"");
+            //fprintf(EF.fout, "%%endif\n");
         #endif
-            fprintf(EF.fout, "%s\n", "%endif");
+            //fprintf(EF.fout, "%s\n", "%endif");
     #endif
 
         }

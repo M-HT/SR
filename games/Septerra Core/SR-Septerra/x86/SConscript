@@ -22,26 +22,33 @@
 
 import re
 
-llasm_include_re = re.compile(r'^include\s+(\S+)\r?$', re.M)
+Import('device env')
 
-def llasmfile_scan(node, env, path):
+include_re = re.compile(r'^%include\s+"(\S+)"\r?$', re.M)
+
+def nasmfile_scan(node, env, path):
     contents = node.get_text_contents()
-    includes = llasm_include_re.findall(contents)
+    includes = include_re.findall(contents)
     return includes
 
-llasmscan = Scanner(function = llasmfile_scan,
-                    skeys = ['.llasm'],
-                    recursive = True)
+nasmscan = Scanner(function = nasmfile_scan,
+                   skeys = ['.asm'],
+                   recursive = True)
 
-SourceFileScanner.add_scanner('.llasm', llasmscan)
+SourceFileScanner.add_scanner('.asm', nasmscan)
 
+if device == 'pc-linux':
+    env1 = Environment(tools=['nasm'], ASFLAGS = ' -felf32 -Ox -w+orphan-labels -w-number-overflow -ix86/')
+    env2 = Environment(tools=['nasm'], ASFLAGS = ' -felf32 -O1 -w+orphan-labels -w-number-overflow -ix86/')
+else:
+    env1 = Environment(tools=['nasm'], ASFLAGS = ' -fwin32 -Ox -w+orphan-labels -w-number-overflow -ix86/')
+    env2 = Environment(tools=['nasm'], ASFLAGS = ' -fwin32 -O1 -w+orphan-labels -w-number-overflow -ix86/')
 
-Import('device', 'env')
+obj = env2.Object('Septerra.asm')
 
-obj = env.Object(Glob('*.c'))
+asm_sources = Glob('*.asm', strings = True)
+asm_sources.remove('Septerra.asm')
 
-for llasm_file in Glob('*.llasm', strings = True):
-    obj += env.llasm(llasm_file)
+obj = obj + env1.Object(asm_sources) + env.Object(Glob('*.c'))
 
 Return('obj')
-

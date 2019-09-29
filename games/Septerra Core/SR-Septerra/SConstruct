@@ -1,0 +1,144 @@
+#
+#  Copyright (C) 2019 Roman Pauer
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy of
+#  this software and associated documentation files (the "Software"), to deal in
+#  the Software without restriction, including without limitation the rights to
+#  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+#  of the Software, and to permit persons to whom the Software is furnished to do
+#  so, subject to the following conditions:
+#
+#  The above copyright notice and this permission notice shall be included in all
+#  copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#  SOFTWARE.
+#
+
+import os
+import subprocess
+
+# set help text
+vars = Variables('custom.py')
+vars.Add(EnumVariable('debug', 'Set debug level (0 = release version)', '0',
+                                 allowed_values=('0', '1', '2'),
+                                 ignorecase=2))
+vars.Add(EnumVariable('device', 'Set target device', 'none',
+                                 allowed_values=('none', 'pc-linux', 'arm-linux-llasm', 'pc-linux-llasm', 'pandora-llasm'),
+                                 ignorecase=2))
+env = Environment(variables = vars)
+
+debug = int(env['debug'])
+device = env['device']
+clean = env.GetOption('clean')
+
+if device == 'none':
+    device = 'pc-linux'
+    if env['PLATFORM'] == 'posix':
+        if os.uname()[4].startswith('arm'):
+            device = 'arm-linux-llasm'
+    env['device'] = device
+    print "\nYou didn't set any target device (parameter 'device')."
+    print "'" + device + "' will be used for compiling.\n"
+
+Help(vars.GenerateHelpText(env))
+
+llasm_version = False
+llasm_params = ""
+llvm_params = ""
+
+if device.endswith("-llasm"):
+    llasm_version = True
+    device = device[0:-6]
+
+if device == 'pc-linux':
+    # default settings
+    env = Environment(CCFLAGS      = '-m32 -O2 -Wall',
+                      CPPPATH      = ['/usr/include/SDL2'],
+                      INCPREFIX    = '-I',
+                      LINKFLAGS    = '-m32 -Wl,-z,noexecstack',
+                      LIBS         = ['SDL2', 'pthread', 'm', 'mpg123', 'quicktime']
+                     )
+    if llasm_version:
+        llvm_params = '-mtriple=i686-unknown-linux-gnu'
+        env.Append(ENV = {'PATH' : os.environ['PATH']})
+elif device == 'arm-linux':
+    env = Environment(CCFLAGS      = '-O2 -Wall',
+                      CPPPATH      = ['/usr/include/SDL2'],
+                      INCPREFIX    = '-I',
+                      LINKFLAGS    = '-Wl,-z,noexecstack',
+                      LIBS         = ['SDL2', 'pthread', 'm', 'mpg123', 'quicktime'],
+                      ENV          = {os.environ['PATH']}
+                     )
+elif device == 'pandora':
+    compiler_path = os.environ['PNDSDK'] + '/'
+    compiler_prefix = 'pandora-'
+
+    env = Environment(CC           = compiler_prefix + 'gcc',
+                      CCFLAGS      = '-O2 -Wall -DPANDORA -pipe -march=armv7-a -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp',
+                      CPPPATH      = [compiler_path + 'usr/include', compiler_path + 'usr/include/SDL'],
+                      INCPREFIX    = '-I',
+                      LIBPATH      = [compiler_path + 'usr/lib'],
+                      LIBDIRPREFIX = '-L',
+                      LINKFLAGS    = '-Wl,-z,noexecstack',
+                      LIBS         = ['SDL', 'ts', 'pthread', 'm', 'dl', 'rt', 'z', 'mpg123', 'quicktime'],
+                      ENV          = {'PATH' : compiler_path + 'bin:' + os.environ['PATH']}
+                     )
+    llvm_params = '-mtriple=armv7a-unknown-linux-eabi -mcpu=cortex-a8'
+
+def get_compiler_version(compiler_path, env_path):
+    process = subprocess.Popen([compiler_path, '-dumpversion'], stdout=subprocess.PIPE, env={"PATH": env_path})
+    (stdout, stderr) = process.communicate()
+    if not stdout or stdout.isspace():
+        return None
+    version = stdout.strip().split('.')
+    return version
+
+def is_version_ge(version, comparand):
+    if version is None or comparand is None:
+        return False
+
+    for i in xrange(len(comparand)):
+        if i >= len(version):
+            component = 0
+        else:
+            component = int(version[i])
+        if int(comparand[i]) > component:
+            return False
+        if int(comparand[i]) < component:
+            return True
+    return True
+
+if not clean:
+    compiler_version = get_compiler_version(env['CC'], env['ENV']['PATH'])
+    if is_version_ge(compiler_version, [3, 4]):
+        env.Append(CCFLAGS = ' -fno-PIE')
+    if is_version_ge(compiler_version, [6]):
+        env.Append(LINKFLAGS = ' -no-pie')
+
+# debug settings
+if debug <= 0:
+    env.Append(LINKFLAGS = ' -s')
+elif debug == 1:
+    env.Append(CCFLAGS = ' -g')
+else:
+    env.Append(CCFLAGS = ' -g -D__DEBUG__')
+
+if llasm_version:
+    bld = Builder(action = 'llasm $SOURCE -O ' + llasm_params + ' | opt -O3 | llc -O=3 -filetype=obj ' + llvm_params + ' > $TARGET',
+                  suffix = "$OBJSUFFIX",
+                  src_suffix = '.llasm'
+                 )
+    env.Append(BUILDERS = {'llasm' : bld})
+
+    arch_objs = SConscript('llasm/SConscript', exports='device env')
+else:
+    arch_objs = SConscript('x86/SConscript', exports='device env')
+
+
+env.Program('SR-Septerra', Glob('*.c') + arch_objs)

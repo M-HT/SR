@@ -1,6 +1,6 @@
 # SR-games
 
-The information about the original executables.
+The information about the original DOS executables.
 
 To generate an assembler version of the original executable, put the static recompiler (*SR.exe*) and the original executable in the appropriate subdirectory and run *build-x86.sh* (or *build-arm.sh*).
 

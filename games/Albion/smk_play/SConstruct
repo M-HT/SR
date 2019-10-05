@@ -79,7 +79,7 @@ elif device == 'gp2x':
     arch_obj = env.Object(Glob('*.s'))
 elif device == 'pandora':
     compiler_path = os.environ['PNDSDK'] + '/'
-    compiler_prefix = 'arm-none-linux-gnueabi-'
+    compiler_prefix = 'pandora-'
 
     env = Environment(CC           = compiler_prefix + 'gcc',
                       CCFLAGS      = '-Os -DPANDORA -pipe -march=armv7-a -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=vfpv3 -mfloat-abi=softfp',
@@ -87,7 +87,7 @@ elif device == 'pandora':
                       INCPREFIX    = '-I',
                       LIBPATH      = [compiler_path + 'usr/lib'],
                       LIBDIRPREFIX = '-L',
-                      LINKFLAGS    = '',
+                      LINKFLAGS    = '-Wl,-z,noexecstack',
                       LIBS         = ['SDL', 'ts', 'pthread'],
                       ENV          = {'PATH' : compiler_path + 'bin:' + os.environ['PATH']},
                       AS           = compiler_prefix + 'as',

@@ -38,38 +38,66 @@ EXTERNC void x86_rep_stosb(CPU)
         *((uint8_t *)REG2PTR(edi)) = eax;
         edi += dir;
 
-        ecx = ((int32_t)ecx) - 1;
-    } while (((int32_t)ecx) != 0);
+        ecx--;
+    } while (ecx != 0);
 }
 
 EXTERNC void x86_rep_stosd(CPU)
 {
-    int32_t dir;
+    uint32_t dstptr, counter, srcvalue;
 
-    if (ecx == 0) return;
+    counter = ecx;
+    if (counter == 0) return;
 
-    dir = (eflags & DF)?-4:4;
+    dstptr = edi;
+    srcvalue = eax;
 
-    if ((edi & 3) == 0)
+    if ((eflags & DF) == 0)
     {
-        do {
-            *((uint32_t *)REG2PTR(edi)) = eax;
-            edi += dir;
+        if ((dstptr & 3) == 0)
+        {
+            do {
+                *((uint32_t *)REG2PTR(dstptr)) = srcvalue;
+                dstptr += 4;
 
-            ecx = ((int32_t)ecx) - 1;
-        } while (((int32_t)ecx) != 0);
+                counter--;
+            } while (counter != 0);
+        }
+        else
+        {
+            do {
+                UNALIGNED_WRITE_32(dstptr, srcvalue)
+                dstptr += 4;
+
+                counter--;
+            } while (counter != 0);
+        }
     }
     else
     {
-        do {
-            UNALIGNED_WRITE_32(edi, eax)
-            edi += dir;
+        if ((dstptr & 3) == 0)
+        {
+            do {
+                *((uint32_t *)REG2PTR(dstptr)) = srcvalue;
+                dstptr -= 4;
 
-            ecx = ((int32_t)ecx) - 1;
-        } while (((int32_t)ecx) != 0);
+                counter--;
+            } while (counter != 0);
+        }
+        else
+        {
+            do {
+                UNALIGNED_WRITE_32(dstptr, srcvalue)
+                dstptr -= 4;
+
+                counter--;
+            } while (counter != 0);
+        }
     }
-}
 
+    ecx = counter;
+    edi = dstptr;
+}
 
 EXTERNC void x86_rep_stosw(CPU)
 {
@@ -85,8 +113,8 @@ EXTERNC void x86_rep_stosw(CPU)
             *((uint16_t *)REG2PTR(edi)) = eax;
             edi += dir;
 
-            ecx = ((int32_t)ecx) - 1;
-        } while (((int32_t)ecx) != 0);
+            ecx--;
+        } while (ecx != 0);
     }
     else
     {
@@ -94,8 +122,8 @@ EXTERNC void x86_rep_stosw(CPU)
             UNALIGNED_WRITE_16(edi, eax)
             edi += dir;
 
-            ecx = ((int32_t)ecx) - 1;
-        } while (((int32_t)ecx) != 0);
+            ecx--;
+        } while (ecx != 0);
     }
 }
 

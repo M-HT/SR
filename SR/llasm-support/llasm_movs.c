@@ -39,58 +39,110 @@ EXTERNC void x86_rep_movsb(CPU)
         esi += dir;
         edi += dir;
 
-        ecx = ((int32_t)ecx) - 1;
-    } while (((int32_t)ecx) != 0);
+        ecx--;
+    } while (ecx != 0);
 }
 
 EXTERNC void x86_rep_movsd(CPU)
 {
-    int32_t dir;
+    uint32_t srcptr, dstptr, counter;
 
-    if (ecx == 0) return;
+    counter = ecx;
+    if (counter == 0) return;
 
-    dir = (eflags & DF)?-4:4;
+    srcptr = esi;
+    dstptr = edi;
 
-    if (((esi | edi) & 3) == 0)
+    if ((eflags & DF) == 0)
     {
-        do {
-            *((uint32_t *)REG2PTR(edi)) = *((uint32_t *)REG2PTR(esi));
-            esi += dir;
-            edi += dir;
+        if (((srcptr | dstptr) & 3) == 0)
+        {
+            do {
+                *((uint32_t *)REG2PTR(dstptr)) = *((uint32_t *)REG2PTR(srcptr));
+                srcptr += 4;
+                dstptr += 4;
 
-            ecx = ((int32_t)ecx) - 1;
-        } while (((int32_t)ecx) != 0);
-    }
-    else if ((esi & 3) == 0)
-    {
-        do {
-            UNALIGNED_WRITE_32(edi, *((uint32_t *)REG2PTR(esi)))
-            esi += dir;
-            edi += dir;
+                counter--;
+            } while (counter != 0);
+        }
+        else if ((srcptr & 3) == 0)
+        {
+            do {
+                UNALIGNED_WRITE_32(dstptr, *((uint32_t *)REG2PTR(srcptr)))
+                srcptr += 4;
+                dstptr += 4;
 
-            ecx = ((int32_t)ecx) - 1;
-        } while (((int32_t)ecx) != 0);
-    }
-    else if ((edi & 3) == 0)
-    {
-        do {
-            *((uint32_t *)REG2PTR(edi)) = UNALIGNED_READ_32(esi);
-            esi += dir;
-            edi += dir;
+                counter--;
+            } while (counter != 0);
+        }
+        else if ((dstptr & 3) == 0)
+        {
+            do {
+                *((uint32_t *)REG2PTR(dstptr)) = UNALIGNED_READ_32(srcptr);
+                srcptr += 4;
+                dstptr += 4;
 
-            ecx = ((int32_t)ecx) - 1;
-        } while (((int32_t)ecx) != 0);
+                counter--;
+            } while (counter != 0);
+        }
+        else
+        {
+            do {
+                UNALIGNED_WRITE_32(dstptr, UNALIGNED_READ_32(srcptr))
+                srcptr += 4;
+                dstptr += 4;
+
+                counter--;
+            } while (counter != 0);
+        }
     }
     else
     {
-        do {
-            UNALIGNED_WRITE_32(edi, UNALIGNED_READ_32(esi))
-            esi += dir;
-            edi += dir;
+        if (((srcptr | dstptr) & 3) == 0)
+        {
+            do {
+                *((uint32_t *)REG2PTR(dstptr)) = *((uint32_t *)REG2PTR(srcptr));
+                srcptr -= 4;
+                dstptr -= 4;
 
-            ecx = ((int32_t)ecx) - 1;
-        } while (((int32_t)ecx) != 0);
+                counter--;
+            } while (counter != 0);
+        }
+        else if ((srcptr & 3) == 0)
+        {
+            do {
+                UNALIGNED_WRITE_32(dstptr, *((uint32_t *)REG2PTR(srcptr)))
+                srcptr -= 4;
+                dstptr -= 4;
+
+                counter--;
+            } while (counter != 0);
+        }
+        else if ((dstptr & 3) == 0)
+        {
+            do {
+                *((uint32_t *)REG2PTR(dstptr)) = UNALIGNED_READ_32(srcptr);
+                srcptr -= 4;
+                dstptr -= 4;
+
+                counter--;
+            } while (counter != 0);
+        }
+        else
+        {
+            do {
+                UNALIGNED_WRITE_32(dstptr, UNALIGNED_READ_32(srcptr))
+                srcptr -= 4;
+                dstptr -= 4;
+
+                counter--;
+            } while (counter != 0);
+        }
     }
+
+    ecx = counter;
+    esi = srcptr;
+    edi = dstptr;
 }
 
 EXTERNC void x86_rep_movsw(CPU)
@@ -108,8 +160,8 @@ EXTERNC void x86_rep_movsw(CPU)
             esi += dir;
             edi += dir;
 
-            ecx = ((int32_t)ecx) - 1;
-        } while (((int32_t)ecx) != 0);
+            ecx--;
+        } while (ecx != 0);
     }
     else if ((esi & 1) == 0)
     {
@@ -118,8 +170,8 @@ EXTERNC void x86_rep_movsw(CPU)
             esi += dir;
             edi += dir;
 
-            ecx = ((int32_t)ecx) - 1;
-        } while (((int32_t)ecx) != 0);
+            ecx--;
+        } while (ecx != 0);
     }
     else if ((edi & 1) == 0)
     {
@@ -128,8 +180,8 @@ EXTERNC void x86_rep_movsw(CPU)
             esi += dir;
             edi += dir;
 
-            ecx = ((int32_t)ecx) - 1;
-        } while (((int32_t)ecx) != 0);
+            ecx--;
+        } while (ecx != 0);
     }
     else
     {
@@ -138,8 +190,8 @@ EXTERNC void x86_rep_movsw(CPU)
             esi += dir;
             edi += dir;
 
-            ecx = ((int32_t)ecx) - 1;
-        } while (((int32_t)ecx) != 0);
+            ecx--;
+        } while (ecx != 0);
     }
 }
 

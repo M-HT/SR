@@ -29,38 +29,52 @@
 EXTERNC uint32_t x86_repe_scasb(CPU)
 {
     int32_t dir;
-    uint32_t val;
+    uint32_t srcptr, counter, scanvalue, srcvalue;
 
     dir = (eflags & DF)?-1:1;
 
+    counter = ecx;
+    srcptr = edi;
+    scanvalue = (eax & 0xff);
+
     do {
-        val = *((uint8_t *)REG2PTR(edi));
-        edi += dir;
+        srcvalue = *((uint8_t *)REG2PTR(srcptr));
+        srcptr += dir;
 
-        ecx = ((int32_t)ecx) - 1;
+        counter--;
 
-        if ((eax & 0xff) != val) break;
-    } while (((int32_t)ecx) != 0);
+        if (scanvalue != srcvalue) break;
+    } while (counter != 0);
 
-    return val;
+    ecx = counter;
+    edi = srcptr;
+
+    return srcvalue;
 }
 
 EXTERNC uint32_t x86_repne_scasb(CPU)
 {
     int32_t dir;
-    uint32_t val;
+    uint32_t srcptr, counter, scanvalue, srcvalue;
 
     dir = (eflags & DF)?-1:1;
 
+    counter = ecx;
+    srcptr = edi;
+    scanvalue = (eax & 0xff);
+
     do {
-        val = *((uint8_t *)REG2PTR(edi));
-        edi += dir;
+        srcvalue = *((uint8_t *)REG2PTR(srcptr));
+        srcptr += dir;
 
-        ecx = ((int32_t)ecx) - 1;
+        counter--;
 
-        if ((eax & 0xff) == val) break;
-    } while (((int32_t)ecx) != 0);
+        if (scanvalue == srcvalue) break;
+    } while (counter != 0);
 
-    return val;
+    ecx = counter;
+    edi = srcptr;
+
+    return srcvalue;
 }
 

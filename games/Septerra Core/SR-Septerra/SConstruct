@@ -58,7 +58,7 @@ if device.endswith("-llasm"):
 
 if device == 'pc-linux':
     # default settings
-    env = Environment(CCFLAGS      = '-m32 -O2 -Wall',
+    env = Environment(CCFLAGS      = '-m32 -O3 -Wall',
                       CPPPATH      = ['/usr/include/SDL2'],
                       INCPREFIX    = '-I',
                       LINKFLAGS    = '-m32 -Wl,-z,noexecstack',
@@ -68,7 +68,7 @@ if device == 'pc-linux':
         llvm_params = '-mtriple=i686-unknown-linux-gnu'
         env.Append(ENV = {'PATH' : os.environ['PATH']})
 elif device == 'arm-linux':
-    env = Environment(CCFLAGS      = '-O2 -Wall',
+    env = Environment(CCFLAGS      = '-O3 -Wall',
                       CPPPATH      = ['/usr/include/SDL2'],
                       INCPREFIX    = '-I',
                       LINKFLAGS    = '-Wl,-z,noexecstack',
@@ -80,7 +80,7 @@ elif device == 'pandora':
     compiler_prefix = 'pandora-'
 
     env = Environment(CC           = compiler_prefix + 'gcc',
-                      CCFLAGS      = '-O2 -Wall -DPANDORA -pipe -march=armv7-a -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp',
+                      CCFLAGS      = '-O3 -Wall -DPANDORA -pipe -march=armv7-a -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp',
                       CPPPATH      = [compiler_path + 'usr/include', compiler_path + 'usr/include/SDL'],
                       INCPREFIX    = '-I',
                       LIBPATH      = [compiler_path + 'usr/lib'],

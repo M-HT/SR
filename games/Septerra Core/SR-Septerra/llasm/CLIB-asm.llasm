@@ -589,13 +589,9 @@ proc _ftol2_sse_asm2c public
 ; st0   = num
 ; [esp] = return address
 
-        FTOL_INT64
+        FTOL_INT32
 
-        load tmp1, tmp0, 4
-        add tmpadr, tmp0, 4
-        load tmp2, tmpadr, 4
-        ashr tmp3, tmp1, 31
-        cmoveq tmp3, tmp2, eax, tmp1, 0x80000000
+        mov eax, tmp0
 
         Call_Asm_Return 0
 

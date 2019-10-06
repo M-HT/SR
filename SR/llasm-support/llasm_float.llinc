@@ -127,6 +127,7 @@ funcv x87_fpow_void $
 funcv x87_fpowr_void $
 funcv x87_fround_void $
 funcv x87_ftan_void $
+func x87_ftol_int32 $
 func x87_ftol_int64 $
 
 
@@ -487,6 +488,10 @@ endm
 
 macro FTAN_VOID
     call x87_ftan_void $
+endm
+
+macro FTOL_INT32
+    call x87_ftol_int32 $
 endm
 
 macro FTOL_INT64

@@ -30,6 +30,15 @@
 #include <time.h>
 
 
+typedef union {
+    double d;
+    struct {
+        uint32_t low;
+        uint32_t high;
+    };
+} double_int;
+
+
 #define eprintf(...) fprintf(stderr,__VA_ARGS__)
 
 
@@ -100,14 +109,36 @@ uint64_t _time64_c(uint64_t *t64)
 
 int32_t _ftol2_sse_c(double *num)
 {
-    int64_t i = (int64_t) trunc(*num);
-    if ((((int32_t) i) >> 31) != ((int32_t)(i >> 32)))
+    //return (int32_t) trunc(*num);
+
+    const static double doublemagic = 6755399441055744.0; // 2^52 * 1.5
+
+    double_int result;
+    double num2;
+
+    if (*num < 0)
     {
-        return 0x80000000;
+        result.d = *num + doublemagic;  // fast conversion to int,
+        num2 = (double)(int32_t)result.low; // result.low contains the result (rounded up or down)
+
+        if (num2 < *num) // compare result with original value and if the result was rounded toward negative infinity, then increase result (truncate toward 0)
+        {
+            result.low++;
+        }
+
+        return (int32_t)result.low;
     }
     else
     {
-        return (int32_t)i;
+        result.d = *num + doublemagic;  // fast conversion to int,
+        num2 = (double)(int32_t)result.low; // result.low contains the result (rounded up or down)
+
+        if (num2 > *num) // compare result with original value and if the result was rounded toward positive infinity, then decrease result (truncate toward 0)
+        {
+            result.low--;
+        }
+
+        return (int32_t)result.low;
     }
 }
 

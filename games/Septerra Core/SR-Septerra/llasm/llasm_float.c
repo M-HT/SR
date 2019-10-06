@@ -120,6 +120,8 @@ const static double const_ln2 = M_LN2;
 
 #define X87_CX 0x4700
 
+#define X87_RC_SHIFT 10
+
 #define CLEAR_X87_FLAG(x) { st_sw_cond &= (~(x)) & X87_CX; }
 
 #define CLEAR_X87_FLAGS { st_sw_cond = 0; }
@@ -339,8 +341,33 @@ EXTERNC void x87_fninit_void(CPU)
 EXTERNC int32_t x87_fistp_int32(CPU)
 {
     register int32_t ret;
+    register double num1, num2;
 
-    ret = (int32_t) ST0;
+    switch ((st_cw >> X87_RC_SHIFT) & 3)
+    {
+    case 0: // Round to nearest (even)
+        num1 = ST0;
+        num2 = floor(num1);
+        ret = (int32_t) num2;
+        if (num1 - num2 > 0.5)
+        {
+            ret++;
+        }
+        else if (!(num1 - num2 < 0.5))
+        {
+            ret = (ret + 1) & ~(int32_t)1;
+        }
+        break;
+    case 1: // Round down (toward -infinity)
+        ret = (int32_t) floor(ST0);
+        break;
+    case 2: // Round up (toward +infinity)
+        ret = (int32_t) ceil(ST0);
+        break;
+    case 3: // Round toward zero (Truncate)
+        ret = (int32_t) trunc(ST0);
+        break;
+    }
     POP_REGS;
     return ret;
 }
@@ -350,8 +377,33 @@ EXTERNC uint32_t x87_fistp_int64(CPU)
 #ifdef BIG_ENDIAN_BYTE_ORDER
     register int_int ret;
     register le_int *presult;
+    register double num1, num2;
 
-    ret.i = (int64_t) ST0;
+    switch ((st_cw >> X87_RC_SHIFT) & 3)
+    {
+    case 0: // Round to nearest (even)
+        num1 = ST0;
+        num2 = floor(num1);
+        ret.i = (int64_t) num2;
+        if (num1 - num2 > 0.5)
+        {
+            ret.i++;
+        }
+        else if (!(num1 - num2 < 0.5))
+        {
+            ret.i = (ret.i + 1) & ~(int64_t)1;
+        }
+        break;
+    case 1: // Round down (toward -infinity)
+        ret.i = (int64_t) floor(ST0);
+        break;
+    case 2: // Round up (toward +infinity)
+        ret.i = (int64_t) ceil(ST0);
+        break;
+    case 3: // Round toward zero (Truncate)
+        ret.i = (int64_t) trunc(ST0);
+        break;
+    }
     POP_REGS;
 
     presult = (le_int *)&(st_result);
@@ -361,7 +413,35 @@ EXTERNC uint32_t x87_fistp_int64(CPU)
 
     return (uint32_t)(uintptr_t)presult;
 #else
-    st_result = (int64_t) ST0;
+    register double num1, num2;
+    register int64_t result;
+
+    switch ((st_cw >> X87_RC_SHIFT) & 3)
+    {
+    case 0: // Round to nearest (even)
+        num1 = ST0;
+        num2 = floor(num1);
+        result = (int64_t) num2;
+        if (num1 - num2 > 0.5)
+        {
+            result++;
+        }
+        else if (!(num1 - num2 < 0.5))
+        {
+            result = (result + 1) & ~(int64_t)1;
+        }
+        break;
+    case 1: // Round down (toward -infinity)
+        result = (int64_t) floor(ST0);
+        break;
+    case 2: // Round up (toward +infinity)
+        result = (int64_t) ceil(ST0);
+        break;
+    case 3: // Round toward zero (Truncate)
+        result = (int64_t) trunc(ST0);
+        break;
+    }
+    st_result = result;
     POP_REGS;
     return (uint32_t)(uintptr_t)&(st_result);
 #endif
@@ -777,7 +857,50 @@ EXTERNC void x87_ftan_void(CPU)
     ST0 = tan(ST0);
 }
 
-// truncate towards zero
+// truncate toward zero
+EXTERNC int32_t x87_ftol_int32(CPU)
+{
+    //register int32_t ret;
+
+    //ret = (int32_t) trunc(ST0);
+    //POP_REGS;
+    //return ret;
+
+    const static double doublemagic = 6755399441055744.0; // 2^52 * 1.5
+
+    double_int result;
+    double num1, num2;
+
+    num1 = ST0;
+    POP_REGS;
+
+    if (num1 < 0)
+    {
+        result.d = num1 + doublemagic;  // fast conversion to int,
+        num2 = (double)(int32_t)result.low; // result.low contains the result (rounded up or down)
+
+        if (num2 < num1) // compare result with original value and if the result was rounded toward negative infinity, then increase result (truncate toward 0)
+        {
+            result.low++;
+        }
+
+        return (int32_t)result.low;
+    }
+    else
+    {
+        result.d = num1 + doublemagic;  // fast conversion to int,
+        num2 = (double)(int32_t)result.low; // result.low contains the result (rounded up or down)
+
+        if (num2 > num1) // compare result with original value and if the result was rounded toward positive infinity, then decrease result (truncate toward 0)
+        {
+            result.low--;
+        }
+
+        return (int32_t)result.low;
+    }
+}
+
+// truncate toward zero
 EXTERNC uint32_t x87_ftol_int64(CPU)
 {
 #ifdef BIG_ENDIAN_BYTE_ORDER

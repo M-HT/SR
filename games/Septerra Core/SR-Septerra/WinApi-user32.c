@@ -40,6 +40,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #else
+#include <time.h>
 #include "CLIB.h"
 unsigned int Winapi_GetTicks(void);
 #endif
@@ -1559,6 +1560,19 @@ uint32_t PeekMessageA_c(void *lpMsg, void *hWnd, uint32_t wMsgFilterMin, uint32_
     if ((hWnd == NULL) && (wMsgFilterMin == 0) && (wMsgFilterMax == 0) && ((wRemoveMsg == 0) || (wRemoveMsg == 1)))
     {
         SDL_Event event;
+
+        // Send Septerra Core to sleep to prevent it from consuming too much cpu
+#ifdef _WIN32
+        Sleep(1);
+#else
+        struct timespec _tp;
+
+        _tp.tv_sec = 0;
+        _tp.tv_nsec = 1000000;
+
+        nanosleep(&_tp, NULL);
+#endif
+
         if (!find_event(&event, wRemoveMsg, 0)) return 0;
 
         if (lpMsg != NULL)

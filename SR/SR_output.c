@@ -33,6 +33,7 @@ typedef struct _Entry_FILE_ {
 } Entry_FILE;
 
 
+#if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_DOS && OUTPUT_TYPE != OUT_LLASM)
 static void SR_write_output_alias_global(alias_data *item, void *data)
 {
 #define DATA ((Entry_FILE *) data)
@@ -47,7 +48,9 @@ static void SR_write_output_alias_global(alias_data *item, void *data)
 
 #undef DATA
 }
+#endif
 
+#ifdef _CHK_HACK
 static void SR_write_output__chk_hack(Word_t Index, void *data)
 {
     char cbuf[32];
@@ -76,6 +79,7 @@ static void SR_write_output__chk_hack(Word_t Index, void *data)
 
 #undef DATA
 }
+#endif
 
 static void SR_write_output_line(output_data *item, void *data)
 {
@@ -244,15 +248,18 @@ static void SR_write_llasm_output_line(output_data *item, void *data)
 int SR_write_output(const char *fname)
 {
     Entry_FILE EF;
+#if (OUTPUT_TYPE != OUT_ORIG)
     int first_data, first_code;
-    Word_t index;
+#endif
 
     EF.fout = fopen(fname, "wt");
 
     if ( EF.fout == NULL ) return -1;
 
+#if (OUTPUT_TYPE != OUT_ORIG)
     first_data = 1;
     first_code = 1;
+#endif
 
 #if (OUTPUT_TYPE == OUT_LLASM)
     fprintf(EF.fout, "%s\n", "include llasm.llinc");
@@ -384,13 +391,13 @@ int SR_write_output(const char *fname)
     #if (OUTPUT_TYPE == OUT_LLASM)
             char incname[20];
 
-            sprintf((char *) &(incname[0]), "seg%.2i_data.llinc", EF.Entry + 1);
+            sprintf((char *) &(incname[0]), "seg%.2i_data.llinc", (unsigned int)(EF.Entry + 1));
             fprintf(EF.fout, "include %s\n", (char *) &(incname[0]));
             fprintf(EF.fout, "endd\n");
     #else
             char incname[12];
 
-            sprintf((char *) &(incname[0]), "seg%.2i.inc", EF.Entry + 1);
+            sprintf((char *) &(incname[0]), "seg%.2i.inc", (unsigned int)(EF.Entry + 1));
 
         #if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
             fprintf(EF.fout, ".include \"%s\"\n", (char *) &(incname[0]));
@@ -517,7 +524,7 @@ int SR_write_output(const char *fname)
             FILE *fmain;
             char incname[20];
 
-            sprintf((char *) &(incname[0]), "seg%.2i_code.llinc", EF.Entry + 1);
+            sprintf((char *) &(incname[0]), "seg%.2i_code.llinc", (unsigned int)(EF.Entry + 1));
 
             fprintf(EF.fout, "include %s\n", (char *) &(incname[0]));
 

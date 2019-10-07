@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2018 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -49,6 +49,9 @@ int SR_disassemble_region_arm(unsigned int Entry, region_data *region)
     orig_ebp_dword_aligned = ebp_dword_aligned;
     orig_esp_dword_aligned = esp_dword_aligned;
 
+    ua_ebp_area_index = 0;
+    ua_esp_area_index = 0;
+
     if (orig_ebp_dword_aligned)
     {
         ua_ebp_area_value = section_ua_ebp_list_FindEntryEqualOrLowerIndex(Entry, cur_ofs, &ua_ebp_area_index);
@@ -87,7 +90,7 @@ int SR_disassemble_region_arm(unsigned int Entry, region_data *region)
     {
         if (output == NULL)
         {
-            fprintf(stderr, "Error: output not found - %i - %i\n", Entry, cur_ofs);
+            fprintf(stderr, "Error: output not found - %i - %i\n", Entry, (unsigned int)cur_ofs);
 
             return 1;
         }
@@ -96,7 +99,7 @@ int SR_disassemble_region_arm(unsigned int Entry, region_data *region)
 
         if (cur_ofs < region->begin_ofs)
         {
-            fprintf(stderr, "Error: output out of bounds - %i - %i\n", Entry, cur_ofs);
+            fprintf(stderr, "Error: output out of bounds - %i - %i\n", Entry, (unsigned int)cur_ofs);
 
             return 2;
         }
@@ -109,7 +112,7 @@ int SR_disassemble_region_arm(unsigned int Entry, region_data *region)
             newstr = (char *) malloc(strlen(output->str) + 2);
             if (newstr == NULL)
             {
-                fprintf(stderr, "Error: not enough memory - %i - %i\n", Entry, cur_ofs);
+                fprintf(stderr, "Error: not enough memory - %i - %i\n", Entry, (unsigned int)cur_ofs);
 
                 return 3;
             }
@@ -129,7 +132,7 @@ int SR_disassemble_region_arm(unsigned int Entry, region_data *region)
 
             if (ret == 0 || ret != output->len + 1)
             {
-                fprintf(stderr, "Error: wrong disassembly - %i - %i - %i\n", Entry, cur_ofs, ret);
+                fprintf(stderr, "Error: wrong disassembly - %i - %i - %i\n", Entry, (unsigned int)cur_ofs, ret);
 
                 finished = 3;
                 break;
@@ -140,7 +143,7 @@ int SR_disassemble_region_arm(unsigned int Entry, region_data *region)
             if (flags_read == FL_UNKNOWN ||
                 flags_write == FL_UNKNOWN)
             {
-                fprintf(stderr, "Error: unknown flags - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                fprintf(stderr, "Error: unknown flags - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
 
                 return 5;
             }
@@ -153,7 +156,7 @@ int SR_disassemble_region_arm(unsigned int Entry, region_data *region)
 
             if ( (flags_to_write & FL_CARRY_SUB_ORIGINAL) && (flags_to_write & FL_CARRY_SUB_INVERTED))
             {
-                fprintf(stderr, "Error: invalid flags (carry flag - original and inverted) - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                fprintf(stderr, "Error: invalid flags (carry flag - original and inverted) - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
 
                 return 5;
             }
@@ -221,7 +224,7 @@ int SR_disassemble_region_arm(unsigned int Entry, region_data *region)
             if (flags_read == FL_SPECIFIC ||
                 flags_write == FL_SPECIFIC)
             {
-                fprintf(stderr, "Error: unknown specific flags - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                fprintf(stderr, "Error: unknown specific flags - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
 
                 return 5;
             }
@@ -253,7 +256,7 @@ int SR_disassemble_region_arm(unsigned int Entry, region_data *region)
     {
         if (flags_to_write & FL_WEAK)
         {
-            fprintf(stderr, "Warning: unknown weak flags on start of region - %i - %i - 0x%x\n", Entry, cur_ofs, flags_to_write);
+            fprintf(stderr, "Warning: unknown weak flags on start of region - %i - %i - 0x%x\n", Entry, (unsigned int)cur_ofs, (unsigned int)flags_to_write);
         }
         else
         {
@@ -285,7 +288,7 @@ int SR_disassemble_region_arm(unsigned int Entry, region_data *region)
 
             if (flags_to_write)
             {
-                fprintf(stderr, "Error: unknown flags on start of region - %i - %i - 0x%x\n", Entry, cur_ofs, flags_to_write);
+                fprintf(stderr, "Error: unknown flags on start of region - %i - %i - 0x%x\n", Entry, (unsigned int)cur_ofs, (unsigned int)flags_to_write);
 
                 return 6;
             }

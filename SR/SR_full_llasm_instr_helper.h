@@ -1282,6 +1282,8 @@ static void SR_llasm_helper_add_8h(enum ud_mnemonic_code mnemonic, enum ll_regs 
 
     if (src2 != LR_NONE)
     {
+        value = 0;
+
         if ((src1 != src2) || (src2shift == 0))
         {
             if ((Tflags_to_write & (FL_ADJUST | FL_OVERFLOW | FL_CARRY)) || LLTEMPREG(dst))

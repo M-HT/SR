@@ -173,6 +173,41 @@ static int SR_LoadSCI_code16_areas(FILE *file)
     return 0;
 }
 
+static int SR_LoadSCI_fixup_do_not_interpret_as_code(FILE *file)
+{
+    char buf[8192];
+    uint_fast32_t SecNum, RelAdr;
+    int length;
+    unsigned int address;
+
+    while (!feof(file))
+    {
+        // read enters
+        fscanf(file, "%8192[\n]", buf);
+        // read line
+        buf[0] = 0;
+        fscanf(file, "%8192[^\n]", buf);
+        length = strlen(buf);
+        if (length != 0 && buf[length - 1] == '\r')
+        {
+            length--;
+            buf[length] = 0;
+        }
+
+        if (length == 0) continue;
+
+        sscanf(buf, "loc_%X", &address);
+
+        if (SR_get_section_reladr(address, &SecNum, &RelAdr))
+        {
+            section_nocode_list_Insert(SecNum, RelAdr);
+        }
+    }
+
+    return 0;
+}
+
+#if (OUTPUT_TYPE != OUT_DOS)
 static int SR_LoadSCI_external_procedures(FILE *file)
 {
     char buf[8192];
@@ -273,7 +308,7 @@ static int SR_LoadSCI_instruction_replacements(FILE *file)
 {
     char buf[8192];
     char *str1, *str2, *str3;
-    replace_data *replace, **replace_value;
+    replace_data *replace;
     uint_fast32_t SecNum, RelAdr;
     int length, instr_empty;
     unsigned int address, instr_len;
@@ -342,6 +377,7 @@ static int SR_LoadSCI_instruction_replacements(FILE *file)
     return 0;
 }
 
+#if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
 static int SR_LoadSCI_unaligned_ebp_areas(FILE *file)
 {
     char buf[8192];
@@ -419,40 +455,7 @@ static int SR_LoadSCI_unaligned_esp_areas(FILE *file)
 
     return 0;
 }
-
-static int SR_LoadSCI_fixup_do_not_interpret_as_code(FILE *file)
-{
-    char buf[8192];
-    uint_fast32_t SecNum, RelAdr;
-    int length;
-    unsigned int address;
-
-    while (!feof(file))
-    {
-        // read enters
-        fscanf(file, "%8192[\n]", buf);
-        // read line
-        buf[0] = 0;
-        fscanf(file, "%8192[^\n]", buf);
-        length = strlen(buf);
-        if (length != 0 && buf[length - 1] == '\r')
-        {
-            length--;
-            buf[length] = 0;
-        }
-
-        if (length == 0) continue;
-
-        sscanf(buf, "loc_%X", &address);
-
-        if (SR_get_section_reladr(address, &SecNum, &RelAdr))
-        {
-            section_nocode_list_Insert(SecNum, RelAdr);
-        }
-    }
-
-    return 0;
-}
+#endif
 
 static int SR_LoadSCI_instruction_flags(FILE *file)
 {
@@ -511,6 +514,7 @@ static int SR_LoadSCI_instruction_flags(FILE *file)
 
     return 0;
 }
+#endif
 
 int SR_LoadSCI(void)
 {
@@ -518,14 +522,18 @@ int SR_LoadSCI(void)
     const static char displaced_labels[] = "displaced_labels.sci";
     const static char noret_procedures[] = "noret_procedures.sci";
     const static char code16_areas[] = "code16_areas.sci";
+    const static char fixup_do_not_interpret_as_code[] = "fixup_do_not_interpret_as_code.sci";
+#if (OUTPUT_TYPE != OUT_DOS)
     const static char external_procedures[] = "external_procedures.sci";
     const static char global_aliases[] = "global_aliases.sci";
     const static char instruction_replacements[] = "instruction_replacements.sci";
     const static char instruction_replacements_FPU[] = "instruction_replacements_FPU.sci";
+#if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
     const static char unaligned_ebp_areas[] = "unaligned_ebp_areas.sci";
     const static char unaligned_esp_areas[] = "unaligned_esp_areas.sci";
-    const static char fixup_do_not_interpret_as_code[] = "fixup_do_not_interpret_as_code.sci";
+#endif
     const static char instruction_flags[] = "instruction_flags.sci";
+#endif
     FILE *f;
     int ret;
 

@@ -1257,6 +1257,7 @@ void GetMovieBox_c (void *theMovie, void *boxRect)
 }
 
 
+#ifndef _WIN32
 static void check_movie_audio(Movie movie)
 {
     movie->play_audio = 0;
@@ -1335,6 +1336,7 @@ static void check_movie_audio(Movie movie)
 
     movie->play_audio = 1;
 }
+#endif
 
 
 //EXTERN_API( ComponentInstance )

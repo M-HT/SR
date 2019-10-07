@@ -42,25 +42,18 @@
 #undef DEFINE_VARIABLES
 
 #if defined(__MINGW32__)
-	#include <sys/timeb.h>
 
-static int get_time(struct timeval *tp)
+static void write_log_time(FILE *fout)
 {
-	struct timeb tb;
+	SYSTEMTIME st;
 
-	ftime(&tb);
+	GetSystemTime(&st);
 
-	tp->tv_sec = tb.time;
-	tp->tv_usec = tb.millitm * 1000;
-
-	return 0;
+	fprintf(fout, "%04i-%02i-%02i %02i:%02i:%02i.%03i: ", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 }
 
 #else
-	#include <sys/time.h>
-
-	#define get_time(x) gettimeofday(x, NULL)
-#endif
+#include <sys/time.h>
 
 static void write_log_time(FILE *fout)
 {
@@ -68,12 +61,14 @@ static void write_log_time(FILE *fout)
 	struct timeval current_time;
 	char str[63];
 
-	get_time(&current_time);								// Get time in seconds and microseconds
+	gettimeofday(&current_time, NULL);						// Get time in seconds and microseconds
 	newtime = gmtime( &current_time.tv_sec );				// Convert time (seconds) to struct
 	strftime (str, 63, "%Y-%m-%d %H:%M:%S", newtime);		// Write date and time (seconds) to string (UTC)
 
 	fprintf(fout, "%s.%03i: ", str, (int) (current_time.tv_usec / 1000));
 }
+
+#endif
 
 
 int SR_get_section_reladr(uint_fast32_t Address, uint_fast32_t *SecNum, uint_fast32_t *RelAdr)

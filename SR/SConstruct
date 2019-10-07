@@ -30,7 +30,7 @@ Help(vars.GenerateHelpText(env))
 debug = env['debug']
 
 # default settings
-env = Environment(CCFLAGS      = '-O2',
+env = Environment(CCFLAGS      = '-O2 -Wall',
                   CPPPATH      = '.',
                   INCPREFIX    = '-I' + udis86_path,
                   LIBPATH      = 'libudis86',

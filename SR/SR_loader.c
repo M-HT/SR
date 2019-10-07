@@ -293,6 +293,7 @@ static void unload_file(memory_file *mem_file)
 }
 
 
+#if ((OUTPUT_TYPE != OUT_ORIG) && (OUTPUT_TYPE != OUT_DOS))
 static int LoadBssBorder(void)
 {
     char buf[8192];
@@ -371,6 +372,7 @@ static int LoadBssBorder(void)
 
     return 0;
 }
+#endif
 
 static int add_fixup(unsigned int Entry, uint_fast32_t SourceOffset, uint_fast32_t TargetObject, int_fast32_t TargetOffset, fixup_type FixupType)
 {
@@ -382,7 +384,7 @@ static int add_fixup(unsigned int Entry, uint_fast32_t SourceOffset, uint_fast32
         fixup = section_fixup_list_Insert(Entry, SourceOffset);
         if (fixup == NULL)
         {
-            fprintf(stderr, "Error: error adding fixup - %i\n", SourceOffset);
+            fprintf(stderr, "Error: error adding fixup - %i\n", (unsigned int)SourceOffset);
             return -2;
         }
 
@@ -396,7 +398,7 @@ static int add_fixup(unsigned int Entry, uint_fast32_t SourceOffset, uint_fast32
             fixup->tsec != TargetObject - 1 ||
             fixup->type != FixupType)
         {
-            fprintf(stderr, "Error: error adding fixup twice - %i\n", SourceOffset);
+            fprintf(stderr, "Error: error adding fixup twice - %i\n", (unsigned int)SourceOffset);
             return -3;
         }
     }

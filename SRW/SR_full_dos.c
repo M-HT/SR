@@ -138,22 +138,22 @@ int SR_disassemble_convert_fixup(const char *ostr, char *dst, fixup_data *fixup,
     }
     else if (fixup->type == FT_IMAGEBASE)
     {
-        sprintf(cbuf, "0x%x", fixup->tsec + fixup->tofs);
+        sprintf(cbuf, "0x%x", (unsigned int)(fixup->tsec + fixup->tofs));
     }
     else if (fixup->type == FT_16BITOFS)
     {
-        sprintf(cbuf, "0x%x", (section[fixup->tsec].start + fixup->tofs) & 0xffff);
+        sprintf(cbuf, "0x%x", (unsigned int)((section[fixup->tsec].start + fixup->tofs) & 0xffff));
     }
     else
     {
-        sprintf(cbuf, "0x%x", section[fixup->tsec].start + fixup->tofs);
+        sprintf(cbuf, "0x%x", (unsigned int)(section[fixup->tsec].start + fixup->tofs));
     }
 
     // find substring (must be exactly one occurence)
     str1 = strstr(ostr, cbuf);
     if (str1 == NULL)
     {
-        fprintf(stderr, "Error: error converting fixup: %i - %s - %s (%i: 0x%x)\n", 1, ostr, cbuf, Entry, offset);
+        fprintf(stderr, "Error: error converting fixup: %i - %s - %s (%i: 0x%x)\n", 1, ostr, cbuf, Entry, (unsigned int)offset);
 
         return 1;
     }
@@ -204,7 +204,7 @@ int SR_disassemble_convert_fixup(const char *ostr, char *dst, fixup_data *fixup,
                 }
             }
         }
-        fprintf(stderr, "Two string occurences in fixup: 0x%x, %i - 0x%x\n%s\n%s\n", fixup->sofs, fixup->tsec, fixup->tofs, cbuf, ostr);
+        fprintf(stderr, "Two string occurences in fixup: 0x%x, %i - 0x%x\n%s\n%s\n", (unsigned int)fixup->sofs, (unsigned int)fixup->tsec, (unsigned int)fixup->tofs, cbuf, ostr);
         return 2;
     }
 
@@ -274,7 +274,7 @@ int SR_disassemble_convert_fixup(const char *ostr, char *dst, fixup_data *fixup,
     }
     else if (fixup->type == FT_IMAGEBASE)
     {
-        sprintf(cbuf, "0x%x + imagebase1000 - 0x1000", fixup->tofs);
+        sprintf(cbuf, "0x%x + imagebase1000 - 0x1000", (unsigned int)fixup->tofs);
     }
     else
     {
@@ -288,7 +288,7 @@ int SR_disassemble_convert_fixup(const char *ostr, char *dst, fixup_data *fixup,
     }
     else
     {
-        sprintf(&(dst[length1]), "(%s + (%i))", cbuf, fixup->tofs - (int_fast32_t)ofs);
+        sprintf(&(dst[length1]), "(%s + (%i))", cbuf, (int)(fixup->tofs - (int_fast32_t)ofs));
     }
 
     // copy second part of the string
@@ -333,7 +333,7 @@ int SR_disassemble_offset_windows(unsigned int Entry, uint_fast32_t offset)
 
         if (output == NULL)
         {
-            fprintf(stderr, "Error: output not found - %i - 0x%x\n", Entry, offset);
+            fprintf(stderr, "Error: output not found - %i - 0x%x\n", Entry, (unsigned int)offset);
 
             return 1;
         }
@@ -371,7 +371,7 @@ int SR_disassemble_offset_windows(unsigned int Entry, uint_fast32_t offset)
 
                 if (fixup->sofs > offset + decoded_length - fixuplen)
                 {
-                    fprintf(stderr, "Error: decoding fixup mismatch - %i - %i\n", Entry, offset);
+                    fprintf(stderr, "Error: decoding fixup mismatch - %i - %i\n", Entry, (unsigned int)offset);
 
                     return 2;
                 }
@@ -389,7 +389,7 @@ int SR_disassemble_offset_windows(unsigned int Entry, uint_fast32_t offset)
 
                             if (fixup2->sofs > offset + decoded_length - fixuplen2)
                             {
-                                fprintf(stderr, "Error: decoding fixup mismatch - %i - %i\n", Entry, offset);
+                                fprintf(stderr, "Error: decoding fixup mismatch - %i - %i\n", Entry, (unsigned int)offset);
 
                                 return 2;
                             }
@@ -668,7 +668,7 @@ int SR_disassemble_offset_windows(unsigned int Entry, uint_fast32_t offset)
                 break;
 
             case UD_Iinvalid:
-                printf("decoded length: %i (%i - 0x%x)\n", decoded_length, Entry, offset);
+                printf("decoded length: %i (%i - 0x%x)\n", decoded_length, Entry, (unsigned int)offset);
                 return 3;
                 break;
 
@@ -731,7 +731,7 @@ int SR_disassemble_offset_windows(unsigned int Entry, uint_fast32_t offset)
                         }
                         else
                         {
-                            printf("fixup: %i - 0x%x - 0x%x\n", fixup->tsec, fixup->tofs, section[fixup->tsec].start + fixup->tofs);
+                            printf("fixup: %i - 0x%x - 0x%x\n", (unsigned int)fixup->tsec, (unsigned int)fixup->tofs, (unsigned int)(section[fixup->tsec].start + fixup->tofs));
                             printf("op type: %i - %i - %i\n", ud_obj.operand[0].type, ud_obj.operand[1].type, ud_obj.operand[2].type);
                             printf("op size: %i - %i - %i\n", ud_obj.operand[0].size, ud_obj.operand[1].size, ud_obj.operand[2].size);
                             return -51;

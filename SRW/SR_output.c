@@ -39,6 +39,7 @@ typedef struct _Entry_Proc_ {
 } Entry_Proc;
 
 
+#if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_WINDOWS && OUTPUT_TYPE != OUT_LLASM)
 static void SR_write_output_alias_global(alias_data *item, void *data)
 {
 #define DATA ((Entry_FILE *) data)
@@ -53,35 +54,7 @@ static void SR_write_output_alias_global(alias_data *item, void *data)
 
 #undef DATA
 }
-
-static void SR_write_output__chk_hack(Word_t Index, void *data)
-{
-    char cbuf[32];
-
-#define DATA ((Entry_FILE *) data)
-
-#if (OUTPUT_TYPE == OUT_LLASM)
-    fprintf(DATA->fout, "%s\n", ".balign 16, 0");
-
-    SR_get_label(cbuf, section[DATA->Entry].start + Index);
-    fprintf(DATA->fout, ".int %s\n", cbuf);
-    cbuf[0] = 's';
-    cbuf[1] = 'u';
-    cbuf[2] = 'b';
-    fprintf(DATA->fout, ".asciz \"%s\"\n", cbuf);
-#else
-    fprintf(DATA->fout, "%s\n", "align 16, db 0");
-
-    SR_get_label(cbuf, section[DATA->Entry].start + Index);
-    fprintf(DATA->fout, "dd %s\n", cbuf);
-    cbuf[0] = 's';
-    cbuf[1] = 'u';
-    cbuf[2] = 'b';
-    fprintf(DATA->fout, "db '%s',0\n", cbuf);
 #endif
-
-#undef DATA
-}
 
 static void SR_write_output_line(output_data *item, void *data)
 {
@@ -139,7 +112,7 @@ static void SR_write_output_line(output_data *item, void *data)
 #endif
             if (add_tracing_to_code && item->type == OT_INSTRUCTION)
             {
-                fprintf(DATA->fout, "TRACE_LABEL 0x%x\n", section[DATA->Entry].start + item->ofs);
+                fprintf(DATA->fout, "TRACE_LABEL 0x%x\n", (unsigned int)(section[DATA->Entry].start + item->ofs));
             }
         }
 
@@ -167,10 +140,9 @@ static void SR_write_output_line(output_data *item, void *data)
 #undef DATA
 }
 
+#if (OUTPUT_TYPE == OUT_ORIG || OUTPUT_TYPE == OUT_WINDOWS)
 static void SR_write_output_import_obj(import_data *item, void *data)
 {
-    char cbuf[16];
-
 #define DATA ((Entry_FILE *) data)
 
     fprintf(DATA->fout, "extern %s\n", item->ProcName);
@@ -178,6 +150,7 @@ static void SR_write_output_import_obj(import_data *item, void *data)
 
 #undef DATA
 }
+#endif
 
 #if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_WINDOWS)
 void SR_write_import_is_used(extrn_data *extrn, void *data)
@@ -200,15 +173,12 @@ void SR_write_import_is_used(extrn_data *extrn, void *data)
 
 static void SR_write_output_import(import_data *item, void *data)
 {
-    char cbuf[16];
-
 #define DATA ((Entry_FILE *) data)
 
 #if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_WINDOWS)
     // is import used ?
 
     Entry_Proc EP;
-    uint_fast32_t Entry;
 
     EP.ProcName = item->ProcName;
     EP.is_used = 0;
@@ -244,11 +214,11 @@ static void SR_write_output_export(export_data *item, void *data)
 
     if (item->name[0] == 0)
     {
-        fprintf(DATA->fout, "export %s %i\n", cbuf, item->ordinal);
+        fprintf(DATA->fout, "export %s %i\n", cbuf, (unsigned int)item->ordinal);
     }
     else
     {
-        fprintf(DATA->fout, "export %s %s %i\n", cbuf, item->name, item->ordinal);
+        fprintf(DATA->fout, "export %s %s %i\n", cbuf, item->name, (unsigned int)item->ordinal);
     }
 
 #undef DATA
@@ -319,8 +289,9 @@ static void SR_write_llasm_output_line(output_data *item, void *data)
 int SR_write_output(const char *fname)
 {
     Entry_FILE EF;
+#if (OUTPUT_TYPE != OUT_ORIG)
     int first_data, first_code;
-    Word_t index;
+#endif
 
 #if (OUTPUT_TYPE == OUT_ORIG || OUTPUT_TYPE == OUT_WINDOWS)
     {
@@ -357,8 +328,10 @@ int SR_write_output(const char *fname)
 
     if ( EF.fout == NULL ) return -1;
 
+#if (OUTPUT_TYPE != OUT_ORIG)
     first_data = 1;
     first_code = 1;
+#endif
 
 #if (OUTPUT_TYPE == OUT_LLASM)
     fprintf(EF.fout, "%s\n", "include llasm.llinc");
@@ -475,6 +448,8 @@ int SR_write_output(const char *fname)
                 fprintf(EF.fout, "\n.section %s\n", section[EF.Entry].name);
                 break;
 #endif
+            default:
+                break;
         }
 
         if (EF.Entry == 0)
@@ -522,13 +497,13 @@ int SR_write_output(const char *fname)
     #if (OUTPUT_TYPE == OUT_LLASM)
             char incname[20];
 
-            sprintf((char *) &(incname[0]), "seg%.2i_data.llinc", EF.Entry + 1);
+            sprintf((char *) &(incname[0]), "seg%.2i_data.llinc", (unsigned int)(EF.Entry + 1));
             fprintf(EF.fout, "include %s\n", (char *) &(incname[0]));
             fprintf(EF.fout, "endd\n");
     #else
             char incname[12];
 
-            sprintf((char *) &(incname[0]), "seg%.2i.inc", EF.Entry + 1);
+            sprintf((char *) &(incname[0]), "seg%.2i.inc", (unsigned int)(EF.Entry + 1));
 
         #if (OUTPUT_TYPE == OUT_LLASM)
             fprintf(EF.fout, ".include \"%s\"\n", (char *) &(incname[0]));
@@ -618,7 +593,7 @@ int SR_write_output(const char *fname)
             FILE *fmain;
             char incname[20];
 
-            sprintf((char *) &(incname[0]), "seg%.2i_code.llinc", EF.Entry + 1);
+            sprintf((char *) &(incname[0]), "seg%.2i_code.llinc", (unsigned int)(EF.Entry + 1));
 
             fprintf(EF.fout, "include %s\n", (char *) &(incname[0]));
 

@@ -78,9 +78,10 @@ int SR_initial_disassembly(void)
 
 void SR_get_label(char *cbuf, uint_fast32_t Address)
 {
-    sprintf(cbuf, "loc_%X", Address);
+    sprintf(cbuf, "loc_%X", (unsigned int)Address);
 }
 
+#if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_WINDOWS)
 static void SR_apply_fixup_alias_init(alias_data *item, void *data)
 {
     output_data *output;
@@ -103,11 +104,14 @@ static void SR_apply_fixup_alias_init(alias_data *item, void *data)
 
 #undef DATA
 }
+#endif
 
 static void SR_apply_fixup_export_init(export_data *item, void *data)
 {
     output_data *output;
+#if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_WINDOWS)
     bound_data *bound;
+#endif
 
 #define DATA ((uint_fast32_t) data)
 
@@ -353,7 +357,7 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
     }
     else if (item->type == FT_IMAGEBASE)
     {
-        sprintf(cbuf, "0x%x + imagebase1000 - 0x1000", item->tofs);
+        sprintf(cbuf, "0x%x + imagebase1000 - 0x1000", (unsigned int)item->tofs);
     }
     else if (extrn != NULL)
     {
@@ -380,7 +384,7 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
         }
         else
         {
-            sprintf(cbuf2, " (%s + (%i))", cbuf, item->tofs - (int_fast32_t)ofs);
+            sprintf(cbuf2, " (%s + (%i))", cbuf, (int)(item->tofs - (int_fast32_t)ofs));
         }
 
         if (item->type == FT_SELFREL)
@@ -464,7 +468,6 @@ int SR_apply_fixup_info(void)
 {
     Entry_FILE EF;
     int fout_opened;
-    Word_t index;
 
 #if (OUTPUT_TYPE == OUT_ORIG || OUTPUT_TYPE == OUT_WINDOWS)
     output_data *output;

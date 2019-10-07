@@ -214,11 +214,11 @@ static int SR_disassemble_fixup_operand(unsigned int Entry, const char *ostr, fi
 
     if (fixup->type == FT_SELFREL)
     {
-        sprintf(cAdr, "0x%x", fixup->sofs + section[Entry].start + 4);
+        sprintf(cAdr, "0x%x", (unsigned int)(fixup->sofs + section[Entry].start + 4));
     }
     else
     {
-        sprintf(cAdr, "0x%x", section[fixup->tsec].start + fixup->tofs);
+        sprintf(cAdr, "0x%x", (unsigned int)(section[fixup->tsec].start + fixup->tofs));
     }
 
 
@@ -271,7 +271,7 @@ static int SR_disassemble_fixup_operand(unsigned int Entry, const char *ostr, fi
                 }
             }
         }
-        fprintf(stderr, "Two string occurences in fixup: 0x%x, %i - 0x%x\n%s\n%s\n", fixup->sofs, fixup->tsec, fixup->tofs, cAdr, ostr);
+        fprintf(stderr, "Two string occurences in fixup: 0x%x, %i - 0x%x\n%s\n%s\n", (unsigned int)fixup->sofs, (unsigned int)fixup->tsec, (unsigned int)fixup->tofs, cAdr, ostr);
         return 0;
     }
 
@@ -338,12 +338,12 @@ static void SR_get_fixup_label(char *cResult, const fixup_data *fixup, const ext
     }
     else
     {
-        sprintf(cResult, "(%s + (%i))", cLabel, fixup->tofs - (int_fast32_t)ofs);
+        sprintf(cResult, "(%s + (%i))", cLabel, (int)(fixup->tofs - (int_fast32_t)ofs));
     }
 
 }
 
-static int SR_add_label(unsigned int Entry, uint_fast32_t offset)
+static void SR_add_label(unsigned int Entry, uint_fast32_t offset)
 {
     output_data *output;
 
@@ -636,14 +636,14 @@ static void SR_disassemble_get_memory_address(char *ostr, enum ll_regs madrreg, 
                             distance = 0;
                             distalign = 4;
 
-                            fprintf(stderr, "Warning: reading instruction - %i - %i - %i (0x%x)\n", fixup->sofs, fixup->tsec, fixup->tofs, section[fixup->tsec].start + fixup->tofs);
+                            fprintf(stderr, "Warning: reading instruction - %i - %i - %i (0x%x)\n", (unsigned int)fixup->sofs, (unsigned int)fixup->tsec, (unsigned int)fixup->tofs, (unsigned int)(section[fixup->tsec].start + fixup->tofs));
                         }
                         else
                         {
                             distance = (fixup->tofs - output->ofs);
                             distalign = 1;
 
-                            fprintf(stderr, "Error: reading inside of instruction - %i - %i - %i (0x%x)\n", fixup->sofs, fixup->tsec, fixup->tofs, section[fixup->tsec].start + fixup->tofs);
+                            fprintf(stderr, "Error: reading inside of instruction - %i - %i - %i (0x%x)\n", (unsigned int)fixup->sofs, (unsigned int)fixup->tsec, (unsigned int)fixup->tofs, (unsigned int)(section[fixup->tsec].start + fixup->tofs));
                         }
                     }
                     else
@@ -667,7 +667,7 @@ static void SR_disassemble_get_memory_address(char *ostr, enum ll_regs madrreg, 
                         else
                         {
                             result->align = 1;
-                            fprintf(stderr, "Warning: suspicious alignment: %i - %i - %i - %i (0x%x)\n", distalign, fixup->sofs, fixup->tsec, fixup->tofs, section[fixup->tsec].start + fixup->tofs);
+                            fprintf(stderr, "Warning: suspicious alignment: %i - %i - %i - %i (0x%x)\n", distalign, (unsigned int)fixup->sofs, (unsigned int)fixup->tsec, (unsigned int)fixup->tofs, (unsigned int)(section[fixup->tsec].start + fixup->tofs));
                         }
                     }
                     else if (distalign == 2)
@@ -683,7 +683,7 @@ static void SR_disassemble_get_memory_address(char *ostr, enum ll_regs madrreg, 
                 else
                 {
                     result->align = 1;
-                    fprintf(stderr, "Warning: output not found - %i - %i (0x%x)\n", fixup->tsec, fixup->tofs, section[fixup->tsec].start + fixup->tofs);
+                    fprintf(stderr, "Warning: output not found - %i - %i (0x%x)\n", (unsigned int)fixup->tsec, (unsigned int)fixup->tofs, (unsigned int)(section[fixup->tsec].start + fixup->tofs));
                 }
 
             }
@@ -1299,7 +1299,7 @@ static void SR_disassemble_set_flags_AZSP(char *cResult, enum ll_regs res, enum 
 
     if (((opersize != 8) && (opersize != 16) && (opersize != 32)) || ((opershift != 0) && (opershift != 8)) || ((opershift != 0) && (opersize != 8)))
     {
-        fprintf(stderr, "Error: calculate adjust/zero/sign/parity flag opersize/opershift error: %i, %i\n", opersize, opershift);
+        fprintf(stderr, "Error: calculate adjust/zero/sign/parity flag opersize/opershift error: %i, %i\n", (unsigned int)opersize, (unsigned int)opershift);
         return;
     }
 
@@ -1316,14 +1316,14 @@ static void SR_disassemble_set_flags_AZSP(char *cResult, enum ll_regs res, enum 
             ADDRESULT("xor tmp0, %s, %s\n", LLREGSTR(opertmp), LLREGSTR(res))
             if (opershift)
             {
-                ADDRESULT("lshr tmp0, tmp0, %i\n", opershift)
+                ADDRESULT("lshr tmp0, tmp0, %i\n", (unsigned int)opershift)
             }
             ADDRESULT0("and tmp0, tmp0, AF\n")
             ADDRESULT0("or eflags, eflags, tmp0\n")
         }
         else
         {
-            fprintf(stderr, "Error: calculate adjust/zero/sign/parity flag mnemonic error: %i - %i\n", (int)mnemonic, opersize);
+            fprintf(stderr, "Error: calculate adjust/zero/sign/parity flag mnemonic error: %i - %i\n", (int)mnemonic, (unsigned int)opersize);
             return;
         }
     }
@@ -1373,7 +1373,7 @@ return (0x6996 >> v) & 1;
 
         if (opershift)
         {
-            ADDRESULT("lshr tmp0, tmp0, %i\n", opershift)
+            ADDRESULT("lshr tmp0, tmp0, %i\n", (unsigned int)opershift)
         }
 
         ADDRESULT0("and tmp0, tmp0, 0xf\n");
@@ -1401,7 +1401,6 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
     uint_fast32_t cur_ofs, flags_write, flags_read;
     unsigned int decoded_length;
     int last_instruction;
-    char *updcond;
     struct madr_result memadr;
 
     cur_ofs = output->ofs;
@@ -1425,7 +1424,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
         {
             if (fixup1->sofs > cur_ofs + decoded_length - 4)
             {
-                fprintf(stderr, "Error: decoding fixup mismatch - %i - %i\n", Entry, cur_ofs);
+                fprintf(stderr, "Error: decoding fixup mismatch - %i - %i\n", Entry, (unsigned int)cur_ofs);
 
                 return 4;
             }
@@ -1441,7 +1440,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                     {
                         if (fixup2->sofs > cur_ofs + decoded_length - 4)
                         {
-                            fprintf(stderr, "Error: decoding fixup mismatch - %i - %i\n", Entry, cur_ofs);
+                            fprintf(stderr, "Error: decoding fixup mismatch - %i - %i\n", Entry, (unsigned int)cur_ofs);
 
                             return 4;
                         }
@@ -1458,7 +1457,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
 
             if (i == 0)
             {
-                fprintf(stderr, "Error: fixup operand mismatch - %i - %i\n", Entry, cur_ofs);
+                fprintf(stderr, "Error: fixup operand mismatch - %i - %i\n", Entry, (unsigned int)cur_ofs);
 
                 return 6;
             }
@@ -1472,7 +1471,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
 
                 if (j == 0 || j == i)
                 {
-                    fprintf(stderr, "Error: fixup operand mismatch - %i - %i\n", Entry, cur_ofs);
+                    fprintf(stderr, "Error: fixup operand mismatch - %i - %i\n", Entry, (unsigned int)cur_ofs);
 
                     return 6;
                 }
@@ -4960,7 +4959,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                         {
                             if (flags_to_write)
                             {
-                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                             }
 
                             OUTPUT_STRING("and tmp1, ecx, 0x1f\n");
@@ -5093,7 +5092,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                         {
                             if (flags_to_write)
                             {
-                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                             }
 
                             OUTPUT_STRING("and tmp2, ecx, 0x1f\n");
@@ -5139,7 +5138,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                         {
                             if (flags_to_write)
                             {
-                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                             }
 
                             OUTPUT_STRING("and tmp2, ecx, 0x1f\n");
@@ -5191,7 +5190,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                         {
                             if (flags_to_write)
                             {
-                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                             }
 
                             OUTPUT_STRING("and tmp2, ecx, 0x1f\n");
@@ -5243,7 +5242,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                         {
                             if (flags_to_write)
                             {
-                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                             }
 
                             OUTPUT_STRING("and tmp2, ecx, 0x1f\n");
@@ -5568,7 +5567,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                         {
                             if (flags_to_write)
                             {
-                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                             }
 
                             OUTPUT_STRING("and tmp1, ecx, 0x1f\n");
@@ -5600,7 +5599,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
 
                             if (flags_to_write)
                             {
-                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                             }
 
                             if (value == 0)
@@ -6697,14 +6696,14 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
 
 #endif
         default:
-            fprintf(stderr, "Error: unknown instruction - %i - %i - %s\n", Entry, cur_ofs, output->str);
+            fprintf(stderr, "Error: unknown instruction - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
 
             return 5;
     }
 
     if (cOutput[0] == 0)
     {
-            fprintf(stderr, "Error: llasm instruction error - %i - %i - %s\n", Entry, cur_ofs, output->str);
+            fprintf(stderr, "Error: llasm instruction error - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
 
             return 7;
     }
@@ -6732,7 +6731,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
         newstr = (char *) malloc(strlen(cOutput) + strlen(output->str) + 3);
         if (newstr == NULL)
         {
-            fprintf(stderr, "Error: not enough memory - %i - %i\n", Entry, cur_ofs);
+            fprintf(stderr, "Error: not enough memory - %i - %i\n", Entry, (unsigned int)cur_ofs);
 
             return 3;
         }

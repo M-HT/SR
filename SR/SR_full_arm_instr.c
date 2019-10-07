@@ -227,11 +227,11 @@ static int SR_disassemble_fixup_operand(unsigned int Entry, const char *ostr, fi
 
     if (fixup->type == FT_SELFREL)
     {
-        sprintf(cAdr, "0x%x", fixup->sofs + section[Entry].start + 4);
+        sprintf(cAdr, "0x%x", (unsigned int)(fixup->sofs + section[Entry].start + 4));
     }
     else
     {
-        sprintf(cAdr, "0x%x", section[fixup->tsec].start + fixup->tofs);
+        sprintf(cAdr, "0x%x", (unsigned int)(section[fixup->tsec].start + fixup->tofs));
     }
 
 
@@ -284,7 +284,7 @@ static int SR_disassemble_fixup_operand(unsigned int Entry, const char *ostr, fi
                 }
             }
         }
-        fprintf(stderr, "Two string occurences in fixup: 0x%x, %i - 0x%x\n%s\n%s\n", fixup->sofs, fixup->tsec, fixup->tofs, cAdr, ostr);
+        fprintf(stderr, "Two string occurences in fixup: 0x%x, %i - 0x%x\n%s\n%s\n", (unsigned int)fixup->sofs, (unsigned int)fixup->tsec, (unsigned int)fixup->tofs, cAdr, ostr);
         return 0;
     }
 
@@ -355,7 +355,7 @@ static void SR_get_fixup_label(char *cResult, const fixup_data *fixup, const ext
     }
     else
     {
-        sprintf(cResult, "(%s + (%i))", cLabel, fixup->tofs - (int_fast32_t)ofs);
+        sprintf(cResult, "(%s + (%i))", cLabel, (int)(fixup->tofs - (int_fast32_t)ofs));
     }
 
 }
@@ -1179,14 +1179,14 @@ static void SR_disassemble_get_memory_address(char *ostr, enum arm_regs madrreg,
                                 distance = 0;
                                 distalign = 4;
 
-                                fprintf(stderr, "Warning: reading instruction - %i - %i - %i\n", fixup->sofs, fixup->tsec, fixup->tofs);
+                                fprintf(stderr, "Warning: reading instruction - %i - %i - %i\n", (unsigned int)fixup->sofs, (unsigned int)fixup->tsec, (unsigned int)fixup->tofs);
                             }
                             else
                             {
                                 distance = (fixup->tofs - output->ofs);
                                 distalign = 1;
 
-                                fprintf(stderr, "Error: reading inside of instruction - %i - %i - %i\n", fixup->sofs, fixup->tsec, fixup->tofs);
+                                fprintf(stderr, "Error: reading inside of instruction - %i - %i - %i\n", (unsigned int)fixup->sofs, (unsigned int)fixup->tsec, (unsigned int)fixup->tofs);
                             }
                         }
                         else
@@ -1210,7 +1210,7 @@ static void SR_disassemble_get_memory_address(char *ostr, enum arm_regs madrreg,
                             else
                             {
                                 result->align = 1;
-                                fprintf(stderr, "Warning: suspicious alignment: %i - %i - %i - %i\n", distalign, fixup->sofs, fixup->tsec, fixup->tofs);
+                                fprintf(stderr, "Warning: suspicious alignment: %i - %i - %i - %i\n", distalign, (unsigned int)fixup->sofs, (unsigned int)fixup->tsec, (unsigned int)fixup->tofs);
                             }
                         }
                         else if (distalign == 2)
@@ -1226,7 +1226,7 @@ static void SR_disassemble_get_memory_address(char *ostr, enum arm_regs madrreg,
                     else
                     {
                         result->align = 1;
-                        fprintf(stderr, "Warning: output not found - %i - %i\n", fixup->tsec, fixup->tofs);
+                        fprintf(stderr, "Warning: output not found - %i - %i\n", (unsigned int)fixup->tsec, (unsigned int)fixup->tofs);
                     }
 
                 }
@@ -2186,7 +2186,7 @@ static void SR_disassemble_change_arm_flags(char *cResult, uint_fast32_t toclear
         if (toclear & FL_SIGN) flags |= 0x80000000;
         if (toclear & FL_OVERFLOW) flags |= 0x10000000;
 
-        ADDRESULT("bic %s, %s, #0x%x\n", ARMREGSTR(tmpreg1), ARMREGSTR(tmpreg1), flags);
+        ADDRESULT("bic %s, %s, #0x%x\n", ARMREGSTR(tmpreg1), ARMREGSTR(tmpreg1), (unsigned int)flags);
     }
 
     if (toset)
@@ -2197,7 +2197,7 @@ static void SR_disassemble_change_arm_flags(char *cResult, uint_fast32_t toclear
         if (toset & FL_SIGN) flags |= 0x80000000;
         if (toset & FL_OVERFLOW) flags |= 0x10000000;
 
-        ADDRESULT("orr %s, %s, #0x%x\n", ARMREGSTR(tmpreg1), ARMREGSTR(tmpreg1), flags);
+        ADDRESULT("orr %s, %s, #0x%x\n", ARMREGSTR(tmpreg1), ARMREGSTR(tmpreg1), (unsigned int)flags);
     }
 
     if (toinvert)
@@ -2208,7 +2208,7 @@ static void SR_disassemble_change_arm_flags(char *cResult, uint_fast32_t toclear
         if (toinvert & FL_SIGN) flags |= 0x80000000;
         if (toinvert & FL_OVERFLOW) flags |= 0x10000000;
 
-        ADDRESULT("eor %s, %s, #0x%x\n", ARMREGSTR(tmpreg1), ARMREGSTR(tmpreg1), flags);
+        ADDRESULT("eor %s, %s, #0x%x\n", ARMREGSTR(tmpreg1), ARMREGSTR(tmpreg1), (unsigned int)flags);
     }
 
     ADDRESULT("msr cpsr_f, %s\n", ARMREGSTR(tmpreg1));
@@ -2245,7 +2245,7 @@ static void SR_disassemble_calculate_parity_adjust_flags(char *cResult, enum arm
         {
             if (opershift)
             {
-                ADDRESULT("eor %s, %s, %s, lsr #%i\n", ARMREGSTR(opertmp), ARMREGSTR(res), ARMREGSTR(opertmp), opershift);
+                ADDRESULT("eor %s, %s, %s, lsr #%i\n", ARMREGSTR(opertmp), ARMREGSTR(res), ARMREGSTR(opertmp), (unsigned int)opershift);
             }
             else
             {
@@ -2341,11 +2341,11 @@ static void SR_disassemble_calculate_parity_flag(char *cResult, enum arm_regs re
 
     if (opershift < 2)
     {
-        ADDRESULT("eor eflags, eflags, %s, lsl #%i\n", ARMREGSTR(tmpreg1), 2 - opershift);
+        ADDRESULT("eor eflags, eflags, %s, lsl #%i\n", ARMREGSTR(tmpreg1), (unsigned int)(2 - opershift));
     }
     else if (opershift > 2)
     {
-        ADDRESULT("eor eflags, eflags, %s, lsr #%i\n", ARMREGSTR(tmpreg1), opershift - 2);
+        ADDRESULT("eor eflags, eflags, %s, lsr #%i\n", ARMREGSTR(tmpreg1), (unsigned int)(opershift - 2));
     }
     else
     {
@@ -2390,7 +2390,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
         {
             if (fixup1->sofs > cur_ofs + decoded_length - 4)
             {
-                fprintf(stderr, "Error: decoding fixup mismatch - %i - %i\n", Entry, cur_ofs);
+                fprintf(stderr, "Error: decoding fixup mismatch - %i - %i\n", Entry, (unsigned int)cur_ofs);
 
                 return 4;
             }
@@ -2406,7 +2406,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
                     {
                         if (fixup2->sofs > cur_ofs + decoded_length - 4)
                         {
-                            fprintf(stderr, "Error: decoding fixup mismatch - %i - %i\n", Entry, cur_ofs);
+                            fprintf(stderr, "Error: decoding fixup mismatch - %i - %i\n", Entry, (unsigned int)cur_ofs);
 
                             return 4;
                         }
@@ -2423,7 +2423,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
             if (i == 0)
             {
-                fprintf(stderr, "Error: fixup operand mismatch - %i - %i\n", Entry, cur_ofs);
+                fprintf(stderr, "Error: fixup operand mismatch - %i - %i\n", Entry, (unsigned int)cur_ofs);
 
                 return 6;
             }
@@ -2437,7 +2437,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                 if (j == 0 || j == i)
                 {
-                    fprintf(stderr, "Error: fixup operand mismatch - %i - %i\n", Entry, cur_ofs);
+                    fprintf(stderr, "Error: fixup operand mismatch - %i - %i\n", Entry, (unsigned int)cur_ofs);
 
                     return 6;
                 }
@@ -6779,7 +6779,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
                         {
                             if (flags_to_write)
                             {
-                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                             }
 
                             OUTPUT_STRING("and tmp1, ecx, #0x1f\n");
@@ -6942,7 +6942,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
                         {
                             if (flags_to_write)
                             {
-                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                             }
 
                             OUTPUT_STRING("and tmp1, ecx, #0x1f\n");
@@ -6978,7 +6978,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
                         {
                             if (flags_to_write)
                             {
-                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                             }
 
                             OUTPUT_STRING("and tmp1, ecx, #0x1f\n");
@@ -7029,7 +7029,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
                         {
                             if (flags_to_write)
                             {
-                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                             }
 
                             OUTPUT_STRING("and tmp1, ecx, #0x1f\n");
@@ -7076,7 +7076,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
                         {
                             if (flags_to_write)
                             {
-                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                             }
 
                             OUTPUT_STRING("and tmp1, ecx, #0x1f\n");
@@ -7380,7 +7380,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
                         {
                             if (flags_to_write)
                             {
-                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                             }
 
                             OUTPUT_STRING("and tmp1, ecx, #0x1f\n");
@@ -7404,7 +7404,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                             if (flags_to_write)
                             {
-                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                             }
 
                             OUTPUT_PARAMSTRING("mov %s, %s, %s #%i\n", X86REGSTR(ud_obj.operand[0].base), X86REGSTR(ud_obj.operand[0].base), ishift, value);
@@ -7888,7 +7888,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                 if (flags_to_write)
                 {
-                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 }
 
                 if (ud_obj.mnemonic == UD_Ifadd) instr = "fadd";
@@ -7965,7 +7965,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                 if (flags_to_write)
                 {
-                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 }
 
                 if (ud_obj.mnemonic == UD_Ifaddp) instr = "faddp";
@@ -8025,7 +8025,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                 if (flags_to_write)
                 {
-                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 }
 
                 if (ud_obj.mnemonic == UD_Ifabs) instr = "fabs";
@@ -8053,7 +8053,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                 if (flags_to_write)
                 {
-                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 }
 
                 if (ud_obj.operand[1].type == UD_NONE)
@@ -8093,7 +8093,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                 if (flags_to_write)
                 {
-                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 }
 
                 if (ud_obj.mnemonic == UD_Ifdivr) instr = "fdivr";
@@ -8156,7 +8156,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                 if (flags_to_write)
                 {
-                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 }
 
                 if (ud_obj.mnemonic == UD_Ifdivrp) instr = "fdivrp";
@@ -8202,7 +8202,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                 if (flags_to_write)
                 {
-                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 }
 
                 if (ud_obj.operand[1].type == UD_NONE)
@@ -8247,7 +8247,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                 if (flags_to_write)
                 {
-                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 }
 
                 if (ud_obj.operand[1].type == UD_NONE)
@@ -8284,7 +8284,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                 if (flags_to_write)
                 {
-                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 }
 
                 if (ud_obj.operand[1].type == UD_NONE)
@@ -8346,7 +8346,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                 if (flags_to_write)
                 {
-                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 }
 
                 if (ud_obj.operand[0].type == UD_OP_MEM)
@@ -8371,7 +8371,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                 if (flags_to_write)
                 {
-                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 }
 
                 if (ud_obj.mnemonic == UD_Ifnstcw) instr = "fnstcw";
@@ -8404,7 +8404,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                 if (flags_to_write)
                 {
-                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 }
 
                 if (ud_obj.operand[1].type == UD_NONE)
@@ -8441,7 +8441,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                 if (flags_to_write)
                 {
-                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 }
 
                 if (ud_obj.operand[1].type == UD_NONE)
@@ -8483,7 +8483,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                 if (flags_to_write)
                 {
-                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 }
 
                 if (ud_obj.operand[1].type == UD_NONE)
@@ -8526,7 +8526,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
                 if (flags_to_write)
                 {
-                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 }
 
                 OUTPUT_STRING("@ wait\n");
@@ -8535,14 +8535,14 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
 
 #endif
         default:
-            fprintf(stderr, "Error: unknown instruction - %i - %i - %s\n", Entry, cur_ofs, output->str);
+            fprintf(stderr, "Error: unknown instruction - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
 
             return 5;
     }
 
     if (cOutput[0] == 0)
     {
-            fprintf(stderr, "Error: arm instruction error - %i - %i - %s\n", Entry, cur_ofs, output->str);
+            fprintf(stderr, "Error: arm instruction error - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
 
             return 7;
     }
@@ -8553,7 +8553,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
         newstr = (char *) malloc(strlen(cOutput) + strlen(output->str) + 3);
         if (newstr == NULL)
         {
-            fprintf(stderr, "Error: not enough memory - %i - %i\n", Entry, cur_ofs);
+            fprintf(stderr, "Error: not enough memory - %i - %i\n", Entry, (unsigned int)cur_ofs);
 
             return 3;
         }

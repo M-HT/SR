@@ -78,6 +78,7 @@ output_data *SR_disassemble_offset_init_output(unsigned int SecNum, uint_fast32_
 
 /* ************************************************************************** */
 
+#if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_DOS)
 static void SR_disassemble_replace_instructions(replace_data *item, void *data)
 {
     output_data *output;
@@ -104,7 +105,9 @@ static void SR_disassemble_replace_instructions(replace_data *item, void *data)
 
 #undef DATA
 }
+#endif
 
+#if ((OUTPUT_TYPE == OUT_X86) || (OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
 static void SR_disassemble_create_aligns_code(output_data *item, void *data)
 {
 #define DATA ((Entry_region *) data)
@@ -159,7 +162,9 @@ static void SR_disassemble_create_aligns_data(output_data *item, void *data)
 
 #undef DATA
 }
+#endif
 
+#if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
 static void SR_disassemble_create_regions(bound_data *item, void *data)
 {
     output_data *output;
@@ -207,6 +212,7 @@ static void SR_disassemble_create_regions(bound_data *item, void *data)
 
 #undef DATA
 }
+#endif
 
 /* ************************************************************************** */
 
@@ -214,12 +220,17 @@ int SR_full_disassembly(void)
 {
     unsigned int index;
     int finished, ret;
-    uint_fast32_t *entry, offset;
+#if (OUTPUT_TYPE != OUT_ORIG)
+    uint_fast32_t offset;
+#endif
+#if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
     output_data *output;
     region_data *region;
     replace_data *replace;
-    bound_data *bound;
+#endif
+#if ((OUTPUT_TYPE == OUT_X86) || (OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
     Entry_region ER;
+#endif
     Word_t entry_index;
 
 
@@ -258,7 +269,9 @@ int SR_full_disassembly(void)
             {
                 finished = 0;
 
+#if (OUTPUT_TYPE != OUT_ORIG)
                 offset = entry_index;
+#endif
                 section_entry_list_Delete(index, entry_index);
 
 #if (OUTPUT_TYPE == OUT_DOS)

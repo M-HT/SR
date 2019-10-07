@@ -223,7 +223,7 @@ static int SR_disassemble_change_cjump_iflags(unsigned int Entry, uint_fast32_t 
         {
             if (iflags->end != (iflags->end | flags))
             {
-                fprintf(stderr, "Error: iflags->end conflict - %i - %i\n", Entry, offset);
+                fprintf(stderr, "Error: iflags->end conflict - %i - %i\n", Entry, (unsigned int)offset);
 
                 return 0;
             }
@@ -245,7 +245,7 @@ static int SR_disassemble_change_cjump_iflags(unsigned int Entry, uint_fast32_t 
         {
             if (iflags->begin != (iflags->begin | flags))
             {
-                fprintf(stderr, "Error: iflags->begin conflict - %i - %i\n", Entry, offset);
+                fprintf(stderr, "Error: iflags->begin conflict - %i - %i\n", Entry, (unsigned int)offset);
 
                 return 0;
             }
@@ -284,7 +284,7 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
 
         if (output == NULL)
         {
-            fprintf(stderr, "Error: output not found - %i - 0x%x\n", Entry, offset);
+            fprintf(stderr, "Error: output not found - %i - 0x%x\n", Entry, (unsigned int)offset);
 
             return 1;
         }
@@ -330,7 +330,7 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
             {
                 if (fixup->sofs > offset + decoded_length - 4)
                 {
-                    fprintf(stderr, "Error: decoding fixup mismatch - %i - %i\n", Entry, offset);
+                    fprintf(stderr, "Error: decoding fixup mismatch - %i - %i\n", Entry, (unsigned int)offset);
 
                     return 2;
                 }
@@ -346,7 +346,7 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
                         {
                             if (fixup2->sofs > offset + decoded_length - 4)
                             {
-                                fprintf(stderr, "Error: decoding fixup mismatch - %i - %i\n", Entry, offset);
+                                fprintf(stderr, "Error: decoding fixup mismatch - %i - %i\n", Entry, (unsigned int)offset);
 
                                 return 2;
                             }
@@ -632,16 +632,16 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
                    )
                 {
                     uint_fast32_t address;
-                    int backward;
+                    //int backward;
 
                     if (ud_obj.operand[0].size == 32)
                     {
-                        backward = (ud_obj.operand[0].lval.sdword < 0)?1:0;
+                        //backward = (ud_obj.operand[0].lval.sdword < 0)?1:0;
                         address = ud_obj.operand[0].lval.sdword + (uint_fast32_t) ud_obj.pc;
                     }
                     else
                     {
-                        backward = (ud_obj.operand[0].lval.sbyte < 0)?1:0;
+                        //backward = (ud_obj.operand[0].lval.sbyte < 0)?1:0;
                         address = ud_obj.operand[0].lval.sbyte + (uint_fast32_t) ud_obj.pc;
                     }
 
@@ -692,18 +692,18 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
                    )
                 {
                     uint_fast32_t address;
-                    int backward, shortjump;
+                    //int backward, shortjump;
 
                     if (ud_obj.operand[0].size == 32)
                     {
-                        shortjump = 0;
-                        backward = (ud_obj.operand[0].lval.sdword < 0)?1:0;
+                        //shortjump = 0;
+                        //backward = (ud_obj.operand[0].lval.sdword < 0)?1:0;
                         address = ud_obj.operand[0].lval.sdword + (uint_fast32_t) ud_obj.pc;
                     }
                     else
                     {
-                        shortjump = 1;
-                        backward = (ud_obj.operand[0].lval.sbyte < 0)?1:0;
+                        //shortjump = 1;
+                        //backward = (ud_obj.operand[0].lval.sbyte < 0)?1:0;
                         address = ud_obj.operand[0].lval.sbyte + (uint_fast32_t) ud_obj.pc;
                     }
 
@@ -851,9 +851,9 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
                    )
                 {
                     uint_fast32_t address;
-                    int backward;
+                    //int backward;
 
-                    backward = (ud_obj.operand[0].lval.sbyte < 0)?1:0;
+                    //backward = (ud_obj.operand[0].lval.sbyte < 0)?1:0;
                     address = ud_obj.operand[0].lval.sbyte + (uint_fast32_t) ud_obj.pc;
 
                     extrn = SR_disassemble_find_proc(Entry, address);
@@ -944,7 +944,7 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
                 break;
 
             case UD_Iinto:
-                    sprintf(cResult, "jno loc_%X_1\npush byte 4\ncall x86_int\nloc_%X_1", section[Entry].start + offset, section[Entry].start + offset);
+                    sprintf(cResult, "jno loc_%X_1\npush byte 4\ncall x86_int\nloc_%X_1", (unsigned int)(section[Entry].start + offset), (unsigned int)(section[Entry].start + offset));
 
                     output->str = strdup(cResult);
 
@@ -1023,25 +1023,25 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
                             sprintf(cResPart, "pushfd\n"); strcat(tmpstr, cResPart);
 
                             sprintf(cResPart, "or ecx, ecx\n"); strcat(tmpstr, cResPart);
-                            sprintf(cResPart, "jz loc_%X_restore_flags\n", section[Entry].start + offset); strcat(tmpstr, cResPart);
+                            sprintf(cResPart, "jz loc_%X_restore_flags\n", (unsigned int)(section[Entry].start + offset)); strcat(tmpstr, cResPart);
 
                             sprintf(cResPart, "push eax\n"); strcat(tmpstr, cResPart);
 
-                            sprintf(cResPart, "loc_%X_loop:\n", section[Entry].start + offset); strcat(tmpstr, cResPart);
+                            sprintf(cResPart, "loc_%X_loop:\n", (unsigned int)(section[Entry].start + offset)); strcat(tmpstr, cResPart);
 
                             sprintf(cResPart, "lodsb\n"); strcat(tmpstr, cResPart);
 
                             sprintf(cResPart, "call x86_out_dx_al\n"); strcat(tmpstr, cResPart);
 
                             sprintf(cResPart, "dec ecx\n"); strcat(tmpstr, cResPart);
-                            sprintf(cResPart, "jnz loc_%X_loop\n", section[Entry].start + offset); strcat(tmpstr, cResPart);
+                            sprintf(cResPart, "jnz loc_%X_loop\n", (unsigned int)(section[Entry].start + offset)); strcat(tmpstr, cResPart);
 
                             sprintf(cResPart, "pop eax\n"); strcat(tmpstr, cResPart);
 
-                            sprintf(cResPart, "loc_%X_restore_flags:\n", section[Entry].start + offset); strcat(tmpstr, cResPart);
+                            sprintf(cResPart, "loc_%X_restore_flags:\n", (unsigned int)(section[Entry].start + offset)); strcat(tmpstr, cResPart);
                             sprintf(cResPart, "popfd\n"); strcat(tmpstr, cResPart);
 
-                            sprintf(cResPart, "loc_%X_after_outsb:\n", section[Entry].start + offset); strcat(tmpstr, cResPart);
+                            sprintf(cResPart, "loc_%X_after_outsb:\n", (unsigned int)(section[Entry].start + offset)); strcat(tmpstr, cResPart);
 
                             output->str = strdup(tmpstr);
 
@@ -1460,7 +1460,7 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
                         }
                         else
                         {
-                            printf("fixup: %i - 0x%x - 0x%x\n", fixup->tsec, fixup->tofs, section[fixup->tsec].start + fixup->tofs);
+                            printf("fixup: %i - 0x%x - 0x%x\n", (unsigned int)fixup->tsec, (unsigned int)fixup->tofs, (unsigned int)(section[fixup->tsec].start + fixup->tofs));
                             printf("op type: %i - %i - %i\n", ud_obj.operand[0].type, ud_obj.operand[1].type, ud_obj.operand[2].type);
                             printf("op size: %i - %i - %i\n", ud_obj.operand[0].size, ud_obj.operand[1].size, ud_obj.operand[2].size);
                             return -51;

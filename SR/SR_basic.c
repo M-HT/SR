@@ -78,9 +78,10 @@ int SR_initial_disassembly(void)
 
 void SR_get_label(char *cbuf, uint_fast32_t Address)
 {
-    sprintf(cbuf, "loc_%X", Address);
+    sprintf(cbuf, "loc_%X", (unsigned int) Address);
 }
 
+#if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_DOS)
 static void SR_apply_fixup_alias_init(alias_data *item, void *data)
 {
     output_data *output;
@@ -103,6 +104,7 @@ static void SR_apply_fixup_alias_init(alias_data *item, void *data)
 
 #undef DATA
 }
+#endif
 
 static void SR_apply_fixup_data_init(fixup_data *item, void *data)
 {
@@ -352,7 +354,7 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
         }
         else
         {
-            sprintf(cbuf2, " (%s + (%i))", cbuf, item->tofs - (int_fast32_t)ofs);
+            sprintf(cbuf2, " (%s + (%i))", cbuf, (int)(item->tofs - (int_fast32_t)ofs));
         }
 
         if (item->type == FT_SELFREL)
@@ -440,7 +442,6 @@ int SR_apply_fixup_info(void)
 {
     Entry_FILE EF;
     int fout_opened;
-    Word_t index;
 
 #if (OUTPUT_TYPE == OUT_ORIG || OUTPUT_TYPE == OUT_DOS)
     output_data *output;

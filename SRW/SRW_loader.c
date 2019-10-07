@@ -440,9 +440,9 @@ static int LoadBssBorder(void)
         section[num_sections].type = ST_UDATA;
         strcpy(section[num_sections].name, ".bss");
 #ifdef _DEBUG_PE
-        fprintf(stderr, "splitting bss section from end of %s (seg%.2i) to %s (seg%.2i)\n", section[BssObject].name, BssObject + 1, section[num_sections].name, num_sections + 1);
-        fprintf(stderr, "\toriginal section changed size from %i to %i\n", section[BssObject].size, BssOffset + BssAlignMinus);
-        fprintf(stderr, "\tnew section start=0x%x and size=%i and type=%i\n", section[num_sections].start, section[num_sections].size, section[num_sections].type);
+        fprintf(stderr, "splitting bss section from end of %s (seg%.2i) to %s (seg%.2i)\n", section[BssObject].name, (unsigned int)(BssObject + 1), section[num_sections].name, num_sections + 1);
+        fprintf(stderr, "\toriginal section changed size from %i to %i\n", (unsigned int)section[BssObject].size, (unsigned int)(BssOffset + BssAlignMinus));
+        fprintf(stderr, "\tnew section start=0x%x and size=%i and type=%i\n", (unsigned int)section[num_sections].start, (unsigned int)section[num_sections].size, section[num_sections].type);
 #endif
         num_sections++;
 
@@ -926,8 +926,8 @@ int SRW_LoadFile(const char *fname)
                                 section[num_sections].type = (c2 == 0)?ST_EDATA:ST_IDATA;
 #ifdef _DEBUG_PE
                                 fprintf(stderr, "splitting section from start of %s (seg%.2i) to %s (seg%.2i)\n", section[Entry].name, Entry + 1, section[num_sections].name, num_sections + 1);
-                                fprintf(stderr, "\toriginal section changed start from 0x%x to 0x%x and size from %i to %i\n", section[Entry].start, section[Entry].start + pp[curdir].Size, section[Entry].size, section[Entry].size - pp[curdir].Size);
-                                fprintf(stderr, "\tnew section start=0x%x and size=%i and type=%i\n", section[num_sections].start, section[num_sections].size, section[num_sections].type);
+                                fprintf(stderr, "\toriginal section changed start from 0x%x to 0x%x and size from %i to %i\n", (unsigned int)section[Entry].start, (unsigned int)(section[Entry].start + pp[curdir].Size), (unsigned int)section[Entry].size, (unsigned int)(section[Entry].size - pp[curdir].Size));
+                                fprintf(stderr, "\tnew section start=0x%x and size=%i and type=%i\n", (unsigned int)section[num_sections].start, (unsigned int)section[num_sections].size, section[num_sections].type);
 #endif
                                 num_sections++;
 
@@ -965,8 +965,8 @@ int SRW_LoadFile(const char *fname)
                             section[num_sections].type = (c2 == 0)?ST_EDATA:ST_IDATA;
 #ifdef _DEBUG_PE
                             fprintf(stderr, "splitting section (%i) from end of %s (seg%.2i) to %s (seg%.2i)\n", ending, section[Entry].name, Entry + 1, section[num_sections].name, num_sections + 1);
-                            fprintf(stderr, "\toriginal section changed size from %i to %i\n", section[Entry].size, Entry_size);
-                            fprintf(stderr, "\tnew section start=0x%x and size=%i and type=%i\n", section[num_sections].start, section[num_sections].size, section[num_sections].type);
+                            fprintf(stderr, "\toriginal section changed size from %i to %i\n", (unsigned int)section[Entry].size, Entry_size);
+                            fprintf(stderr, "\tnew section start=0x%x and size=%i and type=%i\n", (unsigned int)section[num_sections].start, (unsigned int)section[num_sections].size, section[num_sections].type);
 #endif
                             num_sections++;
 
@@ -1038,7 +1038,7 @@ int SRW_LoadFile(const char *fname)
                         if (fixup == NULL)
                         {
                             unload_file(&mf);
-                            fprintf(stderr, "Error: error adding fixup - %i\n", SourceOffset);
+                            fprintf(stderr, "Error: error adding fixup - %i\n", (unsigned int)SourceOffset);
                             return -2;
                         }
 
@@ -1052,7 +1052,7 @@ int SRW_LoadFile(const char *fname)
                             fixup->tsec != TargetObject)
                         {
                             unload_file(&mf);
-                            fprintf(stderr, "Error: error adding fixup twice - %i\n", SourceOffset);
+                            fprintf(stderr, "Error: error adding fixup twice - %i\n", (unsigned int)SourceOffset);
                             return -3;
                         }
                     }
@@ -1159,7 +1159,7 @@ int SRW_LoadFile(const char *fname)
                     SR_get_section_reladr(Header->OptionalHeader.ImageBase + *LookupTable, &Entry, &RelAdr);
                     HintTable = (P_IMAGE_IMPORT_BY_NAME) &(section[Entry].adr[RelAdr]);
 
-                    ProcName = HintTable->Name;
+                    ProcName = (const char *)HintTable->Name;
                 }
 
 #if (defined(_DEBUG_PE) && (_DEBUG_PE >= 2))
@@ -1172,7 +1172,7 @@ int SRW_LoadFile(const char *fname)
                 if (ProcAdrName == NULL)
                 {
                     unload_file(&mf);
-                    fprintf(stderr, "Error: error allocation import memory - %i\n", ImportAddress);
+                    fprintf(stderr, "Error: error allocation import memory - %i\n", (unsigned int)ImportAddress);
                     return -4;
                 }
                 strcpy(ProcAdrName, "_adr_");
@@ -1212,7 +1212,7 @@ int SRW_LoadFile(const char *fname)
                     if (extrn == NULL)
                     {
                         unload_file(&mf);
-                        fprintf(stderr, "Error: error adding import extrn - %i\n", ImportAddress);
+                        fprintf(stderr, "Error: error adding import extrn - %i\n", (unsigned int)ImportAddress);
                         return -2;
                     }
 
@@ -1223,7 +1223,7 @@ int SRW_LoadFile(const char *fname)
                     if ( strcmp(extrn->proc, ProcName) )
                     {
                         unload_file(&mf);
-                        fprintf(stderr, "Error: error adding import extrn twice - %i\n", ImportAddress);
+                        fprintf(stderr, "Error: error adding import extrn twice - %i\n", (unsigned int)ImportAddress);
                         return -3;
                     }
                 }
@@ -1314,7 +1314,7 @@ int SRW_LoadFile(const char *fname)
                 if (export == NULL)
                 {
                     unload_file(&mf);
-                    fprintf(stderr, "Error: error adding export - %i\n", index);
+                    fprintf(stderr, "Error: error adding export - %i\n", (unsigned int)index);
                     return -2;
                 }
             }

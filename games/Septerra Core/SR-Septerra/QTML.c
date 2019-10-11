@@ -28,6 +28,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <SDL.h>
+#include <lqt/lqt.h>
+#include <lqt/colormodels.h>
 #include "QTML.h"
 #include "Game-Config.h"
 
@@ -36,8 +38,6 @@
 #endif
 
 #ifndef _WIN32
-#include <lqt/lqt.h>
-#include <lqt/colormodels.h>
 #include <pthread.h>
 #include "CLIB.h"
 #endif
@@ -79,7 +79,6 @@ typedef struct NativeEvent {
     uint32_t y;
 } NativeEvent;
 
-#ifndef _WIN32
 typedef struct MovieRecord {
     quicktime_t *qt;
     uint8_t** frame;
@@ -107,7 +106,9 @@ typedef struct MovieRecord {
     volatile int stop_playback;
     volatile int updated;
     volatile int flipped;
+#ifndef _WIN32
     pthread_t thread_id;
+#endif
 
     // audio
     int play_audio;
@@ -139,7 +140,6 @@ typedef struct MovieRecord {
 
 
 static quicktime_t *qthandle[4];
-#endif
 
 
 static void *lpDDSurface;
@@ -156,7 +156,6 @@ extern SDL_Renderer *GetSurfaceRenderer(void *);
 #endif
 
 
-#ifndef _WIN32
 #if SDL_VERSION_ATLEAST(2,0,0)
 static void CopyFrameToTexture(Movie movie)
 {
@@ -370,7 +369,11 @@ static int decode_more_audio(Movie movie)
     return 1;
 }
 
+#ifdef _WIN32
+static void movie_thread(void *arg)
+#else
 static void *movie_thread(void *arg)
+#endif
 {
     Movie movie;
     int video_time_scale, phase, playing, diff_time;
@@ -598,7 +601,11 @@ static void *movie_thread(void *arg)
         SDL_PushEvent(&event);
     }
 
+#ifdef _WIN32
+    _endthread();
+#else
     return NULL;
+#endif
 }
 
 // callback procedure for filling audio data
@@ -664,8 +671,6 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
     }
 }
 
-#endif
-
 
 //EXTERN_API( OSErr )
 //InitializeQTML                  (long                   flag);
@@ -675,19 +680,12 @@ int16_t InitializeQTML_c (int32_t flag)
     eprintf("InitializeQTML: 0x%x - ", flag);
 #endif
 
-#ifdef _WIN32
-#ifdef DEBUG_QTML
-    eprintf("error\n");
-#endif
-    return 1;
-#else
     qthandle[0] = qthandle[1] = qthandle[2] = qthandle[3] = NULL;
 
 #ifdef DEBUG_QTML
     eprintf("OK\n");
 #endif
     return 0;
-#endif
 }
 
 //EXTERN_API( void )
@@ -868,13 +866,14 @@ void ExitMovies_c (void)
 //StartMovie                      (Movie                  theMovie)                           TWOWORDINLINE(0x700B, 0xAAAA);
 void StartMovie_c (void *theMovie)
 {
+    Movie movie;
+#ifndef _WIN32
+    pthread_attr_t attr;
+#endif
+
 #ifdef DEBUG_QTML
     eprintf("StartMovie: 0x%x\n", (uintptr_t)theMovie);
 #endif
-
-#ifndef _WIN32
-    Movie movie;
-    pthread_attr_t attr;
 
     if (theMovie == NULL) return;
 
@@ -884,6 +883,13 @@ void StartMovie_c (void *theMovie)
     movie->stop_playback = 0;
 
 
+#ifdef _WIN32
+    movie->is_playing = 1;
+    if ((intptr_t)-1 == _beginthread(&movie_thread, 0, movie))
+    {
+        movie->is_playing = 0;
+    }
+#else
     if (0 != pthread_attr_init(&attr)) return;
 
     if (0 != pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED))
@@ -906,12 +912,11 @@ void StartMovie_c (void *theMovie)
 //StopMovie                       (Movie                  theMovie)                           TWOWORDINLINE(0x700C, 0xAAAA);
 void StopMovie_c (void *theMovie)
 {
+    Movie movie;
+
 #ifdef DEBUG_QTML
     eprintf("StopMovie: 0x%x\n", (uintptr_t)theMovie);
 #endif
-
-#ifndef _WIN32
-    Movie movie;
 
     if (theMovie == NULL) return;
 
@@ -931,7 +936,6 @@ void StopMovie_c (void *theMovie)
             SDL_Delay(1);
         } while (movie->is_playing);
     }
-#endif
 }
 
 
@@ -943,7 +947,6 @@ uint8_t IsMovieDone_c (void *theMovie)
     eprintf("IsMovieDone: 0x%x - ", (uintptr_t)theMovie);
 #endif
 
-#ifndef _WIN32
     if (theMovie == NULL) return 1;
 
     if (((Movie)theMovie)->is_playing)
@@ -954,7 +957,6 @@ uint8_t IsMovieDone_c (void *theMovie)
         return 0;
     }
     else
-#endif
     {
 #ifdef DEBUG_QTML
         eprintf("yes\n");
@@ -971,12 +973,10 @@ void DisposeMovie_c (void *theMovie)
     eprintf("DisposeMovie: 0x%x\n", (uintptr_t)theMovie);
 #endif
 
-#ifndef _WIN32
     if (theMovie == NULL) return;
 
     quicktime_close(((Movie)theMovie)->qt);
     free(theMovie);
-#endif
 }
 
 //EXTERN_API( OSErr )
@@ -985,18 +985,14 @@ void DisposeMovie_c (void *theMovie)
 //                                 SInt8                  permission)                         THREEWORDINLINE(0x303C, 0x0192, 0xAAAA);
 int16_t OpenMovieFile_c (const void *fileSpec, int16_t *resRefNum, int8_t permission)
 {
+    int RefNum;
+#ifndef _WIN32
+    char buf[8192];
+#endif
+
 #ifdef DEBUG_QTML
     eprintf("OpenMovieFile: 0x%x (%s), 0x%x, 0x%x - ", (uintptr_t)fileSpec, ((FSSpec *)fileSpec)->name, (uintptr_t)resRefNum, permission);
 #endif
-
-#ifdef _WIN32
-#ifdef DEBUG_QTML
-    eprintf("error\n");
-#endif
-    return 1;
-#else
-    int RefNum;
-    char buf[8192];
 
     for (RefNum = 0; RefNum <= 3; RefNum++)
     {
@@ -1076,7 +1072,6 @@ int16_t OpenMovieFile_c (const void *fileSpec, int16_t *resRefNum, int8_t permis
 #endif
 
     return 0;
-#endif
 }
 
 //EXTERN_API( OSErr )
@@ -1087,7 +1082,6 @@ int16_t CloseMovieFile_c (int16_t resRefNum)
     eprintf("CloseMovieFile: %i - ", resRefNum);
 #endif
 
-#ifndef _WIN32
     if ((resRefNum < 1) || (resRefNum > 4) || (qthandle[resRefNum - 1] == NULL))
     {
 #ifdef DEBUG_QTML
@@ -1102,7 +1096,6 @@ int16_t CloseMovieFile_c (int16_t resRefNum)
     }
 
     qthandle[resRefNum - 1] = NULL;
-#endif
 
 #ifdef DEBUG_QTML
     eprintf("OK\n");
@@ -1119,18 +1112,12 @@ int16_t CloseMovieFile_c (int16_t resRefNum)
 //                                 Boolean *              dataRefWasChanged)                  THREEWORDINLINE(0x303C, 0x00F0, 0xAAAA);
 int16_t NewMovieFromFile_c (void **theMovie, int16_t resRefNum, int16_t *resId, unsigned char *resName, int16_t newMovieFlags, uint8_t *dataRefWasChanged)
 {
+    Movie movie;
+    int color_models[5], model_index, use_yuv;
+
 #ifdef DEBUG_QTML
     eprintf("NewMovieFromFile: 0x%x, %i, 0x%x, 0x%x, 0x%x, 0x%x - ", (uintptr_t)theMovie, resRefNum, (uintptr_t)resId, (uintptr_t)resName, newMovieFlags, (uintptr_t)dataRefWasChanged);
 #endif
-
-#ifdef _WIN32
-#ifdef DEBUG_QTML
-    eprintf("error\n");
-#endif
-    return 1;
-#else
-    Movie movie;
-    int color_models[5], model_index, use_yuv;
 
     if ((resRefNum < 1) || (resRefNum > 4) || (qthandle[resRefNum - 1] == NULL))
     {
@@ -1234,7 +1221,6 @@ int16_t NewMovieFromFile_c (void **theMovie, int16_t resRefNum, int16_t *resId, 
 #endif
 
     return 0;
-#endif
 }
 
 //EXTERN_API( void )
@@ -1246,18 +1232,15 @@ void GetMovieBox_c (void *theMovie, void *boxRect)
     eprintf("GetMovieBox: 0x%x, 0x%x\n", (uintptr_t)theMovie, (uintptr_t)boxRect);
 #endif
 
-#ifndef _WIN32
     if ((theMovie == NULL) || (boxRect == NULL)) return;
 
     ((Rect *)boxRect)->top = 0;
     ((Rect *)boxRect)->left = 0;
     ((Rect *)boxRect)->bottom = ((Movie)theMovie)->video_height;
     ((Rect *)boxRect)->right = ((Movie)theMovie)->video_width;
-#endif
 }
 
 
-#ifndef _WIN32
 static void check_movie_audio(Movie movie)
 {
     movie->play_audio = 0;
@@ -1336,7 +1319,6 @@ static void check_movie_audio(Movie movie)
 
     movie->play_audio = 1;
 }
-#endif
 
 
 //EXTERN_API( ComponentInstance )
@@ -1345,18 +1327,12 @@ static void check_movie_audio(Movie movie)
 //                                 long                   someFlags)                          THREEWORDINLINE(0x303C, 0x018A, 0xAAAA);
 void *NewMovieController_c (void *theMovie, const void *movieRect, int32_t someFlags)
 {
+    Movie movie;
+    const Rect *rect;
+
 #ifdef DEBUG_QTML
     eprintf("NewMovieController: 0x%x, 0x%x, 0x%x - ", (uintptr_t)theMovie, (uintptr_t)movieRect, someFlags);
 #endif
-
-#ifdef _WIN32
-#ifdef DEBUG_QTML
-    eprintf("error\n");
-#endif
-    return NULL;
-#else
-    Movie movie;
-    const Rect *rect;
 
     if (theMovie == NULL) return NULL;
 
@@ -1586,19 +1562,17 @@ void *NewMovieController_c (void *theMovie, const void *movieRect, int32_t someF
     eprintf("ok: 0x%x\n", (uintptr_t)movie);
 #endif
     return movie;
-#endif
 }
 
 //EXTERN_API( void )
 //DisposeMovieController          (ComponentInstance      mc)                                 THREEWORDINLINE(0x303C, 0x018B, 0xAAAA);
 void DisposeMovieController_c (void *mc)
 {
+    Movie movie;
+
 #ifdef DEBUG_QTML
     eprintf("DisposeMovieController: 0x%x\n", (uintptr_t)mc);
 #endif
-
-#ifndef _WIN32
-    Movie movie;
 
     if (mc == NULL) return;
 
@@ -1629,7 +1603,6 @@ void DisposeMovieController_c (void *mc)
     if (movie->Video != NULL) SDL_FreeSurface(movie->Video);
 #endif
     lqt_rows_free(movie->frame);
-#endif
 }
 
 //EXTERN_API( OSErr )
@@ -1674,7 +1647,6 @@ void *MCIsPlayerEvent_c (void *mc, const void *e)
     eprintf("MCIsPlayerEvent: 0x%x, 0x%x - ", (uintptr_t)mc, (uintptr_t)e);
 #endif
 
-#ifndef _WIN32
     if ((mc != NULL) && (e != NULL))
     {
         const EventRecord *event;
@@ -1728,7 +1700,6 @@ void *MCIsPlayerEvent_c (void *mc, const void *e)
             };
         }
     }
-#endif
 
 #ifdef DEBUG_QTML
     eprintf("ok\n");

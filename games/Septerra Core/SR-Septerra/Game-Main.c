@@ -29,6 +29,7 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <unistd.h>
 #else
 #include <stdio.h>
 #endif
@@ -83,6 +84,22 @@ void init_security_cookie(void)
 
 #ifdef _WIN32
 
+void init_libquicktime(void)
+{
+    if (NULL == getenv("LIBQUICKTIME_PLUGIN_DIR"))
+    {
+        char envstr[MAX_PATH+24];
+        strcpy(envstr, "LIBQUICKTIME_PLUGIN_DIR");
+        envstr[23] = '=';
+        envstr[24] = 0;
+
+        if (NULL != getcwd(&(envstr[24]), MAX_PATH))
+        {
+            putenv(envstr);
+        }
+    }
+}
+
 int CALLBACK WinMain(
   HINSTANCE hInstance,
   HINSTANCE hPrevInstance,
@@ -97,6 +114,8 @@ int CALLBACK WinMain(
     }
 
     atexit(SDL_Quit);
+
+    init_libquicktime();
 
     ReadConfiguration();
 

@@ -163,7 +163,7 @@ int SR_disassemble_convert_fixup(const char *ostr, char *dst, fixup_data *fixup,
 
     if ( strstr(str2, cbuf) != NULL )
     {
-        if (decoded_length != 0)
+        if ((decoded_length != 0) && ((fixup->type == FT_NORMAL) || (fixup->type == FT_SEGOFS32)))
         {
             // if two or more occurences in string, then do one's complement on searched data, and try searching for it
 
@@ -178,7 +178,7 @@ int SR_disassemble_convert_fixup(const char *ostr, char *dst, fixup_data *fixup,
             {
                 memcpy(tmpbuf, &(section[Entry].adr[offset]), decoded_length + 4);
                 fixupofs = (uint32_t *) &(tmpbuf[fixup->sofs - offset]);
-                *fixupofs = ~(*fixupofs);
+                *fixupofs = (*fixupofs - fixup->tofs) + ~fixup->tofs;
                 tmpfixup = *fixup;
                 tmpfixup.tofs = ~tmpfixup.tofs;
 

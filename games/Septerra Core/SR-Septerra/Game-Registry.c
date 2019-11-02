@@ -61,78 +61,95 @@ static int SetValue(const char *ValueName, char *Value)
             file = fopen(buf, "rb");
         }
     } else conf_name = NULL;
-    if (file == NULL) return 0;
 
-    fnew = fopen(CONF_NAME "new", "wb");
-    if (fnew == NULL)
+    if (file == NULL)
     {
-        fclose(file);
-        return 0;
+        fnew = fopen(buf, "wb");
+        if (fnew == NULL)
+        {
+            return 0;
+        }
+        else
+        {
+            conf_name = NULL;
+        }
     }
-
-    if (conf_name != NULL)
+    else
     {
-        conf_name = strdup(conf_name);
-    };
+        fnew = fopen(CONF_NAME "new", "wb");
+        if (fnew == NULL)
+        {
+            fclose(file);
+            return 0;
+        }
+
+        if (conf_name != NULL)
+        {
+            conf_name = strdup(conf_name);
+        };
+    }
 
     value_written = 0;
     hasnewline = 1;
-    while (!feof(file))
+    if (file != NULL)
     {
-        buf[0] = 0;
-        buf_length = fscanf(file, "%8192[\r\n]", buf);
-        if (buf_length)
+        while (!feof(file))
         {
-            hasnewline = 1;
+            buf[0] = 0;
+            buf_length = fscanf(file, "%8192[\r\n]", buf);
+            if (buf_length > 0)
+            {
+                hasnewline = 1;
+                fputs(&(buf[0]), fnew);
+            }
+
+            buf[0] = 0;
+            buf_length = fscanf(file, "%8192[^\r\n]", buf);
+
+            if (buf_length <= 0) continue;
+
+            if (value_written)
+            {
+                fputs(&(buf[0]), fnew);
+                continue;
+            }
+
+            hasnewline = 0;
+
+            value_start = strchr(&(buf[0]), '=');
+            if (value_start == NULL)
+            {
+                fputs(&(buf[0]), fnew);
+                continue;
+            }
+
+            name_start = &(buf[0]);
+
+            while (*name_start == ' ') name_start++;
+
+            buf_length = (uintptr_t)value_start - (uintptr_t)name_start;
+            while ((buf_length != 0) && (name_start[buf_length - 1] == ' '))
+            {
+                buf_length--;
+            }
+            old_char = name_start[buf_length];
+            name_start[buf_length] = 0;
+
+            if (0 != strcasecmp(ValueName, name_start))
+            {
+                name_start[buf_length] = old_char;
+                fputs(&(buf[0]), fnew);
+                continue;
+            }
+
+            value_written = 1;
             fputs(&(buf[0]), fnew);
+            fputc('=', fnew);
+            fputs(Value, fnew);
         }
 
-        buf[0] = 0;
-        buf_length = fscanf(file, "%8192[^\r\n]", buf);
-
-        if (buf_length == 0) continue;
-
-        if (value_written)
-        {
-            fputs(&(buf[0]), fnew);
-            continue;
-        }
-
-        hasnewline = 0;
-
-        value_start = strchr(&(buf[0]), '=');
-        if (value_start == NULL)
-        {
-            fputs(&(buf[0]), fnew);
-            continue;
-        }
-
-        name_start = &(buf[0]);
-
-        while (*name_start == ' ') name_start++;
-
-        buf_length = (uintptr_t)value_start - (uintptr_t)name_start;
-        while ((buf_length != 0) && (name_start[buf_length - 1] == ' '))
-        {
-            buf_length--;
-        }
-        old_char = name_start[buf_length];
-        name_start[buf_length] = 0;
-
-        if (0 != strcasecmp(ValueName, name_start))
-        {
-            name_start[buf_length] = old_char;
-            fputs(&(buf[0]), fnew);
-            continue;
-        }
-
-        value_written = 1;
-        fputs(&(buf[0]), fnew);
-        fputc('=', fnew);
-        fputs(Value, fnew);
+        fclose(file);
     }
-
-    fclose(file);
 
     if (!value_written)
     {
@@ -147,15 +164,18 @@ static int SetValue(const char *ValueName, char *Value)
 
     fclose(fnew);
 
-    remove((conf_name != NULL)?conf_name:CONF_NAME);
-    if (0 != rename(CONF_NAME "new", (conf_name != NULL)?conf_name:CONF_NAME))
+    if (file != NULL)
     {
-        remove(CONF_NAME "new");
-        if (conf_name != NULL) free(conf_name);
-        return 0;
-    }
+        remove((conf_name != NULL)?conf_name:CONF_NAME);
+        if (0 != rename(CONF_NAME "new", (conf_name != NULL)?conf_name:CONF_NAME))
+        {
+            remove(CONF_NAME "new");
+            if (conf_name != NULL) free(conf_name);
+            return 0;
+        }
 
-    if (conf_name != NULL) free(conf_name);
+        if (conf_name != NULL) free(conf_name);
+    }
 
     return 1;
 }
@@ -183,7 +203,7 @@ static int GetValue(const char *ValueName, char *Value, unsigned int Length)
         buf[0] = 0;
         buf_length = fscanf(file, "%8192[^\r\n]", buf);
 
-        if (buf_length == 0) continue;
+        if (buf_length <= 0) continue;
 
         value_start = strchr(&(buf[0]), '=');
         if (value_start == NULL) continue;

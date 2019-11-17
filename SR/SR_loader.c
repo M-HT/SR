@@ -442,6 +442,43 @@ int SR_LoadFile(const char *fname)
 		return -1;
 	}
 
+	if ((*((uint16_t *)&(MZfile[0x18])) != 0x40) || (*((uint16_t *)&(MZfile[0x3c])) == 0))
+	{
+		// search for next MZ header
+		uint_fast32_t HeaderOffset;
+
+		while (1)
+		{
+			HeaderOffset = *((uint16_t *)&(MZfile[0x02])) + 512 * *((uint16_t *)&(MZfile[0x04]));
+
+			if (*((uint16_t *)MZfile) == 0x5a4d) // MZ
+			{
+				HeaderOffset -= 512;
+			}
+			else if (*((uint16_t *)MZfile) != 0x5742) // BW
+			{
+				unload_file(&mf);
+				fprintf(stderr, "Error: Invalid EXE file\n");
+				return -1;
+			}
+
+			// check if file is big enough to contain MZ EXE header
+			if (SR_FileSize <= HeaderOffset + 0x40)
+			{
+				unload_file(&mf);
+				fprintf(stderr, "Error: File too small\n");
+				return -1;
+			}
+
+			MZfile += HeaderOffset;
+
+			if ((*((uint16_t *)MZfile) == 0x5a4d) && (*((uint16_t *)&(MZfile[0x18])) == 0x40) && (*((uint16_t *)&(MZfile[0x3c])) != 0))
+			{
+				break;
+			}
+		};
+	}
+
 	{
 		uint_fast32_t HeaderOffset;
 

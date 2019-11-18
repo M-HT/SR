@@ -56,24 +56,24 @@ Help(vars.GenerateHelpText(env))
 if device == 'pc-linux':
     # default settings
     if sdl2 > 0:
-        env = Environment(CCFLAGS      = '-m32 -O2 -DUSE_SDL2',
+        env = Environment(CCFLAGS      = '-m32 -O2 -DUSE_SDL2 -Wall',
                           LINKFLAGS    = '-m32 -Wl,-z,noexecstack',
                           LIBS         = ['SDL2_mixer', 'SDL2', 'pthread', 'm', 'dl']
                          )
     else:
-        env = Environment(CCFLAGS      = '-m32 -O2 -DALLOW_OPENGL',
+        env = Environment(CCFLAGS      = '-m32 -O2 -DALLOW_OPENGL -Wall',
                           LINKFLAGS    = '-m32 -Wl,-z,noexecstack',
                           LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'm', 'dl', 'GL']
                          )
 elif device == 'arm-linux':
     if sdl2 > 0:
-        env = Environment(CCFLAGS      = '-O2 -DUSE_SDL2',
+        env = Environment(CCFLAGS      = '-O2 -DUSE_SDL2 -Wall',
                           LINKFLAGS    = '-Wl,-z,noexecstack',
                           LIBS         = ['SDL2_mixer', 'SDL2', 'pthread', 'm', 'dl'],
                           ASFLAGS      = ' -I arm/'
                          )
     else:
-        env = Environment(CCFLAGS      = '-O2 -DALLOW_OPENGL',
+        env = Environment(CCFLAGS      = '-O2 -DALLOW_OPENGL -Wall',
                           LINKFLAGS    = '-Wl,-z,noexecstack',
                           LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'm', 'dl', 'GL'],
                           ASFLAGS      = ' -I arm/'
@@ -81,7 +81,7 @@ elif device == 'arm-linux':
     # see arm/armconf.inc for explanation of these options (and others)
     env.Append(ASFLAGS = ' --defsym USE_R9=1 --defsym ALLOW_UNALIGNED_MEMORY_ACCESS=1')
 elif device == 'pc-windows':
-    env = Environment(CCFLAGS      = '-m32 -O2 -DALLOW_OPENGL',
+    env = Environment(CCFLAGS      = '-m32 -O2 -DALLOW_OPENGL -Wall',
                       LINKFLAGS    = '-m32',
                       LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'opengl32']
                      )
@@ -90,7 +90,7 @@ elif device == 'gp2x':
     compiler_prefix = 'arm-open2x-linux-'
 
     env = Environment(CC           = compiler_prefix + 'gcc',
-                      CCFLAGS      = '-O2 -DGP2X -march=armv4t -mtune=arm920t',
+                      CCFLAGS      = '-O2 -DGP2X -march=armv4t -mtune=arm920t -Wall',
                       CPPPATH      = [compiler_path + 'include/SDL/midi', compiler_path + 'include/SDL', compiler_path + 'include'],
                       INCPREFIX    = '-I',
                       LIBPATH      = [compiler_path + 'lib/mixer-midi', compiler_path + 'lib'],
@@ -108,7 +108,7 @@ elif device == 'pandora':
     compiler_prefix = 'pandora-'
 
     env = Environment(CC           = compiler_prefix + 'gcc',
-                      CCFLAGS      = '-O2 -DPANDORA -pipe -march=armv7-a -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=vfpv3 -mfloat-abi=softfp',
+                      CCFLAGS      = '-O2 -DPANDORA -pipe -march=armv7-a -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=vfpv3 -mfloat-abi=softfp -Wall',
                       CPPPATH      = [compiler_path + 'usr/include'],
                       INCPREFIX    = '-I',
                       LIBPATH      = [compiler_path + 'usr/lib'],

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -119,6 +119,9 @@ void Game_save_screenshot(const char *filename)
     if (buffer == NULL) return;
 
     curptr = buffer;
+
+    // silence warning
+    chunk_size_ptr[0] = chunk_size_ptr[1] = NULL;
 
     if ((Game_ScreenshotFormat == 0) || (Game_ScreenshotFormat == 1) || (Game_ScreenshotFormat == 2))
     {

@@ -670,21 +670,21 @@ struct watcom_dirent *Game_readdir(struct watcom_dirent *dirp)
 
     if ( stat(current_entry->real_fullname, &statbuf) )
     {
-        dirp->d_time = 0;
-        dirp->d_date = 0;
+        dirp->ut.d_time = 0;
+        dirp->ud.d_date = 0;
         dirp->d_size = 0;
     }
     else
     {
         tmbuf = localtime(&(statbuf.st_mtime));
 
-        ((watcom_ftime_t *) (void *) (&(dirp->d_time)))->twosecs = tmbuf->tm_sec / 2;
-        ((watcom_ftime_t *) (void *) (&(dirp->d_time)))->minutes = tmbuf->tm_min;
-        ((watcom_ftime_t *) (void *) (&(dirp->d_time)))->hours   = tmbuf->tm_hour;
+        dirp->ut.vt.twosecs = tmbuf->tm_sec / 2;
+        dirp->ut.vt.minutes = tmbuf->tm_min;
+        dirp->ut.vt.hours   = tmbuf->tm_hour;
 
-        ((watcom_fdate_t *) (void *) (&(dirp->d_date)))->day     = tmbuf->tm_mday;
-        ((watcom_fdate_t *) (void *) (&(dirp->d_date)))->month   = tmbuf->tm_mon + 1;
-        ((watcom_fdate_t *) (void *) (&(dirp->d_date)))->year    = tmbuf->tm_year - 80;
+        dirp->ud.vd.day     = tmbuf->tm_mday;
+        dirp->ud.vd.month   = tmbuf->tm_mon + 1;
+        dirp->ud.vd.year    = tmbuf->tm_year - 80;
 
         dirp->d_size = statbuf.st_size;
     }
@@ -732,8 +732,8 @@ static void Conv_find(struct watcom_find_t *buffer, struct watcom_dirent *dirent
     buffer->attrib = direntp->d_attr;
 
     // file's modification time and date
-    buffer->wr_time = direntp->d_time;
-    buffer->wr_date = direntp->d_date;
+    buffer->wr_time = direntp->ut.d_time;
+    buffer->wr_date = direntp->ud.d_date;
 
     // file size
     buffer->size = direntp->d_size;

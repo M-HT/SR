@@ -485,7 +485,7 @@ void BASEMEM_PrintReport(FILE *fp)
 
     fprintf(fp, "\nBASEMEM report\n\n");
     fprintf(fp, "Page size    : %u\n", BASEMEM_page_size);
-    fprintf(fp, "Largest available free block in bytes  : %lu\n", GAME_MAX_FREE_MEMORY);
+    fprintf(fp, "Largest available free block in bytes  : %lu\n", (unsigned long int)GAME_MAX_FREE_MEMORY);
     fprintf(fp, "\n");
 }
 

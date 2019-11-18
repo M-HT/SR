@@ -864,6 +864,9 @@ static void draw_textured_tile(int32_t number_of_coordinates, int32_t a2, int32_
 
     if ( number_of_coordinates < 3 ) return;
 
+    // silence warning
+    var03 = 0;
+
     coordinate_counter = number_of_coordinates;
     current_coordinate = &(d3_word_199A58[0]);
     y_min = 32767;
@@ -1256,6 +1259,9 @@ static int32_t d3_sub_C4F7C(int32_t a1)
         var01 += 2;
     }
 
+    // silence warning
+    var_A = 0;
+
     var01 = &(d3_word_196BB0[0]);
     var02[0] = var01[0];
     var02[1] = var01[1];
@@ -1340,6 +1346,9 @@ static void draw_solid_tile(int32_t number_of_coordinates)
 
 
     if ( number_of_coordinates < 3 ) return;
+
+    // silence warning
+    var01 = 0;
 
     coordinate_counter = number_of_coordinates;
     y_min = 32767;
@@ -2809,6 +2818,9 @@ static void sm1234_hyperproc(struct struc_2 *tex_info)
             d3_texture_column = d3_sub_1CABA((uint32_t)(tex_info->field_0A), (uint32_t)(tex_info->field_0C), (uint32_t)(tex_info->field_08));
             if (d3_texture_column == NULL) return;
 
+            // silence warning
+            var_20 = 0;
+
             if ( tex_info->field_3C == tex_info->field_40 )
             {
                 d3_dword_1A5E34 = 0;
@@ -2918,6 +2930,10 @@ static void draw_list_sm1234(void)
 
     if ( d3_skip_draw_list_sm1234 ) return;
 
+    // silence warning
+    guard_pixel_check_value = guard_pixel_last_value = 0;
+    guard_pixel_ptr = NULL;
+
     if ( g_select_mapobject != NULL )
     {
         guard_pixel_check_value = g_select_mapobject->check_value;
@@ -2993,6 +3009,10 @@ static void draw_floor_and_ceiling(void)
 
 
     if ( d3_mapgrid_number_of_points <= 0 ) return;
+
+    // silence warning
+    guard_pixel_ptr = NULL;
+    guard_pixel_check_value = guard_pixel_last_value = 0;
 
     if ( g_select_mapobject != NULL )
     {
@@ -3255,6 +3275,9 @@ static void draw_background(int endlineoffset) // endlineoffset is allways scree
         viewport_fillchar(endlineoffset, Game_ViewportHeight * Game_ScreenWidth, g_fillvalue2);
         return;
     }
+
+    // silence warning
+    var_28 = 0;
 
     sky_hires = (Game_ViewportHeight > 200)?1:0;
     if ( !sky_hires )
@@ -4580,11 +4603,11 @@ void draw_3dscene(void)
     d3_dword_1A5E0C = g_mapgrid_point_distance - 1;
     d3_mapgrid_point_distance_3_4 = g_mapgrid_point_distance - (g_mapgrid_point_distance >> 2);
 
-    d3_dword_196CA8 = (*((uint32_t *)&(g_word_14A480[0]))) >> (16 - g_byte_13FFAE);
-    d3_dword_196CA4 = (*((uint32_t *)&(g_word_14A486[0]))) >> (16 - g_byte_13FFAE);
-    d3_dword_196CA8 += (*((uint32_t *)&(g_word_14A480[1]))) >> (16 - g_byte_13FFAE);
+    d3_dword_196CA8 = ((uint32_t)(g_word_14A480[0] | (g_word_14A480[1] << 16))) >> (16 - g_byte_13FFAE);
+    d3_dword_196CA4 = ((uint32_t)(g_word_14A486[0] | (g_word_14A486[1] << 16))) >> (16 - g_byte_13FFAE);
+    d3_dword_196CA8 += ((uint32_t)(g_word_14A480[1] | (g_word_14A480[2] << 16))) >> (16 - g_byte_13FFAE);
     ++d3_scene_counter;
-    d3_dword_196CA4 += (*((uint32_t *)&(g_word_14A486[1]))) >> (16 - g_byte_13FFAE);
+    d3_dword_196CA4 += ((uint32_t)(g_word_14A486[1] | (g_word_14A486[2] << 16))) >> (16 - g_byte_13FFAE);
     g_dword_196CEC = ((uint32_t)g_word_14A490) << g_byte_13FFAE;
     d3_word_196D0A = g_word_14A480[0] << g_byte_13FFAE;
     d3_word_196D08 = g_word_14A486[0] << g_byte_13FFAE;

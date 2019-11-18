@@ -505,7 +505,7 @@ void OPM_CopyOPMOPM(OPM_Struct *src_pixel_map, OPM_Struct *dst_pixel_map, int sr
 static void OPM_LocalPrintError(char *buffer, const uint8_t *data)
 {
 #define DATA (((OPM_ErrorStruct *)data))
-    sprintf(buffer, "ERROR!: %s  %ld, %ld", DATA->text, DATA->data1, DATA->data2);
+    sprintf(buffer, "ERROR!: %s  %ld, %ld", DATA->text, (long int)DATA->data1, (long int)DATA->data2);
 #undef DATA
 }
 

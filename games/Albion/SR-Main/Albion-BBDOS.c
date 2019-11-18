@@ -826,7 +826,7 @@ int DOS_GetSeekPosition(int file_handle)
 static void DOS_LocalPrintError(char *buffer, const uint8_t *data)
 {
 #define DATA (((DOS_ErrorStruct *)data))
-    sprintf(buffer, " %s - FILENAME: %s - DATA: %ld - OSERROR: %d", DATA->text, DATA->filename, DATA->data, (int)DATA->oserror);
+    sprintf(buffer, " %s - FILENAME: %s - DATA: %ld - OSERROR: %d", DATA->text, DATA->filename, (long int)DATA->data, (int)DATA->oserror);
 #undef DATA
 }
 

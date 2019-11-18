@@ -77,27 +77,27 @@
 .extern Game_AIL_stop_sequence
 
 .extern ERROR_Init
-.extern ERROR_ClearMessages
-.extern ERROR_AddMessageDOS
-.extern ERROR_RemoveMessage
-.extern ERROR_NumMessagesIsZero
-.extern ERROR_PrintAndClearMessages
+.extern ERROR_ClearStack
+.extern ERROR_PushErrorDOS
+.extern ERROR_PopError
+.extern ERROR_IsStackEmpty
+.extern ERROR_PrintAllErrors
 
 .extern BASEMEM_Init
-.extern BASEMEM_Deinit
+.extern BASEMEM_Exit
 .extern BASEMEM_GetFreeMemSize
 .extern BASEMEM_Alloc
 .extern BASEMEM_Free
 .extern BASEMEM_LockRegion
 .extern BASEMEM_UnlockRegion
-.extern BASEMEM_MemSetByte
-.extern BASEMEM_MemSetDword
-.extern BASEMEM_MemMove
+.extern BASEMEM_FillMemByte
+.extern BASEMEM_FillMemLong
+.extern BASEMEM_CopyMem
 .extern BASEMEM_AlignMemptr
 .extern BASEMEM_PrintReport
 
 .extern DOS_Init
-.extern DOS_DeInit
+.extern DOS_Exit
 .extern DOS_Open
 .extern DOS_Close
 .extern DOS_Read
@@ -109,15 +109,15 @@
 .extern DOS_GetSeekPosition
 
 .extern OPM_New
-.extern OPM_Delete
+.extern OPM_Del
 .extern OPM_SetViewClipStart
-.extern OPM_NewView
-.extern OPM_PutPixel
-.extern OPM_DrawHorizontalLine
-.extern OPM_DrawVerticalLine
-.extern OPM_DrawRectangle
-.extern OPM_DrawFilledRectangle
-.extern OPM_CopyRectangle
+.extern OPM_CreateVirtualOPM
+.extern OPM_SetPixel
+.extern OPM_HorLine
+.extern OPM_VerLine
+.extern OPM_Box
+.extern OPM_FillBox
+.extern OPM_CopyOPMOPM
 @ 0 params
 .extern fcloseall
 .extern Game_WaitAfterVerticalRetrace
@@ -241,27 +241,27 @@
 .global SR_AIL_stop_sequence
 
 .global SR_ERROR_Init
-.global SR_ERROR_ClearMessages
-.global SR_ERROR_AddMessage
-.global SR_ERROR_RemoveMessage
-.global SR_ERROR_NumMessagesIsZero
-.global SR_ERROR_PrintAndClearMessages
+.global SR_ERROR_ClearStack
+.global SR_ERROR_PushError
+.global SR_ERROR_PopError
+.global SR_ERROR_IsStackEmpty
+.global SR_ERROR_PrintAllErrors
 
 .global SR_BASEMEM_Init
-.global SR_BASEMEM_Deinit
+.global SR_BASEMEM_Exit
 .global SR_BASEMEM_GetFreeMemSize
 .global SR_BASEMEM_Alloc
 .global SR_BASEMEM_Free
 .global SR_BASEMEM_LockRegion
 .global SR_BASEMEM_UnlockRegion
-.global SR_BASEMEM_MemSetByte
-.global SR_BASEMEM_MemSetDword
-.global SR_BASEMEM_MemMove
+.global SR_BASEMEM_FillMemByte
+.global SR_BASEMEM_FillMemLong
+.global SR_BASEMEM_CopyMem
 .global SR_BASEMEM_AlignMemptr
 .global SR_BASEMEM_PrintReport
 
 .global SR_DOS_Init
-.global SR_DOS_DeInit
+.global SR_DOS_Exit
 .global SR_DOS_Open
 .global SR_DOS_Close
 .global SR_DOS_Read
@@ -273,15 +273,15 @@
 .global SR_DOS_GetSeekPosition
 
 .global SR_OPM_New
-.global SR_OPM_Delete
+.global SR_OPM_Del
 .global SR_OPM_SetViewClipStart
-.global SR_OPM_NewView
-.global SR_OPM_PutPixel
-.global SR_OPM_DrawHorizontalLine
-.global SR_OPM_DrawVerticalLine
-.global SR_OPM_DrawRectangle
-.global SR_OPM_DrawFilledRectangle
-.global SR_OPM_CopyRectangle
+.global SR_OPM_CreateVirtualOPM
+.global SR_OPM_SetPixel
+.global SR_OPM_HorLine
+.global SR_OPM_VerLine
+.global SR_OPM_Box
+.global SR_OPM_FillBox
+.global SR_OPM_CopyOPMOPM
 @ 0 params
 .global SR_fcloseall
 .global SR_WaitAfterVerticalRetrace
@@ -855,48 +855,48 @@ SR_AIL_stop_sequence:
 
 SR_ERROR_Init:
 
-@ eax = void *logprint_proc
+@ eax = void *output_func_ptr
 
         Game_Call_Asm_Reg1 ERROR_Init,-1
 
 @ end procedure SR_ERROR_Init
 
-SR_ERROR_ClearMessages:
+SR_ERROR_ClearStack:
 
-        Game_Call_Asm_Reg0 ERROR_ClearMessages,-1
+        Game_Call_Asm_Reg0 ERROR_ClearStack,-1
 
-@ end procedure SR_ERROR_ClearMessages
+@ end procedure SR_ERROR_ClearStack
 
-SR_ERROR_AddMessage:
+SR_ERROR_PushError:
 
-@ eax = void *msg_printdata_proc
-@ edx = char *msg_prefix
-@ ebx = int msg_data_len
-@ ecx = char *msg_data
+@ eax = void *error_print_error_ptr
+@ edx = char *error_prefix
+@ ebx = int error_data_len
+@ ecx = char *error_data
 
-        Game_Call_Asm_Reg4 ERROR_AddMessageDOS,-1
+        Game_Call_Asm_Reg4 ERROR_PushErrorDOS,-1
 
-@ end procedure SR_ERROR_AddMessage
+@ end procedure SR_ERROR_PushError
 
-SR_ERROR_RemoveMessage:
+SR_ERROR_PopError:
 
-        Game_Call_Asm_Reg0 ERROR_RemoveMessage,-1
+        Game_Call_Asm_Reg0 ERROR_PopError,-1
 
-@ end procedure SR_ERROR_RemoveMessage
+@ end procedure SR_ERROR_PopError
 
-SR_ERROR_NumMessagesIsZero:
+SR_ERROR_IsStackEmpty:
 
-        Game_Call_Asm_Reg0 ERROR_NumMessagesIsZero,-1
+        Game_Call_Asm_Reg0 ERROR_IsStackEmpty,-1
 
-@ end procedure SR_ERROR_NumMessagesIsZero
+@ end procedure SR_ERROR_IsStackEmpty
 
-SR_ERROR_PrintAndClearMessages:
+SR_ERROR_PrintAllErrors:
 
 @ eax = int flags
 
-        Game_Call_Asm_Reg1 ERROR_PrintAndClearMessages,-1
+        Game_Call_Asm_Reg1 ERROR_PrintAllErrors,-1
 
-@ end procedure SR_ERROR_PrintAndClearMessages
+@ end procedure SR_ERROR_PrintAllErrors
 
 
 SR_BASEMEM_Init:
@@ -905,11 +905,11 @@ SR_BASEMEM_Init:
 
 @ end procedure SR_BASEMEM_Init
 
-SR_BASEMEM_Deinit:
+SR_BASEMEM_Exit:
 
-        Game_Call_Asm_Reg0 BASEMEM_Deinit,-1
+        Game_Call_Asm_Reg0 BASEMEM_Exit,-1
 
-@ end procedure SR_BASEMEM_Deinit
+@ end procedure SR_BASEMEM_Exit
 
 SR_BASEMEM_GetFreeMemSize:
 
@@ -954,35 +954,35 @@ SR_BASEMEM_UnlockRegion:
 
 @ end procedure SR_BASEMEM_UnlockRegion
 
-SR_BASEMEM_MemSetByte:
+SR_BASEMEM_FillMemByte:
 
 @ eax = void *dst
 @ edx = unsigned int length
 @ ebx = int c
 
-        Game_Call_Asm_Reg3 BASEMEM_MemSetByte,-1
+        Game_Call_Asm_Reg3 BASEMEM_FillMemByte,-1
 
-@ end procedure SR_BASEMEM_MemSetByte
+@ end procedure SR_BASEMEM_FillMemByte
 
-SR_BASEMEM_MemSetDword:
+SR_BASEMEM_FillMemLong:
 
 @ eax = void *dst
 @ edx = unsigned int length
 @ ebx = unsigned int c
 
-        Game_Call_Asm_Reg3 BASEMEM_MemSetDword,-1
+        Game_Call_Asm_Reg3 BASEMEM_FillMemLong,-1
 
-@ end procedure SR_BASEMEM_MemSetDword
+@ end procedure SR_BASEMEM_FillMemLong
 
-SR_BASEMEM_MemMove:
+SR_BASEMEM_CopyMem:
 
 @ eax = const void *src
 @ edx = void *dst
 @ ebx = unsigned int length
 
-        Game_Call_Asm_Reg3 BASEMEM_MemMove,-1
+        Game_Call_Asm_Reg3 BASEMEM_CopyMem,-1
 
-@ end procedure SR_BASEMEM_MemMove
+@ end procedure SR_BASEMEM_CopyMem
 
 SR_BASEMEM_AlignMemptr:
 
@@ -1007,11 +1007,11 @@ SR_DOS_Init:
 
 @ end procedure SR_DOS_Init
 
-SR_DOS_DeInit:
+SR_DOS_Exit:
 
-        Game_Call_Asm_Reg0 DOS_DeInit,-1
+        Game_Call_Asm_Reg0 DOS_Exit,-1
 
-@ end procedure SR_DOS_DeInit
+@ end procedure SR_DOS_Exit
 
 SR_DOS_Open:
 
@@ -1107,13 +1107,13 @@ SR_OPM_New:
 
 @ end procedure SR_OPM_New
 
-SR_OPM_Delete:
+SR_OPM_Del:
 
 @ eax = OPM_Struct *pixel_map
 
-        Game_Call_Asm_Reg1 OPM_Delete,-1
+        Game_Call_Asm_Reg1 OPM_Del,-1
 
-@ end procedure SR_OPM_Delete
+@ end procedure SR_OPM_Del
 
 SR_OPM_SetViewClipStart:
 
@@ -1125,7 +1125,7 @@ SR_OPM_SetViewClipStart:
 
 @ end procedure SR_OPM_SetViewClipStart
 
-SR_OPM_NewView:
+SR_OPM_CreateVirtualOPM:
 
 @ eax = OPM_Struct *base_pixel_map
 @ edx = OPM_Struct *view_pixel_map
@@ -1136,36 +1136,22 @@ SR_OPM_NewView:
 @
 @ [esp    ] = return address
 
-        Game_Call_Asm_Reg6 OPM_NewView,-1
+        Game_Call_Asm_Reg6 OPM_CreateVirtualOPM,-1
 
-@ end procedure SR_OPM_NewView
+@ end procedure SR_OPM_CreateVirtualOPM
 
-SR_OPM_PutPixel:
+SR_OPM_SetPixel:
 
 @ eax = OPM_Struct *pixel_map
 @ edx = int x
 @ ebx = int y
 @ ecx = uint8_t color
 
-        Game_Call_Asm_Reg4 OPM_PutPixel,-1
+        Game_Call_Asm_Reg4 OPM_SetPixel,-1
 
-@ end procedure SR_OPM_PutPixel
+@ end procedure SR_OPM_SetPixel
 
-SR_OPM_DrawHorizontalLine:
-
-@ eax = OPM_Struct *pixel_map
-@ edx = int x
-@ ebx = int y
-@ ecx = int length
-@ [esp + 4] = uint8_t color
-@
-@ [esp    ] = return address
-
-        Game_Call_Asm_Reg5 OPM_DrawHorizontalLine,-1
-
-@ end procedure SR_OPM_DrawHorizontalLine
-
-SR_OPM_DrawVerticalLine:
+SR_OPM_HorLine:
 
 @ eax = OPM_Struct *pixel_map
 @ edx = int x
@@ -1175,11 +1161,25 @@ SR_OPM_DrawVerticalLine:
 @
 @ [esp    ] = return address
 
-        Game_Call_Asm_Reg5 OPM_DrawVerticalLine,-1
+        Game_Call_Asm_Reg5 OPM_HorLine,-1
 
-@ end procedure SR_OPM_DrawVerticalLine
+@ end procedure SR_OPM_HorLine
 
-SR_OPM_DrawRectangle:
+SR_OPM_VerLine:
+
+@ eax = OPM_Struct *pixel_map
+@ edx = int x
+@ ebx = int y
+@ ecx = int length
+@ [esp + 4] = uint8_t color
+@
+@ [esp    ] = return address
+
+        Game_Call_Asm_Reg5 OPM_VerLine,-1
+
+@ end procedure SR_OPM_VerLine
+
+SR_OPM_Box:
 
 @ eax = OPM_Struct *pixel_map
 @ edx = int x
@@ -1190,11 +1190,11 @@ SR_OPM_DrawRectangle:
 @
 @ [esp    ] = return address
 
-        Game_Call_Asm_Reg6 OPM_DrawRectangle,-1
+        Game_Call_Asm_Reg6 OPM_Box,-1
 
-@ end procedure SR_OPM_DrawRectangle
+@ end procedure SR_OPM_Box
 
-SR_OPM_DrawFilledRectangle:
+SR_OPM_FillBox:
 
 @ eax = OPM_Struct *pixel_map
 @ edx = int x
@@ -1205,11 +1205,11 @@ SR_OPM_DrawFilledRectangle:
 @
 @[esp    ] = return address
 
-        Game_Call_Asm_Reg6 OPM_DrawFilledRectangle,-1
+        Game_Call_Asm_Reg6 OPM_FillBox,-1
 
-@ end procedure SR_OPM_DrawFilledRectangle
+@ end procedure SR_OPM_FillBox
 
-SR_OPM_CopyRectangle:
+SR_OPM_CopyOPMOPM:
 
 @ eax = OPM_Struct *src_pixel_map
 @ edx = OPM_Struct *dst_pixel_map
@@ -1222,9 +1222,9 @@ SR_OPM_CopyRectangle:
 @
 @ [esp    ] = return address
 
-        Game_Call_Asm_Reg8 OPM_CopyRectangle,-1
+        Game_Call_Asm_Reg8 OPM_CopyOPMOPM,-1
 
-@ end procedure SR_OPM_CopyRectangle
+@ end procedure SR_OPM_CopyOPMOPM
 
 .ltorg
 

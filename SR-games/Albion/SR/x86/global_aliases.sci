@@ -9,7 +9,7 @@ loc_196D18,errno_val
 
 loc_199480,AIL_error
 
-loc_17E8EC,ERROR_num_messages
+loc_17E8EC,ERROR_num_errors
 
 loc_C6417,orig_C6417
 loc_C9CDD,orig_C9CDD

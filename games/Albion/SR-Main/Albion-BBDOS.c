@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018 Roman Pauer
+ *  Copyright (C) 2018-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -69,7 +69,7 @@ typedef struct {
     const char *filename;
     int data;
     int16_t oserror;
-} DOS_ErrorDataStruct;
+} DOS_ErrorStruct;
 
 typedef struct {
     unsigned int flags;
@@ -90,7 +90,7 @@ static DOS_EntryStruct DOS_file_entries[NUM_ENTRIES];
 static char DOS_filenames_history[HISTORY_SIZE][128];
 
 
-static void DOS_PrintData(char *buffer, const uint8_t *data);
+static void DOS_LocalPrintError(char *buffer, const uint8_t *data);
 
 
 int DOS_Init(void)
@@ -100,14 +100,14 @@ int DOS_Init(void)
     DOS_history_index = 0;
     if (!BASEMEM_Init())
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_Init: Cannot init BASEMEM";
         data.filename = " ";
         data.data = 0;
         data.oserror = 0;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return 0;
     }
@@ -126,7 +126,7 @@ int DOS_Init(void)
     return 1;
 }
 
-void DOS_DeInit(void)
+void DOS_Exit(void)
 {
     if (DOS_initialized)
     {
@@ -165,7 +165,7 @@ int DOS_Open(const char *path, unsigned int mode)
 
     if (file_handle >= NUM_ENTRIES)
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_Open: No free entry";
 
@@ -177,7 +177,7 @@ int DOS_Open(const char *path, unsigned int mode)
         data.data = 0;
         data.oserror = 0;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return -1;
     }
@@ -214,7 +214,7 @@ int DOS_Open(const char *path, unsigned int mode)
 
     if (fd == -1)
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_Open: open() oserror";
 
@@ -226,7 +226,7 @@ int DOS_Open(const char *path, unsigned int mode)
         data.data = 0;
         data.oserror = errno;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return -1;
     }
@@ -263,14 +263,14 @@ int DOS_Close(int file_handle)
 
     if (!(DOS_file_entries[file_handle].flags & 1))
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_Close: File is not open";
         data.filename = " ";
         data.data = file_handle;
         data.oserror = 0;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return 0;
     }
@@ -288,14 +288,14 @@ int DOS_Read(int file_handle, void *buffer, unsigned int length)
 
     if (!(DOS_file_entries[file_handle].flags & 1))
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_Read: File not open";
         data.filename = " ";
         data.data = file_handle;
         data.oserror = 0;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return -1;
     }
@@ -304,7 +304,7 @@ int DOS_Read(int file_handle, void *buffer, unsigned int length)
 
     if (retval != length)
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_Read: read() oserror";
 
@@ -316,7 +316,7 @@ int DOS_Read(int file_handle, void *buffer, unsigned int length)
         data.data = file_handle;
         data.oserror = errno;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return -1;
     }
@@ -332,14 +332,14 @@ int DOS_Write(int file_handle, const void *buffer, unsigned int length)
 
     if (!(DOS_file_entries[file_handle].flags & 1))
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_Write: File not open";
         data.filename = " ";
         data.data = file_handle;
         data.oserror = 0;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return -1;
     }
@@ -355,7 +355,7 @@ int DOS_Write(int file_handle, const void *buffer, unsigned int length)
         // todo: remove
         errno_val = ((err >= 0) && (err < 256))?(errno_rtable[err]):(err);
 
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_Write: write() oserror";
 
@@ -367,7 +367,7 @@ int DOS_Write(int file_handle, const void *buffer, unsigned int length)
         data.data = file_handle;
         data.oserror = err;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return -1;
     }
@@ -382,21 +382,21 @@ int DOS_Seek(int file_handle, int origin, int offset)
 
     if (!(DOS_file_entries[file_handle].flags & 1))
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_Seek: File not open";
         data.filename = " ";
         data.data = file_handle;
         data.oserror = 0;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return 0;
     }
 
     if (lseek(DOS_file_entries[file_handle].fd, offset, DOS_lseek_origins[origin]) == -1)
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_Seek: SetFPos() oserror";
 
@@ -408,7 +408,7 @@ int DOS_Seek(int file_handle, int origin, int offset)
         data.data = file_handle;
         data.oserror = errno;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return 0;
     }
@@ -425,7 +425,7 @@ static void *DOS_ReadFile(const char *path, void *buffer, unsigned int buf_len)
     length = DOS_GetFileLength(path);
     if (length < 0)
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_ReadFile: DOS_GetFileLength() error";
 
@@ -437,7 +437,7 @@ static void *DOS_ReadFile(const char *path, void *buffer, unsigned int buf_len)
         data.data = 0;
         data.oserror = 0;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return 0;
     }
@@ -447,7 +447,7 @@ static void *DOS_ReadFile(const char *path, void *buffer, unsigned int buf_len)
         buffer = BASEMEM_Alloc(length, BASEMEM_XMS_MEMORY | BASEMEM_ZERO_MEMORY);
         if (buffer == NULL)
         {
-            DOS_ErrorDataStruct data;
+            DOS_ErrorStruct data;
 
             data.text = "DOS_ReadFile: No Mem for File Buf";
 
@@ -459,7 +459,7 @@ static void *DOS_ReadFile(const char *path, void *buffer, unsigned int buf_len)
             data.data = length;
             data.oserror = 0;
 
-            ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+            ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
             return 0;
         }
@@ -470,7 +470,7 @@ static void *DOS_ReadFile(const char *path, void *buffer, unsigned int buf_len)
     file_handle = DOS_Open(path, DOS_OPEN_MODE_READ);
     if (file_handle < 0)
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_ReadFile: xxx DOS_Open() error";
 
@@ -482,7 +482,7 @@ static void *DOS_ReadFile(const char *path, void *buffer, unsigned int buf_len)
         data.data = file_handle;
         data.oserror = 0;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         if (buf_allocated & 1)
         {
@@ -494,7 +494,7 @@ static void *DOS_ReadFile(const char *path, void *buffer, unsigned int buf_len)
 
     if (DOS_Read(file_handle, buffer, length) < 0)
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_ReadFile: DOS_Read() error";
 
@@ -506,7 +506,7 @@ static void *DOS_ReadFile(const char *path, void *buffer, unsigned int buf_len)
         data.data = file_handle;
         data.oserror = 0;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         DOS_Close(file_handle);
         return 0;
@@ -523,7 +523,7 @@ static int DOS_WriteFile(const char *path, const void *buffer, unsigned int leng
     file_handle = DOS_Open(path, DOS_OPEN_MODE_CREATE);
     if (file_handle < 0)
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_WriteFile: DOS_Open() error";
 
@@ -535,14 +535,14 @@ static int DOS_WriteFile(const char *path, const void *buffer, unsigned int leng
         data.data = file_handle;
         data.oserror = 0;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return 0;
     }
 
     if (DOS_Write(file_handle, buffer, length) < 0)
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_WriteFile: DOS_Write() error";
 
@@ -554,7 +554,7 @@ static int DOS_WriteFile(const char *path, const void *buffer, unsigned int leng
         data.data = file_handle;
         data.oserror = 0;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         DOS_Close(file_handle);
         return 0;
@@ -573,7 +573,7 @@ int DOS_GetFileLength(const char *path)
     file_handle = DOS_Open(path, DOS_OPEN_MODE_READ);
     if (file_handle < 0)
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_GetFileLength: Open error";
 
@@ -585,7 +585,7 @@ int DOS_GetFileLength(const char *path)
         data.data = file_handle;
         data.oserror = 0;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return -1;
     }
@@ -593,7 +593,7 @@ int DOS_GetFileLength(const char *path)
     origpos = lseek(DOS_file_entries[file_handle].fd, 0, SEEK_CUR);
     if (origpos == -1)
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_GetFileLength: filelength error";
 
@@ -605,7 +605,7 @@ int DOS_GetFileLength(const char *path)
         data.data = file_handle;
         data.oserror = 0;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return -1;
     }
@@ -635,7 +635,7 @@ int DOS_exists(const char *path)
         }
         else
         {
-            DOS_ErrorDataStruct data;
+            DOS_ErrorStruct data;
 
             data.text = "DOS_exists: unknown error";
 
@@ -647,7 +647,7 @@ int DOS_exists(const char *path)
             data.data = 0;
             data.oserror = errno;
 
-            ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+            ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
             return 0;
         }
@@ -699,7 +699,7 @@ static const char *DOS_getcurrentdir(void)
 
     if (retval == NULL)
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_getcurrentdir: unknown error";
 
@@ -711,7 +711,7 @@ static const char *DOS_getcurrentdir(void)
         data.data = 0;
         data.oserror = err;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return NULL;
     }
@@ -738,7 +738,7 @@ int DOS_setcurrentdir(const char *path)
 
     if (new_dir == NULL)
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_setcurrentdir: unknown error";
 
@@ -750,7 +750,7 @@ int DOS_setcurrentdir(const char *path)
         data.data = 0;
         data.oserror = ENOENT;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return 0;
     }
@@ -767,14 +767,14 @@ static int DOS_eof(int file_handle)
 
     if (!(DOS_file_entries[file_handle].flags & 1))
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_eof: File not open";
         data.filename = " ";
         data.data = file_handle;
         data.oserror = errno;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return 0;
     }
@@ -782,14 +782,14 @@ static int DOS_eof(int file_handle)
     origpos = lseek(DOS_file_entries[file_handle].fd, 0, SEEK_CUR);
     if (origpos == -1)
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_eof: invalid File Handle";
         data.filename = " ";
         data.data = file_handle;
         data.oserror = errno;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return -1;
     }
@@ -808,14 +808,14 @@ int DOS_GetSeekPosition(int file_handle)
 
     if (!(DOS_file_entries[file_handle].flags & 1))
     {
-        DOS_ErrorDataStruct data;
+        DOS_ErrorStruct data;
 
         data.text = "DOS_GetSeekPosition: File not open";
         data.filename = " ";
         data.data = file_handle;
         data.oserror = 0;
 
-        ERROR_AddMessage(DOS_PrintData, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
+        ERROR_PushError(DOS_LocalPrintError, "BBDOS Library", sizeof(data), (const uint8_t *) &data);
 
         return 0;
     }
@@ -823,9 +823,9 @@ int DOS_GetSeekPosition(int file_handle)
     return lseek(DOS_file_entries[file_handle].fd, 0, SEEK_CUR);
 }
 
-static void DOS_PrintData(char *buffer, const uint8_t *data)
+static void DOS_LocalPrintError(char *buffer, const uint8_t *data)
 {
-#define DATA (((DOS_ErrorDataStruct *)data))
+#define DATA (((DOS_ErrorStruct *)data))
     sprintf(buffer, " %s - FILENAME: %s - DATA: %ld - OSERROR: %d", DATA->text, DATA->filename, DATA->data, (int)DATA->oserror);
 #undef DATA
 }

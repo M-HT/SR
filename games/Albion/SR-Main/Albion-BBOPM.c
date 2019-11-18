@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018 Roman Pauer
+ *  Copyright (C) 2018-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -33,10 +33,10 @@ typedef struct {
     const char *text;
     int data1;
     int data2;
-} OPM_ErrorDataStruct;
+} OPM_ErrorStruct;
 
 
-static void OPM_PrintData(char *buffer, const uint8_t *data);
+static void OPM_LocalPrintError(char *buffer, const uint8_t *data);
 
 static void ASM_DrawFilledRectangle(uint8_t *dst, uint8_t color, unsigned int stridediff, int width, int height);
 static void ASM_DrawVerticalLine(uint8_t *dst, uint8_t color, int linelength, unsigned int stride);
@@ -60,13 +60,13 @@ int OPM_New(unsigned int width, unsigned int height, unsigned int bytes_per_pixe
         pixel_map->buffer = (uint8_t *) BASEMEM_Alloc(size, BASEMEM_XMS_MEMORY | BASEMEM_ZERO_MEMORY);
         if (pixel_map->buffer == NULL)
         {
-            OPM_ErrorDataStruct data;
+            OPM_ErrorStruct data;
 
             data.text = "OPM_New: Cannot Allocate Mem for PixelMap width,height ";
             data.data1 = width;
             data.data2 = height;
 
-            ERROR_AddMessage(OPM_PrintData, "BBOPM Library", sizeof(data), (const uint8_t *) &data);
+            ERROR_PushError(OPM_LocalPrintError, "BBOPM Library", sizeof(data), (const uint8_t *) &data);
 
             return 0;
         }
@@ -95,7 +95,7 @@ int OPM_New(unsigned int width, unsigned int height, unsigned int bytes_per_pixe
     return 1;
 }
 
-void OPM_Delete(OPM_Struct *pixel_map)
+void OPM_Del(OPM_Struct *pixel_map)
 {
     if (!(pixel_map->flags & BBOPM_VIEW))
     {
@@ -149,7 +149,7 @@ void OPM_SetViewClipStart(OPM_Struct *view_pixel_map, int clip_x, int clip_y)
     view_pixel_map->buffer = base_pixel_map->buffer + view_pixel_map->stride * clip_y + clip_x;
 }
 
-void OPM_NewView(OPM_Struct *base_pixel_map, OPM_Struct *view_pixel_map, int view_x, int view_y, int view_width, int view_height)
+void OPM_CreateVirtualOPM(OPM_Struct *base_pixel_map, OPM_Struct *view_pixel_map, int view_x, int view_y, int view_width, int view_height)
 {
     view_pixel_map->flags = BBOPM_VIEW | BBOPM_UNKNOWN4 | BBOPM_MODIFIED;
     view_pixel_map->view_x = view_x;
@@ -212,7 +212,7 @@ void OPM_NewView(OPM_Struct *base_pixel_map, OPM_Struct *view_pixel_map, int vie
     view_pixel_map->buffer = base_pixel_map->buffer + view_pixel_map->stride * view_y + view_x;
 }
 
-void OPM_PutPixel(OPM_Struct *pixel_map, int x, int y, uint8_t color)
+void OPM_SetPixel(OPM_Struct *pixel_map, int x, int y, uint8_t color)
 {
     x += pixel_map->origin_x;
     y += pixel_map->origin_y;
@@ -249,7 +249,7 @@ static uint8_t OPM_GetPixel(OPM_Struct *pixel_map, int x, int y)
 }
 #endif
 
-void OPM_DrawHorizontalLine(OPM_Struct *pixel_map, int x, int y, int length, uint8_t color)
+void OPM_HorLine(OPM_Struct *pixel_map, int x, int y, int length, uint8_t color)
 {
     x += pixel_map->origin_x;
     y += pixel_map->origin_y;
@@ -274,7 +274,7 @@ void OPM_DrawHorizontalLine(OPM_Struct *pixel_map, int x, int y, int length, uin
     pixel_map->flags |= BBOPM_MODIFIED;
 }
 
-void OPM_DrawVerticalLine(OPM_Struct *pixel_map, int x, int y, int length, uint8_t color)
+void OPM_VerLine(OPM_Struct *pixel_map, int x, int y, int length, uint8_t color)
 {
     x += pixel_map->origin_x;
     y += pixel_map->origin_y;
@@ -299,7 +299,7 @@ void OPM_DrawVerticalLine(OPM_Struct *pixel_map, int x, int y, int length, uint8
     pixel_map->flags |= BBOPM_MODIFIED;
 }
 
-void OPM_DrawRectangle(OPM_Struct *pixel_map, int x, int y, int width, int height, uint8_t color)
+void OPM_Box(OPM_Struct *pixel_map, int x, int y, int width, int height, uint8_t color)
 {
     int draw_left_line, draw_right_line, draw_top_line, draw_bottom_line;
 
@@ -357,7 +357,7 @@ void OPM_DrawRectangle(OPM_Struct *pixel_map, int x, int y, int width, int heigh
     pixel_map->flags |= BBOPM_MODIFIED;
 }
 
-void OPM_DrawFilledRectangle(OPM_Struct *pixel_map, int x, int y, int width, int height, uint8_t color)
+void OPM_FillBox(OPM_Struct *pixel_map, int x, int y, int width, int height, uint8_t color)
 {
     x += pixel_map->origin_x;
     y += pixel_map->origin_y;
@@ -392,7 +392,7 @@ void OPM_DrawFilledRectangle(OPM_Struct *pixel_map, int x, int y, int width, int
     pixel_map->flags |= BBOPM_MODIFIED;
 }
 
-void OPM_CopyRectangle(OPM_Struct *src_pixel_map, OPM_Struct *dst_pixel_map, int src_x, int src_y, int src_width, int src_height, int dst_x, int dst_y)
+void OPM_CopyOPMOPM(OPM_Struct *src_pixel_map, OPM_Struct *dst_pixel_map, int src_x, int src_y, int src_width, int src_height, int dst_x, int dst_y)
 {
     int clip_x, clip_y, clip_endx, clip_endy, add_x, add_y;
     uint8_t *src, *dst;
@@ -502,9 +502,9 @@ void OPM_CopyRectangle(OPM_Struct *src_pixel_map, OPM_Struct *dst_pixel_map, int
     dst_pixel_map->flags |= BBOPM_MODIFIED;
 }
 
-static void OPM_PrintData(char *buffer, const uint8_t *data)
+static void OPM_LocalPrintError(char *buffer, const uint8_t *data)
 {
-#define DATA (((OPM_ErrorDataStruct *)data))
+#define DATA (((OPM_ErrorStruct *)data))
     sprintf(buffer, "ERROR!: %s  %ld, %ld", DATA->text, DATA->data1, DATA->data2);
 #undef DATA
 }

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018 Roman Pauer
+ *  Copyright (C) 2018-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 extern int DOS_Init(void);
-extern void DOS_DeInit(void);
+extern void DOS_Exit(void);
 extern int DOS_Open(const char *path, unsigned int mode);
 extern int DOS_Close(int file_handle);
 extern int DOS_Read(int file_handle, void *buffer, unsigned int length);

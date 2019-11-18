@@ -143,27 +143,27 @@ extern SR_AIL_start_sequence
 extern SR_AIL_stop_sequence
 
 extern SR_ERROR_Init
-extern SR_ERROR_ClearMessages
-extern SR_ERROR_AddMessage
-extern SR_ERROR_RemoveMessage
-extern SR_ERROR_NumMessagesIsZero
-extern SR_ERROR_PrintAndClearMessages
+extern SR_ERROR_ClearStack
+extern SR_ERROR_PushError
+extern SR_ERROR_PopError
+extern SR_ERROR_IsStackEmpty
+extern SR_ERROR_PrintAllErrors
 
 extern SR_BASEMEM_Init
-extern SR_BASEMEM_Deinit
+extern SR_BASEMEM_Exit
 extern SR_BASEMEM_GetFreeMemSize
 extern SR_BASEMEM_Alloc
 extern SR_BASEMEM_Free
 extern SR_BASEMEM_LockRegion
 extern SR_BASEMEM_UnlockRegion
-extern SR_BASEMEM_MemSetByte
-extern SR_BASEMEM_MemSetDword
-extern SR_BASEMEM_MemMove
+extern SR_BASEMEM_FillMemByte
+extern SR_BASEMEM_FillMemLong
+extern SR_BASEMEM_CopyMem
 extern SR_BASEMEM_AlignMemptr
 extern SR_BASEMEM_PrintReport
 
 extern SR_DOS_Init
-extern SR_DOS_DeInit
+extern SR_DOS_Exit
 extern SR_DOS_Open
 extern SR_DOS_Close
 extern SR_DOS_Read
@@ -175,15 +175,15 @@ extern SR_DOS_setcurrentdir
 extern SR_DOS_GetSeekPosition
 
 extern SR_OPM_New
-extern SR_OPM_Delete
+extern SR_OPM_Del
 extern SR_OPM_SetViewClipStart
-extern SR_OPM_NewView
-extern SR_OPM_PutPixel
-extern SR_OPM_DrawHorizontalLine
-extern SR_OPM_DrawVerticalLine
-extern SR_OPM_DrawRectangle
-extern SR_OPM_DrawFilledRectangle
-extern SR_OPM_CopyRectangle
+extern SR_OPM_CreateVirtualOPM
+extern SR_OPM_SetPixel
+extern SR_OPM_HorLine
+extern SR_OPM_VerLine
+extern SR_OPM_Box
+extern SR_OPM_FillBox
+extern SR_OPM_CopyOPMOPM
 ; 0 params
 extern SR_fcloseall
 extern SR_WaitAfterVerticalRetrace

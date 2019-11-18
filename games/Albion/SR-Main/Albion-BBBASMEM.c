@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018 Roman Pauer
+ *  Copyright (C) 2018-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -41,7 +41,7 @@ typedef struct {
     uint16_t line_number;
     uint16_t reserved;
     const char *filename;
-} BASEMEM_ErrorDataStruct;
+} BASEMEM_ErrorStruct;
 
 typedef struct {
     unsigned int flags;
@@ -76,8 +76,8 @@ static BASEMEM_RegionStruct BASEMEM_regions[MAX_REGIONS];
 static int BASEMEM_page_size;
 
 
-static void BASEMEM_AddErrorMessage(unsigned int error_number, int error_parameter, int line_number, const char *filename_ptr);
-static void BASEMEM_PrintData(char *buffer, const uint8_t *data);
+static void BASEMEM_PushError(unsigned int error_number, int error_parameter, int line_number, const char *filename_ptr);
+static void BASEMEM_LocalPrintError(char *buffer, const uint8_t *data);
 
 
 int BASEMEM_Init(void)
@@ -109,7 +109,7 @@ int BASEMEM_Init(void)
     return 1;
 }
 
-void BASEMEM_Deinit(void)
+void BASEMEM_Exit(void)
 {
     int index;
 
@@ -136,7 +136,7 @@ unsigned int BASEMEM_GetFreeMemSize(unsigned int memory_flags)
         case BASEMEM_DOS_MEMORY:     // DOS memory
             return 6570 << 4;
         default:
-            BASEMEM_AddErrorMessage(13, 0, 353, "bbbasmem.c");
+            BASEMEM_PushError(13, 0, 353, "bbbasmem.c");
             return 0;
     }
 }
@@ -175,7 +175,7 @@ void *BASEMEM_Alloc(unsigned int size, unsigned int memory_flags)
 
     if (free_region_index == -1)
     {
-        BASEMEM_AddErrorMessage(1, 0, 617, "bbbasmem.c");
+        BASEMEM_PushError(1, 0, 617, "bbbasmem.c");
         return NULL;
     }
 
@@ -186,7 +186,7 @@ void *BASEMEM_Alloc(unsigned int size, unsigned int memory_flags)
             mem_ptr = malloc(size);
             if (mem_ptr == NULL)
             {
-                BASEMEM_AddErrorMessage(3, 0, 685, "bbbasmem.c");
+                BASEMEM_PushError(3, 0, 685, "bbbasmem.c");
                 return NULL;
             }
             break;
@@ -195,12 +195,12 @@ void *BASEMEM_Alloc(unsigned int size, unsigned int memory_flags)
             mem_ptr = malloc(size);
             if (mem_ptr == NULL)
             {
-                BASEMEM_AddErrorMessage(2, 0, 648, "bbbasmem.c");
+                BASEMEM_PushError(2, 0, 648, "bbbasmem.c");
                 return NULL;
             }
             break;
         default:
-            BASEMEM_AddErrorMessage(13, 0, 802, "bbbasmem.c");
+            BASEMEM_PushError(13, 0, 802, "bbbasmem.c");
             return NULL;
     }
 
@@ -222,11 +222,11 @@ void *BASEMEM_Alloc(unsigned int size, unsigned int memory_flags)
 
     if (memory_flags & BASEMEM_ZERO_MEMORY)
     {
-        BASEMEM_MemSetByte(mem_ptr, size, 0);
+        BASEMEM_FillMemByte(mem_ptr, size, 0);
     }
     else
     {
-        BASEMEM_MemSetByte(mem_ptr, size, 0xCC);
+        BASEMEM_FillMemByte(mem_ptr, size, 0xCC);
     }
 
     return mem_ptr;
@@ -251,11 +251,11 @@ int BASEMEM_Free(void *mem_ptr)
 
     if (found_region_index == -1)
     {
-        BASEMEM_AddErrorMessage(7, 0, 914, "bbbasmem.c");
+        BASEMEM_PushError(7, 0, 914, "bbbasmem.c");
         return 0;
     }
 
-    BASEMEM_MemSetByte(BASEMEM_regions[found_region_index].mem_ptr, BASEMEM_regions[found_region_index].length, 0xCC);
+    BASEMEM_FillMemByte(BASEMEM_regions[found_region_index].mem_ptr, BASEMEM_regions[found_region_index].length, 0xCC);
 
     if (BASEMEM_regions[found_region_index].flags & BASEMEM_MEMORY_LOCKED)
     {
@@ -270,7 +270,7 @@ int BASEMEM_Free(void *mem_ptr)
             free(BASEMEM_regions[found_region_index].mem_ptr);
             break;
         default:
-            BASEMEM_AddErrorMessage(13, 0, 1009, "bbbasmem.c");
+            BASEMEM_PushError(13, 0, 1009, "bbbasmem.c");
             break;
     }
 
@@ -300,14 +300,14 @@ static void *BASEMEM_Realloc(void *mem_ptr, unsigned int size)
 
     if (found_region_index == -1)
     {
-        BASEMEM_AddErrorMessage(7, 0, 1078, "bbbasmem.c");
+        BASEMEM_PushError(7, 0, 1078, "bbbasmem.c");
         return NULL;
     }
 
     old_size = BASEMEM_regions[found_region_index].length;
     if (old_size > size)
     {
-        BASEMEM_MemSetByte((void *) (((uintptr_t)BASEMEM_regions[found_region_index].mem_ptr) + size), old_size - size, 0xCC);
+        BASEMEM_FillMemByte((void *) (((uintptr_t)BASEMEM_regions[found_region_index].mem_ptr) + size), old_size - size, 0xCC);
     }
 
     if (BASEMEM_regions[found_region_index].flags & BASEMEM_MEMORY_LOCKED)
@@ -323,7 +323,7 @@ static void *BASEMEM_Realloc(void *mem_ptr, unsigned int size)
             new_mem_ptr = realloc(BASEMEM_regions[found_region_index].mem_ptr, size);
             if (new_mem_ptr == NULL)
             {
-                BASEMEM_AddErrorMessage(12, 0, 1175, "bbbasmem.c");
+                BASEMEM_PushError(12, 0, 1175, "bbbasmem.c");
                 return NULL;
             }
             break;
@@ -332,12 +332,12 @@ static void *BASEMEM_Realloc(void *mem_ptr, unsigned int size)
             new_mem_ptr = realloc(BASEMEM_regions[found_region_index].mem_ptr, size);
             if (new_mem_ptr == NULL)
             {
-                BASEMEM_AddErrorMessage(11, 0, 1135, "bbbasmem.c");
+                BASEMEM_PushError(11, 0, 1135, "bbbasmem.c");
                 return NULL;
             }
             break;
         default:
-            BASEMEM_AddErrorMessage(13, 0, 1254, "bbbasmem.c");
+            BASEMEM_PushError(13, 0, 1254, "bbbasmem.c");
             return NULL;
     }
 
@@ -357,11 +357,11 @@ static void *BASEMEM_Realloc(void *mem_ptr, unsigned int size)
     {
         if (BASEMEM_regions[found_region_index].flags & BASEMEM_ZERO_MEMORY)
         {
-            BASEMEM_MemSetByte((void *) (((uintptr_t)new_mem_ptr) + old_size), size - old_size, 0);
+            BASEMEM_FillMemByte((void *) (((uintptr_t)new_mem_ptr) + old_size), size - old_size, 0);
         }
         else
         {
-            BASEMEM_MemSetByte((void *) (((uintptr_t)new_mem_ptr) + old_size), size - old_size, 0xCC);
+            BASEMEM_FillMemByte((void *) (((uintptr_t)new_mem_ptr) + old_size), size - old_size, 0xCC);
         }
     }
 
@@ -382,7 +382,7 @@ int BASEMEM_UnlockRegion(void *mem_ptr, unsigned int length)
     return 1;
 }
 
-void BASEMEM_MemSetByte(void *dst, unsigned int length, int c)
+void BASEMEM_FillMemByte(void *dst, unsigned int length, int c)
 {
     if (dst != NULL)
     {
@@ -390,11 +390,11 @@ void BASEMEM_MemSetByte(void *dst, unsigned int length, int c)
     }
     else
     {
-        BASEMEM_AddErrorMessage(16, 0, 1482, "bbbasmem.c");
+        BASEMEM_PushError(16, 0, 1482, "bbbasmem.c");
     }
 }
 
-void BASEMEM_MemSetDword(void *dst, unsigned int length, unsigned int c)
+void BASEMEM_FillMemLong(void *dst, unsigned int length, unsigned int c)
 {
     if (dst != NULL)
     {
@@ -412,11 +412,11 @@ void BASEMEM_MemSetDword(void *dst, unsigned int length, unsigned int c)
     }
     else
     {
-        BASEMEM_AddErrorMessage(16, 0, 1482, "bbbasmem.c");
+        BASEMEM_PushError(16, 0, 1482, "bbbasmem.c");
     }
 }
 
-void BASEMEM_MemMove(const void *src, void *dst, unsigned int length)
+void BASEMEM_CopyMem(const void *src, void *dst, unsigned int length)
 {
     if ((src != NULL) && (dst != NULL))
     {
@@ -424,7 +424,7 @@ void BASEMEM_MemMove(const void *src, void *dst, unsigned int length)
     }
     else
     {
-        BASEMEM_AddErrorMessage(16, 0, 1576, "bbbasmem.c");
+        BASEMEM_PushError(16, 0, 1576, "bbbasmem.c");
     }
 }
 
@@ -433,24 +433,24 @@ void *BASEMEM_AlignMemptr(void *mem_ptr)
     return (void *) ( (((uintptr_t)mem_ptr) + 7) & ~((uintptr_t)7) );
 }
 
-static void BASEMEM_AddErrorMessage(unsigned int error_number, int error_parameter, int line_number, const char *filename_ptr)
+static void BASEMEM_PushError(unsigned int error_number, int error_parameter, int line_number, const char *filename_ptr)
 {
-    BASEMEM_ErrorDataStruct data;
+    BASEMEM_ErrorStruct data;
 
     data.error_number = error_number;
     data.error_parameter = error_parameter;
     data.line_number = line_number;
     data.filename = filename_ptr;
 
-    ERROR_AddMessage(BASEMEM_PrintData, "BASEMEM", sizeof(data), (const uint8_t *) &data);
+    ERROR_PushError(BASEMEM_LocalPrintError, "BASEMEM", sizeof(data), (const uint8_t *) &data);
 }
 
-static void BASEMEM_PrintData(char *buffer, const uint8_t *data)
+static void BASEMEM_LocalPrintError(char *buffer, const uint8_t *data)
 {
     unsigned int error_number, error_parameter;
     char tempbuf[100];
 
-#define DATA (((BASEMEM_ErrorDataStruct *)data))
+#define DATA (((BASEMEM_ErrorStruct *)data))
     error_number = DATA->error_number;
     if (error_number > 16)
     {

@@ -56,27 +56,27 @@ loc_8F3C4,SR_AIL_start_sequence
 loc_8F431,SR_AIL_stop_sequence
 
 loc_832A9,SR_ERROR_Init
-loc_832DA,SR_ERROR_ClearMessages
-loc_8332E,SR_ERROR_AddMessage
-loc_8343D,SR_ERROR_RemoveMessage
-loc_8346D,SR_ERROR_NumMessagesIsZero
-loc_834AB,SR_ERROR_PrintAndClearMessages
+loc_832DA,SR_ERROR_ClearStack
+loc_8332E,SR_ERROR_PushError
+loc_8343D,SR_ERROR_PopError
+loc_8346D,SR_ERROR_IsStackEmpty
+loc_834AB,SR_ERROR_PrintAllErrors
 
 loc_83820,SR_BASEMEM_Init
-loc_83938,SR_BASEMEM_Deinit
+loc_83938,SR_BASEMEM_Exit
 loc_839B0,SR_BASEMEM_GetFreeMemSize
 loc_83CEF,SR_BASEMEM_Alloc
 loc_84297,SR_BASEMEM_Free
 loc_84B3C,SR_BASEMEM_LockRegion
 loc_84C16,SR_BASEMEM_UnlockRegion
-loc_84CF0,SR_BASEMEM_MemSetByte
-loc_84D44,SR_BASEMEM_MemSetDword
-loc_84DC1,SR_BASEMEM_MemMove
+loc_84CF0,SR_BASEMEM_FillMemByte
+loc_84D44,SR_BASEMEM_FillMemLong
+loc_84DC1,SR_BASEMEM_CopyMem
 loc_84E1B,SR_BASEMEM_AlignMemptr
 loc_84F87,SR_BASEMEM_PrintReport
 
 loc_85767,SR_DOS_Init
-loc_85831,SR_DOS_DeInit
+loc_85831,SR_DOS_Exit
 loc_858AE,SR_DOS_Open
 loc_85B27,SR_DOS_Close
 loc_85BCA,SR_DOS_Read
@@ -88,15 +88,15 @@ loc_866D7,SR_DOS_setcurrentdir
 loc_868B4,SR_DOS_GetSeekPosition
 
 loc_915A0,SR_OPM_New
-loc_91708,SR_OPM_Delete
+loc_91708,SR_OPM_Del
 loc_91750,SR_OPM_SetViewClipStart
-loc_91869,SR_OPM_NewView
-loc_91AA4,SR_OPM_PutPixel
-loc_91C1E,SR_OPM_DrawHorizontalLine
-loc_91D42,SR_OPM_DrawVerticalLine
-loc_91E66,SR_OPM_DrawRectangle
-loc_920F5,SR_OPM_DrawFilledRectangle
-loc_9251D,SR_OPM_CopyRectangle
+loc_91869,SR_OPM_CreateVirtualOPM
+loc_91AA4,SR_OPM_SetPixel
+loc_91C1E,SR_OPM_HorLine
+loc_91D42,SR_OPM_VerLine
+loc_91E66,SR_OPM_Box
+loc_920F5,SR_OPM_FillBox
+loc_9251D,SR_OPM_CopyOPMOPM
 
 loc_8520A,SR_fcloseall
 loc_F191E,SR_WaitAfterVerticalRetrace

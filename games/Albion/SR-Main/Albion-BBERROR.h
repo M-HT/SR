@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018 Roman Pauer
+ *  Copyright (C) 2018-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -27,21 +27,21 @@
 
 #include <stdint.h>
 
-typedef void (*ERROR_LogPrintProc)(const char *error_string);
-typedef void (*ERROR_PrintDataProc)(char *buffer, const uint8_t *data);
+typedef void (*ERROR_OutputFuncPtr)(const char *error_string);
+typedef void (*ERROR_PrintErrorPtr)(char *buffer, const uint8_t *data);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern void ERROR_Init(ERROR_LogPrintProc logprint_proc);
-extern void ERROR_ClearMessages(void);
-extern int  ERROR_AddMessage(ERROR_PrintDataProc msg_printdata_proc, const char *msg_prefix, int msg_data_len, const uint8_t *msg_data);
+extern void ERROR_Init(ERROR_OutputFuncPtr output_func_ptr);
+extern void ERROR_ClearStack(void);
+extern int  ERROR_PushError(ERROR_PrintErrorPtr error_print_error_ptr, const char *error_prefix, int error_data_len, const uint8_t *error_data);
 // todo: remove
-extern int  ERROR_AddMessageDOS(ERROR_PrintDataProc msg_printdata_proc, const char *msg_prefix, int msg_data_len, const uint8_t *msg_data);
-extern void ERROR_RemoveMessage(void);
-extern int  ERROR_NumMessagesIsZero(void);
-extern void ERROR_PrintAndClearMessages(unsigned int flags);
+extern int  ERROR_PushErrorDOS(ERROR_PrintErrorPtr error_print_error_ptr, const char *error_prefix, int error_data_len, const uint8_t *error_data);
+extern void ERROR_PopError(void);
+extern int  ERROR_IsStackEmpty(void);
+extern void ERROR_PrintAllErrors(unsigned int flags);
 
 
 #ifdef __cplusplus

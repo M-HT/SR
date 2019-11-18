@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018 Roman Pauer
+ *  Copyright (C) 2018-2019 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -65,15 +65,15 @@ extern "C" {
 #endif
 
 extern int OPM_New(unsigned int width, unsigned int height, unsigned int bytes_per_pixel, OPM_Struct *pixel_map, uint8_t *buffer);
-extern void OPM_Delete(OPM_Struct *pixel_map);
+extern void OPM_Del(OPM_Struct *pixel_map);
 extern void OPM_SetViewClipStart(OPM_Struct *view_pixel_map, int clip_x, int clip_y);
-extern void OPM_NewView(OPM_Struct *base_pixel_map, OPM_Struct *view_pixel_map, int view_x, int view_y, int view_width, int view_height);
-extern void OPM_PutPixel(OPM_Struct *pixel_map, int x, int y, uint8_t color);
-extern void OPM_DrawHorizontalLine(OPM_Struct *pixel_map, int x, int y, int length, uint8_t color);
-extern void OPM_DrawVerticalLine(OPM_Struct *pixel_map, int x, int y, int length, uint8_t color);
-extern void OPM_DrawRectangle(OPM_Struct *pixel_map, int x, int y, int width, int height, uint8_t color);
-extern void OPM_DrawFilledRectangle(OPM_Struct *pixel_map, int x, int y, int width, int height, uint8_t color);
-extern void OPM_CopyRectangle(OPM_Struct *src_pixel_map, OPM_Struct *dst_pixel_map, int src_x, int src_y, int src_width, int src_height, int dst_x, int dst_y);
+extern void OPM_CreateVirtualOPM(OPM_Struct *base_pixel_map, OPM_Struct *view_pixel_map, int view_x, int view_y, int view_width, int view_height);
+extern void OPM_SetPixel(OPM_Struct *pixel_map, int x, int y, uint8_t color);
+extern void OPM_HorLine(OPM_Struct *pixel_map, int x, int y, int length, uint8_t color);
+extern void OPM_VerLine(OPM_Struct *pixel_map, int x, int y, int length, uint8_t color);
+extern void OPM_Box(OPM_Struct *pixel_map, int x, int y, int width, int height, uint8_t color);
+extern void OPM_FillBox(OPM_Struct *pixel_map, int x, int y, int width, int height, uint8_t color);
+extern void OPM_CopyOPMOPM(OPM_Struct *src_pixel_map, OPM_Struct *dst_pixel_map, int src_x, int src_y, int src_width, int src_height, int dst_x, int dst_y);
 
 
 #ifdef __cplusplus

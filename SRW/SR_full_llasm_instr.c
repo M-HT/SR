@@ -3523,9 +3523,24 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                         ud_obj.pfx_seg == UD_R_FS
                        )
                     {
-                        // mov reg, fs:[]
+                        // mov reg, fs:[const]
 
                         OUTPUT_PARAMSTRING("call x86_read_fs_dword 0x%x\n", ud_obj.operand[1].lval.udword);
+                        OUTPUT_PARAMSTRING("mov %s, tmp0\n", X86REGSTR(ud_obj.operand[0].base));
+                    }
+                    else if (ud_obj.mnemonic == UD_Imov &&
+                        ud_obj.operand[1].type == UD_OP_MEM &&
+                        (ud_obj.operand[1].base >= UD_R_EAX && ud_obj.operand[1].base <= UD_R_EDI) &&
+                        ud_obj.operand[1].index == UD_NONE &&
+                        ud_obj.operand[1].lval.udword == 0 &&
+                        fixup[1] == NULL &&
+                        (ud_obj.operand[0].base >= UD_R_EAX && ud_obj.operand[0].base <= UD_R_EDI) &&
+                        ud_obj.pfx_seg == UD_R_FS
+                       )
+                    {
+                        // mov reg, fs:[reg]
+
+                        OUTPUT_PARAMSTRING("call x86_read_fs_dword %s\n", X86REGSTR(ud_obj.operand[1].base));
                         OUTPUT_PARAMSTRING("mov %s, tmp0\n", X86REGSTR(ud_obj.operand[0].base));
                     }
                     else if (ud_obj.operand[0].base >= UD_R_EAX && ud_obj.operand[0].base <= UD_R_EDI)
@@ -3724,9 +3739,24 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                         ud_obj.pfx_seg == UD_R_FS
                        )
                     {
-                        // mov fs:[], reg
+                        // mov fs:[const], reg
 
                         OUTPUT_PARAMSTRING("call x86_write_fs_dword 0x%x, %s\n", ud_obj.operand[0].lval.udword, X86REGSTR(ud_obj.operand[1].base));
+                    }
+                    else if (ud_obj.mnemonic == UD_Imov &&
+                        ud_obj.operand[0].base >= UD_R_EAX && ud_obj.operand[0].base <= UD_R_EDI &&
+                        ud_obj.operand[0].index == UD_NONE &&
+                        ud_obj.operand[0].lval.udword == 0 &&
+                        fixup[0] == NULL &&
+                        fixup[1] == NULL &&
+                        ud_obj.operand[1].type == UD_OP_REG &&
+                        ud_obj.operand[1].base >= UD_R_EAX && ud_obj.operand[1].base <= UD_R_EDI &&
+                        ud_obj.pfx_seg == UD_R_FS
+                       )
+                    {
+                        // mov fs:[reg], reg
+
+                        OUTPUT_PARAMSTRING("call x86_write_fs_dword %s, %s\n", X86REGSTR(ud_obj.operand[0].base), X86REGSTR(ud_obj.operand[1].base));
                     }
                     else if (ud_obj.operand[0].size == 32)
                     {

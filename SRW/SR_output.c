@@ -84,6 +84,20 @@ static void SR_write_output_line(output_data *item, void *data)
         {
 #if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_WINDOWS)
             alias_data *alias;
+            export_data *export;
+
+            export = section_export_list_FindEntryEqual1(DATA->Entry, item->ofs);
+            while ((export != NULL) && (export->name[0] != 0))
+            {
+#if (OUTPUT_TYPE == OUT_LLASM)
+                fprintf(DATA->fout, "dlabel %s global\n", (export->internal != NULL)?export->internal:export->name);
+                fprintf(DATA->fout, "dlabel _%s global\n", (export->internal != NULL)?export->internal:export->name);
+#else
+                fprintf(DATA->fout, "%s:\n", (export->internal != NULL)?export->internal:export->name);
+                fprintf(DATA->fout, "_%s:\n", (export->internal != NULL)?export->internal:export->name);
+#endif
+                export = export->next;
+            };
 
             alias = section_alias_list_FindEntryEqual(DATA->Entry, item->ofs);
 
@@ -150,6 +164,68 @@ static void SR_write_output_import_obj(import_data *item, void *data)
 
 #undef DATA
 }
+
+static void SR_write_output_export_obj(export_data *item, void *data)
+{
+    char cbuf[16];
+
+#define DATA ((Entry_FILE *) data)
+
+    SR_get_label(cbuf, section[DATA->Entry].start + item->ofs);
+
+    fprintf(DATA->fout, "extern %s\n", cbuf);
+
+    if (item->name[0] == 0)
+    {
+        fprintf(DATA->fout, "export %s %i\n", cbuf, (unsigned int)item->ordinal);
+    }
+    else
+    {
+        fprintf(DATA->fout, "export %s %s %i\n", cbuf, item->name, (unsigned int)item->ordinal);
+    }
+
+#undef DATA
+}
+#elif (OUTPUT_TYPE != OUT_LLASM)
+static void SR_write_output_export_def(export_data *item, void *data)
+{
+    char cbuf[16];
+
+#define DATA ((Entry_FILE *) data)
+
+    if (item->name[0] == 0)
+    {
+        SR_get_label(cbuf, section[DATA->Entry].start + item->ofs);
+        fprintf(DATA->fout, "%s", cbuf);
+    }
+    else if (item->internal != NULL)
+    {
+        fprintf(DATA->fout, "%s = %s", item->name, item->internal);
+    }
+    else
+    {
+        fprintf(DATA->fout, "%s", item->name);
+    }
+
+    if (item->ordinal != 0)
+    {
+        fprintf(DATA->fout, " @%i", (unsigned int)item->ordinal);
+    }
+
+    if (item->name[0] == 0)
+    {
+        fprintf(DATA->fout, " NONAME");
+    }
+
+    if (section[DATA->Entry].type != ST_CODE)
+    {
+        fprintf(DATA->fout, " DATA");
+    }
+
+    fprintf(DATA->fout, "\n");
+
+#undef DATA
+}
 #endif
 
 #if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_WINDOWS)
@@ -208,17 +284,18 @@ static void SR_write_output_export(export_data *item, void *data)
 
 #define DATA ((Entry_FILE *) data)
 
-    SR_get_label(cbuf, section[DATA->Entry].start + item->ofs);
-
-    fprintf(DATA->fout, "global %s\n", cbuf);
-
-    if (item->name[0] == 0)
+#if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_WINDOWS)
+    if (item->name != NULL)
     {
-        fprintf(DATA->fout, "export %s %i\n", cbuf, (unsigned int)item->ordinal);
+        fprintf(DATA->fout, "global %s\n", (item->internal != NULL)?item->internal:item->name);
+        fprintf(DATA->fout, "global _%s\n", (item->internal != NULL)?item->internal:item->name);
     }
     else
+#endif
     {
-        fprintf(DATA->fout, "export %s %s %i\n", cbuf, item->name, (unsigned int)item->ordinal);
+        SR_get_label(cbuf, section[DATA->Entry].start + item->ofs);
+
+        fprintf(DATA->fout, "global %s\n", cbuf);
     }
 
 #undef DATA
@@ -228,7 +305,7 @@ static void SR_write_output_export(export_data *item, void *data)
 
 static void SR_write_llasm_output_function(output_data *item, void *data)
 {
-    char cbuf[16];
+    char cbuf[16], *export_name;
 
 #define DATA ((Entry_FILE *) data)
 
@@ -237,12 +314,35 @@ static void SR_write_llasm_output_function(output_data *item, void *data)
         if (item->has_label != 0)
         {
             alias_data *alias;
+            export_data *export;
 
             SR_get_label(cbuf, section[DATA->Entry].start + item->ofs);
 
             alias = section_alias_list_FindEntryEqual(DATA->Entry, item->ofs);
+            export = section_export_list_FindEntryEqual(DATA->Entry, item->ofs);
 
-            if (alias != NULL)
+
+            if ((export != NULL) && (export->name[0] != 0))
+            {
+                export_name = (export->internal != NULL)?export->internal:export->name;
+
+                fprintf(DATA->fout, "define %s %s\n", cbuf, export_name);
+
+                while (export->next != NULL)
+                {
+                    export = export->next;
+
+                    fprintf(DATA->fout, "define %s %s\n", (export->internal != NULL)?export->internal:export->name, export_name);
+                    fprintf(DATA->fout, "define c_%s c_%s\n", (export->internal != NULL)?export->internal:export->name, export_name);
+                };
+
+                if (alias != NULL)
+                {
+                    fprintf(DATA->fout, "define %s %s\n", alias->proc, export_name);
+                    fprintf(DATA->fout, "define c_%s c_%s\n", alias->proc, export_name);
+                }
+            }
+            else if (alias != NULL)
             {
                 fprintf(DATA->fout, "define %s %s\n", cbuf, alias->proc);
             }
@@ -263,18 +363,26 @@ static void SR_write_llasm_output_line(output_data *item, void *data)
         if (item->has_label != 0)
         {
             alias_data *alias;
+            export_data *export;
 
-            SR_get_label(cbuf, section[DATA->Entry].start + item->ofs);
-
-            alias = section_alias_list_FindEntryEqual(DATA->Entry, item->ofs);
-
-            if (alias != NULL)
+            export = section_export_list_FindEntryEqual1(DATA->Entry, item->ofs);
+            if ((export != NULL) && (export->name[0] != 0))
             {
-                fprintf(DATA->fout, "proc %s global c_%s\n", alias->proc, alias->proc);
+                fprintf(DATA->fout, "proc %s global c_%s\n", (export->internal != NULL)?export->internal:export->name, (export->internal != NULL)?export->internal:export->name);
             }
             else
             {
-                fprintf(DATA->fout, "proc %s\n", cbuf);
+                alias = section_alias_list_FindEntryEqual(DATA->Entry, item->ofs);
+                if (alias != NULL)
+                {
+                    fprintf(DATA->fout, "proc %s global c_%s\n", alias->proc, alias->proc);
+                }
+                else
+                {
+                    SR_get_label(cbuf, section[DATA->Entry].start + item->ofs);
+
+                    fprintf(DATA->fout, "proc %s\n", cbuf);
+                }
             }
         }
 
@@ -318,6 +426,54 @@ int SR_write_output(const char *fname)
         if ( EF.fout == NULL ) return -1;
 
         import_list_ForEach(&SR_write_output_import_obj, (void *) &EF);
+
+        for (EF.Entry = 0; EF.Entry < num_sections; EF.Entry++)
+        {
+            if (section[EF.Entry].export_list != NULL)
+            {
+                section_export_list_ForEach(EF.Entry, &SR_write_output_export_obj, (void *) &EF);
+            }
+        }
+
+        fclose(EF.fout);
+    }
+#elif (OUTPUT_TYPE != OUT_LLASM)
+    for (EF.Entry = 0; EF.Entry < num_sections; EF.Entry++)
+    {
+        if (section[EF.Entry].export_list != NULL) break;
+    }
+    if (EF.Entry < num_sections)
+    {
+        char *fdefname, *dotptr;
+
+        fdefname = (char *) malloc(strlen(fname) + 1 + 4);
+
+        strcpy(fdefname, fname);
+
+        dotptr = strrchr(fname, '.');
+        if (dotptr != NULL)
+        {
+            strcpy((char *) &(fdefname[dotptr - fname]), ".def");
+        }
+        else
+        {
+            strcat(fdefname, ".def");
+        }
+
+        EF.fout = fopen(fdefname, "wt");
+        free(fdefname);
+
+        if ( EF.fout == NULL ) return -1;
+
+        fprintf(EF.fout, "EXPORTS\n");
+
+        for (EF.Entry = 0; EF.Entry < num_sections; EF.Entry++)
+        {
+            if (section[EF.Entry].export_list != NULL)
+            {
+                section_export_list_ForEach(EF.Entry, &SR_write_output_export_def, (void *) &EF);
+            }
+        }
 
         fclose(EF.fout);
     }

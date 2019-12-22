@@ -114,8 +114,10 @@ typedef struct _region_data_ {
 } region_data;
 
 typedef struct _export_data_ {
-    uint_fast32_t ordinal;      // export ordinal
     uint_fast32_t ofs;          // export offset
+    uint_fast32_t ordinal;      // export ordinal
+    struct _export_data_ *next; // next export with the same offset
+    char          *internal;    // export internal name (undecorated)
     char          name[1];      // export name
 } export_data;
 

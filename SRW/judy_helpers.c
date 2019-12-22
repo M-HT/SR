@@ -413,15 +413,17 @@ region_data *section_region_list_Insert(unsigned int SecNum, Word_t Index, uint_
 }
 
 /* export_list */
-export_data *section_export_list_Insert(unsigned int SecNum, Word_t Index, const char *name, uint_fast32_t offset)
+export_data *section_export_list_Insert(unsigned int SecNum, Word_t Index, uint_fast32_t ordinal, const char *name)
 {
-    export_data *export, **export_value;
+    export_data *export, **export_value, *last;
 
     export = (export_data *)malloc(sizeof(export_data) + ((name)?strlen(name):0));
     if (export == NULL) return NULL;
 
-    export->ordinal = Index;
-    export->ofs = offset;
+    export->ofs = Index;
+    export->ordinal = ordinal;
+    export->next = NULL;
+    export->internal = NULL;
     if (name)
     {
         strcpy(export->name, name);
@@ -440,17 +442,27 @@ export_data *section_export_list_Insert(unsigned int SecNum, Word_t Index, const
 
     if (*export_value != NULL)
     {
-        free(*export_value);
+        last = *export_value;
+        while (last->next != NULL)
+        {
+            last = last->next;
+        };
+
+        last->next = export;
+
+        return export;
     }
+    else
+    {
+        *export_value = export;
 
-    *export_value = export;
-
-    return export;
+        return export;
+    }
 }
 
 void section_export_list_ForEach(unsigned int SecNum, void (*proc)(export_data *export, void *data), void *data)
 {
-    export_data **export_value;
+    export_data **export_value, *export;
     Word_t search_index;
 
     search_index = 0;
@@ -459,7 +471,39 @@ void section_export_list_ForEach(unsigned int SecNum, void (*proc)(export_data *
     {
         proc(*export_value, data);
 
+        export = *export_value;
+        while (export->next != NULL)
+        {
+            export = export->next;
+            proc(export, data);
+        };
+
         JLN(export_value, section[SecNum].export_list, search_index);
+    }
+}
+
+void section_export_list_Delete(unsigned int SecNum, Word_t Index)
+{
+    export_data *export, **export_value, *next;
+    int Rc_int;
+
+    JLG(export_value, section[SecNum].export_list, Index);
+
+    if (export_value != NULL)
+    {
+        export = *export_value;
+        while (export != NULL)
+        {
+            if (export->internal != NULL)
+            {
+                free(export->internal);
+            }
+            next = export->next;
+            free(export);
+            export = next;
+        };
+
+        JLD(Rc_int, section[SecNum].export_list, Index);
     }
 }
 

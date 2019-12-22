@@ -482,9 +482,9 @@ static inline region_data *section_region_list_FindEntryLower(unsigned int SecNu
 
 
 /* export_list */
-export_data *section_export_list_Insert(unsigned int SecNum, Word_t Index, const char *name, uint_fast32_t offset);
+export_data *section_export_list_Insert(unsigned int SecNum, Word_t Index, uint_fast32_t ordinal, const char *name);
 
-static inline export_data *section_export_list_FindEntryEqual(unsigned int SecNum, Word_t Index)
+static inline export_data *section_export_list_FindEntryEqual1(unsigned int SecNum, Word_t Index)
 {
     export_data **export_value;
 
@@ -493,7 +493,27 @@ static inline export_data *section_export_list_FindEntryEqual(unsigned int SecNu
     return (export_value)?*export_value:NULL;
 }
 
+static inline export_data *section_export_list_FindEntryEqual2(unsigned int SecNum, Word_t Index, uint_fast32_t ordinal)
+{
+    export_data **export_value, *export;
+
+    JLG(export_value, section[SecNum].export_list, Index);
+
+    if (export_value == NULL) return NULL;
+
+    export = *export_value;
+
+    while ((export != NULL) && (export->ordinal != ordinal))
+    {
+        export = export->next;
+    };
+
+    return export;
+}
+
 void section_export_list_ForEach(unsigned int SecNum, void (*proc)(export_data *export, void *data), void *data);
+
+void section_export_list_Delete(unsigned int SecNum, Word_t Index);
 
 
 /* import_list */

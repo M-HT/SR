@@ -1278,15 +1278,39 @@ int SRW_LoadFile(const char *fname)
 
                 SR_get_section_reladr(Header->OptionalHeader.ImageBase + AddressTable[OrdinalTable[index]], &Entry, &RelAdr);
 
-                export = section_export_list_FindEntryEqual(Entry, OrdinalTable[index] + Directory->Base);
+                export = section_export_list_FindEntryEqual2(Entry, RelAdr, OrdinalTable[index] + Directory->Base);
                 if (export == NULL)
                 {
-                    export = section_export_list_Insert(Entry, OrdinalTable[index] + Directory->Base, ExportName, RelAdr);
+                    export = section_export_list_Insert(Entry, RelAdr, OrdinalTable[index] + Directory->Base, ExportName);
                     if (export == NULL)
                     {
                         unload_file(&mf);
                         fprintf(stderr, "Error: error adding export - %s\n", ExportName);
                         return -2;
+                    }
+                    else
+                    {
+                        if (ExportName[0] == '_')
+                        {
+                            char *at;
+
+                            at = strchr(ExportName, '@');
+                            if ((at != NULL) && (at[1] >= '0') && (at[1] <= '9'))
+                            {
+                                uint_fast32_t internal_length;
+                                internal_length = (at - ExportName) - 1;
+                                export->internal = (char *) malloc(internal_length + 1);
+                                if (export->internal == NULL)
+                                {
+                                    unload_file(&mf);
+                                    fprintf(stderr, "Error: error allocation export memory - %s\n", ExportName);
+                                    return -4;
+                                }
+
+                                memcpy(export->internal, ExportName + 1, internal_length);
+                                export->internal[internal_length] = 0;
+                            }
+                        }
                     }
                 }
                 else
@@ -1307,10 +1331,10 @@ int SRW_LoadFile(const char *fname)
         {
             SR_get_section_reladr(Header->OptionalHeader.ImageBase + AddressTable[index], &Entry, &RelAdr);
 
-            export = section_export_list_FindEntryEqual(Entry, index + Directory->Base);
+            export = section_export_list_FindEntryEqual2(Entry, RelAdr, index + Directory->Base);
             if (export == NULL)
             {
-                export = section_export_list_Insert(Entry, index + Directory->Base, NULL, RelAdr);
+                export = section_export_list_Insert(Entry, RelAdr, index + Directory->Base, NULL);
                 if (export == NULL)
                 {
                     unload_file(&mf);

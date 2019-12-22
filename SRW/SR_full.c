@@ -95,6 +95,7 @@ static void SR_disassemble_ignore_instructions(Word_t Index, int Value, void *da
         section_output_list_Delete(DATA, Index + index);
         section_bound_list_Delete(DATA, Index + index);
         section_entry_list_Delete(DATA, Index + index);
+        section_export_list_Delete(DATA, Index + index);
     }
 
     if (Index + Value > section[DATA].size)

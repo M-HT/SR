@@ -1134,7 +1134,7 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
         #endif
                 // fallthrough to default
             default:
-                // mov reg, fs:[]
+                // mov reg, fs:[const]
                 if (ud_obj.mnemonic == UD_Imov &&
                     ud_obj.operand[0].type == UD_OP_REG &&
                     ud_obj.operand[1].type == UD_OP_MEM &&
@@ -1156,7 +1156,29 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
                     break;
                 }
 
-                // mov fs:[], reg
+                // mov reg, fs:[reg]
+                if (ud_obj.mnemonic == UD_Imov &&
+                    ud_obj.operand[0].type == UD_OP_REG &&
+                    ud_obj.operand[1].type == UD_OP_MEM &&
+                    (ud_obj.operand[1].base >= UD_R_EAX && ud_obj.operand[1].base <= UD_R_EDI) &&
+                    ud_obj.operand[1].index == UD_NONE &&
+                    ud_obj.operand[1].lval.udword == 0 &&
+                    fixup == NULL &&
+                    (ud_obj.operand[0].base >= UD_R_EAX && ud_obj.operand[0].base <= UD_R_EDI) &&
+                    ud_obj.pfx_seg == UD_R_FS
+                   )
+                {
+                    sprintf(cResult, "push %s\ncall x86_read_fs_dword\npop %s", ud_reg_tab[ud_obj.operand[1].base - UD_R_AL], ud_reg_tab[ud_obj.operand[0].base - UD_R_AL]);
+
+                    output->str = strdup(cResult);
+
+#ifdef DISPLAY_DISASSEMBLY
+                    printf("\t%s\n", output->str);
+#endif
+                    break;
+                }
+
+                // mov fs:[const], reg
                 if (ud_obj.mnemonic == UD_Imov &&
                     ud_obj.operand[1].type == UD_OP_REG &&
                     ud_obj.operand[0].type == UD_OP_MEM &&
@@ -1169,6 +1191,28 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
                    )
                 {
                     sprintf(cResult, "push %s\npush dword 0x%x\ncall x86_write_fs_dword", ud_reg_tab[ud_obj.operand[1].base - UD_R_AL], ud_obj.operand[0].lval.udword);
+
+                    output->str = strdup(cResult);
+
+#ifdef DISPLAY_DISASSEMBLY
+                    printf("\t%s\n", output->str);
+#endif
+                    break;
+                }
+
+                // mov fs:[reg], reg
+                if (ud_obj.mnemonic == UD_Imov &&
+                    ud_obj.operand[1].type == UD_OP_REG &&
+                    ud_obj.operand[0].type == UD_OP_MEM &&
+                    (ud_obj.operand[0].base >= UD_R_EAX && ud_obj.operand[0].base <= UD_R_EDI) &&
+                    ud_obj.operand[0].index == UD_NONE &&
+                    ud_obj.operand[0].lval.udword == 0 &&
+                    fixup == NULL &&
+                    (ud_obj.operand[1].base >= UD_R_EAX && ud_obj.operand[1].base <= UD_R_EDI) &&
+                    ud_obj.pfx_seg == UD_R_FS
+                   )
+                {
+                    sprintf(cResult, "push %s\npush %s\ncall x86_write_fs_dword", ud_reg_tab[ud_obj.operand[1].base - UD_R_AL], ud_reg_tab[ud_obj.operand[0].base - UD_R_AL]);
 
                     output->str = strdup(cResult);
 

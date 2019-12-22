@@ -210,6 +210,27 @@ static void free_extrn_entry(void *entry)
     }
 }
 
+static void free_export_entry(void *entry)
+{
+    export_data *export, *next;
+    export = (export_data *)entry;
+    if (export->internal != NULL)
+    {
+        free(export->internal);
+    }
+    export = export->next;
+    while (export != NULL)
+    {
+        if (export->internal != NULL)
+        {
+            free(export->internal);
+        }
+        next = export->next;
+        free(export);
+        export = next;
+    };
+}
+
 static void free_import_entry(void *entry)
 {
     import_data *import;
@@ -273,7 +294,7 @@ static void deinitialize_values(void)
 		JLFA(Rc_word, section[Entry].ua_esp_list);
 		J1FA(Rc_word, section[Entry].code2data_list);
 		J1FA(Rc_word, section[Entry].data2code_list);
-		free_judy_array_entries(section[Entry].export_list, NULL);
+		free_judy_array_entries(section[Entry].export_list, &free_export_entry);
 	}
 	num_sections = 0;
 

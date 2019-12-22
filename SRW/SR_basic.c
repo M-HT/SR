@@ -121,14 +121,14 @@ static void SR_apply_fixup_export_init(export_data *item, void *data)
         output->has_label = 1;
     }
 
-#if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_WINDOWS)
     if (section[DATA].type == ST_CODE)
     {
         section_entry_list_Insert(DATA, item->ofs);
+#if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_WINDOWS)
         bound = section_bound_list_Insert(DATA, item->ofs);
         if (bound != NULL) bound->begin = 1;
-    }
 #endif
+    }
 
 #undef DATA
 }

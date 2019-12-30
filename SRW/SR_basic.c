@@ -160,7 +160,7 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
     char cbuf2[300];
     output_data *output;
     fixup_data *fixup;
-    uint_fast32_t ofs;
+    uint_fast32_t sec, ofs;
     int *label_value, *code16_area_value;
     Word_t code16_area_index;
     extrn_data *extrn;
@@ -201,9 +201,14 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
 
         label_value = section_label_list_FindEntryEqual(item->tsec, item->tofs);
 
+        sec = item->tsec;
         if (label_value != NULL)
         {
-            output = section_output_list_FindEntryEqualOrLower(item->tsec, item->tofs + *label_value);
+            if (SR_get_section_reladr(section[item->tsec].start + item->tofs + *label_value, &sec, &ofs))
+            {
+                output = section_output_list_FindEntryEqualOrLower(sec, ofs);
+            }
+            else output = NULL;
         }
         else
         {
@@ -225,6 +230,7 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
         }
         else
         {
+            sec = item->tsec;
             ofs = item->tofs;
         }
     }
@@ -234,6 +240,7 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
         if (item->type == FT_SEGMENT) return;
 #endif
         extrn = NULL;
+        sec = item->tsec;
         ofs = item->tofs;
     }
 
@@ -365,7 +372,7 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
     }
     else
     {
-        SR_get_label(cbuf, section[item->tsec].start + ofs);
+        SR_get_label(cbuf, section[sec].start + ofs);
     }
 
     output = section_output_list_FindEntryEqual(DATA->Entry, item->sofs);
@@ -377,14 +384,14 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
             output->str = NULL;
         }
 
-        if (ofs == item->tofs ||
+        if (((sec == item->tsec) && (ofs == item->tofs)) ||
             extrn != NULL)
         {
             sprintf(cbuf2, " %s", cbuf);
         }
         else
         {
-            sprintf(cbuf2, " (%s + (%i))", cbuf, (int)(item->tofs - (int_fast32_t)ofs));
+            sprintf(cbuf2, " (%s + (%i))", cbuf, (int)((section[item->tsec].start + item->tofs) - (section[sec].start + ofs)));
         }
 
         if (item->type == FT_SELFREL)

@@ -309,14 +309,19 @@ static void SR_get_fixup_label(char *cResult, const fixup_data *fixup, const ext
     char cLabel[32];
     int *label_value;
     output_data *output;
-    uint_fast32_t ofs;
+    uint_fast32_t sec, ofs;
 
     // locate label
     label_value = section_label_list_FindEntryEqual(fixup->tsec, fixup->tofs);
 
+    sec = fixup->tsec;
     if (label_value != NULL)
     {
-        output = section_output_list_FindEntryEqualOrLower(fixup->tsec, fixup->tofs + *label_value);
+        if (SR_get_section_reladr(section[fixup->tsec].start + fixup->tofs + *label_value, &sec, &ofs))
+        {
+            output = section_output_list_FindEntryEqualOrLower(sec, ofs);
+        }
+        else output = NULL;
     }
     else if (fixup->tofs >= 0)
     {
@@ -335,6 +340,7 @@ static void SR_get_fixup_label(char *cResult, const fixup_data *fixup, const ext
     }
     else
     {
+        sec = fixup->tsec;
         ofs = fixup->tofs;
     }
 
@@ -345,17 +351,17 @@ static void SR_get_fixup_label(char *cResult, const fixup_data *fixup, const ext
     }
     else
     {
-        SR_get_label(cLabel, section[fixup->tsec].start + ofs);
+        SR_get_label(cLabel, section[sec].start + ofs);
     }
 
-    if (ofs == fixup->tofs ||
+    if (((sec == fixup->tsec) && (ofs == fixup->tofs)) ||
         extrn != NULL)
     {
         strcpy(cResult, cLabel);
     }
     else
     {
-        sprintf(cResult, "(%s + (%i))", cLabel, (int)(fixup->tofs - (int_fast32_t)ofs));
+        sprintf(cResult, "(%s + (%i))", cLabel, (int)((section[fixup->tsec].start + fixup->tofs) - (section[sec].start + ofs)));
     }
 
 }
@@ -657,6 +663,7 @@ static void SR_disassemble_get_memory_address(char *ostr, enum arm_regs madrreg,
     int done, unaligned_access, first, lshift, numop, regalign, distalign, reg1_dword_align, reg2_dword_align;
     int_fast32_t distance;
     int32_t displacement;
+    uint_fast32_t sec, ofs;
 
     if (esp_dword_aligned)
     {
@@ -1161,9 +1168,14 @@ static void SR_disassemble_get_memory_address(char *ostr, enum arm_regs madrreg,
                     // locate label
                     label_value = section_label_list_FindEntryEqual(fixup->tsec, fixup->tofs);
 
+                    sec = fixup->tsec;
                     if (label_value != NULL)
                     {
-                        output = section_output_list_FindEntryEqualOrLower(fixup->tsec, fixup->tofs + *label_value);
+                        if (SR_get_section_reladr(section[fixup->tsec].start + fixup->tofs + *label_value, &sec, &ofs))
+                        {
+                            output = section_output_list_FindEntryEqualOrLower(sec, ofs);
+                        }
+                        else output = NULL;
                     }
                     else
                     {
@@ -1174,7 +1186,7 @@ static void SR_disassemble_get_memory_address(char *ostr, enum arm_regs madrreg,
                     {
                         if (output->type == OT_INSTRUCTION)
                         {
-                            if (fixup->tofs == output->ofs)
+                            if ((fixup->tsec == sec) && (fixup->tofs == output->ofs))
                             {
                                 distance = 0;
                                 distalign = 4;
@@ -1183,7 +1195,7 @@ static void SR_disassemble_get_memory_address(char *ostr, enum arm_regs madrreg,
                             }
                             else
                             {
-                                distance = (fixup->tofs - output->ofs);
+                                distance = (int)((section[fixup->tsec].start + fixup->tofs) - (section[sec].start + output->ofs));
                                 distalign = 1;
 
                                 fprintf(stderr, "Error: reading inside of instruction - %i - %i - %i\n", (unsigned int)fixup->sofs, (unsigned int)fixup->tsec, (unsigned int)fixup->tofs);
@@ -1193,7 +1205,7 @@ static void SR_disassemble_get_memory_address(char *ostr, enum arm_regs madrreg,
                         {
                             SR_disassemble_find_distance(fixup->tsec, output, &distance, &distalign);
 
-                            distance += (fixup->tofs - output->ofs);
+                            distance += (int)((section[fixup->tsec].start + fixup->tofs) - (section[sec].start + output->ofs));
                         }
 
                         if (label_value != NULL)

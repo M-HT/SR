@@ -129,7 +129,7 @@ int SR_disassemble_convert_fixup(const char *ostr, char *dst, fixup_data *fixup,
     char *str1, *str2;
     int *label_value;
     output_data *output;
-    uint_fast32_t ofs;
+    uint_fast32_t sec, ofs;
     int length1;
 
     if (fixup->type == FT_SEGMENT)
@@ -227,13 +227,18 @@ int SR_disassemble_convert_fixup(const char *ostr, char *dst, fixup_data *fixup,
         label_value = NULL;
     }
 
+    sec = fixup->tsec;
     if (fixup->type == FT_SEGMENT || fixup->type == FT_IMAGEBASE)
     {
         output = NULL;
     }
     else if (label_value != NULL)
     {
-        output = section_output_list_FindEntryEqualOrLower(fixup->tsec, fixup->tofs + *label_value);
+        if (SR_get_section_reladr(section[fixup->tsec].start + fixup->tofs + *label_value, &sec, &ofs))
+        {
+            output = section_output_list_FindEntryEqualOrLower(sec, ofs);
+        }
+        else output = NULL;
     }
     else
     {
@@ -258,6 +263,7 @@ int SR_disassemble_convert_fixup(const char *ostr, char *dst, fixup_data *fixup,
     }
     else
     {
+        sec = fixup->tsec;
         ofs = fixup->tofs;
     }
 
@@ -278,17 +284,17 @@ int SR_disassemble_convert_fixup(const char *ostr, char *dst, fixup_data *fixup,
     }
     else
     {
-        SR_get_label(cbuf, section[fixup->tsec].start + ofs);
+        SR_get_label(cbuf, section[sec].start + ofs);
     }
 
-    if (ofs == fixup->tofs ||
+    if (((sec == fixup->tsec) && (ofs == fixup->tofs)) ||
         extrn != NULL)
     {
         sprintf(&(dst[length1]), "%s", cbuf);
     }
     else
     {
-        sprintf(&(dst[length1]), "(%s + (%i))", cbuf, (int)(fixup->tofs - (int_fast32_t)ofs));
+        sprintf(&(dst[length1]), "(%s + (%i))", cbuf, (int)((section[fixup->tsec].start + fixup->tofs) - (section[sec].start + ofs)));
     }
 
     // copy second part of the string

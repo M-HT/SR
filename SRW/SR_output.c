@@ -84,20 +84,6 @@ static void SR_write_output_line(output_data *item, void *data)
         {
 #if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_WINDOWS)
             alias_data *alias;
-            export_data *export;
-
-            export = section_export_list_FindEntryEqual1(DATA->Entry, item->ofs);
-            while ((export != NULL) && (export->name[0] != 0))
-            {
-#if (OUTPUT_TYPE == OUT_LLASM)
-                fprintf(DATA->fout, "dlabel %s global\n", (export->internal != NULL)?export->internal:export->name);
-                fprintf(DATA->fout, "dlabel _%s global\n", (export->internal != NULL)?export->internal:export->name);
-#else
-                fprintf(DATA->fout, "%s:\n", (export->internal != NULL)?export->internal:export->name);
-                fprintf(DATA->fout, "_%s:\n", (export->internal != NULL)?export->internal:export->name);
-#endif
-                export = export->next;
-            };
 
             alias = section_alias_list_FindEntryEqual(DATA->Entry, item->ofs);
 
@@ -111,6 +97,24 @@ static void SR_write_output_line(output_data *item, void *data)
                 fprintf(DATA->fout, "_%s:\n", alias->proc);
 #endif
             }
+            else
+            {
+                export_data *export;
+
+                export = section_export_list_FindEntryEqual1(DATA->Entry, item->ofs);
+                while ((export != NULL) && (export->name[0] != 0))
+                {
+#if (OUTPUT_TYPE == OUT_LLASM)
+                    fprintf(DATA->fout, "dlabel %s global\n", (export->internal != NULL)?export->internal:export->name);
+                    fprintf(DATA->fout, "dlabel _%s global\n", (export->internal != NULL)?export->internal:export->name);
+#else
+                    fprintf(DATA->fout, "%s:\n", (export->internal != NULL)?export->internal:export->name);
+                    fprintf(DATA->fout, "_%s:\n", (export->internal != NULL)?export->internal:export->name);
+#endif
+                    export = export->next;
+                };
+            }
+
             SR_get_label(cbuf, section[DATA->Entry].start + item->ofs);
             if ((alias == NULL) || strcmp(cbuf, alias->proc))
             {
@@ -190,10 +194,24 @@ static void SR_write_output_export_obj(export_data *item, void *data)
 static void SR_write_output_export_def(export_data *item, void *data)
 {
     char cbuf[16];
+    alias_data *alias;
 
 #define DATA ((Entry_FILE *) data)
 
-    if (item->name[0] == 0)
+    alias = section_alias_list_FindEntryEqual(DATA->Entry, item->ofs);
+
+    if (alias != NULL)
+    {
+        if (item->name[0] != 0)
+        {
+            fprintf(DATA->fout, "%s = %s", item->name, alias->proc);
+        }
+        else
+        {
+            fprintf(DATA->fout, "%s", alias->proc);
+        }
+    }
+    else if (item->name[0] == 0)
     {
         SR_get_label(cbuf, section[DATA->Entry].start + item->ofs);
         fprintf(DATA->fout, "%s", cbuf);
@@ -281,14 +299,20 @@ static void SR_write_output_import(import_data *item, void *data)
 static void SR_write_output_export(export_data *item, void *data)
 {
     char cbuf[16];
+    alias_data *alias;
 
 #define DATA ((Entry_FILE *) data)
 
 #if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_WINDOWS)
     if (item->name != NULL)
     {
-        fprintf(DATA->fout, "global %s\n", (item->internal != NULL)?item->internal:item->name);
-        fprintf(DATA->fout, "global _%s\n", (item->internal != NULL)?item->internal:item->name);
+        alias = section_alias_list_FindEntryEqual(DATA->Entry, item->ofs);
+
+        if (alias == NULL)
+        {
+            fprintf(DATA->fout, "global %s\n", (item->internal != NULL)?item->internal:item->name);
+            fprintf(DATA->fout, "global _%s\n", (item->internal != NULL)?item->internal:item->name);
+        }
     }
     else
 #endif
@@ -319,32 +343,30 @@ static void SR_write_llasm_output_function(output_data *item, void *data)
             SR_get_label(cbuf, section[DATA->Entry].start + item->ofs);
 
             alias = section_alias_list_FindEntryEqual(DATA->Entry, item->ofs);
-            export = section_export_list_FindEntryEqual(DATA->Entry, item->ofs);
 
-
-            if ((export != NULL) && (export->name[0] != 0))
-            {
-                export_name = (export->internal != NULL)?export->internal:export->name;
-
-                fprintf(DATA->fout, "define %s %s\n", cbuf, export_name);
-
-                while (export->next != NULL)
-                {
-                    export = export->next;
-
-                    fprintf(DATA->fout, "define %s %s\n", (export->internal != NULL)?export->internal:export->name, export_name);
-                    fprintf(DATA->fout, "define c_%s c_%s\n", (export->internal != NULL)?export->internal:export->name, export_name);
-                };
-
-                if (alias != NULL)
-                {
-                    fprintf(DATA->fout, "define %s %s\n", alias->proc, export_name);
-                    fprintf(DATA->fout, "define c_%s c_%s\n", alias->proc, export_name);
-                }
-            }
-            else if (alias != NULL)
+            if (alias != NULL)
             {
                 fprintf(DATA->fout, "define %s %s\n", cbuf, alias->proc);
+            }
+            else
+            {
+                export = section_export_list_FindEntryEqual(DATA->Entry, item->ofs);
+
+                if ((export != NULL) && (export->name[0] != 0))
+                {
+                    export_name = (export->internal != NULL)?export->internal:export->name;
+
+                    fprintf(DATA->fout, "define %s %s\n", cbuf, export_name);
+
+                    export = export->next;
+                    while ((export != NULL) && (export->name[0] != 0))
+                    {
+                        fprintf(DATA->fout, "define %s %s\n", (export->internal != NULL)?export->internal:export->name, export_name);
+                        fprintf(DATA->fout, "define c_%s c_%s\n", (export->internal != NULL)?export->internal:export->name, export_name);
+
+                        export = export->next;
+                    };
+                }
             }
         }
     }
@@ -365,17 +387,17 @@ static void SR_write_llasm_output_line(output_data *item, void *data)
             alias_data *alias;
             export_data *export;
 
-            export = section_export_list_FindEntryEqual1(DATA->Entry, item->ofs);
-            if ((export != NULL) && (export->name[0] != 0))
+            alias = section_alias_list_FindEntryEqual(DATA->Entry, item->ofs);
+            if (alias != NULL)
             {
-                fprintf(DATA->fout, "proc %s global c_%s\n", (export->internal != NULL)?export->internal:export->name, (export->internal != NULL)?export->internal:export->name);
+                fprintf(DATA->fout, "proc %s global c_%s\n", alias->proc, alias->proc);
             }
             else
             {
-                alias = section_alias_list_FindEntryEqual(DATA->Entry, item->ofs);
-                if (alias != NULL)
+                export = section_export_list_FindEntryEqual1(DATA->Entry, item->ofs);
+                if ((export != NULL) && (export->name[0] != 0))
                 {
-                    fprintf(DATA->fout, "proc %s global c_%s\n", alias->proc, alias->proc);
+                    fprintf(DATA->fout, "proc %s global c_%s\n", (export->internal != NULL)?export->internal:export->name, (export->internal != NULL)?export->internal:export->name);
                 }
                 else
                 {

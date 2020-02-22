@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016-2019 Roman Pauer
+@@  Copyright (C) 2016-2020 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -110,7 +110,7 @@
 
 .extern OPM_New
 .extern OPM_Del
-.extern OPM_SetViewClipStart
+.extern OPM_SetVirtualClipStart
 .extern OPM_CreateVirtualOPM
 .extern OPM_SetPixel
 .extern OPM_HorLine
@@ -274,7 +274,7 @@
 
 .global SR_OPM_New
 .global SR_OPM_Del
-.global SR_OPM_SetViewClipStart
+.global SR_OPM_SetVirtualClipStart
 .global SR_OPM_CreateVirtualOPM
 .global SR_OPM_SetPixel
 .global SR_OPM_HorLine
@@ -1115,24 +1115,24 @@ SR_OPM_Del:
 
 @ end procedure SR_OPM_Del
 
-SR_OPM_SetViewClipStart:
+SR_OPM_SetVirtualClipStart:
 
-@ eax = OPM_Struct *view_pixel_map
+@ eax = OPM_Struct *virtual_pixel_map
 @ edx = int clip_x
 @ ebx = int clip_y
 
-        Game_Call_Asm_Reg3 OPM_SetViewClipStart,-1
+        Game_Call_Asm_Reg3 OPM_SetVirtualClipStart,-1
 
-@ end procedure SR_OPM_SetViewClipStart
+@ end procedure SR_OPM_SetVirtualClipStart
 
 SR_OPM_CreateVirtualOPM:
 
 @ eax = OPM_Struct *base_pixel_map
-@ edx = OPM_Struct *view_pixel_map
-@ ebx = int view_x
-@ ecx = int view_y
-@ [esp +   4] = int view_width
-@ [esp + 2*4] = int view_height
+@ edx = OPM_Struct *virtual_pixel_map
+@ ebx = int virtual_x
+@ ecx = int virtual_y
+@ [esp +   4] = int virtual_width
+@ [esp + 2*4] = int virtual_height
 @
 @ [esp    ] = return address
 

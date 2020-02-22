@@ -89,7 +89,7 @@ loc_868B4,SR_DOS_GetSeekPosition
 
 loc_915A0,SR_OPM_New
 loc_91708,SR_OPM_Del
-loc_91750,SR_OPM_SetViewClipStart
+loc_91750,SR_OPM_SetVirtualClipStart
 loc_91869,SR_OPM_CreateVirtualOPM
 loc_91AA4,SR_OPM_SetPixel
 loc_91C1E,SR_OPM_HorLine

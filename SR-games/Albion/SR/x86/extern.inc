@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2019 Roman Pauer
+;;  Copyright (C) 2016-2020 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -176,7 +176,7 @@ extern SR_DOS_GetSeekPosition
 
 extern SR_OPM_New
 extern SR_OPM_Del
-extern SR_OPM_SetViewClipStart
+extern SR_OPM_SetVirtualClipStart
 extern SR_OPM_CreateVirtualOPM
 extern SR_OPM_SetPixel
 extern SR_OPM_HorLine

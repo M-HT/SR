@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2019 Roman Pauer
+ *  Copyright (C) 2018-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -50,8 +50,8 @@ int OPM_New(unsigned int width, unsigned int height, unsigned int bytes_per_pixe
     unsigned int size;
 
     pixel_map->flags = 0;
-    pixel_map->view_x = 0;
-    pixel_map->view_y = 0;
+    pixel_map->virtual_x = 0;
+    pixel_map->virtual_y = 0;
 
     size = width * height * bytes_per_pixel;
     pixel_map->size = size;
@@ -97,7 +97,7 @@ int OPM_New(unsigned int width, unsigned int height, unsigned int bytes_per_pixe
 
 void OPM_Del(OPM_Struct *pixel_map)
 {
-    if (!(pixel_map->flags & BBOPM_VIEW))
+    if (!(pixel_map->flags & BBOPM_VIRTUAL))
     {
         if (pixel_map->flags & BBOPM_ALLOCATED_BUFFER)
         {
@@ -108,16 +108,16 @@ void OPM_Del(OPM_Struct *pixel_map)
     pixel_map->flags = 0;
 }
 
-void OPM_SetViewClipStart(OPM_Struct *view_pixel_map, int clip_x, int clip_y)
+void OPM_SetVirtualClipStart(OPM_Struct *virtual_pixel_map, int clip_x, int clip_y)
 {
     OPM_Struct *base_pixel_map;
     int clip_width, clip_height;
 
-    if (!(view_pixel_map->flags & BBOPM_VIEW)) return;
+    if (!(virtual_pixel_map->flags & BBOPM_VIRTUAL)) return;
 
-    base_pixel_map = view_pixel_map->base_pixel_map;
-    clip_width = view_pixel_map->width;
-    clip_height = view_pixel_map->height;
+    base_pixel_map = virtual_pixel_map->base_pixel_map;
+    clip_width = virtual_pixel_map->width;
+    clip_height = virtual_pixel_map->height;
 
     if (clip_x < 0)
     {
@@ -141,75 +141,75 @@ void OPM_SetViewClipStart(OPM_Struct *view_pixel_map, int clip_x, int clip_y)
         clip_height = base_pixel_map->height - clip_y;
     }
 
-    view_pixel_map->clip_x = clip_x;
-    view_pixel_map->clip_y = clip_y;
-    view_pixel_map->clip_width = clip_width;
-    view_pixel_map->clip_height = clip_height;
+    virtual_pixel_map->clip_x = clip_x;
+    virtual_pixel_map->clip_y = clip_y;
+    virtual_pixel_map->clip_width = clip_width;
+    virtual_pixel_map->clip_height = clip_height;
 
-    view_pixel_map->buffer = base_pixel_map->buffer + view_pixel_map->stride * clip_y + clip_x;
+    virtual_pixel_map->buffer = base_pixel_map->buffer + virtual_pixel_map->stride * clip_y + clip_x;
 }
 
-void OPM_CreateVirtualOPM(OPM_Struct *base_pixel_map, OPM_Struct *view_pixel_map, int view_x, int view_y, int view_width, int view_height)
+void OPM_CreateVirtualOPM(OPM_Struct *base_pixel_map, OPM_Struct *virtual_pixel_map, int virtual_x, int virtual_y, int virtual_width, int virtual_height)
 {
-    view_pixel_map->flags = BBOPM_VIEW | BBOPM_UNKNOWN4 | BBOPM_MODIFIED;
-    view_pixel_map->view_x = view_x;
-    view_pixel_map->view_y = view_y;
-    view_pixel_map->width = view_width;
-    view_pixel_map->height = view_height;
-    view_pixel_map->origin_x = 0;
-    view_pixel_map->origin_y = 0;
+    virtual_pixel_map->flags = BBOPM_VIRTUAL | BBOPM_UNKNOWN4 | BBOPM_MODIFIED;
+    virtual_pixel_map->virtual_x = virtual_x;
+    virtual_pixel_map->virtual_y = virtual_y;
+    virtual_pixel_map->width = virtual_width;
+    virtual_pixel_map->height = virtual_height;
+    virtual_pixel_map->origin_x = 0;
+    virtual_pixel_map->origin_y = 0;
 
-    if (view_x < base_pixel_map->clip_x)
+    if (virtual_x < base_pixel_map->clip_x)
     {
-        view_width -= base_pixel_map->clip_x - view_x;
-        view_pixel_map->origin_x = -(base_pixel_map->clip_x - view_x);
-        view_x = base_pixel_map->clip_x;
-        if (view_width < 0)
+        virtual_width -= base_pixel_map->clip_x - virtual_x;
+        virtual_pixel_map->origin_x = -(base_pixel_map->clip_x - virtual_x);
+        virtual_x = base_pixel_map->clip_x;
+        if (virtual_width < 0)
         {
-            view_width = 0;
+            virtual_width = 0;
         }
     }
 
-    if (view_x + view_width > base_pixel_map->clip_x + base_pixel_map->clip_width)
+    if (virtual_x + virtual_width > base_pixel_map->clip_x + base_pixel_map->clip_width)
     {
-        view_width -= (view_x + view_width) - (base_pixel_map->clip_x + base_pixel_map->clip_width);
-        if (view_width < 0)
+        virtual_width -= (virtual_x + virtual_width) - (base_pixel_map->clip_x + base_pixel_map->clip_width);
+        if (virtual_width < 0)
         {
-            view_width = 0;
-            view_x = base_pixel_map->clip_x + base_pixel_map->clip_width;
+            virtual_width = 0;
+            virtual_x = base_pixel_map->clip_x + base_pixel_map->clip_width;
         }
     }
 
-    if (view_y < base_pixel_map->clip_y)
+    if (virtual_y < base_pixel_map->clip_y)
     {
-        view_height -= base_pixel_map->clip_y - view_y;
-        view_pixel_map->origin_y = -(base_pixel_map->clip_y - view_y);
-        view_y = base_pixel_map->clip_y;
-        if (view_height < 0)
+        virtual_height -= base_pixel_map->clip_y - virtual_y;
+        virtual_pixel_map->origin_y = -(base_pixel_map->clip_y - virtual_y);
+        virtual_y = base_pixel_map->clip_y;
+        if (virtual_height < 0)
         {
-            view_height = 0;
+            virtual_height = 0;
         }
     }
 
-    if (view_y + view_height > base_pixel_map->clip_y + base_pixel_map->clip_height)
+    if (virtual_y + virtual_height > base_pixel_map->clip_y + base_pixel_map->clip_height)
     {
-        view_height -= (view_y + view_height) - (base_pixel_map->clip_y + base_pixel_map->clip_height);
-        if (view_height < 0)
+        virtual_height -= (virtual_y + virtual_height) - (base_pixel_map->clip_y + base_pixel_map->clip_height);
+        if (virtual_height < 0)
         {
-            view_height = 0;
-            view_y = base_pixel_map->clip_y + base_pixel_map->clip_height;
+            virtual_height = 0;
+            virtual_y = base_pixel_map->clip_y + base_pixel_map->clip_height;
         }
     }
 
-    view_pixel_map->base_pixel_map = base_pixel_map;
-    view_pixel_map->bytes_per_pixel = base_pixel_map->bytes_per_pixel;
-    view_pixel_map->clip_x = 0;
-    view_pixel_map->clip_y = 0;
-    view_pixel_map->clip_width = view_width;
-    view_pixel_map->clip_height = view_height;
-    view_pixel_map->bytes_per_pixel2 = base_pixel_map->bytes_per_pixel;
-    view_pixel_map->stride = base_pixel_map->stride;
-    view_pixel_map->buffer = base_pixel_map->buffer + view_pixel_map->stride * view_y + view_x;
+    virtual_pixel_map->base_pixel_map = base_pixel_map;
+    virtual_pixel_map->bytes_per_pixel = base_pixel_map->bytes_per_pixel;
+    virtual_pixel_map->clip_x = 0;
+    virtual_pixel_map->clip_y = 0;
+    virtual_pixel_map->clip_width = virtual_width;
+    virtual_pixel_map->clip_height = virtual_height;
+    virtual_pixel_map->bytes_per_pixel2 = base_pixel_map->bytes_per_pixel;
+    virtual_pixel_map->stride = base_pixel_map->stride;
+    virtual_pixel_map->buffer = base_pixel_map->buffer + virtual_pixel_map->stride * virtual_y + virtual_x;
 }
 
 void OPM_SetPixel(OPM_Struct *pixel_map, int x, int y, uint8_t color)

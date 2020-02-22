@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2019 Roman Pauer
+ *  Copyright (C) 2018-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -30,7 +30,7 @@
 #define BBOPM_ALLOCATED_BUFFER 1
 #define BBOPM_MODIFIED 2
 #define BBOPM_UNKNOWN4 4
-#define BBOPM_VIEW 8
+#define BBOPM_VIRTUAL 8
 #define BBOPM_TRANSPARENCY 0x10
 
 // todo: align struct members
@@ -52,8 +52,8 @@ typedef struct __attribute__ ((__packed__)) _OPM_Struct {
     int16_t clip_width;
     int16_t clip_height;
     uint16_t transparent_color;
-    int16_t view_x;
-    int16_t view_y;
+    int16_t virtual_x;
+    int16_t virtual_y;
     struct _OPM_Struct *base_pixel_map;
 } OPM_Struct;
 
@@ -66,8 +66,8 @@ extern "C" {
 
 extern int OPM_New(unsigned int width, unsigned int height, unsigned int bytes_per_pixel, OPM_Struct *pixel_map, uint8_t *buffer);
 extern void OPM_Del(OPM_Struct *pixel_map);
-extern void OPM_SetViewClipStart(OPM_Struct *view_pixel_map, int clip_x, int clip_y);
-extern void OPM_CreateVirtualOPM(OPM_Struct *base_pixel_map, OPM_Struct *view_pixel_map, int view_x, int view_y, int view_width, int view_height);
+extern void OPM_SetVirtualClipStart(OPM_Struct *virtual_pixel_map, int clip_x, int clip_y);
+extern void OPM_CreateVirtualOPM(OPM_Struct *base_pixel_map, OPM_Struct *virtual_pixel_map, int virtual_x, int virtual_y, int virtual_width, int virtual_height);
 extern void OPM_SetPixel(OPM_Struct *pixel_map, int x, int y, uint8_t color);
 extern void OPM_HorLine(OPM_Struct *pixel_map, int x, int y, int length, uint8_t color);
 extern void OPM_VerLine(OPM_Struct *pixel_map, int x, int y, int length, uint8_t color);

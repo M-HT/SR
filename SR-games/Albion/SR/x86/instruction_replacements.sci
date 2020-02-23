@@ -115,6 +115,8 @@ loc_25156,1,pop ebx|call SR_Sync ; call sync after save
 
 loc_22F61,83,mov eax, 1 ; skip cdrom check
 
+loc_25517,7,mov dword [ebp-8], 1|cmp dword [Game_ScreenshotEnabled], 0|je loc_25517_end|cmp dword [eax+12], 0x104|je loc_255EF|loc_25517_end: ; screenshot on F4 key
+
 loc_8151C,2454, ; AIL code 1
 loc_81EB2,183, ; CLIB code 1
 

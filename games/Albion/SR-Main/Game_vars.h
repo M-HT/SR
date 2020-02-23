@@ -147,6 +147,7 @@ EXTERNAL_VARIABLE Game_OverlayInfo Game_OverlayDraw;
 EXTERNAL_VARIABLE Game_OverlayInfo Game_OverlayDisplay;
 
 EXTERNAL_VARIABLE int Game_ScreenshotFormat;
+EXTERNAL_VARIABLE uint32_t Game_ScreenshotEnabled;
 
 EXTERNAL_VARIABLE Game_sample *Game_SampleCache[GAME_SAMPLE_CACHE_SIZE];
 

@@ -320,6 +320,17 @@ void Game_ReadConfig(void)
                     Game_ScreenshotFormat = 4;
                 }
             }
+            else if ( strcasecmp(str, "Enabled") == 0 ) // str equals "Enabled"
+            {
+                if ( strcasecmp(param, "yes") == 0 ) // param equals "yes"
+                {
+                    Game_ScreenshotEnabled = 1;
+                }
+                else if ( strcasecmp(param, "no") == 0 ) // param equals "no"
+                {
+                    Game_ScreenshotEnabled = 0;
+                }
+            }
         }
 
     }

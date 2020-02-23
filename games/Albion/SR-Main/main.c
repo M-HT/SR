@@ -749,6 +749,7 @@ static int Game_Initialize(void)
     Game_ScreenViewpartOriginal = NULL;
 
     Game_ScreenshotFormat = 0;
+    Game_ScreenshotEnabled = 0;
 
 #if defined(ALLOW_OPENGL) && !defined(USE_SDL2)
     Game_UseOpenGL = 0;

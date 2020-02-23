@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -147,6 +147,7 @@ EXTERNAL_VARIABLE Game_OverlayInfo Game_OverlayDraw;
 EXTERNAL_VARIABLE Game_OverlayInfo Game_OverlayDisplay;
 
 EXTERNAL_VARIABLE int Game_ScreenshotFormat;
+EXTERNAL_VARIABLE int Game_ScreenshotEnhancedResolution;
 EXTERNAL_VARIABLE uint32_t Game_ScreenshotEnabled;
 
 EXTERNAL_VARIABLE Game_sample *Game_SampleCache[GAME_SAMPLE_CACHE_SIZE];

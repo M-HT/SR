@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -75,7 +75,7 @@ void Game_save_screenshot(const char *filename)
     screenshot_src = &(Game_FrameBuffer[loc_182010 * 360 * 240]);
     DrawOverlay = Get_DrawOverlay(screenshot_src, 0);
 
-    if ((Render_Width == 720) && (Game_ScreenshotFormat != 0))
+    if ((Render_Width == 720) && (Game_ScreenshotEnhancedResolution != 0))
     {
         if (DrawOverlay)
         {

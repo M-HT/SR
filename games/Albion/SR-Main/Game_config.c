@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2018 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -318,6 +318,17 @@ void Game_ReadConfig(void)
                 else if ( strcasecmp(param, "BMP") == 0 ) // param equals "BMP"
                 {
                     Game_ScreenshotFormat = 4;
+                }
+            }
+            else if ( strcasecmp(str, "Enhanced_Resolution") == 0 ) // str equals "Enhanced_Resolution"
+            {
+                if ( strcasecmp(param, "on") == 0 ) // param equals "on"
+                {
+                    Game_ScreenshotEnhancedResolution = 1;
+                }
+                else if ( strcasecmp(param, "off") == 0 ) // param equals "off"
+                {
+                    Game_ScreenshotEnhancedResolution = 0;
                 }
             }
             else if ( strcasecmp(str, "Enabled") == 0 ) // str equals "Enabled"

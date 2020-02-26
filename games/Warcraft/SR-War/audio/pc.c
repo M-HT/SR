@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2018 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -33,7 +33,7 @@ void Init_Audio(void)
     Game_AudioRate = 22050;
     Game_AudioBufferSize = 2048;
     Game_InterpolateAudio = 1;
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     Game_MidiSubsystem = 3;
 #else
     Game_MidiSubsystem = 3;

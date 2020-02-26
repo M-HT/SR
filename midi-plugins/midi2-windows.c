@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2018 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,7 +22,7 @@
  *
  */
 
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     #include <windows.h>
 #endif
 
@@ -33,7 +33,7 @@
 
 static char *midi_device_name = NULL;
 
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 static HMIDISTRM hStream = NULL;
 static HANDLE midi_thread_handle = NULL;
 
@@ -622,7 +622,7 @@ static int play(void const *midibuffer, long int size, int loop_count)
 
     if (loop_count < -1) loop_count = -1;
 
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 	if (hStream == NULL) return -3;
 
 	close_midi();
@@ -682,7 +682,7 @@ static int play(void const *midibuffer, long int size, int loop_count)
 
 static int pause(void)
 {
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 	if (hStream == NULL) return -1;
 	if (!midi_loaded) return -2;
 
@@ -707,7 +707,7 @@ static int pause(void)
 
 static int resume(void)
 {
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 	if (hStream == NULL) return -1;
 	if (!midi_loaded) return -2;
 
@@ -732,7 +732,7 @@ static int resume(void)
 
 static int halt(void)
 {
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 	if (hStream == NULL) return -1;
 
 	close_midi();
@@ -746,7 +746,7 @@ static int set_volume(unsigned char volume) // volume = 0 - 127
 {
     if (volume > 127) volume = 127;
 
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 	if (hStream == NULL) return -1;
 
 	{
@@ -782,7 +782,7 @@ static int set_loop_count(int loop_count) // -1 = unlimited
 {
     if (loop_count < -1) loop_count = -1;
 
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 	if (hStream == NULL) return -1;
 	if (!midi_loaded) return -2;
 
@@ -795,7 +795,7 @@ static int set_loop_count(int loop_count) // -1 = unlimited
 
 static void shutdown_plugin(void)
 {
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 	if (hStream != NULL)
 	{
 		close_midi();
@@ -852,7 +852,7 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
     functions->set_loop_count = &set_loop_count;
     functions->shutdown_plugin = &shutdown_plugin;
 
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 {
 	int numDevices, devid;
 	MIDIOUTCAPS midicaps;

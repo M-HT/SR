@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2018 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,7 +22,7 @@
  *
  */
 
-#if !(defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     #include <alsa/asoundlib.h>
     #include <pthread.h>
     #include <limits.h>
@@ -35,7 +35,7 @@
 
 static char *midi_address = NULL;
 
-#if !(defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 typedef struct {
     const uint8_t *ptr;
     unsigned int len, delta;
@@ -964,7 +964,7 @@ static int play(void const *midibuffer, long int size, int loop_count)
 
     if (loop_count < -1) loop_count = -1;
 
-#if !(defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     if (midi_seq == NULL) return -3;
 
     close_midi();
@@ -1037,7 +1037,7 @@ static int play(void const *midibuffer, long int size, int loop_count)
 
 static int pause_0(void)
 {
-#if !(defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     snd_seq_event_t event;
     int chan, note, num;
 
@@ -1111,7 +1111,7 @@ static int pause_0(void)
 
 static int resume(void)
 {
-#if !(defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     snd_seq_event_t event;
 
     if (midi_seq == NULL) return -1;
@@ -1159,7 +1159,7 @@ static int resume(void)
 
 static int halt(void)
 {
-#if !(defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     if (midi_seq == NULL) return -1;
 
     close_midi();
@@ -1173,7 +1173,7 @@ static int set_volume(unsigned char volume) // volume = 0 - 127
 {
     if (volume > 127) volume = 127;
 
-#if !(defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     if (midi_seq == NULL) return -1;
 
     midi_new_volume = volume;
@@ -1187,7 +1187,7 @@ static int set_loop_count(int loop_count) // -1 = unlimited
 {
     if (loop_count < -1) loop_count = -1;
 
-#if !(defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     if (midi_seq == NULL) return -1;
     if (!midi_loaded) return -2;
 
@@ -1200,7 +1200,7 @@ static int set_loop_count(int loop_count) // -1 = unlimited
 
 static void shutdown_plugin(void)
 {
-#if !(defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     if (midi_seq != NULL)
     {
         close_midi();
@@ -1257,7 +1257,7 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 
     memset(channel_notes, 0, 128*16*sizeof(int));
 
-#if !(defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 {
     pthread_attr_t attr;
 

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2017 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,7 +22,7 @@
  *
  */
 
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     #define WIN32_LEAN_AND_MEAN
 
     #include <windows.h>
@@ -47,7 +47,7 @@ static int file_exists(char const *filename)
     if (filename == NULL) return 0;
     if (*filename == 0) return 0;
 
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     DWORD dwAttrib;
 
     dwAttrib = GetFileAttributesA(filename);
@@ -171,7 +171,7 @@ int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const
     }
     else
     {
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
         WIN32_FIND_DATA finddata;
         HANDLE findhandle;
         findhandle = FindFirstFile("./*.sf2", &finddata);

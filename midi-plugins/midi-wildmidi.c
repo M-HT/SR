@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,7 +22,7 @@
  *
  */
 
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     #define WIN32_LEAN_AND_MEAN
 
     #include <windows.h>
@@ -40,7 +40,7 @@ static char const *check_file(char const *filename)
     if (filename == NULL) return NULL;
     if (*filename == 0) return NULL;
 
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     DWORD dwAttrib;
 
     dwAttrib = GetFileAttributesA(filename);
@@ -138,7 +138,7 @@ int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const
 
         if (timidity_cfg == NULL) timidity_cfg = check_file("timidity.cfg");
 
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
         if (timidity_cfg == NULL) timidity_cfg = check_file("C:\\TIMIDITY\\timidity.cfg");
 #else
         if (timidity_cfg == NULL) timidity_cfg = check_file("/etc/timidity/timidity.cfg");

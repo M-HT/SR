@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2019 Roman Pauer
+ *  Copyright (C) 2018-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -27,7 +27,7 @@
 #include "Albion-BBERROR.h"
 #include <stdio.h>
 #include <string.h>
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #else
@@ -91,7 +91,7 @@ int BASEMEM_Init(void)
             BASEMEM_regions[index].flags = 0;
         }
 
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
         {
             SYSTEM_INFO siSysInfo;
             GetSystemInfo(&siSysInfo);

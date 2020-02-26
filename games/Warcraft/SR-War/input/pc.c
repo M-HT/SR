@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -36,7 +36,7 @@ static int Game_MouseHelper, Game_HelperMouseMiddleButton, Game_HelperMouseRight
 static uint32_t Game_SelectGroupOnMove;
 static int Game_SelectGroupX, Game_SelectGroupY, Game_SelectGroupTreshold;
 
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
@@ -216,7 +216,7 @@ int Handle_Input_Event(SDL_Event *_event)
 {
     switch(_event->type)
     {
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
         case SDL_KEYDOWN:
         case SDL_KEYUP:
             if (!keypad_xor_value_known)

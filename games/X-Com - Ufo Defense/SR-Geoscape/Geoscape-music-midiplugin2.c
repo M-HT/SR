@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,7 +22,7 @@
  *
  */
 
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     #define WIN32_LEAN_AND_MEAN
 
     #include <windows.h>
@@ -49,7 +49,7 @@ typedef struct _MP_midi_ {
     Sint32 loop_count;
 } MP_midi;
 
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     static HMODULE MP2_handle;
 #else
     static void *MP2_handle;
@@ -103,7 +103,7 @@ int MidiPlugin2_Startup(void)
     midi_plugin2_parameters MP2_parameters;
     char temp_str[MAX_PATH];
 
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     if (Game_MidiSubsystem == 21) {
         MP2_handle = LoadLibrary(".\\midi2-windows.dll");
     } else if (Game_MidiSubsystem == 22) {
@@ -155,7 +155,7 @@ void MidiPlugin2_Shutdown(void)
     MP2_functions.halt();
 
     MP2_functions.shutdown_plugin();
-#if (defined(_WIN32) || defined(__WIN32__) || (__WINDOWS__))
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     FreeLibrary(MP2_handle);
 #else
     dlclose(MP2_handle);

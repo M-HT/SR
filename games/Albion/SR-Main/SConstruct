@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016-2019 Roman Pauer
+#  Copyright (C) 2016-2020 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -83,7 +83,7 @@ elif device == 'arm-linux':
 elif device == 'pc-windows':
     env = Environment(CCFLAGS      = '-m32 -O2 -DALLOW_OPENGL -Wall',
                       LINKFLAGS    = '-m32',
-                      LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'opengl32']
+                      LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'opengl32', 'z']
                      )
 elif device == 'gp2x':
     compiler_path = '/opt/open2x/gcc-4.1.1-glibc-2.3.6/'
@@ -96,7 +96,7 @@ elif device == 'gp2x':
                       LIBPATH      = [compiler_path + 'lib/mixer-midi', compiler_path + 'lib'],
                       LIBDIRPREFIX = '-L',
                       LINKFLAGS    = '-static -Wl,-z,noexecstack',
-                      LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'm', 'armmem', 'dl'],
+                      LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'm', 'armmem', 'dl', 'z'],
                       ENV          = {'PATH' : compiler_path + 'bin:' + os.environ['PATH']},
                       AS           = compiler_prefix + 'as',
                       ASFLAGS      = ' -EL -march=armv4t -mfpu=softfpa -I arm/'

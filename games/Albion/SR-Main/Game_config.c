@@ -319,6 +319,10 @@ void Game_ReadConfig(void)
                 {
                     Game_ScreenshotFormat = 4;
                 }
+                else if ( strcasecmp(param, "PNG") == 0 ) // param equals "PNG"
+                {
+                    Game_ScreenshotFormat = 5;
+                }
             }
             else if ( strcasecmp(str, "Enhanced_Resolution") == 0 ) // str equals "Enhanced_Resolution"
             {

@@ -146,7 +146,13 @@ EXTERNAL_VARIABLE uint8_t *Game_ScreenViewpartOriginal;
 EXTERNAL_VARIABLE Game_OverlayInfo Game_OverlayDraw;
 EXTERNAL_VARIABLE Game_OverlayInfo Game_OverlayDisplay;
 
-EXTERNAL_VARIABLE int Game_ScreenshotFormat;
+EXTERNAL_VARIABLE int Game_ScreenshotFormat;    /* screenshot format
+                                                    0: Original (LBM)
+                                                    1: LBM
+                                                    2: LBM with lines in file padded to 16 bytes
+                                                    3: TGA
+                                                    4: BMP
+                                                    5: PNG */
 EXTERNAL_VARIABLE int Game_ScreenshotEnhancedResolution;
 EXTERNAL_VARIABLE uint32_t Game_ScreenshotEnabled;
 

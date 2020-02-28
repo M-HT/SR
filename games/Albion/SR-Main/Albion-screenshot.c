@@ -524,6 +524,7 @@ void Game_save_screenshot(const char *filename)
     unsigned int width, height, width_in_file, palette_index;
     FILE *f;
     int image_mode, DrawOverlay;
+    char *filename2;
 
 #ifdef ZLIB_DYNAMIC
     if (Game_ScreenshotFormat == 5)
@@ -610,6 +611,38 @@ void Game_save_screenshot(const char *filename)
     if (buffer == NULL) return;
 
     curptr = buffer;
+
+    if (NULL == strchr(filename, '.'))
+    {
+        filename2 = (char *) malloc(strlen(filename) + 5);
+        if (filename2 != NULL)
+        {
+            strcpy(filename2, filename);
+            switch (Game_ScreenshotFormat)
+            {
+                case 0:
+                case 1:
+                case 2:
+                    strcat(filename2, ".lbm");
+                    break;
+                case 3:
+                    strcat(filename2, ".tga");
+                    break;
+                case 4:
+                    strcat(filename2, ".bmp");
+                    break;
+                case 5:
+                    strcat(filename2, ".png");
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+    else
+    {
+        filename2 = NULL;
+    }
 
     // silence warning
     chunk_size_ptr[0] = chunk_size_ptr[1] = NULL;
@@ -981,6 +1014,7 @@ void Game_save_screenshot(const char *filename)
         curptr = fill_png_pixel_data(screenshot_src, image_mode, DrawOverlay, 721*480 + (2000 - 16) - (curptr - buffer), curptr);
         if (curptr == NULL)
         {
+            if (filename2 != NULL) free(filename2);
             free(buffer);
             return;
         }
@@ -1225,13 +1259,14 @@ void Game_save_screenshot(const char *filename)
         curptr = write_32be(curptr, zlib_crc32(0, curptr - (4 + 0), 4 + 0));
     }
 
-    f = Game_fopen(filename, "wb");
+    f = Game_fopen((filename2 != NULL)?filename2:filename, "wb");
     if (f != NULL)
     {
         fwrite(buffer, 1, curptr - buffer, f);
         fclose(f);
     }
 
+    if (filename2 != NULL) free(filename2);
     free(buffer);
 }
 

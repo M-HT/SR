@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #
-#  Copyright (C) 2014-2018 Roman Pauer
+#  Copyright (C) 2014-2020 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -127,7 +127,10 @@ class ConfigFile:
             self.AddEntry("Intro", "on/off", "on")
 
         if game == "albion":
-            self.AddEntry("Screenshot_Format", "Original/LBM/LBM_pad16/TGA/BMP", "Original")
+            self.AddEntry("Screenshot_Format", "Original/LBM/LBM_pad16/TGA/BMP/PNG", "Original")
+            self.AddEntry("Screenshot_Enhanced_Resolution", "on/off", "off")
+            self.AddEntry("Screenshot_Enabled", "yes/no", "no")
+            self.AddEntry("Screenshot_Automatic_Filename", "yes/no", "no")
 
         if platform == "pandora":
             self.AddEntry("Use_Alternative_SDL", "yes/no", "yes")
@@ -601,7 +604,13 @@ class ConfigGUI:
         if self.CfgFile.HasEntry("Screenshot_Format"):
             vbox = self.AddPageFrameVBox(notebook, "Screenshots", "Screenshot settings")
 
-            self.CreateRadioSet(vbox, "Screenshot Format", "Screenshot_Format", "Original = original resolution and image format (LBM)\nLBM = image format is LBM\nLBM_pad16 = image format is LBM with lines in file padded to 16 bytes\nTGA = image format is TGA\nBMP = image format is BMP")
+            self.CreateRadioSet(vbox, "Screenshot Format:", "Screenshot_Format", "Original = original image format (LBM)\nLBM = image format is LBM\nLBM_pad16 = image format is LBM with lines in file padded to 16 bytes\nTGA = image format is TGA\nBMP = image format is BMP\nPNG = image format is PNG (requires zlib library)")
+
+            vbox = self.AddPageFrameVBox(notebook, "Screenshots 2", "Screenshot settings")
+
+            self.CreateRadioSet(vbox, "Screenshot Enhanced Resolution:", "Screenshot_Enhanced_Resolution", "if enabled then create screenshots in enhanced resolution (720x480) when it's possible,\notherwise create screenshots in original resolution (360x240)")
+            self.CreateRadioSet(vbox, "Screenshot Enabled ?", "Screenshot_Enabled", "select whether making screenshots (using F4 key) is enabled without entering developer mode")
+            self.CreateRadioSet(vbox, "Screenshot Automatic Filename ?", "Screenshot_Automatic_Filename", "select whether screenshot filename is generated automatically (Screenshot????.???) or not")
 
         if self.CfgFile.HasEntry("Input_Mode") or self.CfgFile.HasEntry("Input_MouseHelper"):
             vbox = self.AddPageFrameVBox(notebook, "Input", "Input")

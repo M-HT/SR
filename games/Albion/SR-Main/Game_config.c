@@ -346,6 +346,17 @@ void Game_ReadConfig(void)
                     Game_ScreenshotEnabled = 0;
                 }
             }
+            else if ( strcasecmp(str, "Automatic_Filename") == 0 ) // str equals "Automatic_Filename"
+            {
+                if ( strcasecmp(param, "yes") == 0 ) // param equals "yes"
+                {
+                    Game_ScreenshotAutomaticFilename = 1;
+                }
+                else if ( strcasecmp(param, "no") == 0 ) // param equals "no"
+                {
+                    Game_ScreenshotAutomaticFilename = 0;
+                }
+            }
         }
 
     }

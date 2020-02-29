@@ -33,6 +33,7 @@
 .extern draw_3dscene_proc
 .extern Game_UseEnhanced3DEngine
 .extern Game_ScreenshotEnabled
+.extern Game_ScreenshotAutomaticFilename
 
 .extern SR_Call_Asm_Float1
 

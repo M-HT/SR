@@ -120,6 +120,9 @@ loc_22F61,83,@mov eax, 1|mov eax, #1 @ skip cdrom check
 
 loc_25517,7,@mov dword [ebp-8], 1|mov tmp1, #1|str tmp1, [ebp, #-8]|@cmp dword [Game_ScreenshotEnabled], 0|LDR tmpadr, =Game_ScreenshotEnabled|ldr tmp1, [tmpadr]|subS tmp1, tmp1, #0|@je loc_25517_end|beq loc_25517_end|@cmp dword [eax+12], 0x104|ldr tmp1, [eax, #12]|subS tmp1, tmp1, #0x104|@je loc_255EF|beq loc_255EF|loc_25517_end: @ screenshot on F4 key
 
+loc_255EF,4,@cmp dword [Game_ScreenshotAutomaticFilename], 0|LDR tmpadr, =Game_ScreenshotAutomaticFilename|ldr tmp1, [tmpadr]|subS tmp1, tmp1, #0|@jne loc_25615_skip|bne loc_25615_skip|@mov byte [ebp-0x74], 0|mov tmp1, #0|strb tmp1, [ebp, #-0x74] @ skip getting filename for screenshot
+loc_25615,2,loc_25615_skip:|@xor eax, eax|mov eax, #0 @ skip getting filename for screenshot
+
 loc_8151C,2454, @ AIL code 1
 loc_81EB2,183, @ CLIB code 1
 

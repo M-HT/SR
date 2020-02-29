@@ -155,6 +155,7 @@ EXTERNAL_VARIABLE int Game_ScreenshotFormat;    /* screenshot format
                                                     5: PNG */
 EXTERNAL_VARIABLE int Game_ScreenshotEnhancedResolution;
 EXTERNAL_VARIABLE uint32_t Game_ScreenshotEnabled;
+EXTERNAL_VARIABLE uint32_t Game_ScreenshotAutomaticFilename;
 
 EXTERNAL_VARIABLE Game_sample *Game_SampleCache[GAME_SAMPLE_CACHE_SIZE];
 

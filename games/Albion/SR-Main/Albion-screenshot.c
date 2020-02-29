@@ -22,6 +22,16 @@
  *
  */
 
+#define _FILE_OFFSET_BITS 64
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+    #define WIN32_LEAN_AND_MEAN
+
+    #include <windows.h>
+#else
+    #include <unistd.h>
+    #include <dirent.h>
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <zlib.h>
@@ -524,6 +534,7 @@ void Game_save_screenshot(const char *filename)
     unsigned int width, height, width_in_file, palette_index;
     FILE *f;
     int image_mode, DrawOverlay;
+    const char *extension;
     char *filename2;
 
 #ifdef ZLIB_DYNAMIC
@@ -612,36 +623,130 @@ void Game_save_screenshot(const char *filename)
 
     curptr = buffer;
 
-    if (NULL == strchr(filename, '.'))
+    switch (Game_ScreenshotFormat)
     {
-        filename2 = (char *) malloc(strlen(filename) + 5);
-        if (filename2 != NULL)
+        case 0:
+        case 1:
+        case 2:
+            extension = ".lbm";
+            break;
+        case 3:
+            extension = ".tga";
+            break;
+        case 4:
+            extension = ".bmp";
+            break;
+        case 5:
+            extension = ".png";
+            break;
+        default:
+            extension = NULL;
+            break;
+    }
+
+    if (Game_ScreenshotAutomaticFilename)
+    {
+        static int lastnum = 0;
+
+        filename2 = (char *) malloc(10 + 4 + 1 + 3 + 1);
+        if (filename2 == NULL)
         {
-            strcpy(filename2, filename);
-            switch (Game_ScreenshotFormat)
+            free(buffer);
+            return;
+        }
+
+        if (lastnum != 0)
+        {
+            sprintf(filename2, "Screenshot%04d%s", lastnum, extension);
+            lastnum++;
+
+            // check if file exists
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+            if (INVALID_FILE_ATTRIBUTES != GetFileAttributesA(filename2))
+#else
+            if (0 == access(filename2, F_OK))
+#endif
             {
-                case 0:
-                case 1:
-                case 2:
-                    strcat(filename2, ".lbm");
-                    break;
-                case 3:
-                    strcat(filename2, ".tga");
-                    break;
-                case 4:
-                    strcat(filename2, ".bmp");
-                    break;
-                case 5:
-                    strcat(filename2, ".png");
-                    break;
-                default:
-                    break;
+                lastnum = 0;
             }
+        }
+
+        if (lastnum == 0)
+        {
+            // find file with highest number
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+            HANDLE hFindFile;
+            WIN32_FIND_DATAA FindFileData;
+
+            sprintf(filename2, "Screenshot*%s", extension);
+
+            hFindFile = FindFirstFileA(filename2, &FindFileData);
+            if (hFindFile != INVALID_HANDLE_VALUE)
+            {
+                do
+                {
+                    int filenum;
+
+                    filenum = atoi(&(FindFileData.cFileName[10]));
+                    if (filenum >= lastnum)
+                    {
+                        lastnum = filenum + 1;
+                    }
+                } while (FindNextFileA(hFindFile, &FindFileData));
+
+                FindClose(hFindFile);
+            }
+#else
+            DIR *dir;
+            struct dirent *entry;
+
+            dir = opendir("./");
+
+            if (dir != NULL)
+            {
+                while (1)
+                {
+                    int filenum;
+
+                    entry = readdir(dir);
+                    if (entry == NULL) break;
+
+                    if (0 != strncasecmp(entry->d_name, "Screenshot", 10)) continue;
+
+                    if (0 != strcasecmp(&(entry->d_name[strlen(entry->d_name) - 4]), extension)) continue;
+
+                    filenum = atoi(&(entry->d_name[10]));
+                    if (filenum >= lastnum)
+                    {
+                        lastnum = filenum + 1;
+                    }
+                }
+
+                closedir(dir);
+            }
+#endif
+            // todo: find lastnum
+
+            sprintf(filename2, "Screenshot%04d%s", lastnum, extension);
+            lastnum++;
         }
     }
     else
     {
-        filename2 = NULL;
+        if (NULL == strchr(filename, '.'))
+        {
+            filename2 = (char *) malloc(8 + 1 + 3 + 1);
+            if (filename2 != NULL)
+            {
+                strncpy(filename2, filename, 8);
+                filename2[8] = 0;
+                strcat(filename2, extension);
+            }
+        }
+        else
+        {
+            filename2 = NULL;
+        }
     }
 
     // silence warning
@@ -1259,7 +1364,14 @@ void Game_save_screenshot(const char *filename)
         curptr = write_32be(curptr, zlib_crc32(0, curptr - (4 + 0), 4 + 0));
     }
 
-    f = Game_fopen((filename2 != NULL)?filename2:filename, "wb");
+    if (Game_ScreenshotAutomaticFilename)
+    {
+        f = fopen(filename2, "wb");
+    }
+    else
+    {
+        f = Game_fopen((filename2 != NULL)?filename2:filename, "wb");
+    }
     if (f != NULL)
     {
         fwrite(buffer, 1, curptr - buffer, f);

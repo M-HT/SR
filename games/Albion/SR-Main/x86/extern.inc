@@ -49,6 +49,7 @@
 
     %define Game_UseEnhanced3DEngine _Game_UseEnhanced3DEngine
     %define Game_ScreenshotEnabled _Game_ScreenshotEnabled
+    %define Game_ScreenshotAutomaticFilename _Game_ScreenshotAutomaticFilename
 %endif
 
 extern Game_ScreenWindow
@@ -81,6 +82,7 @@ extern Game_FloatProcSinCos
 extern draw_3dscene_proc
 extern Game_UseEnhanced3DEngine
 extern Game_ScreenshotEnabled
+extern Game_ScreenshotAutomaticFilename
 
 extern SR_Call_Asm_Float1
 

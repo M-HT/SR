@@ -75,6 +75,7 @@ static volatile unsigned int midi_base_tick;
 static volatile unsigned int midi_last_tick;
 static volatile uint64_t midi_base_time;
 
+static int channel_volume[16];
 static int channel_notes[16][128];
 
 static pthread_mutex_t midi_mutex;
@@ -654,11 +655,11 @@ static void *midi_thread_proc(void *arg)
             event.dest.client = dst_client_id;
             event.dest.port = dst_port_id;
             event.data.control.param = MIDI_CTL_MSB_MAIN_VOLUME;
-            event.data.control.value = midi_current_volume;
 
             for (chan = 0; chan < 16; chan++)
             {
                 event.data.control.channel = chan;
+                event.data.control.value = (midi_current_volume * channel_volume[chan]) / 127;
                 snd_seq_event_output(midi_seq, &event);
             }
 
@@ -716,6 +717,11 @@ static void *midi_thread_proc(void *arg)
                     event.data.control.channel = events[current_event].channel;
                     event.data.control.param = events[current_event].data1;
                     event.data.control.value = events[current_event].data2;
+                    if (event.data.control.param == MIDI_CTL_MSB_MAIN_VOLUME)
+                    {
+                        channel_volume[event.data.control.channel] = event.data.control.value;
+                        event.data.control.value = (event.data.control.value * midi_current_volume) / 127;
+                    }
                     break;
                 case SND_SEQ_EVENT_PGMCHANGE:
                 case SND_SEQ_EVENT_CHANPRESS:
@@ -975,6 +981,7 @@ static int play(void const *midibuffer, long int size, int loop_count)
         unsigned int timediv;
         midi_event_info *dataptr;
         snd_seq_queue_tempo_t *queue_tempo;
+        int chan;
 
         if (preprocessmidi(midibuffer, size, &timediv, &dataptr))
         {
@@ -984,6 +991,11 @@ static int play(void const *midibuffer, long int size, int loop_count)
         snd_seq_queue_tempo_alloca(&queue_tempo);
 
         pthread_mutex_lock(&midi_mutex);
+
+        for (chan = 0; chan < 16; chan++)
+        {
+            channel_volume[chan] = 127;
+        }
 
         midi_current_volume = 128;
 

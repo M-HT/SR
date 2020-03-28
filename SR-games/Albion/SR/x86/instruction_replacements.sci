@@ -86,6 +86,11 @@ loc_4D505,4,or eax, eax|je loc_4D509|mov [eax+0x28], dx ; fix reading from NULL 
 
 loc_3664B,3,or edx, edx|je loc_3664E|mov al, [edx+0x1]|loc_3664E: ; fix reading from NULL pointer
 
+loc_548D4,3,or eax, eax|je loc_548D7|mov al, [eax+0x5]|loc_548D7: ; fix reading from NULL pointer
+loc_5491D,3,or eax, eax|je loc_54912|add eax, 0x6 ; fix reading from NULL pointer
+loc_54950,3,xor edx, edx|or eax, eax|je loc_54953|mov dx, [eax]|loc_54953: ; fix reading from NULL pointer
+loc_5495C,4,xor edx, edx|or eax, eax|je loc_54960|mov dx, [eax+0x2]|loc_54960: ; fix reading from NULL pointer
+
 loc_C5EBB,4,add esp, 4 ; fix esp instead of sp (probably mistake ???)
 
 loc_94C79,6,mov [loc_13FFB0], esi|cmp dword [Game_UseEnhanced3DEngine], 0|jz _NonEnhanced3DEngine|call draw_3dscene_proc|jmp _After3DEngine|_NonEnhanced3DEngine: ; call enhanced 3d engine

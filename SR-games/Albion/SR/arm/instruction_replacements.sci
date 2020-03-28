@@ -90,6 +90,11 @@ loc_4D505,4,@or eax, eax|@je loc_4D509|@mov [eax+0x28], dx|cmp eax, #0|strneh ed
 
 loc_3664B,3,@or edx, edx|cmp edx, #0|@je loc_3664E|@mov al, [edx+0x1]|ldrneb eax, [edx, #1]|@loc_3664E: @ fix reading from NULL pointer
 
+loc_548D4,3,@or eax, eax|cmp eax, #0|@je loc_548D7|@mov al, [eax+0x5]|ldrneb eax, [eax, #5]|@loc_548D7: @ fix reading from NULL pointer
+loc_5491D,3,@or eax, eax|cmp eax, #0|@je loc_54912|beq loc_54912|@add eax, 0x6|add eax, eax, #6 @ fix reading from NULL pointer
+loc_54950,3,@xor edx, edx|mov edx, #0|@or eax, eax|cmp eax, #0|@je loc_54953|@mov dx, [eax]|ldrneh edx, [eax]|@loc_54953: @ fix reading from NULL pointer
+loc_5495C,4,@xor edx, edx|mov edx, #0|@or eax, eax|cmp eax, #0|@je loc_54960|@mov dx, [eax+0x2]|ldrneh edx, [eax, #2]|@loc_54960: @ fix reading from NULL pointer
+
 loc_C5EBB,4,@add esp, 4|add esp, esp, #4 @ fix esp instead of sp (probably mistake in original code ???)
 
 loc_94C79,6,@mov [loc_13FFB0], esi|LDR tmpadr, =loc_13FFB0|str esi, [tmpadr]|@cmp dword [Game_UseEnhanced3DEngine], 0|LDR tmp1, =Game_UseEnhanced3DEngine|ldr tmp2, [tmp1]|cmp tmp2, #0|beq _NonEnhanced3DEngine|@call draw_3dscene_proc|ADR tmp1, loc_94C7F_after_call|stmfd esp!, {tmp1}|b draw_3dscene_proc|LTORG_CALL|_NonEnhanced3DEngine: @ call enhanced 3d engine

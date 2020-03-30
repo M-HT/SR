@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -113,6 +113,9 @@ struct IDirectSoundBuffer_c {
             unsigned int num_channels;
             int16_t *conv_data;
             int32_t *accum_data;
+#if SDL_VERSION_ATLEAST(2,0,0)
+            SDL_AudioDeviceID device_id;
+#endif
         };
         struct {
             struct IDirectSoundBuffer_c *next;
@@ -953,7 +956,12 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
         desired.callback = &fill_audio;
         desired.userdata = lpDSB_c;
 
+#if SDL_VERSION_ATLEAST(2,0,0)
+        lpDSB_c->device_id = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, SDL_AUDIO_ALLOW_ANY_CHANGE);
+        if (lpDSB_c->device_id == 0)
+#else
         if (0 != SDL_OpenAudio(&desired, &obtained))
+#endif
         {
             free(lpDSB_c);
 
@@ -962,6 +970,24 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
 #endif
             return DSERR_OUTOFMEMORY;
         }
+
+#if SDL_VERSION_ATLEAST(2,0,0)
+        if ((obtained.channels > 2) || ((obtained.size / (obtained.samples * obtained.channels)) > 2))
+        {
+            SDL_CloseAudioDevice(lpDSB_c->device_id);
+
+            lpDSB_c->device_id = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
+            if (lpDSB_c->device_id == 0)
+            {
+                free(lpDSB_c);
+
+#ifdef DEBUG_DSOUND
+                eprintf("SDL error\n");
+#endif
+                return DSERR_OUTOFMEMORY;
+            }
+        }
+#endif
 
         if (obtained.channels == 2)
         {
@@ -987,7 +1013,12 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
         {
             if (lpDSB_c->conv_data != NULL) free(lpDSB_c->conv_data);
             if (lpDSB_c->accum_data != NULL) free(lpDSB_c->accum_data);
+#if SDL_VERSION_ATLEAST(2,0,0)
+            SDL_CloseAudioDevice(lpDSB_c->device_id);
+            lpDSB_c->device_id = 0;
+#else
             SDL_CloseAudio();
+#endif
 
             free(lpDSB_c);
 
@@ -1200,13 +1231,24 @@ static void StopPrimaryBuffer(struct IDirectSoundBuffer_c *lpThis)
 
     if (lpThis->status == SDL_AUDIO_PLAYING)
     {
+#if SDL_VERSION_ATLEAST(2,0,0)
+        SDL_LockAudioDevice(lpThis->device_id);
+        SDL_PauseAudioDevice(lpThis->device_id, 1);
+        SDL_UnlockAudioDevice(lpThis->device_id);
+#else
         SDL_LockAudio();
         SDL_PauseAudio(1);
         SDL_UnlockAudio();
+#endif
         lpThis->status = SDL_AUDIO_STOPPED;
     }
 
+#if SDL_VERSION_ATLEAST(2,0,0)
+    SDL_CloseAudioDevice(lpThis->device_id);
+    lpThis->device_id = 0;
+#else
     SDL_CloseAudio();
+#endif
 
     current = lpThis->first;
     while (current != NULL)
@@ -1263,11 +1305,23 @@ uint32_t IDirectSoundBuffer_Release_c(struct IDirectSoundBuffer_c *lpThis)
         {
             if (lpThis->status == SDL_AUDIO_PLAYING)
             {
+                struct IDirectSoundBuffer_c *PrimaryBuffer;
+
+                PrimaryBuffer = lpThis->DirectSound->PrimaryBuffer;
+
+#if SDL_VERSION_ATLEAST(2,0,0)
+                SDL_LockAudioDevice(PrimaryBuffer->device_id);
+#else
                 SDL_LockAudio();
+#endif
 
-                remove_from_list(lpThis->DirectSound->PrimaryBuffer, lpThis, 1);
+                remove_from_list(PrimaryBuffer, lpThis, 1);
 
+#if SDL_VERSION_ATLEAST(2,0,0)
+                SDL_UnlockAudioDevice(PrimaryBuffer->device_id);
+#else
                 SDL_UnlockAudio();
+#endif
             }
 
             if (lpThis->data != NULL)
@@ -1439,6 +1493,8 @@ uint32_t IDirectSoundBuffer_Lock_c(struct IDirectSoundBuffer_c *lpThis, uint32_t
 
 uint32_t IDirectSoundBuffer_Play_c(struct IDirectSoundBuffer_c *lpThis, uint32_t dwReserved1, uint32_t dwReserved2, uint32_t dwFlags)
 {
+    struct IDirectSoundBuffer_c *PrimaryBuffer;
+
 #ifdef DEBUG_DSOUND
     eprintf("IDirectSoundBuffer_Play: 0x%x, 0x%x, 0x%x, 0x%x - ", (uintptr_t) lpThis, dwReserved1, dwReserved2, dwFlags);
 #endif
@@ -1463,7 +1519,11 @@ uint32_t IDirectSoundBuffer_Play_c(struct IDirectSoundBuffer_c *lpThis, uint32_t
 
         lpThis->status = SDL_AUDIO_PLAYING;
         lpThis->looping = 1;
+#if SDL_VERSION_ATLEAST(2,0,0)
+        SDL_PauseAudioDevice(lpThis->device_id, 0);
+#else
         SDL_PauseAudio(0);
+#endif
 
 #ifdef DEBUG_DSOUND
         eprintf("OK\n");
@@ -1471,16 +1531,21 @@ uint32_t IDirectSoundBuffer_Play_c(struct IDirectSoundBuffer_c *lpThis, uint32_t
         return DS_OK;
     }
 
+    PrimaryBuffer = lpThis->DirectSound->PrimaryBuffer;
+
+#if SDL_VERSION_ATLEAST(2,0,0)
+    SDL_LockAudioDevice(PrimaryBuffer->device_id);
+#else
     SDL_LockAudio();
+#endif
 
     lpThis->looping = (dwFlags & DSBPLAY_LOOPING)?1:0;
     if (lpThis->status != SDL_AUDIO_PLAYING)
     {
-        struct IDirectSoundBuffer_c *PrimaryBuffer, *first, *last;
+        struct IDirectSoundBuffer_c *first, *last;
 
         lpThis->status = SDL_AUDIO_PLAYING;
 
-        PrimaryBuffer = lpThis->DirectSound->PrimaryBuffer;
         if (PrimaryBuffer->num_channels == 0)
         {
             PrimaryBuffer->num_channels = 1;
@@ -1500,7 +1565,11 @@ uint32_t IDirectSoundBuffer_Play_c(struct IDirectSoundBuffer_c *lpThis, uint32_t
         }
     }
 
+#if SDL_VERSION_ATLEAST(2,0,0)
+    SDL_UnlockAudioDevice(PrimaryBuffer->device_id);
+#else
     SDL_UnlockAudio();
+#endif
 
 #ifdef DEBUG_DSOUND
     eprintf("OK\n");
@@ -1574,12 +1643,23 @@ uint32_t IDirectSoundBuffer_SetFormat_c(struct IDirectSoundBuffer_c *lpThis, con
 
     if (lpThis->status == SDL_AUDIO_PLAYING)
     {
+#if SDL_VERSION_ATLEAST(2,0,0)
+        SDL_LockAudioDevice(lpThis->device_id);
+        SDL_PauseAudioDevice(lpThis->device_id, 1);
+        SDL_UnlockAudioDevice(lpThis->device_id);
+#else
         SDL_LockAudio();
         SDL_PauseAudio(1);
         SDL_UnlockAudio();
+#endif
     }
 
+#if SDL_VERSION_ATLEAST(2,0,0)
+    SDL_CloseAudioDevice(lpThis->device_id);
+    lpThis->device_id = 0;
+#else
     SDL_CloseAudio();
+#endif
 
     if (lpThis->conv_data != NULL)
     {
@@ -1592,7 +1672,12 @@ uint32_t IDirectSoundBuffer_SetFormat_c(struct IDirectSoundBuffer_c *lpThis, con
         lpThis->accum_data = NULL;
     }
 
+#if SDL_VERSION_ATLEAST(2,0,0)
+    lpThis->device_id = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, SDL_AUDIO_ALLOW_ANY_CHANGE);
+    if (lpThis->device_id == 0)
+#else
     if (0 != SDL_OpenAudio(&desired, &obtained))
+#endif
     {
         lpThis->status = SDL_AUDIO_STOPPED;
 #ifdef DEBUG_DSOUND
@@ -1600,6 +1685,23 @@ uint32_t IDirectSoundBuffer_SetFormat_c(struct IDirectSoundBuffer_c *lpThis, con
 #endif
         return DSERR_BADFORMAT;
     }
+
+#if SDL_VERSION_ATLEAST(2,0,0)
+    if ((obtained.channels > 2) || ((obtained.size / (obtained.samples * obtained.channels)) > 2))
+    {
+        SDL_CloseAudioDevice(lpThis->device_id);
+
+        lpThis->device_id = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
+        if (lpThis->device_id == 0)
+        {
+            lpThis->status = SDL_AUDIO_STOPPED;
+#ifdef DEBUG_DSOUND
+            eprintf("SDL error\n");
+#endif
+            return DSERR_BADFORMAT;
+        }
+    }
+#endif
 
     lpThis->sample_size_shift = 0;
     if (obtained.channels == 2)
@@ -1630,7 +1732,12 @@ uint32_t IDirectSoundBuffer_SetFormat_c(struct IDirectSoundBuffer_c *lpThis, con
             free(lpThis->accum_data);
             lpThis->accum_data = NULL;
         }
+#if SDL_VERSION_ATLEAST(2,0,0)
+        SDL_CloseAudioDevice(lpThis->device_id);
+        lpThis->device_id = 0;
+#else
         SDL_CloseAudio();
+#endif
 
 #ifdef DEBUG_DSOUND
         eprintf("error\n");
@@ -1640,7 +1747,11 @@ uint32_t IDirectSoundBuffer_SetFormat_c(struct IDirectSoundBuffer_c *lpThis, con
 
     if (lpThis->status == SDL_AUDIO_PLAYING)
     {
+#if SDL_VERSION_ATLEAST(2,0,0)
+        SDL_PauseAudioDevice(lpThis->device_id, 0);
+#else
         SDL_PauseAudio(0);
+#endif
     }
 
 #ifdef DEBUG_DSOUND
@@ -1730,6 +1841,8 @@ uint32_t IDirectSoundBuffer_SetFrequency_c(struct IDirectSoundBuffer_c *lpThis, 
 
 uint32_t IDirectSoundBuffer_Stop_c(struct IDirectSoundBuffer_c *lpThis)
 {
+    struct IDirectSoundBuffer_c *PrimaryBuffer;
+
 #ifdef DEBUG_DSOUND
     eprintf("IDirectSoundBuffer_Stop: 0x%x - ", (uintptr_t) lpThis);
 #endif
@@ -1744,9 +1857,15 @@ uint32_t IDirectSoundBuffer_Stop_c(struct IDirectSoundBuffer_c *lpThis)
 
     if (lpThis->primary)
     {
+#if SDL_VERSION_ATLEAST(2,0,0)
+        SDL_LockAudioDevice(lpThis->device_id);
+        SDL_PauseAudioDevice(lpThis->device_id, 1);
+        SDL_UnlockAudioDevice(lpThis->device_id);
+#else
         SDL_LockAudio();
         SDL_PauseAudio(1);
         SDL_UnlockAudio();
+#endif
         lpThis->status = SDL_AUDIO_PAUSED;
 
 #ifdef DEBUG_DSOUND
@@ -1755,14 +1874,24 @@ uint32_t IDirectSoundBuffer_Stop_c(struct IDirectSoundBuffer_c *lpThis)
         return DS_OK;
     }
 
+    PrimaryBuffer = lpThis->DirectSound->PrimaryBuffer;
+
+#if SDL_VERSION_ATLEAST(2,0,0)
+    SDL_LockAudioDevice(PrimaryBuffer->device_id);
+#else
     SDL_LockAudio();
+#endif
 
     if (lpThis->status == SDL_AUDIO_PLAYING)
     {
-        remove_from_list(lpThis->DirectSound->PrimaryBuffer, lpThis, 0);
+        remove_from_list(PrimaryBuffer, lpThis, 0);
     }
 
+#if SDL_VERSION_ATLEAST(2,0,0)
+    SDL_UnlockAudioDevice(PrimaryBuffer->device_id);
+#else
     SDL_UnlockAudio();
+#endif
 
 #ifdef DEBUG_DSOUND
     eprintf("OK\n");

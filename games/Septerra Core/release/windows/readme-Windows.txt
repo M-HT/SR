@@ -1,5 +1,5 @@
 Septerra Core for Windows (x86)
-Version 1.04.0.2
+Version 1.04.0.3
 
 Original Septerra Core version 1.04 is required for playing.
 (version from GOG.com can be used for playing)
@@ -33,5 +33,8 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 
 Changes
 -------
+v1.04.0.3 (2020-03-30)
+* fix audio in Windows Vista and higher
+
 v1.04.0.2 (2019-10-11)
 first Windows (x86) version

@@ -26,9 +26,38 @@ import os
 import datetime
 import sys
 
-import pygtk
-pygtk.require('2.0')
-import gtk
+try:
+    import pygtk
+    pygtk.require('2.0')
+    import gtk
+
+    GTK_WINDOW_TOPLEVEL = gtk.WINDOW_TOPLEVEL
+    GTK_POS_LEFT = gtk.POS_LEFT
+    GTK_DIALOG_MODAL = gtk.DIALOG_MODAL
+    GTK_MESSAGE_QUESTION = gtk.MESSAGE_QUESTION
+    GTK_BUTTONS_YES_NO = gtk.BUTTONS_YES_NO
+    GTK_RESPONSE_YES = gtk.RESPONSE_YES
+    GTK_RESPONSE_CANCEL = gtk.RESPONSE_CANCEL
+    GTK_RESPONSE_OK = gtk.RESPONSE_OK
+    GTK_FILE_CHOOSER_ACTION_OPEN = gtk.FILE_CHOOSER_ACTION_OPEN
+    GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER = gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER
+    GTK_SHADOW_NONE = gtk.SHADOW_NONE
+except:
+    import gi
+    gi.require_version('Gtk', '3.0')
+    from gi.repository import Gtk as gtk
+
+    GTK_WINDOW_TOPLEVEL = gtk.WindowType.TOPLEVEL
+    GTK_POS_LEFT = gtk.PositionType.LEFT
+    GTK_DIALOG_MODAL = gtk.DialogFlags.MODAL
+    GTK_MESSAGE_QUESTION = gtk.MessageType.QUESTION
+    GTK_BUTTONS_YES_NO = gtk.ButtonsType.YES_NO
+    GTK_RESPONSE_YES = gtk.ResponseType.YES
+    GTK_RESPONSE_CANCEL = gtk.ResponseType.CANCEL
+    GTK_RESPONSE_OK = gtk.ResponseType.OK
+    GTK_FILE_CHOOSER_ACTION_OPEN = gtk.FileChooserAction.OPEN
+    GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER = gtk.FileChooserAction.SELECT_FOLDER
+    GTK_SHADOW_NONE = gtk.ShadowType.NONE
 
 class ConfigEntry:
     def __init__(self, entry_name, data_format, default_value):
@@ -50,7 +79,7 @@ class ConfigEntry:
         elif self.DataFormat == "*":
             self.DataType = "*"
         else:
-            raise BaseException, "ConfigEntry: unknown data format"
+            raise BaseException("ConfigEntry: unknown data format")
 
 
     def ResetValue(self):
@@ -110,7 +139,7 @@ class ConfigEntry:
         if new_value == self.CorrectValue(new_value):
             self.CurrentValue = new_value
         else:
-            raise BaseException, "ConfigEntry: wrong value"
+            raise BaseException("ConfigEntry: wrong value")
 
 
 class ConfigFile:
@@ -310,14 +339,14 @@ class ConfigFile:
         self.Entries[entry_name.lower()] = ConfigEntry(entry_name, data_format, default_value)
 
     def AreValuesChanged(self):
-        for entry_lname in self.Entries.iterkeys():
+        for entry_lname in iter(self.Entries):
             if self.Entries[entry_lname].IsValueChanged():
                 return True
 
         return False
 
     def ResetValues(self):
-        for entry_lname in self.Entries.iterkeys():
+        for entry_lname in iter(self.Entries):
             self.Entries[entry_lname].ResetValue()
 
     def HasEntry(self, entry_name):
@@ -344,7 +373,7 @@ class ConfigFile:
     def ReadConfigFile(self, file_path):
         self.ResetValues()
         self.Lines = []
-        fCfg = open(file_path, "rU")
+        fCfg = open(file_path, "r" if sys.version_info >= (3, 4) else "rU")
 
         for OrigLine in fCfg:
             Line = OrigLine.strip(" \r\n")
@@ -380,7 +409,10 @@ class ConfigFile:
             fCfg = open(file_path, "wt")
             EOL = "\n"
         else:
-            fCfg = open(file_path, "wb")
+            if sys.version_info >= (3, 0):
+                fCfg = open(file_path, "wt", newline="")
+            else:
+                fCfg = open(file_path, "wb")
             EOL = self.EOL
 
         UsedEntryNamesLow = set([])
@@ -392,7 +424,7 @@ class ConfigFile:
                 fCfg.write(self.Entries[EntryNameLow].GetName() + "=" + self.Entries[EntryNameLow].SaveFileValue() + EOL)
 
         FirstNewEntry = True
-        for EntryNameLow in self.Entries.iterkeys():
+        for EntryNameLow in iter(self.Entries):
             if not EntryNameLow in UsedEntryNamesLow:
                 if FirstNewEntry:
                     FirstNewEntry = False
@@ -415,18 +447,18 @@ class ConfigGUI:
         self.CfgFile = ConfigFile(game, platform)
         self.CfgFile.ReadConfigFile(file_path)
 
-        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window = gtk.Window(type=GTK_WINDOW_TOPLEVEL)
         self.window.connect("delete_event", self.delete)
 
         self.window.set_size_request(790, 420)
         self.window.set_title(os.path.basename(file_path))
 
-        mainvbox = gtk.VBox(False, 0)
+        mainvbox = gtk.VBox(homogeneous=False, spacing=0)
         self.window.add(mainvbox)
 
         # Create a new notebook, place the position of the tabs
         notebook = gtk.Notebook()
-        notebook.set_tab_pos(gtk.POS_LEFT)
+        notebook.set_tab_pos(GTK_POS_LEFT)
         mainvbox.pack_start(notebook, True, True, 0)
         notebook.show()
         self.show_tabs = True
@@ -683,26 +715,26 @@ class ConfigGUI:
             self.CreateEntryLabel(vbox, "Button mappings are currently not editable using this configuration tool.\nThey can be changed by editing the configuration file directly.", 20)
 
         # Create a bunch of buttons
-        hbox = gtk.HBox(True, 0)
+        hbox = gtk.HBox(homogeneous=True, spacing=0)
         mainvbox.pack_start(hbox, False, False, 0)
         hbox.show()
 
-        button = gtk.Button("Save")
+        button = gtk.Button(label="Save")
         button.connect("clicked", self.Save)
         hbox.pack_start(button, False, True, 0)
         button.show()
 
-        button = gtk.Button("Restore values")
+        button = gtk.Button(label="Restore values")
         button.connect("clicked", self.RestoreValues)
         hbox.pack_start(button, False, True, 0)
         button.show()
 
-        button = gtk.Button("Load default values")
+        button = gtk.Button(label="Load default values")
         button.connect("clicked", self.LoadDefaultValues)
         hbox.pack_start(button, False, True, 0)
         button.show()
 
-        button = gtk.Button("Exit")
+        button = gtk.Button(label="Exit")
         button.connect("clicked", self.Exit)
         hbox.pack_start(button, False, True, 0)
         button.show()
@@ -711,27 +743,33 @@ class ConfigGUI:
         self.window.show()
 
     def Save(self, widget, data=None):
-        message = gtk.MessageDialog(self.window, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_YES_NO, "Save configuration ?")
+        message = gtk.MessageDialog(parent=self.window, buttons=GTK_BUTTONS_YES_NO)
+        message.set_modal(True)
+        message.props.message_type = GTK_MESSAGE_QUESTION
+        message.props.text = "Save configuration ?"
         message.format_secondary_text("Existing configuration will be overwritten.")
         message.set_title("Question")
 
         response = message.run()
         message.destroy()
 
-        if response != gtk.RESPONSE_YES:
+        if response != GTK_RESPONSE_YES:
             return
 
         self.CfgFile.WriteConfigFile(self.file_path)
 
     def RestoreValues(self, widget, data=None):
-        message = gtk.MessageDialog(self.window, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_YES_NO, "Restore values ?")
+        message = gtk.MessageDialog(parent=self.window, buttons=GTK_BUTTONS_YES_NO)
+        message.set_modal(True)
+        message.props.message_type = GTK_MESSAGE_QUESTION
+        message.props.text = "Restore values ?"
         message.format_secondary_text("Configuration entries will be restored to the last saved values.")
         message.set_title("Question")
 
         response = message.run()
         message.destroy()
 
-        if response != gtk.RESPONSE_YES:
+        if response != GTK_RESPONSE_YES:
             return
 
         for entry_type, entry_name, widget in self.widgets:
@@ -740,14 +778,17 @@ class ConfigGUI:
         self.DisplayValues()
 
     def LoadDefaultValues(self, widget, data=None):
-        message = gtk.MessageDialog(self.window, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_YES_NO, "Load default values ?")
+        message = gtk.MessageDialog(parent=self.window, buttons=GTK_BUTTONS_YES_NO)
+        message.set_modal(True)
+        message.props.message_type = GTK_MESSAGE_QUESTION
+        message.props.text = "Load default values ?"
         message.format_secondary_text("Configuration entries will be set to their default values.")
         message.set_title("Question")
 
         response = message.run()
         message.destroy()
 
-        if response != gtk.RESPONSE_YES:
+        if response != GTK_RESPONSE_YES:
             return
 
         for entry_type, entry_name, widget in self.widgets:
@@ -757,49 +798,58 @@ class ConfigGUI:
 
     def Exit(self, widget, data=None):
         if self.CfgFile.AreValuesChanged():
-            message = gtk.MessageDialog(self.window, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_YES_NO, "Exit without saving ?")
+            message = gtk.MessageDialog(parent=self.window, buttons=GTK_BUTTONS_YES_NO)
+            message.set_modal(True)
+            message.props.message_type = GTK_MESSAGE_QUESTION
+            message.props.text = "Exit without saving ?"
             message.format_secondary_text("Some configuration entries were changed.\nIf you exit now, the changed values won't be saved.")
             message.set_title("Question")
 
             response = message.run()
             message.destroy()
 
-            if response != gtk.RESPONSE_YES:
+            if response != GTK_RESPONSE_YES:
                 return
 
         self.delete(self.window)
 
     def AddPageFrameVBox(self, notebook, page_label, frame_label):
-        frame = gtk.Frame(frame_label)
+        frame = gtk.Frame(label=frame_label)
         frame.set_border_width(5)
+        frame.set_shadow_type(GTK_SHADOW_NONE)
         frame.show()
 
-        label = gtk.Label(page_label)
+        label = gtk.Label()
+        label.set_label(page_label)
         notebook.append_page(frame, label)
 
-        vbox = gtk.VBox(False, 0)
+        vbox = gtk.VBox(homogeneous=False, spacing=0)
         frame.add(vbox)
         vbox.show()
 
         return vbox
 
     def CreateEntryLabel(self, parentvbox, entry_label, padding):
-        label = gtk.Label(entry_label)
-        label.set_alignment(0, 0)
-        label.set_padding(padding, 0)
-        parentvbox.pack_start(label, False, False)
+        label = gtk.Label()
+        label.set_label(entry_label)
+        label.props.xalign = 0
+        label.props.yalign = 0
+        label.props.xpad = padding
+        label.props.ypad = 0
+        parentvbox.pack_start(label, False, False, 0)
         label.show()
 
     def CreateSeparator(self, parentvbox):
         separator = gtk.HSeparator()
-        parentvbox.pack_start(separator, False, False)
+        parentvbox.pack_start(separator, False, False, 0)
         separator.show()
 
     def CreateEntry(self, parentvbox, entry_label, entry_name, entry_description = None):
-        vbox = gtk.VBox(False, 0)
+        vbox = gtk.VBox(homogeneous=False, spacing=0)
         self.CreateEntryLabel(vbox, entry_label, 5)
 
-        entry = gtk.Entry(256)
+        entry = gtk.Entry()
+        entry.set_max_length(256)
         entry.set_text(self.CfgFile.GetEntryValue(entry_name))
         entry.connect("changed", self.EntryChanged, entry_name)
         vbox.pack_start(entry, False, False, 5)
@@ -814,14 +864,15 @@ class ConfigGUI:
         vbox.show()
 
     def CreateSoundfontSelector(self, parentvbox, entry_label, entry_name, entry_description = None):
-        vbox = gtk.VBox(False, 0)
+        vbox = gtk.VBox(homogeneous=False, spacing=0)
         self.CreateEntryLabel(vbox, entry_label, 5)
 
-        hbox = gtk.HBox(False, 0)
+        hbox = gtk.HBox(homogeneous=False, spacing=0)
         vbox.pack_start(hbox, False, False, 5)
         hbox.show()
 
-        entry = gtk.Entry(256)
+        entry = gtk.Entry()
+        entry.set_max_length(256)
         entry.set_text(self.CfgFile.GetEntryValue(entry_name))
         entry.connect("changed", self.EntryChanged, entry_name)
         hbox.pack_start(entry, True, True, 5)
@@ -829,7 +880,7 @@ class ConfigGUI:
 
         self.widgets.append(("entry", entry_name, entry))
 
-        button = gtk.Button("Select SoundFont")
+        button = gtk.Button(label="Select SoundFont")
         button.connect("clicked", self.SelectSoundfont, entry)
         hbox.pack_start(button, False, False, 5)
         button.show()
@@ -841,14 +892,15 @@ class ConfigGUI:
         vbox.show()
 
     def CreateROMsDirectorySelector(self, parentvbox, entry_label, entry_name, entry_description = None):
-        vbox = gtk.VBox(False, 0)
+        vbox = gtk.VBox(homogeneous=False, spacing=0)
         self.CreateEntryLabel(vbox, entry_label, 5)
 
-        hbox = gtk.HBox(False, 0)
+        hbox = gtk.HBox(homogeneous=False, spacing=0)
         vbox.pack_start(hbox, False, False, 5)
         hbox.show()
 
-        entry = gtk.Entry(256)
+        entry = gtk.Entry()
+        entry.set_max_length(256)
         entry.set_text(self.CfgFile.GetEntryValue(entry_name))
         entry.connect("changed", self.EntryChanged, entry_name)
         hbox.pack_start(entry, True, True, 5)
@@ -856,7 +908,7 @@ class ConfigGUI:
 
         self.widgets.append(("entry", entry_name, entry))
 
-        button = gtk.Button("Select ROMs directory")
+        button = gtk.Button(label="Select ROMs directory")
         button.connect("clicked", self.SelectROMsDirectory, entry)
         hbox.pack_start(button, False, False, 5)
         button.show()
@@ -868,7 +920,7 @@ class ConfigGUI:
         vbox.show()
 
     def CreateRadioSet(self, parentvbox, entry_label, entry_name, entry_description = None, ReadOnly = False):
-        vbox = gtk.VBox(False, 0)
+        vbox = gtk.VBox(homogeneous=False, spacing=0)
         self.CreateEntryLabel(vbox, entry_label, 5)
 
         entry_format = self.CfgFile.GetEntryFormat(entry_name).split("/")
@@ -878,7 +930,7 @@ class ConfigGUI:
         buttons = []
 
         for entry_value in entry_format:
-            button = gtk.RadioButton(group, entry_value)
+            button = gtk.RadioButton(group=group, label=entry_value)
             button.set_use_underline(False)
             if current_value == entry_value.lower():
                 button.set_active(True)
@@ -902,7 +954,7 @@ class ConfigGUI:
         vbox.show()
 
     def CreateRadioSet2(self, parentvbox, entry_label, entry_name, entry_values, entry_description = None):
-        vbox = gtk.VBox(False, 0)
+        vbox = gtk.VBox(homogeneous=False, spacing=0)
         self.CreateEntryLabel(vbox, entry_label, 5)
 
         entry_format = entry_values.split("/")
@@ -911,14 +963,14 @@ class ConfigGUI:
             entry_format.append(current_value)
         group = None
 
-        hbox = gtk.HBox(False, 0)
+        hbox = gtk.HBox(homogeneous=False, spacing=0)
         vbox.pack_start(hbox, False, False, 0)
         hbox.show()
 
         buttons = []
 
         for entry_value in entry_format:
-            button = gtk.RadioButton(group, entry_value)
+            button = gtk.RadioButton(group=group, label=entry_value)
             button.set_use_underline(False)
             if current_value == entry_value.lower():
                 button.set_active(True)
@@ -939,18 +991,23 @@ class ConfigGUI:
         vbox.show()
 
     def CreateScale(self, parentvbox, entry_label, entry_name, entry_description = None, ReadOnly = False):
-        vbox = gtk.VBox(False, 0)
+        vbox = gtk.VBox(homogeneous=False, spacing=0)
         self.CreateEntryLabel(vbox, entry_label, 5)
 
-        hbox = gtk.HBox(False, 0)
+        hbox = gtk.HBox(homogeneous=False, spacing=0)
         vbox.pack_start(hbox, False, False, 0)
         hbox.show()
 
         entry_format = self.CfgFile.GetEntryFormat(entry_name).partition("-")
         current_value = int(self.CfgFile.GetEntryValue(entry_name))
-        adjustment = gtk.Adjustment(current_value, int(entry_format[0]), int(entry_format[2]), 1, 1)
-        hscale = gtk.HScale(adjustment)
+        adjustment = gtk.Adjustment(value=current_value, lower=int(entry_format[0]), upper=int(entry_format[2]))
+        adjustment.set_step_increment(1)
+        adjustment.set_page_increment(1)
+        hscale = gtk.HScale(adjustment=adjustment)
         hscale.set_digits(0)
+        if hasattr(hscale.props, "margin_top"):
+            hscale.props.margin_top = 4
+            hscale.props.margin_bottom = 4
         if ReadOnly:
             hscale.set_sensitive(False)
         hscale.connect("value-changed", self.ScaleChanged, entry_name)
@@ -989,7 +1046,8 @@ class ConfigGUI:
         self.CfgFile.SetEntryValue(data, str(int(widget.get_value())))
 
     def SelectSoundfont(self, widget, entry=None):
-        dialog = gtk.FileChooserDialog("Select SoundFont", self.window, gtk.FILE_CHOOSER_ACTION_OPEN, (gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL, gtk.STOCK_OK,gtk.RESPONSE_OK))
+        dialog = gtk.FileChooserDialog(title="Select SoundFont", parent=self.window, action=GTK_FILE_CHOOSER_ACTION_OPEN)
+        dialog.add_buttons(gtk.STOCK_CANCEL,GTK_RESPONSE_CANCEL, gtk.STOCK_OK,GTK_RESPONSE_OK);
 
         dialog.set_local_only(True)
 
@@ -1011,13 +1069,14 @@ class ConfigGUI:
 
         response = dialog.run()
 
-        if response == gtk.RESPONSE_OK:
+        if response == GTK_RESPONSE_OK:
             entry.set_text(dialog.get_filename())
 
         dialog.destroy()
 
     def SelectROMsDirectory(self, widget, entry=None):
-        dialog = gtk.FileChooserDialog("Select ROMs directory", self.window, gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER, (gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL, gtk.STOCK_OK,gtk.RESPONSE_OK))
+        dialog = gtk.FileChooserDialog(title="Select ROMs directory", parent=self.window, action=GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER)
+        dialog.add_buttons(gtk.STOCK_CANCEL,GTK_RESPONSE_CANCEL, gtk.STOCK_OK,GTK_RESPONSE_OK)
 
         dialog.set_local_only(True)
 
@@ -1040,7 +1099,7 @@ class ConfigGUI:
 
         response = dialog.run()
 
-        if response == gtk.RESPONSE_OK:
+        if response == GTK_RESPONSE_OK:
             entry.set_text(dialog.get_filename())
 
         dialog.destroy()
@@ -1049,7 +1108,7 @@ if len(sys.argv) >= 4:
     ConfigGUI(sys.argv[1], sys.argv[2], sys.argv[3])
     gtk.main()
 else:
-    print "Not enough parameters: game platform file_path"
-    print "\tgame = albion / xcom1 / xcom2 / warcraft"
-    print "\tplatform = pc / pandora / gp2x"
+    print("Not enough parameters: game platform file_path")
+    print("\tgame = albion / xcom1 / xcom2 / warcraft")
+    print("\tplatform = pc / pandora / gp2x")
 

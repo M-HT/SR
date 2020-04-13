@@ -71,6 +71,8 @@ void ReadConfiguration(void)
     Display_Height = 0;
     Display_Resizable = 0;
 
+    Audio_BufferSize = 0;
+
 #ifdef _WIN32
     f = fopen(CONFIG_FILE, "rt");
 #else
@@ -190,6 +192,19 @@ void ReadConfiguration(void)
                 }
             }
 
+        }
+        else if ( strncasecmp(str, "Audio_", 6) == 0 ) // str begins with "Audio_"
+        {
+            // display settings
+
+            str += 6;
+
+            if ( strcasecmp(str, "BufferSize") == 0 ) // str equals "BufferSize"
+            {
+                num_int = 0;
+                sscanf(param, "%i", &num_int);
+                Audio_BufferSize = num_int;
+            }
         }
 
     }

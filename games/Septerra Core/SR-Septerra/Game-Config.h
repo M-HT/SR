@@ -39,6 +39,8 @@ GAME_CONFIG_STORAGE int Display_Width;      /* horizontal size */
 GAME_CONFIG_STORAGE int Display_Height;     /* vertical size */
 GAME_CONFIG_STORAGE int Display_Resizable;  /* resizable window ? */
 
+GAME_CONFIG_STORAGE int Audio_BufferSize;   /* audio buffer size (in samples) */
+
 void ReadConfiguration(void);
 
 #endif

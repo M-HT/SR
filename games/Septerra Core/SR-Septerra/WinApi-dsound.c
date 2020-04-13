@@ -27,6 +27,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "Game-Config.h"
 
 
 #define make_hresult(s,f,c) ((uint32_t)(((unsigned long)(s)<<31)|((unsigned long)(f)<<16)|((unsigned long)(c))))
@@ -952,7 +953,7 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
         desired.freq = 44100;
         desired.format = AUDIO_S16LSB;
         desired.channels = 2;
-        desired.samples = 1024 /*8192*/;
+        desired.samples = (Audio_BufferSize)?Audio_BufferSize:1024;
         desired.callback = &fill_audio;
         desired.userdata = lpDSB_c;
 
@@ -1637,7 +1638,7 @@ uint32_t IDirectSoundBuffer_SetFormat_c(struct IDirectSoundBuffer_c *lpThis, con
         return DS_OK;
     }
 
-    desired.samples = 256 * (pcfxFormat->nSamplesPerSec / 11025) /*64 * pcfxFormat->nChannels * pcfxFormat->wBitsPerSample * (pcfxFormat->nSamplesPerSec / 11025)*/;
+    desired.samples = (Audio_BufferSize)?Audio_BufferSize:(256 * (pcfxFormat->nSamplesPerSec / 11025));
     desired.callback = &fill_audio;
     desired.userdata = lpThis;
 

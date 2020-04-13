@@ -23,13 +23,16 @@
  */
 
 // https://wiki.multimedia.cx/index.php?title=Sorenson_Video_1
+// https://wiki.multimedia.cx/index.php?title=Cinepak
 
+#define _FILE_OFFSET_BITS 64
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <SDL.h>
 #include <lqt/lqt.h>
 #include <lqt/colormodels.h>
+#include <sys/stat.h>
 #include "QTML.h"
 #include "Game-Config.h"
 
@@ -480,7 +483,7 @@ static void *movie_thread(void *arg)
 
             next_frame_time = lqt_frame_time(movie->qt, 0);
 
-            if (next_frame_time > video_duration)
+            if (next_frame_time >= video_duration)
             {
                 playing = 0;
                 break;
@@ -985,7 +988,10 @@ void DisposeMovie_c (void *theMovie)
 //                                 SInt8                  permission)                         THREEWORDINLINE(0x303C, 0x0192, 0xAAAA);
 int16_t OpenMovieFile_c (const void *fileSpec, int16_t *resRefNum, int8_t permission)
 {
-    int RefNum;
+    int RefNum, found, pathlen;
+    struct stat statbuf;
+    const char *filepath;
+    char *avipath;
 #ifndef _WIN32
     char buf[8192];
 #endif
@@ -1030,22 +1036,82 @@ int16_t OpenMovieFile_c (const void *fileSpec, int16_t *resRefNum, int8_t permis
         if (0 == strcasecmp(name, "m1.db")) return 1;
     }
 
-#ifndef _WIN32
-    if (!CLIB_FindFile(((FSSpec *)fileSpec)->name, buf))
+    found = 0;
+    // check if file exists and has nonzero size
+#ifdef _WIN32
+    if (!stat(((FSSpec *)fileSpec)->name, &statbuf))
     {
+        if (statbuf.st_size > 0)
+        {
+            found = 1;
+            filepath = ((FSSpec *)fileSpec)->name;
+        }
+    }
+#else
+    if (CLIB_FindFile(((FSSpec *)fileSpec)->name, buf))
+    {
+        if (!stat(buf, &statbuf))
+        {
+            if (statbuf.st_size > 0)
+            {
+                found = 1;
+                filepath = buf;
+            }
+        }
+    }
+#endif
+
+    avipath = NULL;
+    if (!found)
+    {
+        // check for file with .avi extension
+        pathlen = strlen(((FSSpec *)fileSpec)->name);
+        avipath = malloc(pathlen + 2);
+        if (avipath != NULL)
+        {
+            memcpy(avipath, ((FSSpec *)fileSpec)->name, pathlen - 2);
+            avipath[pathlen - 2] = 'a';
+            avipath[pathlen - 1] = 'v';
+            avipath[pathlen    ] = 'i';
+            avipath[pathlen + 1] = 0;
+
+#ifdef _WIN32
+            if (!stat(avipath, &statbuf))
+            {
+                if (statbuf.st_size > 0)
+                {
+                    found = 1;
+                    filepath = avipath;
+                }
+            }
+#else
+            if (CLIB_FindFile(avipath, buf))
+            {
+                if (!stat(buf, &statbuf))
+                {
+                    if (statbuf.st_size > 0)
+                    {
+                        found = 1;
+                        filepath = buf;
+                    }
+                }
+            }
+#endif
+        }
+    }
+
+    if (!found)
+    {
+        if (avipath != NULL) free(avipath);
 #ifdef DEBUG_QTML
         eprintf("error\n");
 #endif
         return 1;
     }
-#endif
 
+    qthandle[RefNum] = lqt_open_read(filepath);
 
-#ifdef _WIN32
-    qthandle[RefNum] = lqt_open_read(((FSSpec *)fileSpec)->name);
-#else
-    qthandle[RefNum] = lqt_open_read(buf);
-#endif
+    if (avipath != NULL) free(avipath);
 
     if (qthandle[RefNum] == NULL)
     {
@@ -1204,7 +1270,11 @@ int16_t NewMovieFromFile_c (void **theMovie, int16_t resRefNum, int16_t *resId, 
         movie->format = SDL_PIXELFORMAT_RGB565;
         break;
     case BC_BGR8888:
-        movie->format = SDL_PIXELFORMAT_BGR888;
+    #if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
+        movie->format = SDL_PIXELFORMAT_BGRX8888;
+    #else
+        movie->format = SDL_PIXELFORMAT_RGB888;
+    #endif
         break;
     default:
         movie->format = SDL_PIXELFORMAT_UNKNOWN;
@@ -1468,9 +1538,9 @@ void *NewMovieController_c (void *theMovie, const void *movieRect, int32_t someF
         }
 
     }
+#endif
 
     lqt_set_cmodel(movie->qt, 0, movie->colormodel);
-#endif
 
     check_movie_audio(movie);
 

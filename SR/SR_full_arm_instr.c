@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -2372,7 +2372,7 @@ static void SR_disassemble_calculate_parity_flag(char *cResult, enum arm_regs re
 int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint_fast32_t flags_to_write, uint_fast32_t *pflags_write, uint_fast32_t *pflags_read)
 {
     char cOutput[8192];
-    char cOutPart[128];
+    char cOutPart[384];
     char cAddress[128];
     char cLabel[128];
     fixup_data *fixup1, *fixup2, *fixup[3];

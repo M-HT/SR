@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -350,7 +350,7 @@ static void SR_write_llasm_output_function(output_data *item, void *data)
             }
             else
             {
-                export = section_export_list_FindEntryEqual(DATA->Entry, item->ofs);
+                export = section_export_list_FindEntryEqual1(DATA->Entry, item->ofs);
 
                 if ((export != NULL) && (export->name[0] != 0))
                 {

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -1409,7 +1409,7 @@ return (0x6996 >> v) & 1;
 int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, uint_fast32_t flags_to_write, uint_fast32_t *pflags_write, uint_fast32_t *pflags_read, int *plast_instruction)
 {
     char cOutput[8192];
-    char cOutPart[128];
+    char cOutPart[256];
     char cAddress[128];
     char cLabel[128];
     fixup_data *fixup1, *fixup2, *fixup[3];

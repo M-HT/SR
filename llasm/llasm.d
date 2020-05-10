@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -254,14 +254,16 @@ void initialize()
 
         if (position >= 0)
         {
-            instruction_name = instruction[0..position];
-            instruction = instruction[position+1..$].strip();
+            uint position2 = cast(uint)position;
+            instruction_name = instruction[0..position2];
+            instruction = instruction[position2+1..$].strip();
 
             position = instruction.indexOf('[');
             if (position >= 0)
             {
-                variable_param = instruction[position+1..$].strip();
-                instruction = instruction[0..position].strip();
+                position2 = cast(uint)position;
+                variable_param = instruction[position2+1..$].strip();
+                instruction = instruction[0..position2].strip();
             }
             else
             {
@@ -362,7 +364,8 @@ void read_next_line()
         long position = buf.indexOf(';');
         if (position >= 0)
         {
-            buf = buf[0..position];
+            uint position2 = cast(uint)position;
+            buf = buf[0..position2];
         }
 
         buf = buf.strip().detab(1);
@@ -370,15 +373,17 @@ void read_next_line()
         position = buf.indexOf(' ');
         if (position >= 0)
         {
-            current_line.word = buf[0..position].idup;
-            buf = buf[position+1..$].stripLeft();
+            uint position2 = cast(uint)position;
+            current_line.word = buf[0..position2].idup;
+            buf = buf[position2+1..$].stripLeft();
 
             current_line.params = buf.idup;
 
             position = buf.indexOf(' ');
             if (position >= 0)
             {
-                current_line.param1 = buf[0..position].idup;
+                position2 = cast(uint)position;
+                current_line.param1 = buf[0..position2].idup;
             }
             else
             {
@@ -521,7 +526,8 @@ string[] get_current_params2()
 
     if (position >= 0)
     {
-        return str_split_strip(current_line.params[position+1..$].stripLeft(), ',');
+        uint position2 = cast(uint)position;
+        return str_split_strip(current_line.params[position2+1..$].stripLeft(), ',');
     }
     else
     {
@@ -889,14 +895,16 @@ bool calculate_expr_value(ref string param)
         long position = param.indexOf(')');
         if (position >= 0)
         {
-            string part3 = param[position+1..$];
-            string part1 = param[0..position];
+            uint position2 = cast(uint)position;
+            string part3 = param[position2+1..$];
+            string part1 = param[0..position2];
 
             position = part1.lastIndexOf('(');
             if (position >= 0)
             {
-                string part2 = part1[position+1..$];
-                part1 = part1[0..position];
+                position2 = cast(uint)position;
+                string part2 = part1[position2+1..$];
+                part1 = part1[0..position2];
 
                 if (!calculate_expr_value2(part2))
                 {
@@ -2753,12 +2761,14 @@ public int main(string[] args)
                 {
                     long position = str.indexOf(' ');
 
-                    if (position >= 0 && str[0..position] == "global")
+                    if (position >= 0 && str[0..cast(uint)position] == "global")
                     {
+                        uint position2 = cast(uint)position;
+
                         newproc.isglobal = true;
                         input_reading_proc = true;
 
-                        str = str[position+1..$].strip();
+                        str = str[position2+1..$].strip();
 
                         position = str.indexOf(' ');
                         if (position >= 0)
@@ -3096,9 +3106,10 @@ public int main(string[] args)
 
                 long position = str.indexOf(' ');
 
-                if (position >= 0 && str[0..position] == "dup")
+                if (position >= 0 && str[0..cast(uint)position] == "dup")
                 {
-                    str = str[position+1..$].strip();
+                    uint position2 = cast(uint)position;
+                    str = str[position2+1..$].strip();
 
                     if (!is_number(str))
                     {

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -130,7 +130,8 @@ static void SR_apply_fixup_data_init(fixup_data *item, void *data)
 static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
 {
     char cbuf[128];
-    char cbuf2[64];
+    char cbuf2[160];
+    char cbuf3[336];
     output_data *output;
     fixup_data *fixup;
     uint_fast32_t sec, ofs;
@@ -390,12 +391,12 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
                     {
 #if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
                         // todo: arm
-                        sprintf(cbuf, "@call%s\ncall%s", cbuf2, cbuf2);
+                        sprintf(cbuf3, "@call%s\ncall%s", cbuf2, cbuf2);
 #else
-                        sprintf(cbuf, "call%s", cbuf2);
+                        sprintf(cbuf3, "call%s", cbuf2);
 #endif
 
-                        output->str = strdup(cbuf);
+                        output->str = strdup(cbuf3);
 
 
                         bound = section_bound_list_Insert(DATA->Entry, item->sofs - 1);
@@ -416,27 +417,27 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
         else if (item->type == FT_SEGMENT || item->type == FT_16BITOFS)
         {
 #if (OUTPUT_TYPE == OUT_LLASM)
-            sprintf(cbuf, "dseg%s", cbuf2);
+            sprintf(cbuf3, "dseg%s", cbuf2);
 #elif (OUTPUT_TYPE == OUT_ARM_LINUX)
-            sprintf(cbuf, ".hword%s", cbuf2);
+            sprintf(cbuf3, ".hword%s", cbuf2);
 #else
-            sprintf(cbuf, "dw%s", cbuf2);
+            sprintf(cbuf3, "dw%s", cbuf2);
 #endif
 
-            output->str = strdup(cbuf);
+            output->str = strdup(cbuf3);
             output->type = OT_OFFSET;
         }
         else
         {
 #if (OUTPUT_TYPE == OUT_LLASM)
-            sprintf(cbuf, "daddr%s", cbuf2);
+            sprintf(cbuf3, "daddr%s", cbuf2);
 #elif (OUTPUT_TYPE == OUT_ARM_LINUX)
-            sprintf(cbuf, ".int%s", cbuf2);
+            sprintf(cbuf3, ".int%s", cbuf2);
 #else
-            sprintf(cbuf, "dd%s", cbuf2);
+            sprintf(cbuf3, "dd%s", cbuf2);
 #endif
 
-            output->str = strdup(cbuf);
+            output->str = strdup(cbuf3);
             output->type = OT_OFFSET;
         }
 

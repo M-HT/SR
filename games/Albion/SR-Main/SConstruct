@@ -48,8 +48,8 @@ if device == 'none':
         if os.uname()[4].startswith('arm'):
             device = 'arm-linux'
     env['device'] = device
-    print "\nYou didn't set any target device (parameter 'device')."
-    print "'" + device + "' will be used for compiling.\n"
+    print("\nYou didn't set any target device (parameter 'device').")
+    print("'" + device + "' will be used for compiling.\n")
 
 Help(vars.GenerateHelpText(env))
 
@@ -127,14 +127,14 @@ def get_compiler_version(compiler_path, env_path):
     (stdout, stderr) = process.communicate()
     if not stdout or stdout.isspace():
         return None
-    version = stdout.strip().split('.')
+    version = stdout.strip().split(b'.')
     return version
 
 def is_version_ge(version, comparand):
     if version is None or comparand is None:
         return False
 
-    for i in xrange(len(comparand)):
+    for i in range(len(comparand)):
         if i >= len(version):
             component = 0
         else:

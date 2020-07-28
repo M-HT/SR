@@ -787,8 +787,8 @@ main (int argc, char **argv) {
 #ifndef _WIN32
 	int my_tty;
 	struct termios _tty;
-	tcflag_t _res_oflg = _tty.c_oflag;
-	tcflag_t _res_lflg = _tty.c_lflag;
+	tcflag_t _res_oflg = 0;
+	tcflag_t _res_lflg = 0;
 
 #define raw() (_tty.c_lflag &= ~(ICANON | ICRNL | ISIG), \
 		_tty.c_oflag &= ~ONLCR, tcsetattr(my_tty, TCSANOW, &_tty))
@@ -859,7 +859,7 @@ main (int argc, char **argv) {
 
 	if (!config_file) {
 		config_file = malloc(sizeof(WILDMIDI_CFG)+1);
-		strncpy (config_file, WILDMIDI_CFG, sizeof(WILDMIDI_CFG));
+		memcpy (config_file, WILDMIDI_CFG, sizeof(WILDMIDI_CFG));
 		config_file[sizeof(WILDMIDI_CFG)] = '\0';
 	}
 	if ((optind < argc) || (test_midi)) {

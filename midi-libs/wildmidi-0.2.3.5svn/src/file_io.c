@@ -79,7 +79,7 @@ WM_BufferFile (const char *filename, unsigned long int *size) {
 				return NULL;
 			}
 			memmove((buffer_file + strlen(home)), (buffer_file + 1), (strlen(buffer_file)));
-			strncpy (buffer_file, home,strlen(home));
+			memcpy (buffer_file, home,strlen(home));
 		}
 	} else if (buffer_file[0] != '/') {
 		char* cwdresult = getcwd(buffer_dir, 1024);
@@ -95,7 +95,7 @@ WM_BufferFile (const char *filename, unsigned long int *size) {
 			return NULL;
 		}
 		memmove((buffer_file + strlen(buffer_dir)), buffer_file, strlen(buffer_file)+1);
-		strncpy (buffer_file,buffer_dir,strlen(buffer_dir));
+		memcpy (buffer_file,buffer_dir,strlen(buffer_dir));
 	}
 #endif
 	if (stat(buffer_file,&buffer_stat)) {

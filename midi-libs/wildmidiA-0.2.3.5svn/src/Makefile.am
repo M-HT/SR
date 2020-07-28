@@ -19,7 +19,7 @@ libWildMidiA_la_LDFLAGS=		-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) -
 libWildMidiA_la_LIBADD=      -lm -lc
 
 bin_PROGRAMS= wildmidi
-wildmidi_libs=			$(top_builddir)/src/libWildMidiA.la
+wildmidi_libs=			libWildMidiA.la
 wildmidi_SOURCES=		wildmidi.c
 wildmidi_LDADD=			$(AUDDR) $(LDFLAGS) $(wildmidi_libs)
 wildmidi_DEPENDENCIES=	$(wildmidi_libs)

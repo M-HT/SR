@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,8 +26,36 @@
 #include <stdint.h>
 #include <malloc.h>
 #include <string.h>
-#include "conf.h"
 #include "smack.h"
+
+#ifdef __BYTE_ORDER__
+
+#if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+#define BIG_ENDIAN_BYTE_ORDER
+#else
+#undef BIG_ENDIAN_BYTE_ORDER
+#endif
+
+#else
+
+#include <endian.h>
+#if (__BYTE_ORDER == __BIG_ENDIAN)
+#define BIG_ENDIAN_BYTE_ORDER
+#else
+#undef BIG_ENDIAN_BYTE_ORDER
+#endif
+
+#endif
+
+#ifdef BIG_ENDIAN_BYTE_ORDER
+	#define LE2NATIVE32(x) (  ((x) << 24)               | \
+	                         (((x) <<  8) & 0x00ff0000) | \
+	                         (((x) >>  8) & 0x0000ff00) | \
+	                          ((x) >> 24)               )
+#else
+	#define LE2NATIVE32(x) (x)
+#endif
+
 
 /* palette map - convert 6bit palette color to 8bit palette color */
 const static uint8_t palmap[64] = {
@@ -99,7 +127,7 @@ static void BitStreamInitialize(BitStream *bitstream, FILE *File,
 	bitstream->Empty = !BitStreamSize;
 }
 
-#if (USE_ASM != ASM_ARMLE)
+#if !(defined(GP2X) && defined(__GNUC__))
 static
 #endif
 void BitStreamFillBuffer(BitStream *bitstream)
@@ -152,22 +180,84 @@ void BitStreamFillBuffer(BitStream *bitstream)
 	} \
 }
 
-#if (USE_ASM == ASM_ARMLE)
-	#ifdef __cplusplus
-	extern "C" {
-	#endif
+#if defined(GP2X) && defined(__GNUC__)
 
-	uint32_t BitStreamReadBitAsm(BitStream *bitstream);
+static uint32_t __attribute__ ((noinline, naked)) BitStreamReadBitAsm(BitStream *bitstream)
+{
+	asm(
+		// BitStream offsets
+		".equ BS_File, 0" "\n"
+		".equ BS_Buffer, 4" "\n"
+		".equ BS_BufferSize, 8" "\n"
+		".equ BS_BytesRead, 12" "\n"
+		".equ BS_BufferPos, 16" "\n"
+		".equ BS_BitsLeft, 20" "\n"
+		".equ BS_BytesLeft, 24" "\n"
+		".equ BS_Empty, 28" "\n"
 
-	#ifdef __cplusplus
-	}
-	#endif
+		"ldr r1, [r0, #BS_Empty]" "\n"
+		"cmp r1, #0" "\n"
+		"movne r0, #0" "\n"
+		// exit
+		"movne pc, lr" "\n"
 
-	#define BitStreamReadBit(x) BitStreamReadBitAsm(x)
+		"mov r3, r0" "\n"
+
+		"ldr r12, [r3, #BS_BytesRead]" "\n"
+		"ldr r2, [r3, #BS_BufferPos]" "\n"
+		"ldr r1, [r3, #BS_BitsLeft]" "\n"
+
+		"cmp r1, #0" "\n"
+		"bne 2f" "\n"
+		"add r0, r2, #1" "\n"
+		"cmp r0, r12" "\n"
+		"bhs 3f" "\n"
+
+		"1:" "\n"
+		"mov r1, #8" "\n"
+		"add r2, r2, #1" "\n"
+		"str r2, [r3, #BS_BufferPos]" "\n"
+
+		"2:" "\n"
+		"ldr r0, [r3, #BS_Buffer]" "\n"
+		"ldrb r0, [r0, r2]" "\n"
+		"mov r0, r0, lsl r1" "\n"
+		"mov r0, r0, lsr #8" "\n"
+		"and r0, r0, #1" "\n"
+		"subS r1, r1, #1" "\n"
+		"str r1, [r3, #BS_BitsLeft]" "\n"
+		// exit
+		"movne pc, lr" "\n"
+		"add r2, r2, #1" "\n"
+		"cmp r2, r12" "\n"
+		// exit
+		"movlo pc, lr" "\n"
+		"ldr r1, [r3, #BS_BytesLeft]" "\n"
+		"cmp r1, #0" "\n"
+		"moveq r1, #1" "\n"
+		"streq r1, [r3, #BS_Empty]" "\n"
+		// exit
+		"bx lr" "\n"
+
+		"3:" "\n"
+		"stmfd sp!, {r3, lr}" "\n"
+		"mov r0, r3" "\n"
+		"bl BitStreamFillBuffer" "\n"
+		"ldmfd sp!, {r3, lr}" "\n"
+		"ldr r12, [r3, #BS_BytesRead]" "\n"
+		"ldr r2, [r3, #BS_BufferPos]" "\n"
+		"ldr r1, [r3, #BS_BitsLeft]" "\n"
+		"cmp r1, #0" "\n"
+		"bne 2b" "\n"
+		"b 1b" "\n"
+	);
+}
+
+#define BitStreamReadBit(x) BitStreamReadBitAsm(x)
 
 #else
 
-uint32_t BitStreamReadBit(BitStream *bitstream)
+static uint32_t BitStreamReadBit(BitStream *bitstream)
 {
 	uint32_t ret;
 
@@ -562,24 +652,21 @@ SmackStruct *SmackOpen(FILE *SmackFile)
 
 		test = 0x12345678UL;
 
-		if (IS_BIG_ENDIAN == 0)
+#ifdef BIG_ENDIAN_BYTE_ORDER
+		/* big endian */
+		if ( *((uint8_t *) (&test)) != 0x12 )
 		{
-			/* little endian */
-			if ( *((uint8_t *) (&test)) != 0x78 )
-			{
-				SmackErrorCode = SM_WRONG_ENDIANNESS;
-				return NULL;
-			}
+			SmackErrorCode = SM_WRONG_ENDIANNESS;
+			return NULL;
 		}
-		else
+#else
+		/* little endian */
+		if ( *((uint8_t *) (&test)) != 0x78 )
 		{
-			/* big endian */
-			if ( *((uint8_t *) (&test)) != 0x12 )
-			{
-				SmackErrorCode = SM_WRONG_ENDIANNESS;
-				return NULL;
-			}
+			SmackErrorCode = SM_WRONG_ENDIANNESS;
+			return NULL;
 		}
+#endif
 	}
 
 	if (SmackFile == NULL)
@@ -600,7 +687,7 @@ SmackStruct *SmackOpen(FILE *SmackFile)
 		}
 	}
 
-	if (IS_BIG_ENDIAN != 0)
+#ifdef BIG_ENDIAN_BYTE_ORDER
 	{
 		/* big endian */
 		int i;
@@ -609,6 +696,7 @@ SmackStruct *SmackOpen(FILE *SmackFile)
 			((uint32_t *) (&Header))[i] = LE2NATIVE32( ((uint32_t *) (&Header))[i] );
 		}
 	}
+#endif
 /* for now only version 2 Smacker files supported - 'SMK2' */
 	if (Header.Signature != SMACKER_VER_2)
 	{

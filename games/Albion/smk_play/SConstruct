@@ -46,7 +46,6 @@ if device == 'none':
 
 Help(vars.GenerateHelpText(env))
 
-arch_obj = []
 if device == 'pc-windows' or device == 'pc-linux':
     # default settings
     env = Environment(CCFLAGS      = '-m32 -O2',
@@ -56,8 +55,7 @@ if device == 'pc-windows' or device == 'pc-linux':
 elif device == 'arm-linux':
     env = Environment(CCFLAGS      = '-O2',
                       LINKFLAGS    = '',
-                      LIBS         = ['SDL', 'pthread'],
-                      ASFLAGS      = ' -I arm/'
+                      LIBS         = ['SDL', 'pthread']
                      )
 elif device == 'gp2x':
     compiler_path = '/opt/open2x/gcc-4.1.1-glibc-2.3.6/'
@@ -71,12 +69,8 @@ elif device == 'gp2x':
                       LIBDIRPREFIX = '-L',
                       LINKFLAGS    = '-static',
                       LIBS         = ['SDL', 'pthread', 'armmem'],
-                      ENV          = {'PATH' : compiler_path + 'bin:' + os.environ['PATH']},
-                      AS           = compiler_prefix + 'as',
-                      ASFLAGS      = ' -EL -march=armv4t -mfpu=softfpa -I arm/'
+                      ENV          = {'PATH' : compiler_path + 'bin:' + os.environ['PATH']}
                      )
-
-    arch_obj = env.Object(Glob('*.s'))
 elif device == 'pandora':
     compiler_path = os.environ['PNDSDK'] + '/'
     compiler_prefix = 'pandora-'
@@ -89,9 +83,7 @@ elif device == 'pandora':
                       LIBDIRPREFIX = '-L',
                       LINKFLAGS    = '-Wl,-z,noexecstack',
                       LIBS         = ['SDL', 'ts', 'pthread'],
-                      ENV          = {'PATH' : compiler_path + 'bin:' + os.environ['PATH']},
-                      AS           = compiler_prefix + 'as',
-                      ASFLAGS      = ' -EL -march=armv7-a -mcpu=cortex-a8 -mfpu=vfpv3 -mfloat-abi=softfp -I arm/'
+                      ENV          = {'PATH' : compiler_path + 'bin:' + os.environ['PATH']}
                      )
 
 def get_compiler_version(compiler_path, env_path):
@@ -131,4 +123,4 @@ else:
     env.Append(LINKFLAGS = ' -s')
 
 
-env.Program('smk_play', Glob('*.c') + arch_obj)
+env.Program('smk_play', Glob('*.c'))

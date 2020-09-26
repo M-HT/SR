@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,27 +26,147 @@
 #include <stdlib.h>
 #include <string.h>
 #include <SDL/SDL.h>
-#include "conf.h"
 #include "smack.h"
 #include "smk_defs.h"
 
 
 typedef void (*change_vol_func)(uint8_t *dst, uint8_t *src, int len);
 
-#if (USE_ASM == ASM_ARMLE)
-	#ifdef __cplusplus
-	extern "C" {
-	#endif
+#if defined(GP2X) && defined(__GNUC__)
+static void __attribute__ ((noinline, naked)) BufferToScreen320x240x16Asm(uint16_t *dst, uint8_t *src, uint32_t *pal, uint32_t Height, uint32_t Width, uint32_t WidthDiff)
+{
+//input:
+// r0 - dst
+// r1 - src
+// r2 - palette
+// r3 - Height
+// [sp] - Width
+// [sp+4] - screen->w
+//
+//temp:
+// ip - Width
+// lr - screen->w - Width
+// v1 - horizontal counter
+// v2 - *src
+// v3 - *pal
+// v4 - *dst
+// v5 - *dst2
+	asm(
+		"stmfd sp!, {v1-v5, lr}" "\n"
+		"ldr ip, [sp, #(6*4)]" "\n"
+		"ldr lr, [sp, #(7*4)]" "\n"
 
-	void BufferToScreen320x240x16Asm(uint16_t *dst, uint8_t *src, uint32_t *pal, uint32_t Height, uint32_t Width, uint32_t WidthDiff);
-	void BufferToScreen320x240x16DoubleAsm(uint16_t *dst, uint8_t *src, uint32_t *pal, uint32_t Height, uint32_t Width, uint32_t WidthDiff);
+		"rsb v1, r3, #240" "\n"
+		"mul v2, v1, lr" "\n"
+		"add r0, r0, v2" "\n"
+		"rsb v1, ip, #320" "\n"
+		"add r0, r0, v1" "\n"
 
-	#ifdef __cplusplus
-	}
-	#endif
+		"sub lr, lr, ip" "\n"
 
-	#define BitStreamReadBit(x) BitStreamReadBitAsm(x)
+		"1:" "\n"
+		"mov v1, ip, lsr #2" "\n"
 
+		"2:" "\n"
+		"ldr v2, [r1], #4" "\n"
+		"and v4, v2, #0x00ff" "\n"
+		"ldr v4, [r2, v4, lsl #2]" "\n"
+
+		"and v3, v2, #0x00ff00" "\n"
+		"ldr v3, [r2, v3, lsr #6]" "\n"
+		"orr v4, v4, v3, lsl #16" "\n"
+
+		"and v5, v2, #0x00ff0000" "\n"
+		"ldr v5, [r2, v5, lsr #14]" "\n"
+
+		"mov v3, v2, lsr #24" "\n"
+		"ldr v3, [r2, v3, lsl #2]" "\n"
+		"orr v5, v5, v3, lsl #16" "\n"
+
+		"stmia r0!, {v4, v5}" "\n"
+
+		"subS v1, v1, #1" "\n"
+		"bne 2b" "\n"
+
+		"add r0, r0, lr" "\n"
+
+		"subS r3, r3, #1" "\n"
+		"bne 1b" "\n"
+
+		//exit
+		"ldmfd sp!, {v1-v5, pc}" "\n"
+	);
+}
+
+static void __attribute__ ((noinline, naked)) BufferToScreen320x240x16DoubleAsm(uint16_t *dst, uint8_t *src, uint32_t *pal, uint32_t Height, uint32_t Width, uint32_t WidthDiff)
+{
+//input:
+// r0 - dst
+// r1 - src
+// r2 - palette
+// r3 - Height
+// [sp] - Width
+// [sp+4] - screen->w
+//
+//temp:
+// ip - Width
+// lr - screen->w - Width
+// v1 - horizontal counter
+// v2 - *src
+// v3 - *pal
+// v4 - *dst
+// v5 - *dst2
+// v6 - dst+w
+	asm(
+		"stmfd sp!, {v1-v6, lr}" "\n"
+		"ldr ip, [sp, #(7*4)]" "\n"
+		"ldr lr, [sp, #(8*4)]" "\n"
+
+		"rsb v1, r3, #120" "\n"
+		"mul v2, v1, lr" "\n"
+		"add r0, r0, v2, lsl #1" "\n"
+		"rsb v1, ip, #320" "\n"
+		"add r0, r0, v1" "\n"
+
+		"add v6, r0, lr" "\n"
+
+		"rsb lr, ip, lr, lsl #1" "\n"
+
+		"1:" "\n"
+		"mov v1, ip, lsr #2" "\n"
+
+		"2:" "\n"
+		"ldr v2, [r1], #4" "\n"
+		"and v4, v2, #0x00ff" "\n"
+		"ldr v4, [r2, v4, lsl #2]" "\n"
+
+		"and v3, v2, #0x00ff00" "\n"
+		"ldr v3, [r2, v3, lsr #6]" "\n"
+		"orr v4, v4, v3, lsl #16" "\n"
+
+		"and v5, v2, #0x00ff0000" "\n"
+		"ldr v5, [r2, v5, lsr #14]" "\n"
+
+		"mov v3, v2, lsr #24" "\n"
+		"ldr v3, [r2, v3, lsl #2]" "\n"
+		"orr v5, v5, v3, lsl #16" "\n"
+
+		"stmia r0!, {v4, v5}" "\n"
+		"stmia v6!, {v4, v5}" "\n"
+
+		"subS v1, v1, #1" "\n"
+		"bne 2b" "\n"
+
+		"add r0, r0, lr" "\n"
+		"add v6, v6, lr" "\n"
+
+		"subS r3, r3, #1" "\n"
+		"bne 1b" "\n"
+
+		//exit
+		"ldmfd sp!, {v1-v6, pc}" "\n"
+	);
+}
 #endif
 
 SmackStruct *Smack;
@@ -264,7 +384,7 @@ static void BufferToScreen(void)
 		SDL_LockSurface(screen);
 		if (Smack->Flags & 4)
 		{
-#if (USE_ASM == ASM_ARMLE)
+#if defined(GP2X) && defined(__GNUC__)
 			BufferToScreen320x240x16DoubleAsm
 			(
 				(uint16_t *) screen->pixels,
@@ -310,7 +430,7 @@ static void BufferToScreen(void)
 		}
 		else
 		{
-#if (USE_ASM == ASM_ARMLE)
+#if defined(GP2X) && defined(__GNUC__)
 			BufferToScreen320x240x16Asm
 			(
 				(uint16_t *) screen->pixels,

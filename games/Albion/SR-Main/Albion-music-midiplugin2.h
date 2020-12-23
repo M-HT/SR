@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2018 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -28,6 +28,7 @@
 #include "Albion-music.h"
 
 int MidiPlugin2_Startup(void);
+void MidiPlugin2_Restore(void);
 void MidiPlugin2_Shutdown(void);
 
 void MidiPlugin2_AIL_allocate_sequence_handle2(void *mdi, AIL_sequence *S);

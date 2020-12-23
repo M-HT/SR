@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -96,14 +96,14 @@ int SR_get_section_reladr(uint_fast32_t Address, uint_fast32_t *SecNum, uint_fas
 			return 1;
 		}
 	}
-	for (Entry = num_sections - 1; Entry >= 0; Entry--)
+	for (Entry = num_sections; Entry > 0; Entry--)
 	{
-		if (Address >= section[Entry].start)
+		if (Address >= section[Entry - 1].start)
 		{
-			if (Entry == num_sections - 1) break;
+			if (Entry == num_sections) break;
 
 			*SecNum = Entry;
-			*RelAdr = Address - section[Entry].start;
+			*RelAdr = Address - section[Entry - 1].start;
 
 			return 1;
 		}

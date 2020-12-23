@@ -1,14 +1,11 @@
 #! /bin/sh
 
-ALBION_CFG=Albion.cfg
-
 SETUP_INI=
 ALBION_EXE=
 ALBIONCD=
 ALBIONCD_ROOT=
 
 FILE_RESULT=
-INTRO_PLAY=on
 
 find_file () {
     if [ -e "$1/$2" ]
@@ -43,67 +40,6 @@ find_file () {
     fi
 
     FILE_RESULT=
-}
-
-read_cfg () {
-    if [ -f "$ALBION_CFG" ]
-    then
-        INTRO_PLAY=`grep -x ^Intro=.*$ $ALBION_CFG | head -n1 | sed 's/^Intro=//;s/\\r$//'`
-
-        if [ "x$INTRO_PLAY" = "xoff" ]
-        then
-            INTRO_PLAY=
-        else
-            INTRO_PLAY=on
-        fi
-    else
-        INTRO_PLAY=on
-    fi
-}
-
-play_smk () {
-    find_file "." "$1"
-    if [ -n "$FILE_RESULT" ]
-    then
-        ./smk_play "./$FILE_RESULT"
-        return
-    fi
-
-    find_file "." "VIDEO"
-    if [ -n "$FILE_RESULT" ]
-    then
-        VIDEO="$FILE_RESULT"
-
-        find_file "./$VIDEO" "$1"
-        if [ -n "$FILE_RESULT" ]
-        then
-            ./smk_play "./$VIDEO/$FILE_RESULT"
-            return
-        fi
-    fi
-
-    if [ -n "$ALBIONCD" ]
-    then
-        find_file "./$ALBIONCD" "$1"
-        if [ -n "$FILE_RESULT" ]
-        then
-            ./smk_play "./$ALBIONCD/$FILE_RESULT"
-            return
-        fi
-
-        find_file "./$ALBIONCD" "VIDEO"
-        if [ -n "$FILE_RESULT" ]
-        then
-            VIDEO="$FILE_RESULT"
-
-            find_file "./$ALBIONCD/$VIDEO" "$1"
-            if [ -n "$FILE_RESULT" ]
-            then
-                ./smk_play "./$ALBIONCD/$VIDEO/$FILE_RESULT"
-                return
-            fi
-        fi
-    fi
 }
 
 cd "`echo $0 | sed 's/\/[^\/]*$//'`"
@@ -168,28 +104,7 @@ then
     fi
 fi
 
-read_cfg
-
 export LD_LIBRARY_PATH=`pwd`
 
-if [ -n "$INTRO_PLAY" ]
-then
-    play_smk "INTRO.smk"
-fi
-
-while :
-do
-    ./SR-Main
-    RESULT=$?
-    sync
-
-    if [ $RESULT -eq 2 ]
-    then
-        play_smk "INTRO.smk"
-    elif [ $RESULT -eq 3 ]
-    then
-        play_smk "CREDITS.smk"
-    else
-        exit 0
-    fi
-done
+./SR-Main
+sync

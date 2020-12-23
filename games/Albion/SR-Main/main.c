@@ -697,6 +697,7 @@ static int Game_Initialize(void)
     Thread_Exited = 0;
     Thread_Exit = 0;
     Game_Paused = 0;
+    SMK_Playing = 0;
     Game_OldCursor = NULL;
     Game_NoCursor = NULL;
     Game_MinCursor = NULL;
@@ -712,6 +713,7 @@ static int Game_Initialize(void)
     Game_MinCursorData[8] = 0xF8;
     Game_MinCursorData[9] = 0xD8;
     Game_MouseCursor = 0;
+    Game_PlayIntro = 1;
     Game_Sound = 1;
     Game_Music = 1;
 
@@ -1044,7 +1046,8 @@ static void Game_Event_Loop(void)
 
     while (!Thread_Exited && SDL_WaitEvent(&event))
     {
-        if (!Handle_Input_Event(&event))
+        if (Handle_Input_Event(&event)) continue;
+
         switch(event.type)
         {
         #ifdef USE_SDL2
@@ -1133,7 +1136,7 @@ static void Game_Event_Loop(void)
                 #else
                     Game_Screen != NULL
                 #endif
-                    && AppActive && AppInputFocus && AppMouseFocus)
+                    && AppActive && AppInputFocus && AppMouseFocus && !SMK_Playing)
                 {
 
                     if ( ( (Game_MQueueWrite + 1) & (GAME_MQUEUE_LENGTH - 1) ) == Game_MQueueRead )
@@ -1326,6 +1329,10 @@ static void Game_Event_Loop(void)
                         #endif
                         }
                         break;
+                    case EC_SMK_FUNCTION:
+                        ((void(*)(void))event.user.data1)();
+                        break;
+                        // case EC_SMK_FUNCTION:
                 }
 
                 break;

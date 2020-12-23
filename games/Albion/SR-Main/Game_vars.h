@@ -71,6 +71,7 @@ EXTERNAL_VARIABLE int Game_MouseCursor;				/* mouse cursor type in window
                                                        0: normal
                                                        1: minimal
                                                        2: none */
+EXTERNAL_VARIABLE int Game_PlayIntro;				/* play intro on start ? */
 
 
 // global display variables
@@ -177,6 +178,7 @@ EXTERNAL_VARIABLE volatile uint32_t Game_VSyncTick;	/* VSync tick counter */
 EXTERNAL_VARIABLE volatile uint32_t Thread_Exited;	/* did main thread exit ? */
 EXTERNAL_VARIABLE volatile uint32_t Thread_Exit;	/* should thread exit ? */
 EXTERNAL_VARIABLE volatile uint32_t Game_Paused;	/* is game paused? */
+EXTERNAL_VARIABLE volatile uint32_t SMK_Playing;	/* is smk video playing? */
 
 EXTERNAL_VARIABLE SDL_sem *Game_DisplaySem;
 EXTERNAL_VARIABLE SDL_sem *Game_FlipSem;

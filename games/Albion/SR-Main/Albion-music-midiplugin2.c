@@ -621,6 +621,15 @@ int MidiPlugin2_Startup(void)
 #undef free_library
 }
 
+void MidiPlugin2_Restore(void)
+{
+    if (MP_thread != NULL)
+    {
+        // set mixer
+        Mix_HookMusic(&MidiPlugin2_MusicPlayer, temp_buf);
+    }
+}
+
 void MidiPlugin2_Shutdown(void)
 {
     int index;

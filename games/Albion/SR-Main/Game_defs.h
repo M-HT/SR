@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -73,6 +73,7 @@
 #define EC_MOUSE_MOVE			(5)
 #define EC_MOUSE_SET 			(6)
 #define EC_INPUT_KEY 			(7)
+#define EC_SMK_FUNCTION			(8)
 
 
 typedef enum {

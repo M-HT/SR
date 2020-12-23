@@ -97,6 +97,10 @@
 .extern SR_AIL_start_sequence
 .extern SR_AIL_stop_sequence
 
+.extern SR_SMK_ShowMenu
+.extern SR_SMK_PlayIntro
+.extern SR_SMK_PlayCredits
+
 .extern SR_ERROR_Init
 .extern SR_ERROR_ClearStack
 .extern SR_ERROR_PushError

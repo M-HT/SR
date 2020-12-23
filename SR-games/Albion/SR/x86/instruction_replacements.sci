@@ -125,6 +125,10 @@ loc_25517,7,mov dword [ebp-8], 1|cmp dword [Game_ScreenshotEnabled], 0|je loc_25
 loc_255EF,4,cmp dword [Game_ScreenshotAutomaticFilename], 0|jne loc_25615_skip|mov byte [ebp-0x74], 0 ; skip getting filename for screenshot
 loc_25615,2,loc_25615_skip:|xor eax, eax ; skip getting filename for screenshot
 
+loc_33A02,6,call SR_SMK_ShowMenu ; play intro video on start in game
+loc_33EB5,18,call SR_SMK_PlayIntro ; play intro video in game
+loc_33F10,18,call SR_SMK_PlayCredits ; play credits video in game
+
 loc_8151C,2454, ; AIL code 1
 loc_81EB2,183, ; CLIB code 1
 

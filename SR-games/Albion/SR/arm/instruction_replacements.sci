@@ -128,6 +128,10 @@ loc_25517,7,@mov dword [ebp-8], 1|mov tmp1, #1|str tmp1, [ebp, #-8]|@cmp dword [
 loc_255EF,4,@cmp dword [Game_ScreenshotAutomaticFilename], 0|LDR tmpadr, =Game_ScreenshotAutomaticFilename|ldr tmp1, [tmpadr]|subS tmp1, tmp1, #0|@jne loc_25615_skip|bne loc_25615_skip|@mov byte [ebp-0x74], 0|mov tmp1, #0|strb tmp1, [ebp, #-0x74] @ skip getting filename for screenshot
 loc_25615,2,loc_25615_skip:|@xor eax, eax|mov eax, #0 @ skip getting filename for screenshot
 
+loc_33A02,6,@call SR_SMK_ShowMenu|ADR tmp1, loc_33A02_after_call|stmfd esp!, {tmp1}|b SR_SMK_ShowMenu|LTORG_CALL|loc_33A02_after_call: @ play intro video on start in game
+loc_33EB5,18,@call SR_SMK_PlayIntro|ADR tmp1, loc_33EB5_after_call|stmfd esp!, {tmp1}|b SR_SMK_PlayIntro|LTORG_CALL|loc_33EB5_after_call: @ play intro video in game
+loc_33F10,18,@call SR_SMK_PlayCredits|ADR tmp1, loc_33F10_after_call|stmfd esp!, {tmp1}|b SR_SMK_PlayCredits|LTORG_CALL|loc_33F10_after_call: @ play credits video in game
+
 loc_8151C,2454, @ AIL code 1
 loc_81EB2,183, @ CLIB code 1
 

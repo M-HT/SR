@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -1380,6 +1380,12 @@ int Handle_Input_Event2(SDL_Event *_event)
                     //senquack
                     Game_JButton[event.jbutton.button] = 0;
 
+                    if (SMK_Playing)
+                    {
+                        EmulateKey(SDL_KEYUP, SDLK_ESCAPE);
+                        break;
+                    }
+
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_ABXY)
                     {
                         if (Game_JKeyboard && !Game_Paused)
@@ -1538,10 +1544,19 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                         SDL_PushEvent(&pump_event);
                     }
-                    else if (!Game_JButton[GP2X_BUTTON_R] && !Game_JButton[GP2X_BUTTON_L])
+                    else
                     {
-//                            EmulateKey(SDL_KEYUP, SDLK_PAUSE);
-                        Action_button_Start(0, Action_button_Start_Key);
+                        if (SMK_Playing)
+                        {
+                            EmulateKey(SDL_KEYUP, SDLK_ESCAPE);
+                            break;
+                        }
+
+                        if (!Game_JButton[GP2X_BUTTON_R] && !Game_JButton[GP2X_BUTTON_L])
+                        {
+//                                EmulateKey(SDL_KEYUP, SDLK_PAUSE);
+                            Action_button_Start(0, Action_button_Start_Key);
+                        }
                     }
                     break;
                     //senquack - up/down/left/right are now mappable:

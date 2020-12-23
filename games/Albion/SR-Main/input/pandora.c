@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -843,6 +843,16 @@ int Handle_Input_Event(SDL_Event *_event)
                     break;
                 case PANDORA_BUTTON_X:
                     Game_PButton[BUTTON_X] = (_event->type == SDL_KEYDOWN)?1:0;
+
+                    if (SMK_Playing)
+                    {
+                        if (!Game_PButton[BUTTON_X])
+                        {
+                            _event->key.keysym.sym = SDLK_ESCAPE;
+                            break;
+                        }
+                    }
+
                     if (Game_InputMode == GAME_TOUCHSCREEN_ABXY)
                     {
                         if (Game_Paused)
@@ -1004,6 +1014,15 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     else
                     {
+                        if (SMK_Playing)
+                        {
+                            if (!Game_PButton[BUTTON_START])
+                            {
+                                _event->key.keysym.sym = SDLK_ESCAPE;
+                                break;
+                            }
+                        }
+
                         if ( Game_CtrlButton )
                         {
                             return Action_button_R[BUTTON_START] (Game_PButton[BUTTON_START], Action_button_R_Key[BUTTON_START], _event);

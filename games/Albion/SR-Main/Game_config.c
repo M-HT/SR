@@ -262,6 +262,24 @@ void Game_ReadConfig(void)
                 }
             }
         }
+        else if ( strncasecmp(str, "Intro", 5) == 0 ) // str begins with "Intro"
+        {
+            str += 5;
+
+            if (str[0] == 0) // str equals "Intro"
+            {
+                // intro setting
+
+                if ( strcasecmp(param, "on") == 0 ) // param equals "on"
+                {
+                    Game_PlayIntro = 1;
+                }
+                else if ( strcasecmp(param, "off") == 0 ) // param equals "off"
+                {
+                    Game_PlayIntro = 0;
+                }
+            }
+        }
         else if ( strncasecmp(str, "Display_", 8) == 0 ) // str begins with "Display_"
         {
             str += 8;

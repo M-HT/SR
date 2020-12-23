@@ -75,6 +75,10 @@
     %define Game_AIL_start_sequence _Game_AIL_start_sequence
     %define Game_AIL_stop_sequence _Game_AIL_stop_sequence
 
+    %define SMK_ShowMenu _SMK_ShowMenu
+    %define SMK_PlayIntro _SMK_PlayIntro
+    %define SMK_PlayCredits _SMK_PlayCredits
+
     %define ERROR_Init _ERROR_Init
     %define ERROR_ClearStack _ERROR_ClearStack
     %define ERROR_PushErrorDOS _ERROR_PushErrorDOS
@@ -233,6 +237,10 @@ extern Game_AIL_set_sequence_loop_count
 extern Game_AIL_set_sequence_volume
 extern Game_AIL_start_sequence
 extern Game_AIL_stop_sequence
+
+extern SMK_ShowMenu
+extern SMK_PlayIntro
+extern SMK_PlayCredits
 
 extern ERROR_Init
 extern ERROR_ClearStack
@@ -397,6 +405,10 @@ global SR_AIL_set_sequence_loop_count
 global SR_AIL_set_sequence_volume
 global SR_AIL_start_sequence
 global SR_AIL_stop_sequence
+
+global SR_SMK_ShowMenu
+global SR_SMK_PlayIntro
+global SR_SMK_PlayCredits
 
 global SR_ERROR_Init
 global SR_ERROR_ClearStack
@@ -1104,6 +1116,28 @@ SR_AIL_stop_sequence:
         Game_Call_Asm_Stack1 Game_AIL_stop_sequence,-1
 
 ; end procedure SR_AIL_stop_sequence
+
+
+align 16
+SR_SMK_ShowMenu:
+
+        Game_Call_Asm_Reg0 SMK_ShowMenu,-1
+
+; end procedure SR_SMK_ShowMenu
+
+align 16
+SR_SMK_PlayIntro:
+
+        Game_Call_Asm_Reg0 SMK_PlayIntro,-1
+
+; end procedure SR_SMK_PlayIntro
+
+align 16
+SR_SMK_PlayCredits:
+
+        Game_Call_Asm_Reg0 SMK_PlayCredits,-1
+
+; end procedure SR_SMK_PlayCredits
 
 
 align 16

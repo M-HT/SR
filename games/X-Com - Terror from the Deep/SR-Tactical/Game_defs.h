@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -28,8 +28,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <SDL/SDL.h>
-#include <SDL/SDL_mixer.h>
+#ifdef USE_SDL2
+    #include <SDL2/SDL.h>
+    #include <SDL2/SDL_mixer.h>
+#else
+    #include <SDL/SDL.h>
+    #include <SDL/SDL_mixer.h>
+#endif
 
 #ifdef __WIN32__
     #include <windows.h>

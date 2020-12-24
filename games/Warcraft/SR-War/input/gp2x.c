@@ -298,7 +298,7 @@ static void Action_key(int pressed, int key)
 {
     if (!Game_Paused)
     {
-        EmulateKey((pressed)?SDL_KEYDOWN:SDL_KEYUP, (SDLKey) key);
+        EmulateKey((pressed)?SDL_KEYDOWN:SDL_KEYUP, key);
     }
 }
 
@@ -308,11 +308,11 @@ static void Action_macro_key_left_mouse_button(int pressed, int key)
     {
         if (pressed)
         {
-            EmulateKey(SDL_KEYDOWN, (SDLKey) key);
+            EmulateKey(SDL_KEYDOWN, key);
 
             EmulateDelay(40);
 
-            EmulateKey(SDL_KEYUP, (SDLKey) key);
+            EmulateKey(SDL_KEYUP, key);
 
             EmulateDelay(40);
         }

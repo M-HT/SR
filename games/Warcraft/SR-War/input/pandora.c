@@ -322,11 +322,11 @@ static int Action_macro_key_left_mouse_button(int pressed, int key, SDL_Event *e
     {
         if (pressed)
         {
-            EmulateKey(SDL_KEYDOWN, (SDLKey) key);
+            EmulateKey(SDL_KEYDOWN, key);
 
             EmulateDelay(40);
 
-            EmulateKey(SDL_KEYUP, (SDLKey) key);
+            EmulateKey(SDL_KEYUP, key);
 
             EmulateDelay(40);
         }

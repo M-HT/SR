@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -24,7 +24,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <SDL/SDL.h>
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Tactical-int2.h"
@@ -38,7 +37,6 @@ uint32_t Game_int386x(
     Game_SREGS *seg_regs)
 {
     Game_REGS tmp_regs;
-    //SDL_Event event;
 
     tmp_regs = *in_regs;
 
@@ -55,59 +53,6 @@ uint32_t Game_int386x(
 
     switch (IntNum)
     {
-        /*case 0x10:
-        // Video
-            switch (AX)
-            {
-                case 0x0013:
-                // Set Video Mode
-#if defined(__DEBUG__)
-                    fprintf(stderr, "Setting video mode: 0x%x\n", AL);
-                    fprintf(stderr, "320x200x256\n");
-#endif
-
-                    if (Game_Screen != NULL)
-                    {
-                        event.type = SDL_USEREVENT;
-                        event.user.code = EC_DISPLAY_DESTROY;
-                        event.user.data1 = NULL;
-                        event.user.data2 = NULL;
-
-                        SDL_PushEvent(&event);
-
-                        SDL_SemWait(Game_DisplaySem);
-                    }
-
-                    event.type = SDL_USEREVENT;
-                    event.user.code = EC_DISPLAY_CREATE;
-                    event.user.data1 = NULL;
-                    event.user.data2 = NULL;
-
-                    SDL_PushEvent(&event);
-
-                    SDL_SemWait(Game_DisplaySem);
-
-                    if (Game_Screen == NULL)
-                    {
-#if defined(__DEBUG__)
-                        fprintf (stderr, "Error: Couldn't set video mode\n");
-#endif
-                        Game_StopMain();
-                    }
-
-                    Game_VideoAspectX = (320 << 16) / Game_Screen->w;
-                    Game_VideoAspectY = (200 << 16) / Game_Screen->h;
-
-                    Game_VideoAspectXR = (Game_Screen->w << 16) / 320;
-                    Game_VideoAspectYR = (Game_Screen->h << 16) / 200;
-
-                    break;
-                default:
-                    Game_StopMain();
-            }
-
-            break;
-            // case 0x10:*/
         default:
             Game_StopMain();
     } // switch (inter_no)

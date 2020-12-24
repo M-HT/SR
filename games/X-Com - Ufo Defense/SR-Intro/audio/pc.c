@@ -22,6 +22,7 @@
  *
  */
 
+#include <stdio.h>
 #include "../Game_defs.h"
 #include "../Game_vars.h"
 

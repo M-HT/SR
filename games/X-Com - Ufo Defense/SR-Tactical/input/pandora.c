@@ -92,7 +92,7 @@ static int Action_button_Key[BUTTON_LAST], Action_button_R_Key[BUTTON_LAST];
 
 
 // functions
-void EmulateKey(int type, SDLKey key)
+void EmulateKey(int type, int key)
 {
     SDL_Event pump_event;
 
@@ -452,12 +452,12 @@ static int Action_levelup(int pressed, int key, SDL_Event *event)
             // Simulate movement to battlescape "Level Up" icon
             WarpGameMouse(94, 152);
             EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
-            EmulateKey(SDL_MOUSEBUTTONDOWN, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT);
             EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
         }
         else
         {
-            EmulateKey(SDL_MOUSEBUTTONUP, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
             SDL_WarpMouse(orig_pos[0], orig_pos[1]);
         }
     }
@@ -477,12 +477,12 @@ static int Action_leveldown(int pressed, int key, SDL_Event *event)
             // Simulate movement to battlescape "Level Down" icon
             WarpGameMouse(94, 168);
             EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
-            EmulateKey(SDL_MOUSEBUTTONDOWN, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT);
             EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
         }
         else
         {
-            EmulateKey(SDL_MOUSEBUTTONUP, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
             SDL_WarpMouse(orig_pos[0], orig_pos[1]);
         }
     }
@@ -502,12 +502,12 @@ static int Action_selectnextsoldier(int pressed, int key, SDL_Event *event)
             // Simulate movement to battlescape "Select Next Soldier" icon
             WarpGameMouse(190, 152);
             EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
-            EmulateKey(SDL_MOUSEBUTTONDOWN, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT);
             EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
         }
         else
         {
-            EmulateKey(SDL_MOUSEBUTTONUP, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
             SDL_WarpMouse(orig_pos[0], orig_pos[1]);
         }
     }
@@ -527,12 +527,12 @@ static int Action_deselectcurrentsoldier(int pressed, int key, SDL_Event *event)
             // Simulate movement to battlescape "Deselect Current Soldier" icon
             WarpGameMouse(190, 168);
             EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
-            EmulateKey(SDL_MOUSEBUTTONDOWN, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT);
             EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
         }
         else
         {
-            EmulateKey(SDL_MOUSEBUTTONUP, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
             SDL_WarpMouse(orig_pos[0], orig_pos[1]);
         }
     }
@@ -1404,9 +1404,9 @@ int Handle_Input_Event(SDL_Event *_event)
                             {
                                 // left mouse click
                                 EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
-                                EmulateKey(SDL_MOUSEBUTTONDOWN, (SDLKey) SDL_BUTTON_LEFT);
+                                EmulateKey(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT);
                                 EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
-                                EmulateKey(SDL_MOUSEBUTTONUP, (SDLKey) SDL_BUTTON_LEFT);
+                                EmulateKey(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
 
                                 return 1;
                             }

@@ -24,7 +24,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <SDL/SDL.h>
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Game_config.h"

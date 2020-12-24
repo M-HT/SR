@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,10 +26,13 @@
 #define _GAME_VARS_H_INCLUDED_
 
 #include <errno.h>
-#include <SDL/SDL.h>
-#include <SDL/SDL_mixer.h>
-#ifdef ALLOW_OPENGL
-    #include <SDL/SDL_opengl.h>
+#ifdef USE_SDL2
+    #include <SDL2/SDL.h>
+#else
+    #include <SDL/SDL.h>
+    #ifdef ALLOW_OPENGL
+        #include <SDL/SDL_opengl.h>
+    #endif
 #endif
 #include "Game_defs.h"
 
@@ -43,7 +46,14 @@ EXTERNAL_VARIABLE uint32_t X86_InterruptFlag;		/* interrupt flag indicator */
 
 EXTERNAL_VARIABLE char **main_argv;
 EXTERNAL_VARIABLE char *main_arg1;
+#ifdef USE_SDL2
+EXTERNAL_VARIABLE SDL_Window *Game_Window;
+EXTERNAL_VARIABLE SDL_Renderer *Game_Renderer;
+EXTERNAL_VARIABLE SDL_Texture *Game_Texture;
+EXTERNAL_VARIABLE void *Game_TextureData;
+#else
 EXTERNAL_VARIABLE SDL_Surface *Game_Screen;
+#endif
 EXTERNAL_VARIABLE uint8_t *Game_FrameMemory;		/* allocated video memory */
 EXTERNAL_VARIABLE uint8_t *Game_FrameBuffer;		/* pointer to video memory (all) */
 EXTERNAL_VARIABLE uint8_t *Game_ScreenWindow;		/* video bank (64KiB) */
@@ -82,7 +92,7 @@ EXTERNAL_VARIABLE int32_t Picture_Position_UL_Y;	/* picture position - upper lef
 EXTERNAL_VARIABLE int32_t Picture_Position_BR_X;	/* picture position - bottom right corner - x (relative to display) */
 EXTERNAL_VARIABLE int32_t Picture_Position_BR_Y;	/* picture position - bottom right corner - y (relative to display) */
 EXTERNAL_VARIABLE Game_Flip_Procedure Display_Flip_Procedure;	/* flip procedure */
-#ifdef ALLOW_OPENGL
+#if defined(ALLOW_OPENGL) && !defined(USE_SDL2)
 EXTERNAL_VARIABLE uint32_t Game_UseOpenGL;			/* use OpenGL for drawing ? */
 EXTERNAL_VARIABLE void *Game_TextureData;
 EXTERNAL_VARIABLE GLuint Game_GLTexture[3];

@@ -43,7 +43,7 @@
 #define PANDORA_BUTTON_SELECT          (SDLK_LCTRL)
 
 // functions
-void EmulateKey(int type, SDLKey key)
+void EmulateKey(int type, int key)
 {
     SDL_Event pump_event;
 

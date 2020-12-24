@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -24,7 +24,11 @@
 
 #include <malloc.h>
 #include <string.h>
-#include <SDL/SDL_mixer.h>
+#ifdef USE_SDL2
+    #include <SDL2/SDL_mixer.h>
+#else
+    #include <SDL/SDL_mixer.h>
+#endif
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Intro-sound.h"
@@ -437,7 +441,7 @@ static void Interpolated_Resample(int _stereo, int _16bit, int _signed, uint32_t
 #undef RESAMPLE
 }
 
-void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
+static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
 {
     Game_sample *sample;
     int same_audio_params;

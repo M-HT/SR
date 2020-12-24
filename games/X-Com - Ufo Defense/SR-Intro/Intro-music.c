@@ -24,7 +24,11 @@
 
 #include <malloc.h>
 #include <string.h>
-#include <SDL/SDL_mixer.h>
+#ifdef USE_SDL2
+    #include <SDL2/SDL_mixer.h>
+#else
+    #include <SDL/SDL_mixer.h>
+#endif
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Intro-music.h"
@@ -111,7 +115,12 @@ void Game_start_sequence(uint8_t *seq)
         Game_MusicSequence.midi_RW = SDL_RWFromMem(Game_MusicSequence.midi, Game_MusicSequence.midi_size);
         if (Game_MusicSequence.midi_RW == NULL) return;
 
-        Game_MusicSequence.midi_music = Mix_LoadMUS_RW(Game_MusicSequence.midi_RW);
+        Game_MusicSequence.midi_music = Mix_LoadMUS_RW(
+            Game_MusicSequence.midi_RW
+#ifdef USE_SDL2
+            , 0
+#endif
+        );
         if (Game_MusicSequence.midi_music == NULL) return;
     }
 

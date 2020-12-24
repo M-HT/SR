@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -142,13 +142,17 @@ static int Game_ScrollButtons;				// GAME_SCROLLBUTTONS_F100: L+Stick used to sc
 
 
 // functions
-void EmulateKey(int type, SDLKey key)
+void EmulateKey(int type, int key)
 {
     SDL_Event pump_event;
 
     pump_event.type = type;
     pump_event.key.state = (type == SDL_KEYUP)?SDL_RELEASED:SDL_PRESSED;
-    pump_event.key.keysym.sym = key;
+#ifdef USE_SDL2
+    pump_event.key.keysym.sym = (SDL_Keycode) key;
+#else
+    pump_event.key.keysym.sym = (SDLKey) key;
+#endif
     pump_event.key.keysym.mod = KMOD_NONE;
 
     SDL_PushEvent(&pump_event);
@@ -217,7 +221,7 @@ static void Action_key(int pressed, int key)
 {
     if (!Game_Paused)
     {
-        EmulateKey((pressed)?SDL_KEYDOWN:SDL_KEYUP, (SDLKey) key);
+        EmulateKey((pressed)?SDL_KEYDOWN:SDL_KEYUP, key);
     }
 }
 

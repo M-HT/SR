@@ -31,10 +31,14 @@ vars.Add(EnumVariable('debug', 'Set debug level (0 = release version)', '0',
 vars.Add(EnumVariable('device', 'Set target device', 'none',
                                  allowed_values=('none', 'pc-windows', 'pc-linux', 'arm-linux', 'gp2x', 'pandora'),
                                  ignorecase=2))
+vars.Add(EnumVariable('sdl2', 'Use SDL2 instead of SDL? (1 = yes)', '0',
+                                 allowed_values=('0', '1'),
+                                 ignorecase=2))
 env = Environment(variables = vars)
 
 debug = int(env['debug'])
 device = env['device']
+sdl2 = int(env['sdl2'])
 clean = env.GetOption('clean')
 
 if device == 'none':
@@ -50,23 +54,42 @@ Help(vars.GenerateHelpText(env))
 
 if device == 'pc-linux':
     # default settings
-    env = Environment(CCFLAGS      = '-m32 -O2 -Wall -DALLOW_OPENGL',
-                      LINKFLAGS    = '-m32 -Wl,-z,noexecstack',
-                      LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'dl', 'GL']
-                     )
+    if sdl2 > 0:
+        env = Environment(CCFLAGS      = '-m32 -O2 -Wall -DUSE_SDL2',
+                          LINKFLAGS    = '-m32 -Wl,-z,noexecstack',
+                          LIBS         = ['SDL2_mixer', 'SDL2', 'pthread', 'dl']
+                         )
+    else:
+        env = Environment(CCFLAGS      = '-m32 -O2 -Wall -DALLOW_OPENGL',
+                          LINKFLAGS    = '-m32 -Wl,-z,noexecstack',
+                          LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'dl', 'GL']
+                         )
 elif device == 'arm-linux':
-    env = Environment(CCFLAGS      = '-O2 -Wall -DALLOW_OPENGL',
-                      LINKFLAGS    = '-Wl,-z,noexecstack',
-                      LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'dl', 'GL'],
-                      ASFLAGS      = ' -I arm/'
-                     )
+    if sdl2 > 0:
+        env = Environment(CCFLAGS      = '-O2 -Wall -DUSE_SDL2',
+                          LINKFLAGS    = '-Wl,-z,noexecstack',
+                          LIBS         = ['SDL2_mixer', 'SDL2', 'pthread', 'dl'],
+                          ASFLAGS      = ' -I arm/'
+                         )
+    else:
+        env = Environment(CCFLAGS      = '-O2 -Wall -DALLOW_OPENGL',
+                          LINKFLAGS    = '-Wl,-z,noexecstack',
+                          LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'dl', 'GL'],
+                          ASFLAGS      = ' -I arm/'
+                         )
     # see arm/armconf.inc for explanation of these options (and others)
     env.Append(ASFLAGS = ' --defsym USE_R9=1 --defsym ALLOW_UNALIGNED_MEMORY_ACCESS=1')
 elif device == 'pc-windows':
-    env = Environment(CCFLAGS      = '-m32 -O2 -Wall',
-                      LINKFLAGS    = '-m32',
-                      LIBS         = ['SDL_mixer-1.2', 'SDL-1.2', 'pthread']
-                     )
+    if sdl2 > 0:
+        env = Environment(CCFLAGS      = '-m32 -O2 -Wall -DUSE_SDL2',
+                          LINKFLAGS    = '-m32',
+                          LIBS         = ['mingw32', 'SDL2main', 'SDL2_mixer', 'SDL2', 'pthread']
+                         )
+    else:
+        env = Environment(CCFLAGS      = '-m32 -O2 -Wall -DALLOW_OPENGL',
+                          LINKFLAGS    = '-m32',
+                          LIBS         = ['mingw32', 'SDLmain', 'SDL_mixer', 'SDL', 'pthread', 'opengl32']
+                         )
 elif device == 'gp2x':
     compiler_path = '/opt/open2x/gcc-4.1.1-glibc-2.3.6/'
     compiler_prefix = 'arm-open2x-linux-'

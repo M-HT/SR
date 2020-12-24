@@ -83,7 +83,7 @@ static int Action_button_Key[BUTTON_LAST], Action_button_R_Key[BUTTON_LAST];
 
 
 // functions
-void EmulateKey(int type, SDLKey key)
+void EmulateKey(int type, int key)
 {
     SDL_Event pump_event;
 
@@ -209,14 +209,14 @@ static int Action_rotateup(int pressed, int key, SDL_Event *event)
             // Simulate movement to geoscape "Rotate Up" icon
             WarpGameMouse(278, 165);
             EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
-            EmulateKey(SDL_MOUSEBUTTONDOWN, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT);
         }
         else
         {
             if ( Game_CurrentlyRotating == 1 )
             {
                 Game_CurrentlyRotating = 0;
-                EmulateKey(SDL_MOUSEBUTTONUP, (SDLKey) SDL_BUTTON_LEFT);
+                EmulateKey(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
                 EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
                 SDL_WarpMouse(Game_RotateOrigMousePos[0], Game_RotateOrigMousePos[1]);
             }
@@ -241,14 +241,14 @@ static int Action_rotatedown(int pressed, int key, SDL_Event *event)
             // Simulate movement to geoscape "Rotate Down" icon
             WarpGameMouse(278, 195);
             EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
-            EmulateKey(SDL_MOUSEBUTTONDOWN, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT);
         }
         else
         {
             if ( Game_CurrentlyRotating == 2 )
             {
                 Game_CurrentlyRotating = 0;
-                EmulateKey(SDL_MOUSEBUTTONUP, (SDLKey) SDL_BUTTON_LEFT);
+                EmulateKey(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
                 EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
                 SDL_WarpMouse(Game_RotateOrigMousePos[0], Game_RotateOrigMousePos[1]);
             }
@@ -273,14 +273,14 @@ static int Action_rotateleft(int pressed, int key, SDL_Event *event)
             // Simulate movement to geoscape "Rotate Left" icon
             WarpGameMouse(264, 181);
             EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
-            EmulateKey(SDL_MOUSEBUTTONDOWN, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT);
         }
         else
         {
             if ( Game_CurrentlyRotating == 3 )
             {
                 Game_CurrentlyRotating = 0;
-                EmulateKey(SDL_MOUSEBUTTONUP, (SDLKey) SDL_BUTTON_LEFT);
+                EmulateKey(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
                 EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
                 SDL_WarpMouse(Game_RotateOrigMousePos[0], Game_RotateOrigMousePos[1]);
             }
@@ -305,14 +305,14 @@ static int Action_rotateright(int pressed, int key, SDL_Event *event)
             // Simulate movement to geoscape "Rotate Right" icon
             WarpGameMouse(292, 181);
             EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
-            EmulateKey(SDL_MOUSEBUTTONDOWN, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT);
         }
         else
         {
             if ( Game_CurrentlyRotating == 4 )
             {
                 Game_CurrentlyRotating = 0;
-                EmulateKey(SDL_MOUSEBUTTONUP, (SDLKey) SDL_BUTTON_LEFT);
+                EmulateKey(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
                 EmulateDelay((Game_Main_Loop_VSync_Ticks + 2) * 17);
                 SDL_WarpMouse(Game_RotateOrigMousePos[0], Game_RotateOrigMousePos[1]);
             }
@@ -334,11 +334,11 @@ static int Action_levelup(int pressed, int key, SDL_Event *event)
 
             // Simulate movement to geoscape "Zoom In" icon
             WarpGameMouse(305, 168);
-            EmulateKey(SDL_MOUSEBUTTONDOWN, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT);
         }
         else
         {
-            EmulateKey(SDL_MOUSEBUTTONUP, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
             SDL_WarpMouse(orig_pos[0], orig_pos[1]);
         }
     }
@@ -358,11 +358,11 @@ static int Action_leveldown(int pressed, int key, SDL_Event *event)
 
             // Simulate movement to geoscape "Zoom Out" icon
             WarpGameMouse(305, 189);
-            EmulateKey(SDL_MOUSEBUTTONDOWN, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT);
         }
         else
         {
-            EmulateKey(SDL_MOUSEBUTTONUP, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
             SDL_WarpMouse(orig_pos[0], orig_pos[1]);
         }
     }
@@ -382,11 +382,11 @@ static int Action_selectnextsoldier(int pressed, int key, SDL_Event *event)
 
             // Simulate movement to geoscape "5 Secs" icon
             WarpGameMouse(272, 118);
-            EmulateKey(SDL_MOUSEBUTTONDOWN, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT);
         }
         else
         {
-            EmulateKey(SDL_MOUSEBUTTONUP, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
             SDL_WarpMouse(orig_pos[0], orig_pos[1]);
         }
     }
@@ -406,11 +406,11 @@ static int Action_deselectcurrentsoldier(int pressed, int key, SDL_Event *event)
 
             // Simulate movement to geoscape "1 Day" icon
             WarpGameMouse(302, 146);
-            EmulateKey(SDL_MOUSEBUTTONDOWN, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT);
         }
         else
         {
-            EmulateKey(SDL_MOUSEBUTTONUP, (SDLKey) SDL_BUTTON_LEFT);
+            EmulateKey(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
             SDL_WarpMouse(orig_pos[0], orig_pos[1]);
         }
     }

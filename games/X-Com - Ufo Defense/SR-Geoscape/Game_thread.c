@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,8 +25,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
-#include <SDL/SDL.h>
-#include <SDL/SDL_mixer.h>
+#ifdef USE_SDL2
+    #include <SDL2/SDL.h>
+#else
+    #include <SDL/SDL.h>
+#endif
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Game_thread.h"
@@ -182,7 +185,9 @@ int Game_MainThread(void *data)
 int Game_FlipThread(void *data)
 {
     SDL_Event event;
+#if !defined(USE_SDL2)
     int clear_screen;
+#endif
 
 #undef FPS_WRITE
 
@@ -194,7 +199,9 @@ int Game_FlipThread(void *data)
     LastTimer = Game_VSyncTick;
 #endif
 
+#if !defined(USE_SDL2)
     clear_screen = 0;
+#endif
 
     while (1)
     {
@@ -223,6 +230,9 @@ fprintf(stderr, "fps: %.3f    tps: %.3f\n", (float) NumDisplay * 1000 / (Current
 
         if (Game_DisplayActive)
         {
+        #ifdef USE_SDL2
+            Display_Flip_Procedure(Game_FrameBuffer, Game_TextureData);
+        #else
         #ifdef ALLOW_OPENGL
             if (Game_UseOpenGL)
             {
@@ -276,6 +286,7 @@ fprintf(stderr, "fps: %.3f    tps: %.3f\n", (float) NumDisplay * 1000 / (Current
                 SDL_UnlockSurface(Game_Screen);
                 SDL_Flip(Game_Screen);
             }
+        #endif
         }
 
         SDL_UnlockMutex(Game_ScreenMutex);

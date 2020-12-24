@@ -29,9 +29,15 @@
 #else
     #include <dlfcn.h>
 #endif
-#include <SDL/SDL.h>
-#define USE_RWOPS
-#include <SDL/SDL_mixer.h>
+#ifdef USE_SDL2
+    #include <SDL2/SDL.h>
+    #define USE_RWOPS
+    #include <SDL2/SDL_mixer.h>
+#else
+    #include <SDL/SDL.h>
+    #define USE_RWOPS
+    #include <SDL/SDL_mixer.h>
+#endif
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Intro-music-midiplugin.h"
@@ -520,7 +526,13 @@ int MidiPlugin_Startup(void)
     // start thread
     thread_finish = 0;
 
-    MP_thread = SDL_CreateThread(MidiPlugin_ProcessData, NULL);
+    MP_thread = SDL_CreateThread(
+        MidiPlugin_ProcessData,
+#ifdef USE_SDL2
+        "midi",
+#endif
+        NULL
+    );
     if (MP_thread == NULL)
     {
         if (temp_buf != NULL)

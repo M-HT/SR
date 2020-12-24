@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -62,7 +62,7 @@ static void Flip_320x200x8_to_640x400x32(uint8_t *src, uint32_t *dst)
 #undef WRITE_PIXEL2
 }
 
-#if !defined(ALLOW_OPENGL)
+#if !defined(ALLOW_OPENGL) && !defined(USE_SDL2)
 static void Flip_320x200x8_to_320x200x32(const uint8_t *src, uint32_t *dst)
 {
     int counter;
@@ -270,7 +270,8 @@ void Init_Display2(void)
     {
         ScaleOutput = 1;
 
-    #ifdef ALLOW_OPENGL
+    #if defined(USE_SDL2)
+    #elif defined(ALLOW_OPENGL)
         Game_UseOpenGL = 1;
     #else
         ScaleSrc = (uint32_t *) malloc(320*200*4+4);
@@ -296,7 +297,7 @@ void Init_Display2(void)
     Picture_Position_UL_Y = 0;
     Picture_Position_BR_X = ScaledWidth-1;
     Picture_Position_BR_Y = ScaledHeight-1;
-#if !defined(ALLOW_OPENGL)
+#if !defined(ALLOW_OPENGL) && !defined(USE_SDL2)
     if (ScaleOutput)
     {
         Display_Flip_Procedure = (Game_Flip_Procedure) &Flip_320x200x8_to_WxHx32_bilinear;

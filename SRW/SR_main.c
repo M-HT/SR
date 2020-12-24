@@ -142,6 +142,7 @@ static void read_cfg(void)
     FILE *f;
     char buf[8192];
     char *str, *param;
+    int items;
 
     f = fopen(config_filename, "rt");
 
@@ -150,11 +151,12 @@ static void read_cfg(void)
     while (!feof(f))
     {
         /* skip empty lines */
-        fscanf(f, "%8192[\n\r]", buf);
+        items = fscanf(f, "%8192[\n\r]", buf);
 
         /* read line */
         buf[0] = 0;
-        fscanf(f, "%8192[^\n^\r]", buf);
+        items = fscanf(f, "%8192[^\n^\r]", buf);
+        if (items <= 0) continue;
 
         /* trim line */
         str = trim_string(buf);
@@ -345,7 +347,7 @@ int main (int argc, char *argv[])
 #ifdef WIN32
 	SetPriorityClass(GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS);
 #else
-	nice(1);
+	if (-1 == nice(1));
 #endif
 
 #if (OUTPUT_TYPE == OUT_ORIG)

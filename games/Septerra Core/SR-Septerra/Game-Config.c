@@ -61,7 +61,7 @@ void ReadConfiguration(void)
     FILE *f;
     char buf[8192];
     char *str, *param;
-    int num_int;
+    int items, num_int;
 
     Intro_Play = 1;
 
@@ -86,11 +86,12 @@ void ReadConfiguration(void)
     while (!feof(f))
     {
         // skip empty lines
-        fscanf(f, "%8192[\n\r]", buf);
+        items = fscanf(f, "%8192[\n\r]", buf);
 
         // read line
         buf[0] = 0;
-        fscanf(f, "%8192[^\n^\r]", buf);
+        items = fscanf(f, "%8192[^\n^\r]", buf);
+        if (items <= 0) continue;
 
         // trim line
         str = trim_string(buf);

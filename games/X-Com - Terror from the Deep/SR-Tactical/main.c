@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -456,6 +456,7 @@ static void Game_ReadFontData(void)
 {
     FILE *f;
     off_t fsize;
+    size_t items;
 
     f = Game_fopen("GEODATA\\SMALLSET.DAT", "rb");
     if (f == NULL) return;
@@ -476,9 +477,16 @@ static void Game_ReadFontData(void)
         return;
     }
 
-    fread(UFO_Font, 1, fsize, f);
+    items = fread(UFO_Font, 1, fsize, f);
 
     fclose(f);
+
+    if (items != fsize)
+    {
+        free(UFO_Font);
+        UFO_Font = NULL;
+        return;
+    }
 
     if (Font_Size_Shift > 0)
     {
@@ -500,10 +508,12 @@ static int Game_Initialize(void)
     {
         char cur_dir[MAX_PATH];
 
-        getcwd(cur_dir, MAX_PATH);
-        chdir(Game_Directory);
-        vfs_init(0);
-        chdir(cur_dir);
+        if (NULL != getcwd(cur_dir, MAX_PATH))
+        {
+            if (0 != chdir(Game_Directory));
+            vfs_init(0);
+            if (0 != chdir(cur_dir));
+        }
     }
 
     main_arg1 = NULL;

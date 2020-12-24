@@ -174,7 +174,8 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
     {
         ExitWithMessage("Unable to allocate memory for manifest file buffer", 103);
     }
-    fread(ManifestFileBuffer, 1, ManifestSize, ManifestFILE);
+    size_t items = fread(ManifestFileBuffer, 1, ManifestSize, ManifestFILE);
+    if (items != ManifestSize) exit(-1);
 
     // replace returns with zeros
     char *buf = ManifestFileBuffer;
@@ -207,7 +208,8 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
     {
         ExitWithMessage("Unable to allocate memory for index file buffer", 103);
     }
-    fread(IndexFileBuffer, 1, IndexSize, IndexFILE);
+    items = fread(IndexFileBuffer, 1, IndexSize, IndexFILE);
+    if (items != IndexSize) exit(-1);
 
     NumberOfIndices = IndexSize >> 5;
     NumberOfRecords = 256;

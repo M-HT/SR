@@ -299,13 +299,14 @@ static void SR_write_output_import(import_data *item, void *data)
 static void SR_write_output_export(export_data *item, void *data)
 {
     char cbuf[16];
-    alias_data *alias;
 
 #define DATA ((Entry_FILE *) data)
 
 #if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_WINDOWS)
     if (item->name != NULL)
     {
+        alias_data *alias;
+
         alias = section_alias_list_FindEntryEqual(DATA->Entry, item->ofs);
 
         if (alias == NULL)

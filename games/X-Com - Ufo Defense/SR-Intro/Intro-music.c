@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -94,7 +94,7 @@ void Game_start_sequence(uint8_t *seq)
         Game_MusicSequence.midi = NULL;
     }
 
-    if (strcmp(seq, "MIDI") == 0)
+    if (strcmp((const char *)seq, "MIDI") == 0)
     {
         midi_loop = seq[5];
         Game_MusicSequence.midi = NULL;

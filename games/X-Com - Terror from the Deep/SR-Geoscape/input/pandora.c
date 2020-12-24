@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2017 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -462,10 +462,9 @@ void Init_Input2(void)
     // without this code, calling localtime in function Game_readdir (called by Game_dos_findfirst) in file Albion-proc-vfs.c crashes on Pandora
     {
         struct stat statbuf;
-        struct tm *tmbuf;
 
         statbuf.st_mtime = 0;
-        tmbuf = localtime(&(statbuf.st_mtime));
+        localtime(&(statbuf.st_mtime));
     }
 
     if (Game_InputMode != GAME_KEYBOARD_DPAD)

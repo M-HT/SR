@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -160,7 +160,9 @@ int Game_MainThread(void *data)
 int Game_FlipThread(void *data)
 {
     SDL_Event event;
+#if !defined(USE_SDL2)
     int clear_screen;
+#endif
 
 #undef FPS_WRITE
 
@@ -172,7 +174,9 @@ int Game_FlipThread(void *data)
     LastTimer = Game_VSyncTick;
 #endif
 
+#if !defined(USE_SDL2)
     clear_screen = 0;
+#endif
 
     while (1)
     {

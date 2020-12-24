@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -58,7 +58,7 @@ void Game_ReadConfig(void)
     FILE *f;
     char buf[8192];
     char *str, *param;
-    int num_int;
+    int items, num_int;
 
     // senquack - config files are now specified via command line
 //    f = fopen(config_filename, "rt");
@@ -80,11 +80,12 @@ void Game_ReadConfig(void)
     while (!feof(f))
     {
         // skip empty lines
-        fscanf(f, "%8192[\n\r]", buf);
+        items = fscanf(f, "%8192[\n\r]", buf);
 
         // read line
         buf[0] = 0;
-        fscanf(f, "%8192[^\n^\r]", buf);
+        items = fscanf(f, "%8192[^\n^\r]", buf);
+        if (items <= 0) continue;
 
         // trim line
         str = trim_string(buf);

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -300,7 +300,7 @@ static int LoadBssBorder(void)
     char *str1;
     FILE *file;
     uint_fast32_t BssObject, BssOffset;
-    int length, BssAlignMinus;
+    int items, length, BssAlignMinus;
     unsigned int BssAddress;
 
     file = fopen("bssborder.csv", "rt");
@@ -309,10 +309,11 @@ static int LoadBssBorder(void)
     while (!feof(file))
     {
         // read enters
-        fscanf(file, "%8192[\n]", buf);
+        items = fscanf(file, "%8192[\n]", buf);
         // read line
         buf[0] = 0;
-        fscanf(file, "%8192[^\n]", buf);
+        items = fscanf(file, "%8192[^\n]", buf);
+        if (items <= 0) continue;
         length = strlen(buf);
         if (length != 0 && buf[length - 1] == '\r')
         {

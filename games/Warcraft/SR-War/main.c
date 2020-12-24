@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -413,6 +413,7 @@ static void Game_ReadFontData(void)
 {
     FILE *f;
     off_t fsize;
+    size_t items;
 
     f = fopen("CP850.F08", "rb");
     if (f == NULL)
@@ -457,9 +458,16 @@ static void Game_ReadFontData(void)
         return;
     }
 
-    fread(Warcraft_Font, 1, fsize, f);
+    items = fread(Warcraft_Font, 1, fsize, f);
 
     fclose(f);
+
+    if (items != fsize)
+    {
+        free(Warcraft_Font);
+        Warcraft_Font = NULL;
+        return;
+    }
 
     Temp_Font_Data = (uint8_t *) malloc((8*8) << (2*Font_Size_Shift + 1));
 }
@@ -474,10 +482,12 @@ static int Game_Initialize(void)
     {
         char cur_dir[MAX_PATH];
 
-        getcwd(cur_dir, MAX_PATH);
-        chdir(Game_Directory);
-        vfs_init(0);
-        chdir(cur_dir);
+        if (NULL != getcwd(cur_dir, MAX_PATH))
+        {
+            if (0 != chdir(Game_Directory));
+            vfs_init(0);
+            if (0 != chdir(cur_dir));
+        }
     }
 
     Game_Screen = NULL;

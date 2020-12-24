@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -29,6 +29,18 @@
 
 #pragma pack(1)
 
+typedef struct __attribute__ ((__packed__)) {
+    uint16_t twosecs : 5;    // seconds / 2
+    uint16_t minutes : 6;    // minutes (0,59)
+    uint16_t hours   : 5;    // hours (0,23)
+} watcom_ftime_t;
+
+typedef struct __attribute__ ((__packed__)) {
+    uint16_t day     : 5;    // day (1,31)
+    uint16_t month   : 4;    // month (1,12)
+    uint16_t year    : 7;    // 0 is 1980
+} watcom_fdate_t;
+
 struct __attribute__ ((__packed__)) watcom_dirent {
     union __attribute__ ((__packed__)) {
         struct __attribute__ ((__packed__)) {
@@ -46,8 +58,14 @@ struct __attribute__ ((__packed__)) watcom_dirent {
     uint16_t           d_lfnax;         /* DOS LFN search handle */
     uint8_t            d_lfnsup;        /* DOS LFN support status */
     uint8_t            d_attr;          /* file's attribute */
-    uint16_t           d_time;          /* file's time */
-    uint16_t           d_date;          /* file's date */
+    union __attribute__ ((__packed__)) {
+        uint16_t           d_time;          /* file's time */
+        watcom_ftime_t     vt;
+    } ut;
+    union __attribute__ ((__packed__)) {
+        uint16_t           d_date;          /* file's date */
+        watcom_fdate_t     vd;
+    } ud;
     uint32_t           d_size;          /* file's size */
     char               d_name[13];      /* file's name */
     uint16_t           d_ino;           /* serial number (not used) */
@@ -78,19 +96,6 @@ struct __attribute__ ((__packed__)) watcom_find_t {
     uint32_t size;				/* length of file in bytes		*/
     char name[13];				/* null-terminated filename		*/
 };
-
-
-typedef struct __attribute__ ((__packed__)) {
-    uint16_t twosecs : 5;    // seconds / 2
-    uint16_t minutes : 6;    // minutes (0,59)
-    uint16_t hours   : 5;    // hours (0,23)
-} watcom_ftime_t;
-
-typedef struct __attribute__ ((__packed__)) {
-    uint16_t day     : 5;    // day (1,31)
-    uint16_t month   : 4;    // month (1,12)
-    uint16_t year    : 7;    // 0 is 1980
-} watcom_fdate_t;
 
 #pragma pack()
 

@@ -554,7 +554,9 @@ static void eventloop_initialize(void)
 
     main_result = 1;
 
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
 main_init_exit:
+#endif
     SDL_SemPost(SMK_FuncSem);
 }
 
@@ -711,7 +713,9 @@ init_exit2:
     }
 #endif
 
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
 init_exit1:
+#endif
     SDL_DestroySemaphore(SMK_FuncSem);
     SMK_FuncSem = NULL;
     return 0;

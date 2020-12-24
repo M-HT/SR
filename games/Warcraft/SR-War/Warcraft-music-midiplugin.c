@@ -584,6 +584,8 @@ static int MidiPlugin_ProcessData(void *data)
 
         SDL_Delay(10);
     }
+
+    return 0;
 }
 
 
@@ -709,6 +711,8 @@ int MidiPlugin_Startup(void)
 
     // set mixer
     Mix_HookMusic(&MidiPlugin_MusicPlayer, temp_buf);
+
+    return 0;
 
 #undef get_proc_address
 #undef free_library

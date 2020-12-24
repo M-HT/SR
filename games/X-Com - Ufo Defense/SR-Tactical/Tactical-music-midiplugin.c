@@ -407,6 +407,8 @@ static int MidiPlugin_ProcessData(void *data)
 
         SDL_Delay(10);
     }
+
+    return 0;
 }
 
 
@@ -535,14 +537,14 @@ int MidiPlugin_Startup(void)
     // set mixer
     Mix_HookMusic(&MidiPlugin_MusicPlayer, temp_buf);
 
+    return 0;
+
 #undef get_proc_address
 #undef free_library
 }
 
 void MidiPlugin_Shutdown(void)
 {
-    int index;
-
     // unset mixer
     Mix_PauseMusic();
     Mix_HookMusic(NULL, NULL);
@@ -621,7 +623,7 @@ void MidiPlugin_start_sequence(uint8_t *seq)
 
             MP_sequence.midi = MP_functions.open_buffer(seq, 33000);
         }
-        else if (strcmp(seq, "MIDI") == 0)
+        else if (strcmp((const char *)seq, "MIDI") == 0)
         {
             midi_loop = seq[5];
             Game_MusicSequence.midi = NULL;

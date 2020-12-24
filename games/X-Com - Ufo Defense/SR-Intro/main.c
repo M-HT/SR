@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -422,10 +422,12 @@ static int Game_Initialize(void)
     {
         char cur_dir[MAX_PATH];
 
-        getcwd(cur_dir, MAX_PATH);
-        chdir(Game_Directory);
-        vfs_init(0);
-        chdir(cur_dir);
+        if (NULL != getcwd(cur_dir, MAX_PATH))
+        {
+            if (0 != chdir(Game_Directory));
+            vfs_init(0);
+            if (0 != chdir(cur_dir));
+        }
     }
 
     main_arg1 = NULL;
@@ -754,7 +756,7 @@ static void Game_Event_Loop(void)
     SDL_Thread *FlipThread;
     SDL_Thread *TimerThread;
     SDL_Event event;
-    uint32_t AppMouseFocus;
+    //uint32_t AppMouseFocus;
     uint32_t AppInputFocus;
     uint32_t AppActive;
     int FlipActive, CreateAfterFlip, DestroyAfterFlip;
@@ -804,7 +806,7 @@ static void Game_Event_Loop(void)
 
         AppState = SDL_GetAppState();
 
-        AppMouseFocus = AppState & SDL_APPMOUSEFOCUS;
+        //AppMouseFocus = AppState & SDL_APPMOUSEFOCUS;
         AppInputFocus = AppState & SDL_APPINPUTFOCUS;
         AppActive = AppState & SDL_APPACTIVE;
     }
@@ -819,10 +821,10 @@ static void Game_Event_Loop(void)
         switch(event.type)
         {
             case SDL_ACTIVEEVENT:
-                if (event.active.state & SDL_APPMOUSEFOCUS)
-                {
-                    AppMouseFocus = event.active.gain;
-                }
+                //if (event.active.state & SDL_APPMOUSEFOCUS)
+                //{
+                //    AppMouseFocus = event.active.gain;
+                //}
                 if (event.active.state & SDL_APPINPUTFOCUS)
                 {
                     AppInputFocus = event.active.gain;

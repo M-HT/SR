@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -84,7 +84,7 @@ static void Game_VK_Convert_Mouse(int *posX, int *posY)
 static void Game_VK_scale2x(const uint8_t *src, uint8_t *dst, int srcwidth, int srcheight)
 {
     int x, y;
-    unsigned int A, B, C, D, E, F, G, H, I;
+    unsigned int /*A,*/ B, C, D, E, F, /*G,*/ H, I;
 
     // first line
     {
@@ -98,9 +98,9 @@ static void Game_VK_scale2x(const uint8_t *src, uint8_t *dst, int srcwidth, int 
 
         for (x = 1; x < srcwidth; x++)
         {
-            A = B;
+            //A = B;
             D = E;
-            G = H;
+            //G = H;
             B = C;
             E = F;
             H = I;
@@ -128,9 +128,9 @@ static void Game_VK_scale2x(const uint8_t *src, uint8_t *dst, int srcwidth, int 
         }
 
         // last column
-        A = B;
+        //A = B;
         D = E;
-        G = H;
+        //G = H;
         B = C;
         E = F;
         H = I;
@@ -171,9 +171,9 @@ static void Game_VK_scale2x(const uint8_t *src, uint8_t *dst, int srcwidth, int 
 
         for (x = 1; x < srcwidth; x++)
         {
-            A = B;
+            //A = B;
             D = E;
-            G = H;
+            //G = H;
             B = C;
             E = F;
             H = I;
@@ -201,9 +201,9 @@ static void Game_VK_scale2x(const uint8_t *src, uint8_t *dst, int srcwidth, int 
         }
 
         // last column
-        A = B;
+        //A = B;
         D = E;
-        G = H;
+        //G = H;
         B = C;
         E = F;
         H = I;
@@ -244,9 +244,9 @@ static void Game_VK_scale2x(const uint8_t *src, uint8_t *dst, int srcwidth, int 
 
         for (x = 1; x < srcwidth; x++)
         {
-            A = B;
+            //A = B;
             D = E;
-            G = H;
+            //G = H;
             B = C;
             E = F;
             H = I;
@@ -274,9 +274,9 @@ static void Game_VK_scale2x(const uint8_t *src, uint8_t *dst, int srcwidth, int 
         }
 
         // last column
-        A = B;
+        //A = B;
         D = E;
-        G = H;
+        //G = H;
         B = C;
         E = F;
         H = I;

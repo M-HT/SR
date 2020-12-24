@@ -270,8 +270,6 @@ static void Game_Display_Create(void)
 
 static void Game_Display_Destroy(int post)
 {
-    SDL_Rect rect;
-
     if (Game_OldCursor != NULL)
     {
         SDL_SetCursor(Game_OldCursor);
@@ -292,6 +290,8 @@ static void Game_Display_Destroy(int post)
     else
 #endif
     {
+        SDL_Rect rect;
+
         rect.x = 0;
         rect.y = 0;
         rect.w = Game_Screen->w;
@@ -532,7 +532,7 @@ static void Game_BuildRTable(void)
 static void Game_ReadCDPath(void)
 {
     char str[8192];
-    int len;
+    int items, len;
     FILE *f;
 
     f = Game_fopen("SETUP.INI", "rt");
@@ -542,7 +542,8 @@ static void Game_ReadCDPath(void)
         while (!feof(f))
         {
             str[0] = 0;
-            fscanf(f, "%8192[^\n]\n", str);
+            items = fscanf(f, "%8192[^\n]\n", str);
+            if (items <= 0) continue;
             if (strncasecmp(str, "SOURCE_PATH=", 12) == 0)
             {
                 strcpy(Albion_CDPath, &(str[12]));
@@ -607,6 +608,7 @@ static void Game_ReadFontData(void)
     uint8_t buf8[8];
     FILE *f;
     uint32_t size1, size2;
+    size_t items;
 
     strcpy(fname_base, Albion_CDPath);
     strcat(fname_base, "XLDLIBS\\FONTS0.XLD");
@@ -614,14 +616,19 @@ static void Game_ReadFontData(void)
     f = Game_fopen(fname_base, "rb");
     if (f == NULL) return;
 
-    fread(buf8, 1, 8, f);
-    if (buf8[6] != 2)
+    items = fread(buf8, 1, 8, f);
+    if ((items != 8) || (buf8[6] != 2))
     {
         fclose(f);
         return;
     }
-    fread(&size1, 1, 4, f);
-    fread(&size2, 1, 4, f);
+    items = fread(&size1, 1, 4, f);
+    items = fread(&size2, 1, 4, f);
+    if (items != 4)
+    {
+        fclose(f);
+        return;
+    }
 
     Albion_Font = (uint8_t *) malloc(size2);
 
@@ -632,9 +639,16 @@ static void Game_ReadFontData(void)
     }
 
     fseek(f, size1, SEEK_CUR);
-    fread(Albion_Font, 1, size2, f);
+    items = fread(Albion_Font, 1, size2, f);
 
     fclose(f);
+
+    if (items != size2)
+    {
+        free(Albion_Font);
+        Albion_Font = NULL;
+        return;
+    }
 
     switch (calculate_crc(Albion_Font, size2))
     {
@@ -669,10 +683,12 @@ static int Game_Initialize(void)
     {
         char cur_dir[MAX_PATH];
 
-        getcwd(cur_dir, MAX_PATH);
-        chdir(Game_Directory);
-        vfs_init(0);
-        chdir(cur_dir);
+        if (NULL != getcwd(cur_dir, MAX_PATH))
+        {
+            if (0 != chdir(Game_Directory));
+            vfs_init(0);
+            if (0 != chdir(cur_dir));
+        }
     }
 
 #ifdef USE_SDL2

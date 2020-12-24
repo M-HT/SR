@@ -132,6 +132,8 @@ int MidiPlugin2_Startup(void)
         memset(&(MP_sequence[index]), 0, sizeof(MP_midi));
     }
 
+    return 0;
+
 #undef get_proc_address
 #undef free_library
 }

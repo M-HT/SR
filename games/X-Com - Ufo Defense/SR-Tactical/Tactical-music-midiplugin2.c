@@ -101,7 +101,6 @@ int MidiPlugin2_Startup(void)
 {
     midi_plugin2_initialize MP2_initialize;
     midi_plugin2_parameters MP2_parameters;
-    char temp_str[MAX_PATH];
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     if (Game_MidiSubsystem == 21) {
@@ -146,6 +145,8 @@ int MidiPlugin2_Startup(void)
 
     MidiPlugin2_SetMusicVolume();
 
+    return 0;
+
 #undef get_proc_address
 #undef free_library
 }
@@ -189,7 +190,7 @@ void MidiPlugin2_start_sequence(uint8_t *seq)
             Game_MusicSequence.midi = NULL;
         }
 
-        if (strcmp(seq, "MIDI") == 0)
+        if (strcmp((const char *)seq, "MIDI") == 0)
         {
             midi_loop = seq[5];
             Game_MusicSequence.midi = load_file((char *) &(seq[6]), &Game_MusicSequence.midi_size);

@@ -1331,6 +1331,7 @@ uint32_t GetPrivateProfileStringA_c(const char *lpAppName, const char *lpKeyName
     FILE *file;
     unsigned int remaining_size, correct_appname;
     size_t default_length, length;
+    int items;
     char buf[8192];
 
 #ifdef DEBUG_KERNEL32
@@ -1401,9 +1402,10 @@ uint32_t GetPrivateProfileStringA_c(const char *lpAppName, const char *lpKeyName
 
     while (!feof(file))
     {
-        fscanf(file, "%8192[\r\n]", buf);
+        items = fscanf(file, "%8192[\r\n]", buf);
         buf[0] = 0;
-        fscanf(file, "%8192[^\r\n]", buf);
+        items = fscanf(file, "%8192[^\r\n]", buf);
+        if (items <= 0) continue;
         length = strlen(buf);
 
         if (length == 0) continue;

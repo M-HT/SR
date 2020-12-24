@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -31,16 +31,17 @@ static int SR_LoadSCI_fixup_interpret_as_code(FILE *file)
 {
     char buf[8192];
     uint_fast32_t SecNum, RelAdr;
-    int length;
+    int items, length;
     unsigned int address;
 
     while (!feof(file))
     {
         // read enters
-        fscanf(file, "%8192[\n]", buf);
+        items = fscanf(file, "%8192[\n]", buf);
         // read line
         buf[0] = 0;
-        fscanf(file, "%8192[^\n]", buf);
+        items = fscanf(file, "%8192[^\n]", buf);
+        if (items <= 0) continue;
         length = strlen(buf);
         if (length != 0 && buf[length - 1] == '\r')
         {
@@ -66,16 +67,17 @@ static int SR_LoadSCI_displaced_labels(FILE *file)
     char buf[8192];
     int *label_value;
     uint_fast32_t SecNum, RelAdr;
-    int length, displacement;
+    int items, length, displacement;
     unsigned int address;
 
     while (!feof(file))
     {
         // read enters
-        fscanf(file, "%8192[\n]", buf);
+        items = fscanf(file, "%8192[\n]", buf);
         // read line
         buf[0] = 0;
-        fscanf(file, "%8192[^\n]", buf);
+        items = fscanf(file, "%8192[^\n]", buf);
+        if (items <= 0) continue;
         length = strlen(buf);
         if (length != 0 && buf[length - 1] == '\r')
         {
@@ -104,16 +106,17 @@ static int SR_LoadSCI_noret_procedures(FILE *file)
 {
     char buf[8192];
     uint_fast32_t SecNum, RelAdr;
-    int length;
+    int items, length;
     unsigned int address;
 
     while (!feof(file))
     {
         // read enters
-        fscanf(file, "%8192[\n]", buf);
+        items = fscanf(file, "%8192[\n]", buf);
         // read line
         buf[0] = 0;
-        fscanf(file, "%8192[^\n]", buf);
+        items = fscanf(file, "%8192[^\n]", buf);
+        if (items <= 0) continue;
         length = strlen(buf);
         if (length != 0 && buf[length - 1] == '\r')
         {
@@ -139,16 +142,17 @@ static int SR_LoadSCI_code16_areas(FILE *file)
     char buf[8192];
     int *code16_area_value;
     uint_fast32_t SecNum, RelAdr;
-    int length, arealength;
+    int items, length, arealength;
     unsigned int address;
 
     while (!feof(file))
     {
         // read enters
-        fscanf(file, "%8192[\n]", buf);
+        items = fscanf(file, "%8192[\n]", buf);
         // read line
         buf[0] = 0;
-        fscanf(file, "%8192[^\n]", buf);
+        items = fscanf(file, "%8192[^\n]", buf);
+        if (items <= 0) continue;
         length = strlen(buf);
         if (length != 0 && buf[length - 1] == '\r')
         {
@@ -177,16 +181,17 @@ static int SR_LoadSCI_fixup_do_not_interpret_as_code(FILE *file)
 {
     char buf[8192];
     uint_fast32_t SecNum, RelAdr;
-    int length;
+    int items, length;
     unsigned int address;
 
     while (!feof(file))
     {
         // read enters
-        fscanf(file, "%8192[\n]", buf);
+        items = fscanf(file, "%8192[\n]", buf);
         // read line
         buf[0] = 0;
-        fscanf(file, "%8192[^\n]", buf);
+        items = fscanf(file, "%8192[^\n]", buf);
+        if (items <= 0) continue;
         length = strlen(buf);
         if (length != 0 && buf[length - 1] == '\r')
         {
@@ -214,16 +219,17 @@ static int SR_LoadSCI_external_procedures(FILE *file)
     char *str1, *str2;
     extrn_data *extrn;
     uint_fast32_t SecNum, RelAdr;
-    int length;
+    int items, length;
     unsigned int address;
 
     while (!feof(file))
     {
         // read enters
-        fscanf(file, "%8192[\n]", buf);
+        items = fscanf(file, "%8192[\n]", buf);
         // read line
         buf[0] = 0;
-        fscanf(file, "%8192[^\n]", buf);
+        items = fscanf(file, "%8192[^\n]", buf);
+        if (items <= 0) continue;
         length = strlen(buf);
         if (length != 0 && buf[length - 1] == '\r')
         {
@@ -267,16 +273,17 @@ static int SR_LoadSCI_global_aliases(FILE *file)
     char *str1;
     alias_data *alias;
     uint_fast32_t SecNum, RelAdr;
-    int length;
+    int items, length;
     unsigned int address;
 
     while (!feof(file))
     {
         // read enters
-        fscanf(file, "%8192[\n]", buf);
+        items = fscanf(file, "%8192[\n]", buf);
         // read line
         buf[0] = 0;
-        fscanf(file, "%8192[^\n]", buf);
+        items = fscanf(file, "%8192[^\n]", buf);
+        if (items <= 0) continue;
         length = strlen(buf);
         if (length != 0 && buf[length - 1] == '\r')
         {
@@ -310,16 +317,17 @@ static int SR_LoadSCI_instruction_replacements(FILE *file)
     char *str1, *str2, *str3;
     replace_data *replace;
     uint_fast32_t SecNum, RelAdr;
-    int length, instr_empty;
+    int items, length, instr_empty;
     unsigned int address, instr_len;
 
     while (!feof(file))
     {
         // read enters
-        fscanf(file, "%8192[\n]", buf);
+        items = fscanf(file, "%8192[\n]", buf);
         // read line
         buf[0] = 0;
-        fscanf(file, "%8192[^\n]", buf);
+        items = fscanf(file, "%8192[^\n]", buf);
+        if (items <= 0) continue;
         length = strlen(buf);
         if (length != 0 && buf[length - 1] == '\r')
         {
@@ -383,16 +391,17 @@ static int SR_LoadSCI_unaligned_ebp_areas(FILE *file)
     char buf[8192];
     int *ua_ebp_area_value;
     uint_fast32_t SecNum, RelAdr;
-    int length, arealength;
+    int items, length, arealength;
     unsigned int address;
 
     while (!feof(file))
     {
         // read enters
-        fscanf(file, "%8192[\n]", buf);
+        items = fscanf(file, "%8192[\n]", buf);
         // read line
         buf[0] = 0;
-        fscanf(file, "%8192[^\n]", buf);
+        items = fscanf(file, "%8192[^\n]", buf);
+        if (items <= 0) continue;
         length = strlen(buf);
         if (length != 0 && buf[length - 1] == '\r')
         {
@@ -422,16 +431,17 @@ static int SR_LoadSCI_unaligned_esp_areas(FILE *file)
     char buf[8192];
     int *ua_esp_area_value;
     uint_fast32_t SecNum, RelAdr;
-    int length, arealength;
+    int items, length, arealength;
     unsigned int address;
 
     while (!feof(file))
     {
         // read enters
-        fscanf(file, "%8192[\n]", buf);
+        items = fscanf(file, "%8192[\n]", buf);
         // read line
         buf[0] = 0;
-        fscanf(file, "%8192[^\n]", buf);
+        items = fscanf(file, "%8192[^\n]", buf);
+        if (items <= 0) continue;
         length = strlen(buf);
         if (length != 0 && buf[length - 1] == '\r')
         {
@@ -463,16 +473,17 @@ static int SR_LoadSCI_instruction_flags(FILE *file)
     char *str1, *str2, *str3;
     bound_data *iflags;
     uint_fast32_t SecNum, RelAdr;
-    int length;
+    int items, length;
     unsigned int address, to_set, to_clear;
 
     while (!feof(file))
     {
         // read enters
-        fscanf(file, "%8192[\n]", buf);
+        items = fscanf(file, "%8192[\n]", buf);
         // read line
         buf[0] = 0;
-        fscanf(file, "%8192[^\n]", buf);
+        items = fscanf(file, "%8192[^\n]", buf);
+        if (items <= 0) continue;
         length = strlen(buf);
         if (length != 0 && buf[length - 1] == '\r')
         {

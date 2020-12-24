@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -1422,7 +1422,9 @@ void Game_ProcessKEvents(void)
 
     _after_switch1:
         Game_KQueueRead = (Game_KQueueRead + 1) & (GAME_KQUEUE_LENGTH - 1);
+#if !defined(USE_SDL2)
     _after_switch2:
+#endif
         if (VSyncTick != Game_VSyncTick) finish = 1;
     }
 

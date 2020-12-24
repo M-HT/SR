@@ -25,7 +25,6 @@
 import std.stdio;
 import std.string;
 import std.array;
-import std.c.stdlib;
 import std.conv;
 import std.file;
 import std.path;

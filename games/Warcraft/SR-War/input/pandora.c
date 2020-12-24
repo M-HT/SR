@@ -94,7 +94,7 @@ static int Action_button_Key[BUTTON_LAST], Action_button_R_Key[BUTTON_LAST];
 
 
 // functions
-void EmulateKey(int type, SDLKey key)
+void EmulateKey(int type, int key)
 {
     SDL_Event pump_event;
 

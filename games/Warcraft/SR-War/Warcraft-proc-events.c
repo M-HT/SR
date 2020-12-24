@@ -23,12 +23,17 @@
  */
 
 #include <string.h>
-#include <SDL/SDL.h>
+#ifdef USE_SDL2
+    #include <SDL2/SDL.h>
+#else
+    #include <SDL/SDL.h>
+#endif
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Warcraft-proc-events.h"
 #include "input.h"
 
+#if !defined(USE_SDL2)
 //senquack
 /* Convert GP2X touchscreen coordinates to keyboard cursor position */
 static void Game_VK_Convert_Mouse(int *posX, int *posY)
@@ -720,8 +725,8 @@ YZ123456
 
         while (*str != 0)
         {
-            EmulateKey(SDL_KEYDOWN, (SDLKey) *str);
-            EmulateKey(SDL_KEYUP, (SDLKey) *str);
+            EmulateKey(SDL_KEYDOWN, (int) *str);
+            EmulateKey(SDL_KEYUP, (int) *str);
 
             str++;
         }
@@ -857,6 +862,7 @@ static void Game_Pause(void)
     Game_BaseClockValue += (SDL_GetTicks() - clock_shift);
     Game_Paused = 0;
 }
+#endif
 
 void Game_ProcessKEvents(void)
 {
@@ -899,6 +905,9 @@ void Game_ProcessKEvents(void)
             case SDL_KEYUP:
                 if (cevent->key.keysym.sym == SDLK_PAUSE)
                 {
+            #ifdef USE_SDL2
+                    goto _after_switch1;
+            #else
                 #ifdef ALLOW_OPENGL
                     if (Game_UseOpenGL)
                     {
@@ -911,6 +920,7 @@ void Game_ProcessKEvents(void)
                         goto _after_switch2;
                     }
                     else goto _after_switch1;
+            #endif
                 }
                 else if (cevent->key.keysym.sym < 128)
                 {
@@ -939,52 +949,92 @@ void Game_ProcessKEvents(void)
 
                     switch((int) cevent->key.keysym.sym)
                     {
+                    #ifdef USE_SDL2
+                        case SDLK_KP_0:
+                    #else
                         case SDLK_KP0:
+                    #endif
                             scancode = 0x52;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '0';
 
                             break;
+                    #ifdef USE_SDL2
+                        case SDLK_KP_1:
+                    #else
                         case SDLK_KP1:
+                    #endif
                             scancode = 0x4f;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '1';
 
                             break;
+                    #ifdef USE_SDL2
+                        case SDLK_KP_2:
+                    #else
                         case SDLK_KP2:
+                    #endif
                             scancode = 0x50;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '2';
 
                             break;
+                    #ifdef USE_SDL2
+                        case SDLK_KP_3:
+                    #else
                         case SDLK_KP3:
+                    #endif
                             scancode = 0x51;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '3';
 
                             break;
+                    #ifdef USE_SDL2
+                        case SDLK_KP_4:
+                    #else
                         case SDLK_KP4:
+                    #endif
                             scancode = 0x4b;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '4';
 
                             break;
+                    #ifdef USE_SDL2
+                        case SDLK_KP_5:
+                    #else
                         case SDLK_KP5:
+                    #endif
                             scancode = 0x4c;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '5';
 
                             break;
+                    #ifdef USE_SDL2
+                        case SDLK_KP_6:
+                    #else
                         case SDLK_KP6:
+                    #endif
                             scancode = 0x4d;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '6';
 
                             break;
+                    #ifdef USE_SDL2
+                        case SDLK_KP_7:
+                    #else
                         case SDLK_KP7:
+                    #endif
                             scancode = 0x47;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '7';
 
                             break;
+                    #ifdef USE_SDL2
+                        case SDLK_KP_8:
+                    #else
                         case SDLK_KP8:
+                    #endif
                             scancode = 0x48;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '8';
 
                             break;
+                    #ifdef USE_SDL2
+                        case SDLK_KP_9:
+                    #else
                         case SDLK_KP9:
+                    #endif
                             scancode = 0x49;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '9';
 
@@ -1108,6 +1158,9 @@ void Game_ProcessKEvents(void)
 
                             break;
                         case SDLK_F15:
+                    #ifdef USE_SDL2
+                            goto _after_switch1;
+                    #else
                         #ifdef ALLOW_OPENGL
                             if (Game_UseOpenGL)
                             {
@@ -1120,7 +1173,12 @@ void Game_ProcessKEvents(void)
                                 goto _after_switch2;
                             }
                             else goto _after_switch1;
+                    #endif
+                    #ifdef USE_SDL2
+                        case SDLK_NUMLOCKCLEAR:
+                    #else
                         case SDLK_NUMLOCK:
+                    #endif
                             scancode = 0x45;
 
                             break;
@@ -1128,7 +1186,11 @@ void Game_ProcessKEvents(void)
                             scancode = 0x3a;
 
                             break;
+                    #ifdef USE_SDL2
+                        case SDLK_SCROLLLOCK:
+                    #else
                         case SDLK_SCROLLOCK:
+                    #endif
                             scancode = 0x46;
 
                             break;
@@ -1156,11 +1218,19 @@ void Game_ProcessKEvents(void)
                             scancode = 0x38;
 
                             break;
+                    #ifdef USE_SDL2
+                        case SDLK_LGUI:
+                    #else
                         case SDLK_LSUPER:
+                    #endif
                             scancode = 0x5b;
 
                             break;
+                    #ifdef USE_SDL2
+                        case SDLK_RGUI:
+                    #else
                         case SDLK_RSUPER:
+                    #endif
                             scancode = 0x5c;
 
                             break;
@@ -1213,7 +1283,9 @@ void Game_ProcessKEvents(void)
 
     _after_switch1:
         Game_KQueueRead = (Game_KQueueRead + 1) & (GAME_KQUEUE_LENGTH - 1);
+#if !defined(USE_SDL2)
     _after_switch2:
+#endif
         if (VSyncTick != Game_VSyncTick) finish = 1;
     }
 
@@ -1327,6 +1399,9 @@ int Game_ProcessMEvents(void)
                     Game_MouseButton(0 /*SDL_GetMouseState(NULL, NULL)*/, ((cevent->button.state == SDL_PRESSED)?1:2) + ((cevent->button.button == SDL_BUTTON_LEFT)?0:2), mousex, mousey);
                 //senquack - added support for toggling scaling using mouse wheel:
                 }
+        #ifdef USE_SDL2
+            // handled below
+        #else
                 else if (cevent->button.button == SDL_BUTTON_WHEELUP)
                 {
                     Display_ChangeMode = 1;
@@ -1335,8 +1410,22 @@ int Game_ProcessMEvents(void)
                 {
                     Display_ChangeMode = -1;
                 }
+        #endif
                 break;
                 // case SDL_MOUSEBUTTONUP, SDL_MOUSEBUTTONDOWN:
+        #ifdef USE_SDL2
+            case SDL_MOUSEWHEEL:
+                if (cevent->wheel.y > 0)
+                {
+                    Display_ChangeMode = 1;
+                }
+                else if (cevent->wheel.y < 0)
+                {
+                    Display_ChangeMode = -1;
+                }
+                break;
+                // case SDL_MOUSEWHEEL:
+        #endif
         } // switch(event.type)
 
 

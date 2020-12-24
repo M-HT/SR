@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2020 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -32,7 +32,11 @@
 #include <signal.h>
 #include <time.h>
 #include <sys/time.h>
-#include <SDL/SDL.h>
+#ifdef USE_SDL2
+    #include <SDL2/SDL.h>
+#else
+    #include <SDL/SDL.h>
+#endif
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Warcraft-proc.h"

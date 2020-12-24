@@ -26,10 +26,17 @@
 #include <malloc.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <SDL/SDL.h>
-#include <SDL/SDL_thread.h>
-#include <SDL/SDL_version.h>
-#include <SDL/SDL_mixer.h>
+#ifdef USE_SDL2
+    #include <SDL2/SDL.h>
+    #include <SDL2/SDL_thread.h>
+    #include <SDL2/SDL_version.h>
+    #include <SDL2/SDL_mixer.h>
+#else
+    #include <SDL/SDL.h>
+    #include <SDL/SDL_thread.h>
+    #include <SDL/SDL_version.h>
+    #include <SDL/SDL_mixer.h>
+#endif
 #include "Game_defs.h"
 
 #define DEFINE_VARIABLES
@@ -54,6 +61,84 @@ static void Game_Display_Create(void)
 {
     SDL_LockMutex(Game_ScreenMutex);
 
+#ifdef USE_SDL2
+    if (Display_Fullscreen)
+    {
+        Game_Window = SDL_CreateWindow("SDL Warcraft", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_INPUT_GRABBED);
+    }
+    else
+    {
+        Game_Window = SDL_CreateWindow("SDL Warcraft", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Display_Width, Display_Height, (Display_MouseLocked)?SDL_WINDOW_INPUT_GRABBED:0);
+    }
+
+    if (Game_Window != NULL)
+    {
+        Game_Renderer = SDL_CreateRenderer(Game_Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+        if (Game_Renderer != NULL)
+        {
+            SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+
+            if (Display_Fullscreen)
+            {
+                SDL_RenderSetLogicalSize(Game_Renderer, Display_Width, Display_Height);
+            }
+        }
+        else
+        {
+            SDL_DestroyWindow(Game_Window);
+            Game_Window = NULL;
+        }
+    }
+
+    if (Game_Window != NULL)
+    {
+        Game_Texture = SDL_CreateTexture(Game_Renderer, (Display_Bitsperpixel == 32)?SDL_PIXELFORMAT_ARGB8888:SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, Render_Width, Render_Height);
+        if (Game_Texture == NULL)
+        {
+            SDL_DestroyRenderer(Game_Renderer);
+            Game_Renderer = NULL;
+            SDL_DestroyWindow(Game_Window);
+            Game_Window = NULL;
+        }
+    }
+
+    if (Game_Window != NULL)
+    {
+        int mousex, mousey;
+
+        SDL_ShowCursor(SDL_DISABLE);
+
+        if (Display_MouseLocked)
+        {
+            Game_OldCursor = SDL_GetCursor();
+            SDL_SetCursor(Game_NoCursor);
+
+            SDL_SetRelativeMouseMode(SDL_TRUE);
+
+            SDL_WarpMouseInWindow(Game_Window, 0, 0);
+        }
+        else
+        {
+            if (Display_Fullscreen || (Game_MouseCursor == 2))
+            {
+                Game_OldCursor = SDL_GetCursor();
+                SDL_SetCursor(Game_NoCursor);
+            }
+            else if (Game_MouseCursor == 1)
+            {
+                Game_OldCursor = SDL_GetCursor();
+                SDL_SetCursor(Game_MinCursor);
+            }
+
+            SDL_GetMouseState(&mousex, &mousey);
+            SDL_WarpMouseInWindow(Game_Window, mousex, mousey);
+
+            SDL_ShowCursor(SDL_ENABLE);
+        }
+
+        Game_DisplayActive = 1;
+    }
+#else
     {
         Uint32 flags;
 
@@ -165,6 +250,7 @@ static void Game_Display_Create(void)
 
         Game_DisplayActive = 1;
     }
+#endif
 
     SDL_UnlockMutex(Game_ScreenMutex);
 
@@ -173,8 +259,6 @@ static void Game_Display_Create(void)
 
 static void Game_Display_Destroy(int post)
 {
-    SDL_Rect rect;
-
     SDL_LockMutex(Game_ScreenMutex);
 
     Game_DisplayActive = 0;
@@ -186,6 +270,11 @@ static void Game_Display_Destroy(int post)
     }
 
     // clear screen
+#ifdef USE_SDL2
+    SDL_SetRenderDrawColor(Game_Renderer, 0, 0, 0, 255);
+    SDL_RenderClear(Game_Renderer);
+    SDL_RenderPresent(Game_Renderer);
+#else
 #ifdef ALLOW_OPENGL
     if (Game_UseOpenGL)
     {
@@ -194,6 +283,8 @@ static void Game_Display_Destroy(int post)
     else
 #endif
     {
+        SDL_Rect rect;
+
         rect.x = 0;
         rect.y = 0;
         rect.w = Game_Screen->w;
@@ -201,9 +292,20 @@ static void Game_Display_Destroy(int post)
         SDL_FillRect(Game_Screen, &rect, 0);
         SDL_Flip(Game_Screen);
     }
+#endif
 
     SDL_ShowCursor(SDL_DISABLE);
 
+#ifdef USE_SDL2
+    SDL_SetRelativeMouseMode(SDL_FALSE);
+
+    SDL_DestroyTexture(Game_Texture);
+    Game_Texture = NULL;
+    SDL_DestroyRenderer(Game_Renderer);
+    Game_Renderer = NULL;
+    SDL_DestroyWindow(Game_Window);
+    Game_Window = NULL;
+#else
     SDL_WM_GrabInput(SDL_GRAB_OFF);
     //SDL_FreeSurface(Game_Screen);
     Game_Screen = NULL;
@@ -214,6 +316,7 @@ static void Game_Display_Destroy(int post)
         glBindTexture(GL_TEXTURE_2D, 0);
         glDeleteTextures(3, &(Game_GLTexture[0]));
     }
+#endif
 #endif
 
     SDL_UnlockMutex(Game_ScreenMutex);
@@ -262,7 +365,11 @@ void Game_CleanState(int imm)
     memset(&Game_MouseTable, 0, sizeof(Game_MouseTable));
     memset(&Game_Palette_Or, 0, sizeof(Game_Palette_Or));
 
+#ifdef USE_SDL2
+    if (Game_Window != NULL)
+#else
     if (Game_Screen != NULL)
+#endif
     {
         if (imm)
         {
@@ -313,7 +420,7 @@ static void Game_Cleanup(void)
 
     Game_CleanState(1);
 
-#ifdef ALLOW_OPENGL
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
     if (Game_TextureData != NULL)
     {
         free(Game_TextureData);
@@ -490,7 +597,13 @@ static int Game_Initialize(void)
         }
     }
 
+#ifdef USE_SDL2
+    Game_Window = NULL;
+    Game_Renderer = NULL;
+    Game_Texture = NULL;
+#else
     Game_Screen = NULL;
+#endif
     Game_FrameBuffer = NULL;
     Game_ScreenWindow = NULL;
     memset(&Game_AllocatedMemory, 0, sizeof(Game_AllocatedMemory));
@@ -552,10 +665,12 @@ static int Game_Initialize(void)
     Game_ScreenMutex = NULL;
     Game_DisplayActive = 0;
 
-#ifdef ALLOW_OPENGL
+#if defined(ALLOW_OPENGL) && !defined(USE_SDL2)
     Game_UseOpenGL = 0;
-    Game_TextureData = NULL;
     Game_CurrentTexture = 0;
+#endif
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+    Game_TextureData = NULL;
 #endif
 
     Init_Display();
@@ -723,8 +838,10 @@ static void Game_Initialize2(void)
     Game_VideoAspectXR = (Picture_Width << 16) / 320;
     Game_VideoAspectYR = (Picture_Height << 16) / 200;
 
-#ifdef ALLOW_OPENGL
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if !defined(USE_SDL2)
     if (Game_UseOpenGL)
+#endif
     {
         Game_TextureData = malloc(Render_Width * Render_Height * Display_Bitsperpixel / 8);
     }
@@ -743,7 +860,13 @@ static void Game_Event_Loop(void)
     int FlipActive, CreateAfterFlip, DestroyAfterFlip;
 
 
-    TimerThread = SDL_CreateThread(Game_TimerThread, NULL);
+    TimerThread = SDL_CreateThread(
+        Game_TimerThread,
+#ifdef USE_SDL2
+        "timer",
+#endif
+        NULL
+    );
 
     if (TimerThread == NULL)
     {
@@ -751,7 +874,13 @@ static void Game_Event_Loop(void)
         return;
     }
 
-    FlipThread = SDL_CreateThread(Game_FlipThread, NULL);
+    FlipThread = SDL_CreateThread(
+        Game_FlipThread,
+#ifdef USE_SDL2
+        "flip",
+#endif
+        NULL
+    );
 
     if (FlipThread == NULL)
     {
@@ -765,7 +894,13 @@ static void Game_Event_Loop(void)
         return;
     }
 
-    MainThread = SDL_CreateThread(Game_MainThread, NULL);
+    MainThread = SDL_CreateThread(
+        Game_MainThread,
+#ifdef USE_SDL2
+        "main",
+#endif
+        NULL
+    );
 
     if (MainThread == NULL)
     {
@@ -782,6 +917,11 @@ static void Game_Event_Loop(void)
         return;
     }
 
+#ifdef USE_SDL2
+    AppMouseFocus = 1;
+    AppInputFocus = 1;
+    AppActive = 1;
+#else
     {
         uint32_t AppState;
 
@@ -791,6 +931,7 @@ static void Game_Event_Loop(void)
         AppInputFocus = AppState & SDL_APPINPUTFOCUS;
         AppActive = AppState & SDL_APPACTIVE;
     }
+#endif
 
     FlipActive = 0;
     CreateAfterFlip = 0;
@@ -798,9 +939,40 @@ static void Game_Event_Loop(void)
 
     while (!Thread_Exited && SDL_WaitEvent(&event))
     {
-        if (!Handle_Input_Event(&event))
+        if (Handle_Input_Event(&event)) continue;
+
         switch(event.type)
         {
+        #ifdef USE_SDL2
+            case SDL_WINDOWEVENT:
+                switch (event.window.event)
+                {
+                    case SDL_WINDOWEVENT_ENTER:
+                        AppMouseFocus = 1;
+                        break;
+                    case SDL_WINDOWEVENT_LEAVE:
+                        AppMouseFocus = 0;
+                        break;
+                    case SDL_WINDOWEVENT_FOCUS_GAINED:
+                        AppInputFocus = 1;
+                        break;
+                    case SDL_WINDOWEVENT_FOCUS_LOST:
+                        AppInputFocus = 0;
+                        break;
+                    case SDL_WINDOWEVENT_MINIMIZED:
+                        AppActive = 0;
+                        break;
+                    case SDL_WINDOWEVENT_MAXIMIZED:
+                    case SDL_WINDOWEVENT_RESTORED:
+                        AppActive = 1;
+                        break;
+                    //case SDL_WINDOWEVENT_CLOSE:
+                    // todo: ?
+                }
+
+                break;
+                // case SDL_WINDOWEVENT:
+        #else
             case SDL_ACTIVEEVENT:
                 if (event.active.state & SDL_APPMOUSEFOCUS)
                 {
@@ -817,10 +989,17 @@ static void Game_Event_Loop(void)
 
                 break;
                 // case SDL_ACTIVEEVENT:
+        #endif
 
             case SDL_KEYDOWN:
             case SDL_KEYUP:
-                if (Game_Screen != NULL && AppActive && AppInputFocus)
+                if (
+                #ifdef USE_SDL2
+                    Game_Window != NULL
+                #else
+                    Game_Screen != NULL
+                #endif
+                    && AppActive && AppInputFocus)
                 {
                     if ( ( (Game_KQueueWrite + 1) & (GAME_KQUEUE_LENGTH - 1) ) == Game_KQueueRead )
                     {
@@ -841,7 +1020,16 @@ static void Game_Event_Loop(void)
             case SDL_MOUSEMOTION:
             case SDL_MOUSEBUTTONUP:
             case SDL_MOUSEBUTTONDOWN:
-                if (Game_Screen != NULL && AppActive && AppInputFocus && AppMouseFocus)
+        #ifdef USE_SDL2
+            case SDL_MOUSEWHEEL:
+        #endif
+                if (
+                #ifdef USE_SDL2
+                    Game_Window != NULL
+                #else
+                    Game_Screen != NULL
+                #endif
+                    && AppActive && AppInputFocus && AppMouseFocus)
                 {
                     if ( ( (Game_MQueueWrite + 1) & (GAME_MQUEUE_LENGTH - 1) ) == Game_MQueueRead )
                     {
@@ -906,7 +1094,13 @@ static void Game_Event_Loop(void)
                         // case EC_DISPLAY_DESTROY:
 
                     case EC_DISPLAY_FLIP_START:
-                        if (!FlipActive && Game_Screen != NULL)
+                        if (!FlipActive &&
+                        #ifdef USE_SDL2
+                            Game_Window != NULL
+                        #else
+                            Game_Screen != NULL
+                        #endif
+                            )
                         {
                             FlipActive = 1;
 
@@ -922,7 +1116,14 @@ static void Game_Event_Loop(void)
                     case EC_DISPLAY_FLIP_FINISH:
                         if (FlipActive)
                         {
-                        #ifdef ALLOW_OPENGL
+                        #if defined(USE_SDL2)
+                            if (Game_DisplayActive)
+                            {
+                                SDL_UpdateTexture(Game_Texture, NULL, Game_TextureData, Render_Width * Display_Bitsperpixel / 8);
+                                SDL_RenderCopy(Game_Renderer, Game_Texture, NULL, NULL);
+                                SDL_RenderPresent(Game_Renderer);
+                            }
+                        #elif defined(ALLOW_OPENGL)
                             if (Game_UseOpenGL && Game_DisplayActive)
                             {
                                 glBindTexture(GL_TEXTURE_2D, Game_GLTexture[Game_CurrentTexture]);
@@ -1007,12 +1208,20 @@ static void Game_Event_Loop(void)
                             int mousex, mousey;
 
                             SDL_GetMouseState(&mousex, &mousey);
+                        #ifdef USE_SDL2
+                            SDL_WarpMouseInWindow(Game_Window, mousex + (int) event.user.data1, mousey + (int) event.user.data2);
+                        #else
                             SDL_WarpMouse(mousex + (int) event.user.data1, mousey + (int) event.user.data2);
+                        #endif
                         }
                         break;
                     case EC_MOUSE_SET:
                         {
+                        #ifdef USE_SDL2
+                            SDL_WarpMouseInWindow(Game_Window, (int) event.user.data1, (int) event.user.data2);
+                        #else
                             SDL_WarpMouse((int) event.user.data1, (int) event.user.data2);
+                        #endif
                         }
                         break;
                     case EC_DELAY:

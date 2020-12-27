@@ -58,18 +58,65 @@
 #include "audio.h"
 #include "input.h"
 
+static void Display_RecalculateResolution(int w, int h)
+{
+    if (Display_FSType == 1)
+    {
+        if ((((double)w) / h) > (((double)Display_Width) / Display_Height))
+        {
+            Picture_Height = h;
+            Picture_Width = (((double)h) * Display_Width) / Display_Height;
+        }
+        else
+        {
+            Picture_Width = w;
+            Picture_Height = (((double)w) * Display_Height) / Display_Width;
+        }
+    }
+    else
+    {
+        Picture_Width = w;
+        Picture_Height = h;
+    }
+
+    Display_Width = w;
+    Display_Height = h;
+
+    Picture_Position_UL_X = (Display_Width - Picture_Width) / 2;
+    Picture_Position_UL_Y = (Display_Height - Picture_Height) / 2;
+    Picture_Position_BR_X = Picture_Position_UL_X + Picture_Width - 1;
+    Picture_Position_BR_Y = Picture_Position_BR_Y + Picture_Height - 1;
+
+    Game_VideoAspectX = (320 << 16) / Picture_Width;
+    Game_VideoAspectY = (200 << 16) / Picture_Height;
+
+    Game_VideoAspectXR = (Picture_Width << 16) / 320;
+    Game_VideoAspectYR = (Picture_Height << 16) / 200;
+}
+
 static void Game_Display_Create(void)
 {
     SDL_LockMutex(Game_ScreenMutex);
 
 #ifdef USE_SDL2
-    if (Display_Fullscreen)
+    if (Display_Fullscreen && Display_FSType)
     {
         Game_Window = SDL_CreateWindow("SDL Tactical", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_INPUT_GRABBED);
     }
     else
     {
-        Game_Window = SDL_CreateWindow("SDL Tactical", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Display_Width, Display_Height, (Display_MouseLocked)?SDL_WINDOW_INPUT_GRABBED:0);
+        Uint32 flags;
+
+        if (Display_Fullscreen)
+        {
+            flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_INPUT_GRABBED;
+        }
+        else
+        {
+            flags = (Display_MouseLocked)?SDL_WINDOW_INPUT_GRABBED:0;
+        }
+
+        Game_Window = SDL_CreateWindow("SDL Tactical", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Display_Width, Display_Height, flags);
     }
 
     if (Game_Window != NULL)
@@ -79,9 +126,23 @@ static void Game_Display_Create(void)
         {
             SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
-            if (Display_Fullscreen)
+            if (Display_Fullscreen && Display_FSType)
             {
-                SDL_RenderSetLogicalSize(Game_Renderer, Display_Width, Display_Height);
+                int w, h;
+                SDL_Rect viewport;
+
+                if (SDL_GetRendererOutputSize(Game_Renderer, &w, &h))
+                {
+                    SDL_GetWindowSize(Game_Window, &w, &h);
+                }
+
+                Display_RecalculateResolution(w, h);
+
+                viewport.x = Picture_Position_UL_X;
+                viewport.y = Picture_Position_UL_Y;
+                viewport.w = Picture_Width;
+                viewport.h = Picture_Height;
+                SDL_RenderSetViewport(Game_Renderer, &viewport);
             }
         }
         else
@@ -189,7 +250,19 @@ static void Game_Display_Create(void)
             flags = SDL_SWSURFACE;
         }
 
-        Game_Screen = SDL_SetVideoMode (Display_Width, Display_Height, Display_Bitsperpixel, flags);
+        if (Display_Fullscreen && Display_FSType)
+        {
+            Game_Screen = SDL_SetVideoMode (0, 0, 0, flags);
+
+            if (Game_Screen != NULL)
+            {
+                Display_RecalculateResolution(Game_Screen->w, Game_Screen->h);
+            }
+        }
+        else
+        {
+            Game_Screen = SDL_SetVideoMode (Display_Width, Display_Height, Display_Bitsperpixel, flags);
+        }
     }
 
     if (Game_Screen != NULL)
@@ -244,7 +317,7 @@ static void Game_Display_Create(void)
         {
             int index;
 
-            glViewport(0, 0, Display_Width, Display_Height);
+            glViewport(Picture_Position_UL_X, Picture_Position_UL_Y, Picture_Width, Picture_Height);
 
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();

@@ -83,6 +83,7 @@ EXTERNAL_VARIABLE uint32_t Display_Width;			/* physical display width */
 EXTERNAL_VARIABLE uint32_t Display_Height;			/* physical display height */
 EXTERNAL_VARIABLE uint32_t Display_Bitsperpixel;	/* display bits per pixel */
 EXTERNAL_VARIABLE uint32_t Display_Fullscreen;		/* display - fulscreen ? */
+EXTERNAL_VARIABLE uint32_t Display_FSType;			/* fulscreen type */
 EXTERNAL_VARIABLE uint32_t Display_MouseLocked;		/* is mouse locked in the window ? */
 EXTERNAL_VARIABLE volatile int32_t Display_ChangeMode;		/* flag to change display mode: 1 = forward, -1 = backward */
 EXTERNAL_VARIABLE uint32_t Render_Width;			/* render width */

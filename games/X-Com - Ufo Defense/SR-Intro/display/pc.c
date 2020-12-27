@@ -254,6 +254,12 @@ static void Flip_320x200x8_to_WxHx32_bilinear(uint8_t *src, uint32_t *dst)
 
 void Init_Display(void)
 {
+#if defined(USE_SDL2) || defined(ALLOW_OPENGL)
+    Display_FSType = 1;
+#else
+    Display_FSType = 0;
+#endif
+
     ScaleOutput = 0;
     ScaledWidth = 640;
     ScaledHeight = 400;
@@ -265,7 +271,22 @@ void Init_Display2(void)
 {
     Init_Palette();
 
-    if ((ScaledWidth != 640) || (ScaledHeight != 400))
+    if (Fullscreen && Display_FSType)
+    {
+        if ((ScaledWidth == 0) || (ScaledHeight == 0))
+        {
+            Display_FSType = 2;
+            ScaledWidth = 640;
+            ScaledHeight = 400;
+        }
+    }
+    else
+    {
+        if (ScaledWidth < 640) ScaledWidth = 640;
+        if (ScaledHeight < 400) ScaledHeight = 400;
+    }
+
+    if ((ScaledWidth != 640) || (ScaledHeight != 400) || (Fullscreen && Display_FSType))
     {
         ScaleOutput = 1;
 
@@ -319,11 +340,10 @@ int Config_Display(char *str, char *param)
         if ( strcasecmp(str, "ScaledWidth") == 0)	// str equals "ScaledWidth"
         {
             num_int = 0;
-            sscanf(param, "%i", &num_int);
-            if (num_int > 0)
+            if (sscanf(param, "%i", &num_int) > 0)
             {
                 ScaledWidth = num_int;
-                if (ScaledWidth < 640) ScaledWidth = 640;
+                if (ScaledWidth < 0) ScaledWidth = 0;
             }
 
             return 1;
@@ -331,11 +351,10 @@ int Config_Display(char *str, char *param)
         else if ( strcasecmp(str, "ScaledHeight") == 0)	// str equals "ScaledHeight"
         {
             num_int = 0;
-            sscanf(param, "%i", &num_int);
-            if (num_int > 0)
+            if (sscanf(param, "%i", &num_int) > 0)
             {
                 ScaledHeight = num_int;
-                if (ScaledHeight < 480) ScaledHeight = 480;
+                if (ScaledHeight < 0) ScaledHeight = 0;
             }
 
             return 1;

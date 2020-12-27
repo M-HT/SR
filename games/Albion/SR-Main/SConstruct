@@ -81,10 +81,16 @@ elif device == 'arm-linux':
     # see arm/armconf.inc for explanation of these options (and others)
     env.Append(ASFLAGS = ' --defsym USE_R9=1 --defsym ALLOW_UNALIGNED_MEMORY_ACCESS=1')
 elif device == 'pc-windows':
-    env = Environment(CCFLAGS      = '-m32 -O2 -DALLOW_OPENGL -Wall',
-                      LINKFLAGS    = '-m32',
-                      LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'opengl32', 'z']
-                     )
+    if sdl2 > 0:
+        env = Environment(CCFLAGS      = '-m32 -O2 -DUSE_SDL2 -Wall',
+                          LINKFLAGS    = '-m32',
+                          LIBS         = ['mingw32', 'SDL2main', 'SDL2_mixer', 'SDL2', 'pthread', 'z']
+                         )
+    else:
+        env = Environment(CCFLAGS      = '-m32 -O2 -DALLOW_OPENGL -Wall',
+                          LINKFLAGS    = '-m32',
+                          LIBS         = ['mingw32', 'SDLmain', 'SDL_mixer', 'SDL', 'pthread', 'opengl32', 'z']
+                         )
 elif device == 'gp2x':
     compiler_path = '/opt/open2x/gcc-4.1.1-glibc-2.3.6/'
     compiler_prefix = 'arm-open2x-linux-'

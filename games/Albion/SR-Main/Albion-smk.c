@@ -50,11 +50,12 @@ static SDL_sem *SMK_FuncSem;
 static volatile int main_result;
 
 #ifdef USE_SDL2
-static SDL_Texture *SMK_Texture;
-static void *SMK_TextureData;
+static SDL_Texture *SMK_Texture[3];
 #elif defined(ALLOW_OPENGL)
-static void *SMK_TextureData;
 static GLuint SMK_GLTexture[3];
+#endif
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+static void *SMK_TextureData;
 static int SMK_CurrentTexture;
 #endif
 
@@ -505,8 +506,24 @@ static void Blit_16_double_height_double_pixels(SDL_Surface *surface, uint16_t *
 static void eventloop_initialize(void)
 {
 #ifdef USE_SDL2
-    SMK_Texture = SDL_CreateTexture(Game_Renderer, (Display_Bitsperpixel == 32)?SDL_PIXELFORMAT_ARGB8888:SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, (SMK_double_pixels)?640:320, (SMK_double_pixels)?400:200);
-    if (SMK_Texture == NULL) goto main_init_exit;
+    int index;
+
+    for (index = 0; index < 3; index++)
+    {
+        SMK_Texture[index] = SDL_CreateTexture(Game_Renderer, (Display_Bitsperpixel == 32)?SDL_PIXELFORMAT_ARGB8888:SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, (SMK_double_pixels)?640:320, (SMK_double_pixels)?400:200);
+    }
+    if ((SMK_Texture[0] == NULL) || (SMK_Texture[1] == NULL) || (SMK_Texture[2] == NULL))
+    {
+        for (index = 2; index >= 0; index--)
+        {
+            if (SMK_Texture[index] != NULL)
+            {
+                SDL_DestroyTexture(SMK_Texture[index]);
+                SMK_Texture[index] = NULL;
+            }
+        }
+        goto main_init_exit;
+    }
 #else
 #ifdef ALLOW_OPENGL
     if (Game_UseOpenGL)
@@ -563,10 +580,14 @@ main_init_exit:
 static void eventloop_deinitialize(void)
 {
 #ifdef USE_SDL2
-    if (SMK_Texture != NULL)
+    if (SMK_Texture[0] != NULL)
     {
-        SDL_DestroyTexture(SMK_Texture);
-        SMK_Texture = NULL;
+        SDL_DestroyTexture(SMK_Texture[2]);
+        SMK_Texture[2] = NULL;
+        SDL_DestroyTexture(SMK_Texture[1]);
+        SMK_Texture[1] = NULL;
+        SDL_DestroyTexture(SMK_Texture[0]);
+        SMK_Texture[0] = NULL;
     }
 #elif defined(ALLOW_OPENGL)
     if (SMK_GLTexture[0] != 0)
@@ -582,9 +603,15 @@ static void eventloop_deinitialize(void)
 static void eventloop_flip(void)
 {
 #if defined(USE_SDL2)
-    SDL_UpdateTexture(SMK_Texture, NULL, SMK_TextureData, ((SMK_double_pixels)?640:320) * Display_Bitsperpixel / 8);
-    SDL_RenderCopy(Game_Renderer, SMK_Texture, NULL, NULL);
+    SDL_UpdateTexture(SMK_Texture[SMK_CurrentTexture], NULL, SMK_TextureData, ((SMK_double_pixels)?640:320) * Display_Bitsperpixel / 8);
+    SDL_RenderCopy(Game_Renderer, SMK_Texture[SMK_CurrentTexture], NULL, NULL);
     SDL_RenderPresent(Game_Renderer);
+
+    SMK_CurrentTexture++;
+    if (SMK_CurrentTexture > 2)
+    {
+        SMK_CurrentTexture = 0;
+    }
 #elif defined(ALLOW_OPENGL)
     if (Game_UseOpenGL)
     {
@@ -669,6 +696,7 @@ static int initialize_display(void)
 
 #if defined(ALLOW_OPENGL) || defined(USE_SDL2)
     SMK_TextureData = NULL;
+    SMK_CurrentTexture = 0;
 #if !defined(USE_SDL2)
     if (Game_UseOpenGL)
 #endif
@@ -681,10 +709,9 @@ static int initialize_display(void)
 #endif
 
 #ifdef USE_SDL2
-    SMK_Texture = NULL;
+    SMK_Texture[0] = NULL;
 #elif defined(ALLOW_OPENGL)
     SMK_GLTexture[0] = 0;
-    SMK_CurrentTexture = 0;
 #endif
 
     if (Thread_Exit) goto init_exit2;

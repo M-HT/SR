@@ -46,14 +46,6 @@
 
 EXTERNAL_VARIABLE uint32_t X86_InterruptFlag;		/* interrupt flag indicator */
 
-#ifdef USE_SDL2
-EXTERNAL_VARIABLE SDL_Window *Game_Window;
-EXTERNAL_VARIABLE SDL_Renderer *Game_Renderer;
-EXTERNAL_VARIABLE SDL_Texture *Game_Texture;
-EXTERNAL_VARIABLE void *Game_TextureData;
-#else
-EXTERNAL_VARIABLE SDL_Surface *Game_Screen;
-#endif
 EXTERNAL_VARIABLE uint8_t *Game_FrameBuffer;		/* video memory (all) */
 EXTERNAL_VARIABLE uint8_t *Game_ScreenWindow;		/* video bank (64KiB) */
 EXTERNAL_VARIABLE void *Game_InterruptTable[256];	/* interrupt table */
@@ -95,10 +87,20 @@ EXTERNAL_VARIABLE int32_t Picture_Position_BR_X;	/* picture position - bottom ri
 EXTERNAL_VARIABLE int32_t Picture_Position_BR_Y;	/* picture position - bottom right corner - y (relative to display) */
 EXTERNAL_VARIABLE Game_Flip_Procedure Display_Flip_Procedure;	/* flip procedure */
 EXTERNAL_VARIABLE int Font_Size_Shift;				/* font size = font size * 2 ^ Font_Size_Shift */
-#if defined(ALLOW_OPENGL) && !defined(USE_SDL2)
+
+#ifdef USE_SDL2
+EXTERNAL_VARIABLE SDL_Window *Game_Window;
+EXTERNAL_VARIABLE SDL_Renderer *Game_Renderer;
+EXTERNAL_VARIABLE SDL_Texture *Game_Texture[3];
+#else
+EXTERNAL_VARIABLE SDL_Surface *Game_Screen;
+#ifdef ALLOW_OPENGL
 EXTERNAL_VARIABLE uint32_t Game_UseOpenGL;			/* use OpenGL for drawing ? */
-EXTERNAL_VARIABLE void *Game_TextureData;
 EXTERNAL_VARIABLE GLuint Game_GLTexture[3];
+#endif
+#endif
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+EXTERNAL_VARIABLE void *Game_TextureData;
 EXTERNAL_VARIABLE int Game_CurrentTexture;
 #endif
 

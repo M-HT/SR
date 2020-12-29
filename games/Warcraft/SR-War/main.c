@@ -57,6 +57,7 @@
 #include "audio.h"
 #include "input.h"
 
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
 static void Display_RecalculateResolution(int w, int h)
 {
     if (Display_FSType == 1)
@@ -92,6 +93,7 @@ static void Display_RecalculateResolution(int w, int h)
     Game_VideoAspectXR = (Picture_Width << 16) / 320;
     Game_VideoAspectYR = (Picture_Height << 16) / 200;
 }
+#endif
 
 static void Game_Display_Create(void)
 {
@@ -153,9 +155,23 @@ static void Game_Display_Create(void)
 
     if (Game_Window != NULL)
     {
-        Game_Texture = SDL_CreateTexture(Game_Renderer, (Display_Bitsperpixel == 32)?SDL_PIXELFORMAT_ARGB8888:SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, Render_Width, Render_Height);
-        if (Game_Texture == NULL)
+        int index;
+
+        for (index = 0; index < 3; index++)
         {
+            Game_Texture[index] = SDL_CreateTexture(Game_Renderer, (Display_Bitsperpixel == 32)?SDL_PIXELFORMAT_ARGB8888:SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, Render_Width, Render_Height);
+        }
+        if ((Game_Texture[0] == NULL) || (Game_Texture[1] == NULL) || (Game_Texture[2] == NULL))
+        {
+            for (index = 2; index >= 0; index--)
+            {
+                if (Game_Texture[index] != NULL)
+                {
+                    SDL_DestroyTexture(Game_Texture[index]);
+                    Game_Texture[index] = NULL;
+                }
+            }
+
             SDL_DestroyRenderer(Game_Renderer);
             Game_Renderer = NULL;
             SDL_DestroyWindow(Game_Window);
@@ -206,6 +222,9 @@ static void Game_Display_Create(void)
     #ifdef ALLOW_OPENGL
         if (Game_UseOpenGL)
         {
+            // flush GL errors
+            while(glGetError() != GL_NO_ERROR);
+
             if (Display_Bitsperpixel == 32)
             {
                 SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 8 );
@@ -237,6 +256,7 @@ static void Game_Display_Create(void)
             flags = SDL_SWSURFACE;
         }
 
+    #ifdef ALLOW_OPENGL
         if (Display_Fullscreen && Display_FSType)
         {
             Game_Screen = SDL_SetVideoMode (0, 0, 0, flags);
@@ -247,10 +267,53 @@ static void Game_Display_Create(void)
             }
         }
         else
+    #endif
         {
             Game_Screen = SDL_SetVideoMode (Display_Width, Display_Height, Display_Bitsperpixel, flags);
         }
     }
+
+#ifdef ALLOW_OPENGL
+    if ((Game_Screen != NULL) && Game_UseOpenGL)
+    {
+        int index;
+
+        glViewport(Picture_Position_UL_X, Picture_Position_UL_Y, Picture_Width, Picture_Height);
+
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+
+        glGenTextures(3, &(Game_GLTexture[0]));
+
+        for (index = 0; index < 3; index++)
+        {
+            glBindTexture(GL_TEXTURE_2D, Game_GLTexture[index]);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, Render_Width, Render_Height, 0, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Game_TextureData);
+        }
+
+        if (glGetError() != GL_NO_ERROR)
+        {
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glDeleteTextures(3, &(Game_GLTexture[0]));
+
+            // flush GL errors
+            while(glGetError() != GL_NO_ERROR);
+
+            SDL_WM_GrabInput(SDL_GRAB_OFF);
+            Game_Screen = NULL;
+        }
+    }
+#endif
 
     if (Game_Screen != NULL)
     {
@@ -288,38 +351,6 @@ static void Game_Display_Create(void)
 
             SDL_ShowCursor(SDL_ENABLE);
         }
-
-    #ifdef ALLOW_OPENGL
-        if (Game_UseOpenGL)
-        {
-            int index;
-
-            glViewport(Picture_Position_UL_X, Picture_Position_UL_Y, Picture_Width, Picture_Height);
-
-            glMatrixMode(GL_PROJECTION);
-            glLoadIdentity();
-
-            glMatrixMode(GL_MODELVIEW);
-            glLoadIdentity();
-
-            glGenTextures(3, &(Game_GLTexture[0]));
-
-            for (index = 0; index < 3; index++)
-            {
-                glBindTexture(GL_TEXTURE_2D, Game_GLTexture[index]);
-
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, Render_Width, Render_Height, 0, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Game_TextureData);
-            }
-
-            Game_CurrentTexture = 0;
-        }
-    #endif
 
         Game_DisplayActive = 1;
     }
@@ -372,8 +403,12 @@ static void Game_Display_Destroy(int post)
 #ifdef USE_SDL2
     SDL_SetRelativeMouseMode(SDL_FALSE);
 
-    SDL_DestroyTexture(Game_Texture);
-    Game_Texture = NULL;
+    SDL_DestroyTexture(Game_Texture[2]);
+    Game_Texture[2] = NULL;
+    SDL_DestroyTexture(Game_Texture[1]);
+    Game_Texture[1] = NULL;
+    SDL_DestroyTexture(Game_Texture[0]);
+    Game_Texture[0] = NULL;
     SDL_DestroyRenderer(Game_Renderer);
     Game_Renderer = NULL;
     SDL_DestroyWindow(Game_Window);
@@ -670,13 +705,6 @@ static int Game_Initialize(void)
         }
     }
 
-#ifdef USE_SDL2
-    Game_Window = NULL;
-    Game_Renderer = NULL;
-    Game_Texture = NULL;
-#else
-    Game_Screen = NULL;
-#endif
     Game_FrameBuffer = NULL;
     Game_ScreenWindow = NULL;
     memset(&Game_AllocatedMemory, 0, sizeof(Game_AllocatedMemory));
@@ -738,12 +766,20 @@ static int Game_Initialize(void)
     Game_ScreenMutex = NULL;
     Game_DisplayActive = 0;
 
-#if defined(ALLOW_OPENGL) && !defined(USE_SDL2)
+#ifdef USE_SDL2
+    Game_Window = NULL;
+    Game_Renderer = NULL;
+    Game_Texture[0] = NULL;
+#else
+    Game_Screen = NULL;
+#if defined(ALLOW_OPENGL)
     Game_UseOpenGL = 0;
-    Game_CurrentTexture = 0;
+    Game_GLTexture[0] = 0;
+#endif
 #endif
 #if defined(ALLOW_OPENGL) || defined(USE_SDL2)
     Game_TextureData = NULL;
+    Game_CurrentTexture = 0;
 #endif
 
     Init_Display();
@@ -1192,9 +1228,15 @@ static void Game_Event_Loop(void)
                         #if defined(USE_SDL2)
                             if (Game_DisplayActive)
                             {
-                                SDL_UpdateTexture(Game_Texture, NULL, Game_TextureData, Render_Width * Display_Bitsperpixel / 8);
-                                SDL_RenderCopy(Game_Renderer, Game_Texture, NULL, NULL);
+                                SDL_UpdateTexture(Game_Texture[Game_CurrentTexture], NULL, Game_TextureData, Render_Width * Display_Bitsperpixel / 8);
+                                SDL_RenderCopy(Game_Renderer, Game_Texture[Game_CurrentTexture], NULL, NULL);
                                 SDL_RenderPresent(Game_Renderer);
+
+                                Game_CurrentTexture++;
+                                if (Game_CurrentTexture > 2)
+                                {
+                                    Game_CurrentTexture = 0;
+                                }
                             }
                         #elif defined(ALLOW_OPENGL)
                             if (Game_UseOpenGL && Game_DisplayActive)

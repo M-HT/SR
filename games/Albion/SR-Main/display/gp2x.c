@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -465,6 +465,8 @@ void Init_Display2(void)
     Init_Palette();
 
     memset(&(interpolation_matrix2[0]), 0, sizeof(interpolation_matrix2));
+
+    Game_AdvancedScaling = 0;
 
     DisplayMode = 0;
     Display_Width = 320;

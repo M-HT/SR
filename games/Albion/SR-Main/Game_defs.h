@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -50,6 +50,9 @@
 
 
 #define GAME_KEYBOARD_TYPE_RATE (30)
+
+
+#define GAME_MAX_3D_ENGINE_FACTOR (6)
 
 
 #if !defined(MAX_PATH)
@@ -226,6 +229,7 @@ typedef union _Game_REGS_ {
 
 
 typedef void (*Game_Flip_Procedure)(void *src, void *dst);
+typedef void (*Game_Advanced_Flip_Procedure)(void *src, void *dst1, void *dst2, int *dst2_used);
 
 typedef union _pixel_format_orig_ {
     struct {

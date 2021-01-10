@@ -28,8 +28,6 @@
 #define D3_MAXIMUM_VIEWPORT_WIDTH 800
 // original value = 400
 #define D3_MAXIMUM_VIEWPORT_HEIGHT 400
-// note: function draw_floor_and_ceiling can't draw viewport higher than 400
-//       when higher viewport is required, this function must be rewritten
 
 #pragma pack(1)
 
@@ -132,6 +130,12 @@ struct __attribute__ ((__packed__)) struc_9 {
 #pragma pack()
 
 
+static uint32_t Engine_RenderWidth;
+static uint32_t Engine_RenderHeight;
+static uint32_t Engine_MaximumViewportWidth;
+static uint32_t Engine_MaximumViewportHeight;
+
+
 static uint32_t Game_ScreenWidth;
 static uint32_t Game_ViewportWidth, Game_ViewportHeight;
 static uint8_t *Game_ViewportPtr;
@@ -141,8 +145,10 @@ static int32_t Game_ViewportMinimumX, Game_ViewportMaximumX, Game_ViewportMinimu
 static uint16_t Game_ResizeWidthMult, Game_ResizeWidthDiv, Game_ResizeHeightMult, Game_ResizeHeightDiv;
 static int32_t Game_mul_dword_140004_ResizeWidthMult, Game_mul_dword_140008_ResizeHeightMult;
 
-static struct struc_1 Game_stru_1414AC[D3_MAXIMUM_VIEWPORT_WIDTH + 3];
-static struct struc_7 Game_unk_144F50[2 * (D3_MAXIMUM_VIEWPORT_HEIGHT + 1)];
+//static struct struc_1 Game_stru_1414AC[D3_MAXIMUM_VIEWPORT_WIDTH + 3];
+//static struct struc_7 Game_unk_144F50[2 * (D3_MAXIMUM_VIEWPORT_HEIGHT + 1)];
+static struct struc_1 *Game_stru_1414AC = NULL;
+static struct struc_7 *Game_unk_144F50 = NULL;
 
 #define g_viewport_offsetx loc_14A8E8
 #define g_viewport_offsety loc_14A8EA
@@ -511,12 +517,12 @@ extern void *sub_8B6BB(void *handle);
 
 static int32_t inline convert_horizontal(int32_t xpos)
 {
-    return (xpos * (int32_t)Render_Width) / 360;
+    return (xpos * (int32_t)Engine_RenderWidth) / 360;
 }
 
 static int32_t inline convert_vertical(int32_t ypos)
 {
-    return (ypos * (int32_t)Render_Height) / 240;
+    return (ypos * (int32_t)Engine_RenderHeight) / 240;
 }
 
 
@@ -712,7 +718,7 @@ static void d3_sub_C61A7(int32_t number_of_coordinates, int16_t *list_of_coordin
     l_counter_144F28 = number_of_coordinates;
     var02 = (struct struc_7 *) &(Game_unk_144F50[0]);
     if ( !d3_param_byte_144E8D )
-        var02 += D3_MAXIMUM_VIEWPORT_HEIGHT;
+        var02 += Engine_MaximumViewportHeight;
 
     do
     {
@@ -747,7 +753,7 @@ static void d3_sub_C61A7(int32_t number_of_coordinates, int16_t *list_of_coordin
     list_of_coordinates = &(l_list_of_coordinates[4 * number_of_coordinates]);
     var02 = (struct struc_7 *) &(Game_unk_144F50[0]);
     if ( d3_param_byte_144E8D )
-        var02 += D3_MAXIMUM_VIEWPORT_HEIGHT;
+        var02 += Engine_MaximumViewportHeight;
 
     do
     {
@@ -789,7 +795,7 @@ static void d3_sub_C61A7(int32_t number_of_coordinates, int16_t *list_of_coordin
         column_max = Game_ViewportZeroXColumn + l_x_max;
         if ( column_max > Game_ViewportWidth )
             column_max = Game_ViewportWidth;
-        var02[D3_MAXIMUM_VIEWPORT_HEIGHT].viewport_column = (uint16_t)column_max;
+        var02[Engine_MaximumViewportHeight].viewport_column = (uint16_t)column_max;
     }
 
     g_word_144EA0 = Game_ViewportZeroYRow + (int32_t)l_viewport_y1;
@@ -799,20 +805,20 @@ static void d3_sub_C61A7(int32_t number_of_coordinates, int16_t *list_of_coordin
 
     do
     {
-        viewport_column2 = (uint32_t)var02[D3_MAXIMUM_VIEWPORT_HEIGHT].viewport_column;
+        viewport_column2 = (uint32_t)var02[Engine_MaximumViewportHeight].viewport_column;
         viewport_column1 = (uint32_t)var02[0].viewport_column;
 
         if ( viewport_column2 <= viewport_column1 )
         {
             viewport_column2 = (uint32_t)var02[0].viewport_column;
-            viewport_column1 = (uint32_t)var02[D3_MAXIMUM_VIEWPORT_HEIGHT].viewport_column;
+            viewport_column1 = (uint32_t)var02[Engine_MaximumViewportHeight].viewport_column;
         }
 
         horizontal_counter = (viewport_column2 - viewport_column1) + 1;
         dst = viewport_line_ptr + viewport_column1;
 
-        texture_xdiff_fp16 = ((var02[D3_MAXIMUM_VIEWPORT_HEIGHT].texture_xpos_fp8 - var02[0].texture_xpos_fp8) << 8) / horizontal_counter;
-        texture_ydiff_fp16 = ((var02[D3_MAXIMUM_VIEWPORT_HEIGHT].texture_ypos_fp8 - var02[0].texture_ypos_fp8) << 8) / horizontal_counter;
+        texture_xdiff_fp16 = ((var02[Engine_MaximumViewportHeight].texture_xpos_fp8 - var02[0].texture_xpos_fp8) << 8) / horizontal_counter;
+        texture_ydiff_fp16 = ((var02[Engine_MaximumViewportHeight].texture_ypos_fp8 - var02[0].texture_ypos_fp8) << 8) / horizontal_counter;
 
         texture_xpos_fp16 = var02[0].texture_xpos_fp8 << 8;
         texture_ypos_fp16 = var02[0].texture_ypos_fp8 << 8;
@@ -1037,7 +1043,7 @@ static void d3_sub_C5B99(int32_t number_of_coordinates, int16_t *list_of_coordin
     if ( !d3_param_byte_144E8D )
     {
         d3_param_byte_144E92 = ~d3_param_byte_144E92;
-        var02 += D3_MAXIMUM_VIEWPORT_HEIGHT;
+        var02 += Engine_MaximumViewportHeight;
     }
 
     do
@@ -1070,7 +1076,7 @@ static void d3_sub_C5B99(int32_t number_of_coordinates, int16_t *list_of_coordin
     list_of_coordinates = &(l_list_of_coordinates[2 * number_of_coordinates]);
     var02 = (uint8_t **) &(Game_unk_144F50[0]);
     if ( d3_param_byte_144E8D )
-        var02 += D3_MAXIMUM_VIEWPORT_HEIGHT;
+        var02 += Engine_MaximumViewportHeight;
 
     do
     {
@@ -1101,7 +1107,7 @@ static void d3_sub_C5B99(int32_t number_of_coordinates, int16_t *list_of_coordin
 
         var16 = &(Game_ViewportPtr[Game_ViewportZeroXColumn + Game_ScreenWidth * (Game_ViewportZeroYRow + (int32_t)l_viewport_y1)]);
         var02[0] = &(var16[l_x_min]);
-        var02[D3_MAXIMUM_VIEWPORT_HEIGHT] = &(var16[l_x_max]);
+        var02[Engine_MaximumViewportHeight] = &(var16[l_x_max]);
     }
 
     vertical_counter = l_viewport_y2 - l_viewport_y1;
@@ -1109,7 +1115,7 @@ static void d3_sub_C5B99(int32_t number_of_coordinates, int16_t *list_of_coordin
     do
     {
         dst = var02[0];
-        var22 = var02[D3_MAXIMUM_VIEWPORT_HEIGHT] - dst;
+        var22 = var02[Engine_MaximumViewportHeight] - dst;
         ++var02;
 
         if ( var22 < 0 )
@@ -3127,6 +3133,76 @@ static void draw_floor_and_ceiling(void)
 }
 
 
+static void draw_scaledres_sky(uint8_t *texture_ptr, uint8_t *column_ptr, int32_t starty, int32_t column_height, int32_t texture_width, int32_t a6, uint32_t a7, uint32_t factor)
+{
+    int32_t var_4;
+
+    uint32_t counter1;
+    uint8_t *dst, *src;
+    uint32_t counter2;
+    uint32_t fpcounter, fpdiff;
+
+    uint32_t jjj; // esi@5
+    uint32_t var11; // ecx@8
+
+    uint32_t counter3;
+
+
+    if ( column_height <= 0 ) return;
+
+    column_ptr += starty * Game_ScreenWidth;
+
+    for ( var_4 = ((texture_width * a6) * (int64_t)(-32 * (int32_t)g_view_angle_fp14)) / 16384; var_4 < 0; var_4 += 32 * texture_width ) ;
+
+    counter1 = 0;
+    fpcounter = 0;
+    fpdiff = ((g_viewport_width - 1) << 16) / (Game_ViewportWidth - 1);
+    do
+    {
+        jjj = (((uint32_t)g_word_1966B0[fpcounter >> 16]) * (0x10000 - (fpcounter & 0xffff)) + ((uint32_t)g_word_1966B0[(fpcounter >> 16) + 1]) * (fpcounter & 0xffff)) >> 16;
+        for ( jjj = ((int32_t) (var_4 + jjj)) >> 5; jjj >= (uint32_t)texture_width; jjj -= texture_width ) ;
+
+        dst = column_ptr;
+        var11 = column_height;
+        src = &(texture_ptr[jjj]);
+        column_ptr++;
+
+        if ( a7 )
+        {
+            for (counter3 = a7; counter3 != 0; counter3--)
+            {
+                *dst = *src;
+                dst += Game_ScreenWidth;
+                var11--;
+                if ( var11 == 0 ) break;
+            }
+
+            src += texture_width;
+        }
+
+        for (counter2 = var11; counter2 >= factor; counter2 -= factor)
+        {
+            for (counter3 = factor; counter3 != 0; counter3--)
+            {
+                *dst = *src;
+                dst += Game_ScreenWidth;
+            }
+            src += texture_width;
+        }
+
+        for (; counter2 > 0; counter2--)
+        {
+            *dst = *src;
+            dst += Game_ScreenWidth;
+        }
+
+        fpcounter+=fpdiff;
+        counter1++;
+    }
+    while ( counter1 < (uint32_t)Game_ViewportWidth );
+}
+
+
 static void draw_hires_sky(uint8_t *texture_ptr, uint8_t *column_ptr, int32_t starty, int32_t column_height, int32_t texture_width, int32_t a6, uint32_t a7)
 {
     int32_t var_4;
@@ -3256,6 +3332,7 @@ static void draw_background(int endlineoffset) // endlineoffset is allways scree
 {
     uint32_t var_28;
     uint32_t sky_hires;
+    int32_t factor;
     int32_t var_20;
     int32_t var_1C;
 
@@ -3282,13 +3359,17 @@ static void draw_background(int endlineoffset) // endlineoffset is allways scree
     sky_hires = (Game_ViewportHeight > 200)?1:0;
     if ( !sky_hires )
     {
+        factor = 1;
         var07 = Game_ViewportZeroYRow - (int32_t)g_word_14A494;
         var06 = (uint32_t)g_sky_texture_height;
     }
     else
     {
-        var07 = Game_ViewportZeroYRow - 2 * (int32_t)g_word_14A494;
-        var06 = 2 * (uint32_t)g_sky_texture_height;
+        factor = 2;
+        while (Game_ViewportHeight > factor * 200) factor++;
+
+        var07 = Game_ViewportZeroYRow - factor * (int32_t)g_word_14A494;
+        var06 = factor * (uint32_t)g_sky_texture_height;
     }
 
     var_1C = var07 + var06;
@@ -3320,8 +3401,16 @@ static void draw_background(int endlineoffset) // endlineoffset is allways scree
     {
         if ( sky_hires )
         {
-            var08 = -((var07 >> 1) * (int32_t)(uint32_t)g_sky_texture_width);
-            var_28 = var07 & 1;
+            if (factor == 2)
+            {
+                var08 = -((var07 >> 1) * (int32_t)(uint32_t)g_sky_texture_width);
+                var_28 = var07 & 1;
+            }
+            else
+            {
+                var08 = -((var07 / factor) * (int32_t)(uint32_t)g_sky_texture_width);
+                var_28 = var07 % factor;
+            }
         }
         else
         {
@@ -3352,7 +3441,12 @@ static void draw_background(int endlineoffset) // endlineoffset is allways scree
     }
 
     if ( sky_hires )
-        draw_hires_sky(var02, Game_ViewportPtr, var07, var06, (uint32_t)g_sky_texture_width, (uint32_t)g_word_14A496, var_28);
+    {
+        if (factor == 2)
+            draw_hires_sky(var02, Game_ViewportPtr, var07, var06, (uint32_t)g_sky_texture_width, (uint32_t)g_word_14A496, var_28);
+        else
+            draw_scaledres_sky(var02, Game_ViewportPtr, var07, var06, (uint32_t)g_sky_texture_width, (uint32_t)g_word_14A496, var_28, factor);
+    }
     else
         draw_lores_sky(var02, Game_ViewportPtr, var07, var06, (uint32_t)g_sky_texture_width, (uint32_t)g_word_14A496);
 }
@@ -4475,6 +4569,39 @@ static void prepare_mapgrid(void)
 
 void draw_3dscene(void)
 {
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+    if (Game_AdvancedScaling)
+    {
+        // using factor greater than 6 introduces visible artifacts (oveflow or loss of precision in fixed point calculations)
+        Engine_RenderWidth = Scaler_ScaleFactor * Render_Width;
+        Engine_RenderHeight = Scaler_ScaleFactor * Render_Height;
+        Engine_MaximumViewportWidth = Scaler_ScaleFactor * Render_Width;
+        Engine_MaximumViewportHeight = (Scaler_ScaleFactor * Render_Height * 5) / 6; // = ... * 200 / 240
+        Game_ScreenWidth = Scaler_ScaleFactor * Render_Width;
+    }
+    else
+#endif
+    {
+        Engine_RenderWidth = Render_Width;
+        Engine_RenderHeight = Render_Height;
+        Engine_MaximumViewportWidth = D3_MAXIMUM_VIEWPORT_WIDTH;
+        Engine_MaximumViewportHeight = D3_MAXIMUM_VIEWPORT_HEIGHT;
+        Game_ScreenWidth = 800;
+    }
+
+    if (Game_stru_1414AC == NULL)
+    {
+        Game_stru_1414AC = (struct struc_1 *) malloc((Engine_MaximumViewportWidth + 3) * sizeof(struct struc_1));
+        if (Game_stru_1414AC == NULL) return;
+    }
+
+    if (Game_unk_144F50 == NULL)
+    {
+        Game_unk_144F50 = (struct struc_7 *) malloc((2 * (Engine_MaximumViewportHeight + 1)) * sizeof(struct struc_7));
+        if (Game_unk_144F50 == NULL) return;
+    }
+
+
     Game_OverlayDraw.Enhanced3DEngineUsed = 1;
     Game_OverlayDraw.ViewportX = g_viewport_offsetx;
     Game_OverlayDraw.ViewportY = g_viewport_offsety;
@@ -4482,9 +4609,8 @@ void draw_3dscene(void)
     Game_OverlayDraw.ViewportHeight = g_viewport_height;
     Game_OverlayDraw.OverlayX = convert_horizontal(g_viewport_offsetx);
     Game_OverlayDraw.OverlayY = convert_vertical(g_viewport_offsety);
-    Game_OverlayDraw.OverlayWidth = (Render_Width - Game_OverlayDraw.OverlayX) - convert_horizontal((360 - g_viewport_offsetx) - g_viewport_width);
-    Game_OverlayDraw.OverlayHeight = (Render_Height - Game_OverlayDraw.OverlayY) - convert_vertical((240 - g_viewport_offsety) - g_viewport_height);
-    Game_ScreenWidth = 800;
+    Game_OverlayDraw.OverlayWidth = (Engine_RenderWidth - Game_OverlayDraw.OverlayX) - convert_horizontal((360 - g_viewport_offsetx) - g_viewport_width);
+    Game_OverlayDraw.OverlayHeight = (Engine_RenderHeight - Game_OverlayDraw.OverlayY) - convert_vertical((240 - g_viewport_offsety) - g_viewport_height);
     Game_ViewportWidth = Game_OverlayDraw.OverlayWidth;
     Game_ViewportHeight = Game_OverlayDraw.OverlayHeight;
     Game_ViewportPtr = &(Game_OverlayDraw.ScreenViewpartOverlay[Game_OverlayDraw.OverlayY * Game_ScreenWidth + Game_OverlayDraw.OverlayX]);
@@ -4522,9 +4648,9 @@ void draw_3dscene(void)
     Game_ViewportMinimumY = - Game_ViewportZeroYRow;
     Game_ViewportMaximumY = Game_ViewportMinimumY + (int32_t)Game_ViewportHeight - 1;
 
-    Game_ResizeWidthMult = Render_Width;
+    Game_ResizeWidthMult = Engine_RenderWidth;
     Game_ResizeWidthDiv = 360; // = 2 * 2 * 2 * 3 * 3 * 5
-    Game_ResizeHeightMult = Render_Height;
+    Game_ResizeHeightMult = Engine_RenderHeight;
     Game_ResizeHeightDiv = 240; // = 2 * 2 * 2 * 2 * 3 * 5
 
     // minimize mult and div values
@@ -4648,7 +4774,7 @@ void draw_3dscene(void)
                 Game_ViewportPtr[-(Game_ScreenWidth + 1)] = Game_ViewportPtr[0];
             }
             memcpy(&(Game_ViewportPtr[-Game_ScreenWidth]), Game_ViewportPtr, Game_ViewportWidth);
-            if (Game_OverlayDraw.OverlayX + Game_ViewportWidth < Render_Width)
+            if (Game_OverlayDraw.OverlayX + Game_ViewportWidth < Engine_RenderWidth)
             {
                 Game_ViewportPtr[-(Game_ScreenWidth - Game_ViewportWidth)] = Game_ViewportPtr[Game_ViewportWidth - 1];
             }
@@ -4662,7 +4788,7 @@ void draw_3dscene(void)
             }
         }
 
-        if (Game_OverlayDraw.OverlayX + Game_ViewportWidth < Render_Width)
+        if (Game_OverlayDraw.OverlayX + Game_ViewportWidth < Engine_RenderWidth)
         {
             for (height = 0; height < Game_ViewportHeight; height++)
             {
@@ -4670,14 +4796,14 @@ void draw_3dscene(void)
             }
         }
 
-        if (Game_OverlayDraw.OverlayY + Game_ViewportHeight < (Render_Height - convert_vertical(240-192)))
+        if (Game_OverlayDraw.OverlayY + Game_ViewportHeight < (Engine_RenderHeight - convert_vertical(240-192)))
         {
             if (Game_OverlayDraw.OverlayX > 0)
             {
                 Game_ViewportPtr[Game_ViewportHeight * Game_ScreenWidth - 1] = Game_ViewportPtr[(Game_ViewportHeight - 1) * Game_ScreenWidth];
             }
             memcpy(&(Game_ViewportPtr[Game_ViewportHeight * Game_ScreenWidth]), &(Game_ViewportPtr[(Game_ViewportHeight - 1) * Game_ScreenWidth]), Game_ViewportWidth);
-            if (Game_OverlayDraw.OverlayX + Game_ViewportWidth < Render_Width)
+            if (Game_OverlayDraw.OverlayX + Game_ViewportWidth < Engine_RenderWidth)
             {
                 Game_ViewportPtr[Game_ViewportHeight * Game_ScreenWidth + Game_ViewportWidth] = Game_ViewportPtr[(Game_ViewportHeight - 1) * Game_ScreenWidth + Game_ViewportWidth - 1];
             }

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -51,6 +51,7 @@
 #include "Albion-music-midiplugin.h"
 #include "Albion-music-midiplugin2.h"
 #include "Game_config.h"
+#include "Game_scalerplugin.h"
 #include "Game_thread.h"
 #include "virtualfs.h"
 #include "display.h"
@@ -58,6 +59,14 @@
 #include "input.h"
 
 extern char main_;
+
+#if defined(ALLOW_OPENGL) && !defined(USE_SDL2)
+static int gl_FBO = 0;
+static PFNGLGENFRAMEBUFFERSEXTPROC gl_glGenFramebuffersEXT;
+static PFNGLDELETEFRAMEBUFFERSEXTPROC gl_glDeleteFramebuffersEXT;
+static PFNGLFRAMEBUFFERTEXTURE2DEXTPROC gl_glFramebufferTexture2DEXT;
+static PFNGLBINDFRAMEBUFFEREXTPROC gl_glBindFramebufferEXT;
+#endif
 
 #if defined(ALLOW_OPENGL) || defined(USE_SDL2)
 static void Display_RecalculateResolution(int w, int h)
@@ -122,11 +131,9 @@ static void Game_Display_Create(void)
 
     if (Game_Window != NULL)
     {
-        Game_Renderer = SDL_CreateRenderer(Game_Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+        Game_Renderer = SDL_CreateRenderer(Game_Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | (Scaler_ScaleTexture ? SDL_RENDERER_TARGETTEXTURE : 0));
         if (Game_Renderer != NULL)
         {
-            SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-
             if (Display_Fullscreen && Display_FSType)
             {
                 int w, h;
@@ -154,15 +161,185 @@ static void Game_Display_Create(void)
     }
 
     if (Game_Window != NULL)
-    {
+    do {
         int index;
+        SDL_RendererInfo info;
+
+        // Scaler_ScaleTexture and Scaler_ScaleTextureData are mutually exclusive
+        if (Scaler_ScaleTextureData)
+        {
+            if (ScalerPlugin_Startup())
+            {
+                SDL_DestroyRenderer(Game_Renderer);
+                Game_Renderer = NULL;
+                SDL_DestroyWindow(Game_Window);
+                Game_Window = NULL;
+
+                break;
+            }
+        }
+
+        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, (Game_ScalingQuality)?"linear":"nearest");
+
+        if (Scaler_ScaleTexture)
+        {
+            if (!Scaler_ScaleFactor)
+            {
+                Scaler_ScaleFactor = 2;
+
+                while (((Scaler_ScaleFactor + 1) * Render_Width <= Picture_Width) ||
+                       ((Scaler_ScaleFactor + 1) * Render_Height <= Picture_Height)
+                      ) Scaler_ScaleFactor++;
+
+                if (Scaler_ScaleFactor > GAME_MAX_3D_ENGINE_FACTOR) Scaler_ScaleFactor = GAME_MAX_3D_ENGINE_FACTOR;
+
+                if (0 == SDL_GetRendererInfo(Game_Renderer, &info))
+                {
+                    if (info.max_texture_width > Picture_Width)
+                    {
+                        while (Scaler_ScaleFactor * Render_Width > info.max_texture_width) Scaler_ScaleFactor--;
+                    }
+                    if (info.max_texture_height > Picture_Height)
+                    {
+                        while (Scaler_ScaleFactor * Render_Height > info.max_texture_height) Scaler_ScaleFactor--;
+                    }
+                }
+            }
+
+            for (index = 0; index < 3; index++)
+            {
+                Game_ScaledTexture[index] = SDL_CreateTexture(Game_Renderer, (Display_Bitsperpixel == 32)?SDL_PIXELFORMAT_ARGB8888:SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_TARGET, Scaler_ScaleFactor * Render_Width, Scaler_ScaleFactor * Render_Height);
+            }
+
+            if ((Game_ScaledTexture[0] == NULL) || (Game_ScaledTexture[1] == NULL) || (Game_ScaledTexture[2] == NULL))
+            {
+                for (index = 2; index >= 0; index--)
+                {
+                    if (Game_ScaledTexture[index] != NULL)
+                    {
+                        SDL_DestroyTexture(Game_ScaledTexture[index]);
+                        Game_ScaledTexture[index] = NULL;
+                    }
+                }
+
+                SDL_DestroyRenderer(Game_Renderer);
+                Game_Renderer = NULL;
+                SDL_DestroyWindow(Game_Window);
+                Game_Window = NULL;
+
+                break;
+            }
+
+            SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
+
+            for (index = 0; index < 3; index++)
+            {
+                Game_Texture2[index] = SDL_CreateTexture(Game_Renderer, (Display_Bitsperpixel == 32)?SDL_PIXELFORMAT_ARGB8888:SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, Scaler_ScaleFactor * Render_Width, Scaler_ScaleFactor * Render_Height);
+                if (Game_Texture2[index] != NULL)
+                {
+                    SDL_SetTextureBlendMode(Game_Texture2[index], SDL_BLENDMODE_BLEND);
+                }
+            }
+
+            Game_TextureData2 = malloc(Scaler_ScaleFactor * Render_Width * Scaler_ScaleFactor * Render_Height * Display_Bitsperpixel / 8);
+
+            if ((Game_Texture2[0] == NULL) || (Game_Texture2[1] == NULL) || (Game_Texture2[2] == NULL) || (Game_TextureData2 == NULL))
+            {
+                if (Game_TextureData2 != NULL)
+                {
+                    free(Game_TextureData2);
+                    Game_TextureData2 = NULL;
+                }
+
+                for (index = 2; index >= 0; index--)
+                {
+                    if (Game_Texture2[index] != NULL)
+                    {
+                        SDL_DestroyTexture(Game_Texture2[index]);
+                        Game_Texture2[index] = NULL;
+                    }
+                }
+
+                SDL_DestroyTexture(Game_ScaledTexture[2]);
+                Game_ScaledTexture[2] = NULL;
+                SDL_DestroyTexture(Game_ScaledTexture[1]);
+                Game_ScaledTexture[1] = NULL;
+                SDL_DestroyTexture(Game_ScaledTexture[0]);
+                Game_ScaledTexture[0] = NULL;
+
+                SDL_DestroyRenderer(Game_Renderer);
+                Game_Renderer = NULL;
+                SDL_DestroyWindow(Game_Window);
+                Game_Window = NULL;
+
+                break;
+            }
+        }
+
+        if (Scaler_ScaleTextureData)
+        {
+            if (!Scaler_ScaleFactor)
+            {
+                int max_factor;
+
+                Scaler_ScaleFactor = 2;
+
+                while (((Scaler_ScaleFactor + 1) * Render_Width <= Picture_Width) ||
+                       ((Scaler_ScaleFactor + 1) * Render_Height <= Picture_Height)
+                      ) Scaler_ScaleFactor++;
+
+                if (Scaler_ScaleFactor > GAME_MAX_3D_ENGINE_FACTOR) Scaler_ScaleFactor = GAME_MAX_3D_ENGINE_FACTOR;
+
+                max_factor = ScalerPlugin_get_maximum_scale_factor();
+                if (Scaler_ScaleFactor > max_factor) Scaler_ScaleFactor = max_factor;
+
+                if (0 == SDL_GetRendererInfo(Game_Renderer, &info))
+                {
+                    if (info.max_texture_width > Picture_Width)
+                    {
+                        while (Scaler_ScaleFactor * Render_Width > info.max_texture_width) Scaler_ScaleFactor--;
+                    }
+                    if (info.max_texture_height > Picture_Height)
+                    {
+                        while (Scaler_ScaleFactor * Render_Height > info.max_texture_height) Scaler_ScaleFactor--;
+                    }
+                }
+            }
+        }
 
         for (index = 0; index < 3; index++)
         {
-            Game_Texture[index] = SDL_CreateTexture(Game_Renderer, (Display_Bitsperpixel == 32)?SDL_PIXELFORMAT_ARGB8888:SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, Render_Width, Render_Height);
+            Game_Texture[index] = SDL_CreateTexture(Game_Renderer, (Display_Bitsperpixel == 32)?SDL_PIXELFORMAT_ARGB8888:SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, (Scaler_ScaleTextureData ? Scaler_ScaleFactor : 1) * Render_Width, (Scaler_ScaleTextureData ? Scaler_ScaleFactor : 1) * Render_Height);
         }
-        if ((Game_Texture[0] == NULL) || (Game_Texture[1] == NULL) || (Game_Texture[2] == NULL))
+
+        if (Scaler_ScaleTextureData)
         {
+            Game_TextureData2 = malloc(Scaler_ScaleFactor * Render_Width * Scaler_ScaleFactor * Render_Height * Display_Bitsperpixel / 8);
+            Game_ScaledTextureData = malloc(Scaler_ScaleFactor * Render_Width * Scaler_ScaleFactor * Render_Height * Display_Bitsperpixel / 8);
+        }
+
+        if (Game_AdvancedScaling && (Scaler_ScaleFactor > 2))
+        {
+            free(Game_ScreenViewpartOverlay[0]);
+            Game_ScreenViewpartOverlay[0] = (uint8_t *) malloc(Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * 192 * 2);
+            Game_ScreenViewpartOverlay[1] = Game_ScreenViewpartOverlay[0] + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * 192;
+            Game_OverlayDisplay.ScreenViewpartOverlay = Game_OverlayDraw.ScreenViewpartOverlay = Game_ScreenViewpartOverlay[0];
+        }
+
+        if ((Game_Texture[0] == NULL) || (Game_Texture[1] == NULL) || (Game_Texture[2] == NULL) || (Scaler_ScaleTextureData && (Game_ScaledTextureData == NULL)) || (Game_AdvancedScaling && ((Game_TextureData2 == NULL) || (Game_ScreenViewpartOverlay[0] == NULL))))
+        {
+            if (Game_ScaledTextureData != NULL)
+            {
+                free(Game_ScaledTextureData);
+                Game_ScaledTextureData = NULL;
+            }
+
+            if (Game_TextureData2 != NULL)
+            {
+                free(Game_TextureData2);
+                Game_TextureData2 = NULL;
+            }
+
             for (index = 2; index >= 0; index--)
             {
                 if (Game_Texture[index] != NULL)
@@ -172,12 +349,32 @@ static void Game_Display_Create(void)
                 }
             }
 
+            if (Game_Texture2[0] != NULL)
+            {
+                SDL_DestroyTexture(Game_Texture2[2]);
+                Game_Texture2[2] = NULL;
+                SDL_DestroyTexture(Game_Texture2[1]);
+                Game_Texture2[1] = NULL;
+                SDL_DestroyTexture(Game_Texture2[0]);
+                Game_Texture2[0] = NULL;
+            }
+
+            if (Game_ScaledTexture[0] != NULL)
+            {
+                SDL_DestroyTexture(Game_ScaledTexture[2]);
+                Game_ScaledTexture[2] = NULL;
+                SDL_DestroyTexture(Game_ScaledTexture[1]);
+                Game_ScaledTexture[1] = NULL;
+                SDL_DestroyTexture(Game_ScaledTexture[0]);
+                Game_ScaledTexture[0] = NULL;
+            }
+
             SDL_DestroyRenderer(Game_Renderer);
             Game_Renderer = NULL;
             SDL_DestroyWindow(Game_Window);
             Game_Window = NULL;
         }
-    }
+    } while (0);
 
     if (Game_Window != NULL)
     {
@@ -283,8 +480,21 @@ static void Game_Display_Create(void)
 
 #ifdef ALLOW_OPENGL
     if ((Game_Screen != NULL) && Game_UseOpenGL)
-    {
+    do {
         int index;
+        GLint scaling_quality, max_texture_size;
+
+        // Scaler_ScaleTexture and Scaler_ScaleTextureData are mutually exclusive
+        if (Scaler_ScaleTextureData)
+        {
+            if (ScalerPlugin_Startup())
+            {
+                SDL_WM_GrabInput(SDL_GRAB_OFF);
+                Game_Screen = NULL;
+
+                break;
+            }
+        }
 
         glViewport(Picture_Position_UL_X, Picture_Position_UL_Y, Picture_Width, Picture_Height);
 
@@ -294,25 +504,201 @@ static void Game_Display_Create(void)
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
+        scaling_quality = (Game_ScalingQuality)?GL_LINEAR:GL_NEAREST;
+
+        if (Scaler_ScaleTexture)
+        {
+            if (!gl_FBO)
+            {
+                gl_glGenFramebuffersEXT = (PFNGLGENFRAMEBUFFERSEXTPROC) SDL_GL_GetProcAddress("glGenFramebuffersEXT");
+                gl_glDeleteFramebuffersEXT = (PFNGLDELETEFRAMEBUFFERSEXTPROC) SDL_GL_GetProcAddress("glDeleteFramebuffersEXT");
+                gl_glFramebufferTexture2DEXT = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC) SDL_GL_GetProcAddress("glFramebufferTexture2DEXT");
+                gl_glBindFramebufferEXT = (PFNGLBINDFRAMEBUFFEREXTPROC) SDL_GL_GetProcAddress("glBindFramebufferEXT");
+
+                if ((gl_glGenFramebuffersEXT != NULL) &&
+                    (gl_glDeleteFramebuffersEXT != NULL) &&
+                    (gl_glFramebufferTexture2DEXT != NULL) &&
+                    (gl_glBindFramebufferEXT != NULL)
+                   )
+                {
+                    gl_FBO = 1;
+                }
+                else
+                {
+                    gl_FBO = -1;
+                }
+            }
+
+            if (gl_FBO <= 0)
+            {
+                SDL_WM_GrabInput(SDL_GRAB_OFF);
+                Game_Screen = NULL;
+
+                break;
+            }
+
+            if (!Scaler_ScaleFactor)
+            {
+                Scaler_ScaleFactor = 2;
+
+                while (((Scaler_ScaleFactor + 1) * Render_Width <= Picture_Width) ||
+                       ((Scaler_ScaleFactor + 1) * Render_Height <= Picture_Height)
+                      ) Scaler_ScaleFactor++;
+
+                if (Scaler_ScaleFactor > GAME_MAX_3D_ENGINE_FACTOR) Scaler_ScaleFactor = GAME_MAX_3D_ENGINE_FACTOR;
+
+                max_texture_size = 0;
+                glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
+                if (max_texture_size > Picture_Width)
+                {
+                    while (Scaler_ScaleFactor * Render_Width > max_texture_size) Scaler_ScaleFactor--;
+                }
+                if (max_texture_size > Picture_Height)
+                {
+                    while (Scaler_ScaleFactor * Render_Height > max_texture_size) Scaler_ScaleFactor--;
+                }
+            }
+
+            glGenTextures(3, &(Game_GLScaledTexture[0]));
+
+            for (index = 0; index < 3; index++)
+            {
+                glBindTexture(GL_TEXTURE_2D, Game_GLScaledTexture[index]);
+
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, scaling_quality);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, scaling_quality);
+
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, Scaler_ScaleFactor * Render_Width, Scaler_ScaleFactor * Render_Height, 0, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, NULL);
+            }
+
+            gl_glGenFramebuffersEXT(3, &(Game_GLFramebuffer[0]));
+
+            for (index = 0; index < 3; index++)
+            {
+                gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, Game_GLFramebuffer[index]);
+
+                gl_glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, Game_GLScaledTexture[index], 0);
+            }
+
+            scaling_quality = GL_NEAREST;
+
+            Game_TextureData2 = malloc(Scaler_ScaleFactor * Render_Width * Scaler_ScaleFactor * Render_Height * Display_Bitsperpixel / 8);
+
+            glGenTextures(3, &(Game_GLTexture2[0]));
+
+            for (index = 0; index < 3; index++)
+            {
+                glBindTexture(GL_TEXTURE_2D, Game_GLTexture2[index]);
+
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, scaling_quality);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, scaling_quality);
+
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, Scaler_ScaleFactor * Render_Width, Scaler_ScaleFactor * Render_Height, 0, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Game_TextureData2);
+            }
+        }
+
+        if (Scaler_ScaleTextureData)
+        {
+            if (!Scaler_ScaleFactor)
+            {
+                int max_factor;
+
+                Scaler_ScaleFactor = 2;
+
+                while (((Scaler_ScaleFactor + 1) * Render_Width <= Picture_Width) ||
+                       ((Scaler_ScaleFactor + 1) * Render_Height <= Picture_Height)
+                      ) Scaler_ScaleFactor++;
+
+                if (Scaler_ScaleFactor > GAME_MAX_3D_ENGINE_FACTOR) Scaler_ScaleFactor = GAME_MAX_3D_ENGINE_FACTOR;
+
+                max_factor = ScalerPlugin_get_maximum_scale_factor();
+                if (Scaler_ScaleFactor > max_factor) Scaler_ScaleFactor = max_factor;
+
+                max_texture_size = 0;
+                glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
+                if (max_texture_size > Picture_Width)
+                {
+                    while (Scaler_ScaleFactor * Render_Width > max_texture_size) Scaler_ScaleFactor--;
+                }
+                if (max_texture_size > Picture_Height)
+                {
+                    while (Scaler_ScaleFactor * Render_Height > max_texture_size) Scaler_ScaleFactor--;
+                }
+            }
+        }
+
+        if (Scaler_ScaleTextureData)
+        {
+            Game_TextureData2 = malloc(Scaler_ScaleFactor * Render_Width * Scaler_ScaleFactor * Render_Height * Display_Bitsperpixel / 8);
+            Game_ScaledTextureData = malloc(Scaler_ScaleFactor * Render_Width * Scaler_ScaleFactor * Render_Height * Display_Bitsperpixel / 8);
+        }
+
         glGenTextures(3, &(Game_GLTexture[0]));
 
         for (index = 0; index < 3; index++)
         {
             glBindTexture(GL_TEXTURE_2D, Game_GLTexture[index]);
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, scaling_quality);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, scaling_quality);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, Render_Width, Render_Height, 0, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Game_TextureData);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, (Scaler_ScaleTextureData ? Scaler_ScaleFactor : 1) * Render_Width, (Scaler_ScaleTextureData ? Scaler_ScaleFactor : 1) * Render_Height, 0, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Scaler_ScaleTextureData ? Game_ScaledTextureData : Game_TextureData);
         }
 
-        if (glGetError() != GL_NO_ERROR)
+        if (Game_AdvancedScaling && (Scaler_ScaleFactor > 2))
         {
+            free(Game_ScreenViewpartOverlay[0]);
+            Game_ScreenViewpartOverlay[0] = (uint8_t *) malloc(Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * 192 * 2);
+            Game_ScreenViewpartOverlay[1] = Game_ScreenViewpartOverlay[0] + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * 192;
+            Game_OverlayDisplay.ScreenViewpartOverlay = Game_OverlayDraw.ScreenViewpartOverlay = Game_ScreenViewpartOverlay[0];
+        }
+
+        if ((glGetError() != GL_NO_ERROR) || (Scaler_ScaleTextureData && (Game_ScaledTextureData == NULL)) || (Game_AdvancedScaling && ((Game_TextureData2 == NULL) || (Game_ScreenViewpartOverlay[0] == NULL))))
+        {
+            if (Game_ScaledTextureData != NULL)
+            {
+                free(Game_ScaledTextureData);
+                Game_ScaledTextureData = NULL;
+            }
+
+            if (Game_TextureData2 != NULL)
+            {
+                free(Game_TextureData2);
+                Game_TextureData2 = NULL;
+            }
+
             glBindTexture(GL_TEXTURE_2D, 0);
+
             glDeleteTextures(3, &(Game_GLTexture[0]));
+            Game_GLTexture[0] = 0;
+
+            if (Game_GLTexture2[0] != 0)
+            {
+                glDeleteTextures(3, &(Game_GLTexture2[0]));
+                Game_GLTexture2[0] = 0;
+            }
+
+            if (Game_GLFramebuffer[0] != 0)
+            {
+                gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+                gl_glDeleteFramebuffersEXT(3, &(Game_GLFramebuffer[0]));
+                Game_GLFramebuffer[0] = 0;
+            }
+
+            if (Game_GLScaledTexture != 0)
+            {
+                glDeleteTextures(3, &(Game_GLScaledTexture[0]));
+                Game_GLScaledTexture[0] = 0;
+            }
 
             // flush GL errors
             while(glGetError() != GL_NO_ERROR);
@@ -320,7 +706,7 @@ static void Game_Display_Create(void)
             SDL_WM_GrabInput(SDL_GRAB_OFF);
             Game_Screen = NULL;
         }
-    }
+    } while (0);
 #endif
 
     if (Game_Screen != NULL)
@@ -411,12 +797,45 @@ static void Game_Display_Destroy(int post)
 #ifdef USE_SDL2
     SDL_SetRelativeMouseMode(SDL_FALSE);
 
+    if (Game_ScaledTextureData != NULL)
+    {
+        free(Game_ScaledTextureData);
+        Game_ScaledTextureData = NULL;
+    }
+
+    if (Game_TextureData2 != NULL)
+    {
+        free(Game_TextureData2);
+        Game_TextureData2 = NULL;
+    }
+
     SDL_DestroyTexture(Game_Texture[2]);
     Game_Texture[2] = NULL;
     SDL_DestroyTexture(Game_Texture[1]);
     Game_Texture[1] = NULL;
     SDL_DestroyTexture(Game_Texture[0]);
     Game_Texture[0] = NULL;
+
+    if (Game_Texture2[0] != NULL)
+    {
+        SDL_DestroyTexture(Game_Texture2[2]);
+        Game_Texture2[2] = NULL;
+        SDL_DestroyTexture(Game_Texture2[1]);
+        Game_Texture2[1] = NULL;
+        SDL_DestroyTexture(Game_Texture2[0]);
+        Game_Texture2[0] = NULL;
+    }
+
+    if (Game_ScaledTexture[0] != NULL)
+    {
+        SDL_DestroyTexture(Game_ScaledTexture[2]);
+        Game_ScaledTexture[2] = NULL;
+        SDL_DestroyTexture(Game_ScaledTexture[1]);
+        Game_ScaledTexture[1] = NULL;
+        SDL_DestroyTexture(Game_ScaledTexture[0]);
+        Game_ScaledTexture[0] = NULL;
+    }
+
     SDL_DestroyRenderer(Game_Renderer);
     Game_Renderer = NULL;
     SDL_DestroyWindow(Game_Window);
@@ -430,8 +849,41 @@ static void Game_Display_Destroy(int post)
 #ifdef ALLOW_OPENGL
     if (Game_UseOpenGL)
     {
+        if (Game_ScaledTextureData != NULL)
+        {
+            free(Game_ScaledTextureData);
+            Game_ScaledTextureData = NULL;
+        }
+
+        if (Game_TextureData2 != NULL)
+        {
+            free(Game_TextureData2);
+            Game_TextureData2 = NULL;
+        }
+
         glBindTexture(GL_TEXTURE_2D, 0);
+
         glDeleteTextures(3, &(Game_GLTexture[0]));
+        Game_GLTexture[0] = 0;
+
+        if (Game_GLTexture2[0] != 0)
+        {
+            glDeleteTextures(3, &(Game_GLTexture2[0]));
+            Game_GLTexture2[0] = 0;
+        }
+
+        if (Game_GLFramebuffer[0] != 0)
+        {
+            gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+            gl_glDeleteFramebuffersEXT(3, &(Game_GLFramebuffer[0]));
+            Game_GLFramebuffer[0] = 0;
+        }
+
+        if (Game_GLScaledTexture[0] != 0)
+        {
+            glDeleteTextures(3, &(Game_GLScaledTexture[0]));
+            Game_GLScaledTexture[0] = 0;
+        }
     }
 #endif
 #endif
@@ -535,6 +987,8 @@ static void Game_Cleanup(void)
         Mix_CloseAudio();
     }
 
+    ScalerPlugin_Shutdown();
+
     Game_CleanState(1);
 
 #if defined(ALLOW_OPENGL) || defined(USE_SDL2)
@@ -587,16 +1041,18 @@ static void Game_Cleanup(void)
         Game_ScreenWindow = NULL;
     }*/
 
-    if (Game_ScreenViewpartOriginal != NULL)
+    if (Game_ScreenViewpartOriginal[0] != NULL)
     {
-        free(Game_ScreenViewpartOriginal);
-        Game_ScreenViewpartOriginal = NULL;
+        free(Game_ScreenViewpartOriginal[0]);
+        Game_ScreenViewpartOriginal[0] = NULL;
+        Game_ScreenViewpartOriginal[1] = NULL;
     }
 
-    if (Game_ScreenViewpartOverlay != NULL)
+    if (Game_ScreenViewpartOverlay[0] != NULL)
     {
-        free(Game_ScreenViewpartOverlay);
-        Game_ScreenViewpartOverlay = NULL;
+        free(Game_ScreenViewpartOverlay[0]);
+        Game_ScreenViewpartOverlay[0] = NULL;
+        Game_ScreenViewpartOverlay[1] = NULL;
     }
 
     if (Game_FrameBuffer != NULL)
@@ -865,28 +1321,46 @@ static int Game_Initialize(void)
     Game_UseEnhanced3DEngineNewValue = 0;
     Game_OverlayDisplay.Enhanced3DEngineUsed = -1;
     Game_OverlayDraw.Enhanced3DEngineUsed = -1;
-    Game_ScreenViewpartOverlay = NULL;
-    Game_ScreenViewpartOriginal = NULL;
+    Game_ScreenViewpartOverlay[0] = NULL;
+    Game_ScreenViewpartOverlay[1] = NULL;
+    Game_ScreenViewpartOriginal[0] = NULL;
+    Game_ScreenViewpartOriginal[1] = NULL;
 
     Game_ScreenshotFormat = 0;
     Game_ScreenshotEnhancedResolution = 0;
     Game_ScreenshotEnabled = 0;
     Game_ScreenshotAutomaticFilename = 0;
 
+    Game_AdvancedScaling = 0;
+    Game_ScalingQuality = 1;
+    Game_AdvancedScaler = 1;
+    Game_ScaleFactor = 0;
+
 #ifdef USE_SDL2
     Game_Window = NULL;
     Game_Renderer = NULL;
     Game_Texture[0] = NULL;
+    Game_Texture2[0] = NULL;
+    Game_ScaledTexture[0] = NULL;
 #else
     Game_Screen = NULL;
 #if defined(ALLOW_OPENGL)
     Game_UseOpenGL = 0;
     Game_GLTexture[0] = 0;
+    Game_GLTexture2[0] = 0;
+    Game_GLFramebuffer[0] = 0;
+    Game_GLScaledTexture[0] = 0;
 #endif
 #endif
 #if defined(ALLOW_OPENGL) || defined(USE_SDL2)
     Game_TextureData = NULL;
+    Game_TextureData2 = NULL;
+    Game_ScaledTextureData = NULL;
     Game_CurrentTexture = 0;
+    Game_UseTextureData2 = 0;
+    Scaler_ScaleFactor = 0;
+    Scaler_ScaleTextureData = 0;
+    Scaler_ScaleTexture = 0;
 #endif
 
     Init_Display();
@@ -933,25 +1407,27 @@ static int Game_Initialize(void)
 
     if (Game_UseEnhanced3DEngineNewValue)
     {
-        Game_ScreenViewpartOverlay = (uint8_t *) malloc(800*384*2);
-        if (Game_ScreenViewpartOverlay == NULL)
+        Game_ScreenViewpartOverlay[0] = (uint8_t *) malloc(800*384*2);
+        if (Game_ScreenViewpartOverlay[0] == NULL)
         {
             fprintf(stderr, "Error: Not enough memory\n");
             Game_Cleanup();
             return -4;
         }
+        Game_ScreenViewpartOverlay[1] = Game_ScreenViewpartOverlay[0] + 800 * 384;
 
-        Game_ScreenViewpartOriginal = (uint8_t *) malloc(360*192*2);
-        if (Game_ScreenViewpartOriginal == NULL)
+        Game_ScreenViewpartOriginal[0] = (uint8_t *) malloc(360*192*2);
+        if (Game_ScreenViewpartOriginal[0] == NULL)
         {
             fprintf(stderr, "Error: Not enough memory\n");
             Game_Cleanup();
             return -4;
         }
+        Game_ScreenViewpartOriginal[1] = Game_ScreenViewpartOriginal[0] + 360 * 192;
     }
 
-    Game_OverlayDisplay.ScreenViewpartOverlay = Game_OverlayDraw.ScreenViewpartOverlay = Game_ScreenViewpartOverlay;
-    Game_OverlayDisplay.ScreenViewpartOriginal = Game_OverlayDraw.ScreenViewpartOriginal = Game_ScreenViewpartOriginal;
+    Game_OverlayDisplay.ScreenViewpartOverlay = Game_OverlayDraw.ScreenViewpartOverlay = Game_ScreenViewpartOverlay[0];
+    Game_OverlayDisplay.ScreenViewpartOriginal = Game_OverlayDraw.ScreenViewpartOriginal = Game_ScreenViewpartOriginal[0];
 
 /*	Game_ScreenWindow = (uint8_t *) malloc(65536);
     if (Game_ScreenWindow == NULL)
@@ -1063,6 +1539,24 @@ static void Game_Initialize2(void)
 
 #if !defined(USE_SDL2)
     SDL_EnableUNICODE(1);
+#endif
+
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+    if (Game_AdvancedScaling)
+    {
+        Scaler_ScaleFactor = Game_ScaleFactor;
+        Scaler_ScaleTextureData = (Game_AdvancedScaler > 1)?1:0;
+        Scaler_ScaleTexture = (Game_AdvancedScaler == 1)?1:0;
+    }
+    else
+    {
+        Game_AdvancedScaling = 0;
+        Scaler_ScaleTextureData = 0;
+        Scaler_ScaleTexture = 0;
+        Scaler_ScaleFactor = 1;
+    }
+#else
+    Game_AdvancedScaling = 0;
 #endif
 
     Game_VideoAspectX = (360 << 16) / Picture_Width;
@@ -1351,8 +1845,33 @@ static void Game_Event_Loop(void)
                         if (FlipActive)
                         {
                         #if defined(USE_SDL2)
-                            SDL_UpdateTexture(Game_Texture[Game_CurrentTexture], NULL, Game_TextureData, Render_Width * Display_Bitsperpixel / 8);
-                            SDL_RenderCopy(Game_Renderer, Game_Texture[Game_CurrentTexture], NULL, NULL);
+                            if (Scaler_ScaleTextureData)
+                            {
+                                SDL_UpdateTexture(Game_Texture[Game_CurrentTexture], NULL, Game_ScaledTextureData, Scaler_ScaleFactor * Render_Width * Display_Bitsperpixel / 8);
+                            }
+                            else
+                            {
+                                SDL_UpdateTexture(Game_Texture[Game_CurrentTexture], NULL, Game_TextureData, Render_Width * Display_Bitsperpixel / 8);
+                            }
+
+                            if (Scaler_ScaleTexture)
+                            {
+                                SDL_SetRenderTarget(Game_Renderer, Game_ScaledTexture[Game_CurrentTexture]);
+                                SDL_RenderCopy(Game_Renderer, Game_Texture[Game_CurrentTexture], NULL, NULL);
+                                if (Game_UseTextureData2)
+                                {
+                                    SDL_UpdateTexture(Game_Texture2[Game_CurrentTexture], NULL, Game_TextureData2, Scaler_ScaleFactor * Render_Width * Display_Bitsperpixel / 8);
+                                    SDL_RenderCopy(Game_Renderer, Game_Texture2[Game_CurrentTexture], NULL, NULL);
+                                }
+                                SDL_RenderPresent(Game_Renderer);
+
+                                SDL_SetRenderTarget(Game_Renderer, NULL);
+                                SDL_RenderCopy(Game_Renderer, Game_ScaledTexture[Game_CurrentTexture], NULL, NULL);
+                            }
+                            else
+                            {
+                                SDL_RenderCopy(Game_Renderer, Game_Texture[Game_CurrentTexture], NULL, NULL);
+                            }
                             SDL_RenderPresent(Game_Renderer);
 
                             Game_CurrentTexture++;
@@ -1365,7 +1884,14 @@ static void Game_Event_Loop(void)
                             {
                                 glBindTexture(GL_TEXTURE_2D, Game_GLTexture[Game_CurrentTexture]);
 
-                                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Render_Width, Render_Height, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Game_TextureData);
+                                if (Scaler_ScaleTextureData)
+                                {
+                                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Scaler_ScaleFactor * Render_Width, Scaler_ScaleFactor * Render_Height, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Game_ScaledTextureData);
+                                }
+                                else
+                                {
+                                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Render_Width, Render_Height, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Game_TextureData);
+                                }
 
                                 glEnable(GL_TEXTURE_2D);
 
@@ -1381,9 +1907,46 @@ static void Game_Event_Loop(void)
                                     1.0f, 1.0f,
                                     0.0f, 1.0f
                                 };
+                                static const GLfloat QuadScaleTexCoords[2*4] = {
+                                    0.0f, 1.0f,
+                                    1.0f, 1.0f,
+                                    1.0f, 0.0f,
+                                    0.0f, 0.0f,
+                                };
 
                                 glEnableClientState(GL_VERTEX_ARRAY);
                                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+                                if (Scaler_ScaleTexture)
+                                {
+                                    gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, Game_GLFramebuffer[Game_CurrentTexture]);
+
+                                    glViewport(0, 0, Scaler_ScaleFactor * Render_Width, Scaler_ScaleFactor * Render_Height);
+
+                                    glVertexPointer(2, GL_FLOAT, 0, &(QuadVertices[0]));
+                                    glTexCoordPointer(2, GL_FLOAT, 0, &(QuadScaleTexCoords[0]));
+                                    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+                                    if (Game_UseTextureData2)
+                                    {
+                                        glBindTexture(GL_TEXTURE_2D, Game_GLTexture2[Game_CurrentTexture]);
+
+                                        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Scaler_ScaleFactor * Render_Width, Scaler_ScaleFactor * Render_Height, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Game_TextureData2);
+
+                                        glEnable(GL_BLEND);
+                                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+                                        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+                                        glDisable(GL_BLEND);
+                                    }
+
+                                    gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+
+                                    glViewport(Picture_Position_UL_X, Picture_Position_UL_Y, Picture_Width, Picture_Height);
+
+                                    glBindTexture(GL_TEXTURE_2D, Game_GLScaledTexture[Game_CurrentTexture]);
+                                }
 
                                 glVertexPointer(2, GL_FLOAT, 0, &(QuadVertices[0]));
                                 glTexCoordPointer(2, GL_FLOAT, 0, &(QuadTexCoords[0]));

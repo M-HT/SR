@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -548,6 +548,8 @@ void Init_Display2(void)
     {
         Game_DisplayStretched = 0;
     }
+
+    Game_AdvancedScaling = 0;
 
     Display_Width = 320;
     Display_Bitsperpixel = 16;

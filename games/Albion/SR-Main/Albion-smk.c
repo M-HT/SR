@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020 Roman Pauer
+ *  Copyright (C) 2020-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -29,6 +29,7 @@
     #include <SDL/SDL.h>
 #endif
 #include "Game_vars.h"
+#include "Game_scalerplugin.h"
 #include "Game_thread.h"
 #include "Albion-smk.h"
 #include "Albion-proc-vfs.h"
@@ -51,12 +52,24 @@ static volatile int main_result;
 
 #ifdef USE_SDL2
 static SDL_Texture *SMK_Texture[3];
+static SDL_Texture *SMK_ScaledTexture[3];
 #elif defined(ALLOW_OPENGL)
 static GLuint SMK_GLTexture[3];
+static GLuint SMK_GLFramebuffer[3];
+static GLuint SMK_GLScaledTexture[3];
+
+static PFNGLGENFRAMEBUFFERSEXTPROC gl_glGenFramebuffersEXT;
+static PFNGLDELETEFRAMEBUFFERSEXTPROC gl_glDeleteFramebuffersEXT;
+static PFNGLFRAMEBUFFERTEXTURE2DEXTPROC gl_glFramebufferTexture2DEXT;
+static PFNGLBINDFRAMEBUFFEREXTPROC gl_glBindFramebufferEXT;
 #endif
 #if defined(ALLOW_OPENGL) || defined(USE_SDL2)
 static void *SMK_TextureData;
+static void *SMK_ScaledTextureData;
 static int SMK_CurrentTexture;
+static int SMK_ScaleFactor;
+static int SMK_ScaledTextureWidth;
+static int SMK_ScaledTextureHeight;
 #endif
 
 static Uint32 palette_out[256];
@@ -507,13 +520,119 @@ static void eventloop_initialize(void)
 {
 #ifdef USE_SDL2
     int index;
+    SDL_RendererInfo info;
+
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, (Game_ScalingQuality)?"linear":"nearest");
+
+    if (Scaler_ScaleTexture)
+    {
+        int horizontal_factor, vertical_factor;
+
+        if (!SMK_ScaleFactor)
+        {
+            horizontal_factor = vertical_factor = 2;
+
+            while ((horizontal_factor + 1) * 320 <= Picture_Width) horizontal_factor++;
+            while ((vertical_factor + 1) * 200 <= Picture_Height) vertical_factor++;
+
+            if (horizontal_factor > GAME_MAX_3D_ENGINE_FACTOR) horizontal_factor = GAME_MAX_3D_ENGINE_FACTOR;
+            if (vertical_factor > GAME_MAX_3D_ENGINE_FACTOR) vertical_factor = GAME_MAX_3D_ENGINE_FACTOR;
+
+            if (0 == SDL_GetRendererInfo(Game_Renderer, &info))
+            {
+                if (info.max_texture_width > Picture_Width)
+                {
+                    while (horizontal_factor * 320 > info.max_texture_width) horizontal_factor--;
+                }
+                if (info.max_texture_height > Picture_Height)
+                {
+                    while (vertical_factor * 200 > info.max_texture_height) vertical_factor--;
+                }
+            }
+
+            SMK_ScaleFactor = 1;
+        }
+        else
+        {
+            horizontal_factor = vertical_factor = SMK_ScaleFactor;
+        }
+
+        SMK_ScaledTextureWidth = horizontal_factor * 320;
+        SMK_ScaledTextureHeight = vertical_factor * 200;
+
+        for (index = 0; index < 3; index++)
+        {
+            SMK_ScaledTexture[index] = SDL_CreateTexture(Game_Renderer, (Display_Bitsperpixel == 32)?SDL_PIXELFORMAT_ARGB8888:SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_TARGET, SMK_ScaledTextureWidth, SMK_ScaledTextureHeight);
+        }
+
+        if ((SMK_ScaledTexture[0] == NULL) || (SMK_ScaledTexture[1] == NULL) || (SMK_ScaledTexture[2] == NULL))
+        {
+            for (index = 2; index >= 0; index--)
+            {
+                if (SMK_ScaledTexture[index] != NULL)
+                {
+                    SDL_DestroyTexture(SMK_ScaledTexture[index]);
+                    SMK_ScaledTexture[index] = NULL;
+                }
+            }
+
+            goto main_init_exit;
+        }
+
+        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
+    }
+
+    if (Scaler_ScaleTextureData)
+    {
+        if (!SMK_ScaleFactor)
+        {
+            int max_factor;
+
+            SMK_ScaleFactor = 2;
+
+            while (((SMK_ScaleFactor + 1) * 320 <= Picture_Width) ||
+                   ((SMK_ScaleFactor + 1) * 200 <= Picture_Height)
+                  ) SMK_ScaleFactor++;
+
+            max_factor = ScalerPlugin_get_maximum_scale_factor();
+            if (Scaler_ScaleFactor > max_factor) Scaler_ScaleFactor = max_factor;
+
+            if (0 == SDL_GetRendererInfo(Game_Renderer, &info))
+            {
+                if (info.max_texture_width > Picture_Width)
+                {
+                    while (SMK_ScaleFactor * 320 > info.max_texture_width) SMK_ScaleFactor--;
+                }
+                if (info.max_texture_height > Picture_Height)
+                {
+                    while (SMK_ScaleFactor * 200 > info.max_texture_height) SMK_ScaleFactor--;
+                }
+            }
+        }
+    }
+    else
+    {
+        SMK_ScaleFactor = (SMK_double_pixels)?2:1;
+    }
 
     for (index = 0; index < 3; index++)
     {
-        SMK_Texture[index] = SDL_CreateTexture(Game_Renderer, (Display_Bitsperpixel == 32)?SDL_PIXELFORMAT_ARGB8888:SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, (SMK_double_pixels)?640:320, (SMK_double_pixels)?400:200);
+        SMK_Texture[index] = SDL_CreateTexture(Game_Renderer, (Display_Bitsperpixel == 32)?SDL_PIXELFORMAT_ARGB8888:SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, SMK_ScaleFactor * 320, SMK_ScaleFactor * 200);
     }
-    if ((SMK_Texture[0] == NULL) || (SMK_Texture[1] == NULL) || (SMK_Texture[2] == NULL))
+
+    if (Scaler_ScaleTextureData)
     {
+        SMK_ScaledTextureData = malloc(SMK_ScaleFactor * 320 * SMK_ScaleFactor * 200 * Display_Bitsperpixel / 8);
+    }
+
+    if ((SMK_Texture[0] == NULL) || (SMK_Texture[1] == NULL) || (SMK_Texture[2] == NULL) || (Scaler_ScaleTextureData && (SMK_ScaledTextureData == NULL)))
+    {
+        if (SMK_ScaledTextureData != NULL)
+        {
+            free(SMK_ScaledTextureData);
+            SMK_ScaledTextureData = NULL;
+        }
+
         for (index = 2; index >= 0; index--)
         {
             if (SMK_Texture[index] != NULL)
@@ -522,6 +641,17 @@ static void eventloop_initialize(void)
                 SMK_Texture[index] = NULL;
             }
         }
+
+        if (SMK_ScaledTexture[0] != NULL)
+        {
+            SDL_DestroyTexture(SMK_ScaledTexture[2]);
+            SMK_ScaledTexture[2] = NULL;
+            SDL_DestroyTexture(SMK_ScaledTexture[1]);
+            SMK_ScaledTexture[1] = NULL;
+            SDL_DestroyTexture(SMK_ScaledTexture[0]);
+            SMK_ScaledTexture[0] = NULL;
+        }
+
         goto main_init_exit;
     }
 #else
@@ -529,30 +659,159 @@ static void eventloop_initialize(void)
     if (Game_UseOpenGL)
     {
         int index;
+        GLint scaling_quality, max_texture_size;
 
         // flush GL errors
         while(glGetError() != GL_NO_ERROR);
 
+        scaling_quality = (Game_ScalingQuality)?GL_LINEAR:GL_NEAREST;
+
+        if (Scaler_ScaleTexture)
+        {
+            int horizontal_factor, vertical_factor;
+
+            gl_glGenFramebuffersEXT = (PFNGLGENFRAMEBUFFERSEXTPROC) SDL_GL_GetProcAddress("glGenFramebuffersEXT");
+            gl_glDeleteFramebuffersEXT = (PFNGLDELETEFRAMEBUFFERSEXTPROC) SDL_GL_GetProcAddress("glDeleteFramebuffersEXT");
+            gl_glFramebufferTexture2DEXT = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC) SDL_GL_GetProcAddress("glFramebufferTexture2DEXT");
+            gl_glBindFramebufferEXT = (PFNGLBINDFRAMEBUFFEREXTPROC) SDL_GL_GetProcAddress("glBindFramebufferEXT");
+
+            if (!SMK_ScaleFactor)
+            {
+                horizontal_factor = vertical_factor = 2;
+
+                while ((horizontal_factor + 1) * 320 <= Picture_Width) horizontal_factor++;
+                while ((vertical_factor + 1) * 200 <= Picture_Height) vertical_factor++;
+
+                if (horizontal_factor > GAME_MAX_3D_ENGINE_FACTOR) horizontal_factor = GAME_MAX_3D_ENGINE_FACTOR;
+                if (vertical_factor > GAME_MAX_3D_ENGINE_FACTOR) vertical_factor = GAME_MAX_3D_ENGINE_FACTOR;
+
+                max_texture_size = 0;
+                glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
+                if (max_texture_size > Picture_Width)
+                {
+                    while (horizontal_factor * 320 > max_texture_size) horizontal_factor--;
+                }
+                if (max_texture_size > Picture_Height)
+                {
+                    while (vertical_factor * 200 > max_texture_size) vertical_factor--;
+                }
+
+                SMK_ScaleFactor = 1;
+            }
+            else
+            {
+                horizontal_factor = vertical_factor = SMK_ScaleFactor;
+            }
+
+            SMK_ScaledTextureWidth = horizontal_factor * 320;
+            SMK_ScaledTextureHeight = vertical_factor * 200;
+
+            glGenTextures(3, &(SMK_GLScaledTexture[0]));
+            if (glGetError() != GL_NO_ERROR) goto main_init_exit;
+
+            for (index = 0; index < 3; index++)
+            {
+                glBindTexture(GL_TEXTURE_2D, SMK_GLScaledTexture[index]);
+
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, scaling_quality);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, scaling_quality);
+
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SMK_ScaledTextureWidth, SMK_ScaledTextureHeight, 0, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, NULL);
+            }
+
+            gl_glGenFramebuffersEXT(3, &(SMK_GLFramebuffer[0]));
+
+            for (index = 0; index < 3; index++)
+            {
+                gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, SMK_GLFramebuffer[index]);
+
+                gl_glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, SMK_GLScaledTexture[index], 0);
+            }
+
+            scaling_quality = GL_NEAREST;
+        }
+
+        if (Scaler_ScaleTextureData)
+        {
+            if (!SMK_ScaleFactor)
+            {
+                int max_factor;
+
+                SMK_ScaleFactor = 2;
+
+                while (((SMK_ScaleFactor + 1) * 320 <= Picture_Width) ||
+                       ((SMK_ScaleFactor + 1) * 200 <= Picture_Height)
+                      ) SMK_ScaleFactor++;
+
+                max_factor = ScalerPlugin_get_maximum_scale_factor();
+                if (Scaler_ScaleFactor > max_factor) Scaler_ScaleFactor = max_factor;
+
+                max_texture_size = 0;
+                glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
+                if (max_texture_size > Picture_Width)
+                {
+                    while (SMK_ScaleFactor * 320 > max_texture_size) SMK_ScaleFactor--;
+                }
+                if (max_texture_size > Picture_Height)
+                {
+                    while (SMK_ScaleFactor * 200 > max_texture_size) SMK_ScaleFactor--;
+                }
+            }
+        }
+        else
+        {
+            SMK_ScaleFactor = (SMK_double_pixels)?2:1;
+        }
+
+        if (Scaler_ScaleTextureData)
+        {
+            SMK_ScaledTextureData = malloc(SMK_ScaleFactor * 320 * SMK_ScaleFactor * 200 * Display_Bitsperpixel / 8);
+        }
+
         glGenTextures(3, &(SMK_GLTexture[0]));
-        if (glGetError() != GL_NO_ERROR) goto main_init_exit;
+        if ((!Scaler_ScaleTexture) && (glGetError() != GL_NO_ERROR)) goto main_init_exit;
 
         for (index = 0; index < 3; index++)
         {
             glBindTexture(GL_TEXTURE_2D, SMK_GLTexture[index]);
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, scaling_quality);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, scaling_quality);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, (SMK_double_pixels)?640:320, (SMK_double_pixels)?400:200, 0, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, SMK_TextureData);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SMK_ScaleFactor * 320, SMK_ScaleFactor * 200, 0, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Scaler_ScaleTextureData ? SMK_ScaledTextureData : SMK_TextureData);
         }
 
-        if (glGetError() != GL_NO_ERROR)
+        if ((glGetError() != GL_NO_ERROR) || (Scaler_ScaleTextureData && (SMK_ScaledTextureData == NULL)))
         {
+            if (SMK_ScaledTextureData != NULL)
+            {
+                free(SMK_ScaledTextureData);
+                SMK_ScaledTextureData = NULL;
+            }
+
             glBindTexture(GL_TEXTURE_2D, 0);
+
             glDeleteTextures(3, &(SMK_GLTexture[0]));
+            SMK_GLTexture[0] = 0;
+
+            if (SMK_GLFramebuffer[0] != 0)
+            {
+                gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+                gl_glDeleteFramebuffersEXT(3, &(SMK_GLFramebuffer[0]));
+                SMK_GLFramebuffer[0] = 0;
+            }
+
+            if (SMK_GLScaledTexture != 0)
+            {
+                glDeleteTextures(3, &(SMK_GLScaledTexture[0]));
+                SMK_GLScaledTexture[0] = 0;
+            }
 
             // flush GL errors
             while(glGetError() != GL_NO_ERROR);
@@ -580,6 +839,12 @@ main_init_exit:
 static void eventloop_deinitialize(void)
 {
 #ifdef USE_SDL2
+    if (SMK_ScaledTextureData != NULL)
+    {
+        free(SMK_ScaledTextureData);
+        SMK_ScaledTextureData = NULL;
+    }
+
     if (SMK_Texture[0] != NULL)
     {
         SDL_DestroyTexture(SMK_Texture[2]);
@@ -589,11 +854,45 @@ static void eventloop_deinitialize(void)
         SDL_DestroyTexture(SMK_Texture[0]);
         SMK_Texture[0] = NULL;
     }
+
+    if (SMK_ScaledTexture[0] != NULL)
+    {
+        SDL_DestroyTexture(SMK_ScaledTexture[2]);
+        SMK_ScaledTexture[2] = NULL;
+        SDL_DestroyTexture(SMK_ScaledTexture[1]);
+        SMK_ScaledTexture[1] = NULL;
+        SDL_DestroyTexture(SMK_ScaledTexture[0]);
+        SMK_ScaledTexture[0] = NULL;
+    }
 #elif defined(ALLOW_OPENGL)
-    if (SMK_GLTexture[0] != 0)
+    if (SMK_ScaledTextureData != NULL)
+    {
+        free(SMK_ScaledTextureData);
+        SMK_ScaledTextureData = NULL;
+    }
+
+    if ((SMK_GLTexture[0] != 0) || (SMK_GLScaledTexture[0] != 0))
     {
         glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    if (SMK_GLTexture[0] != 0)
+    {
         glDeleteTextures(3, &(SMK_GLTexture[0]));
+        SMK_GLTexture[0] = 0;
+    }
+
+    if (SMK_GLFramebuffer[0] != 0)
+    {
+        gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+        gl_glDeleteFramebuffersEXT(3, &(SMK_GLFramebuffer[0]));
+        SMK_GLFramebuffer[0] = 0;
+    }
+
+    if (SMK_GLScaledTexture[0] != 0)
+    {
+        glDeleteTextures(3, &(SMK_GLScaledTexture[0]));
+        SMK_GLScaledTexture[0] = 0;
     }
 #endif
 
@@ -603,8 +902,29 @@ static void eventloop_deinitialize(void)
 static void eventloop_flip(void)
 {
 #if defined(USE_SDL2)
-    SDL_UpdateTexture(SMK_Texture[SMK_CurrentTexture], NULL, SMK_TextureData, ((SMK_double_pixels)?640:320) * Display_Bitsperpixel / 8);
-    SDL_RenderCopy(Game_Renderer, SMK_Texture[SMK_CurrentTexture], NULL, NULL);
+    if (Scaler_ScaleTextureData)
+    {
+        SDL_UpdateTexture(SMK_Texture[SMK_CurrentTexture], NULL, SMK_ScaledTextureData, SMK_ScaleFactor * 320 * Display_Bitsperpixel / 8);
+    }
+    else
+    {
+        SDL_UpdateTexture(SMK_Texture[SMK_CurrentTexture], NULL, SMK_TextureData, ((SMK_double_pixels)?640:320) * Display_Bitsperpixel / 8);
+    }
+
+    if (Scaler_ScaleTexture)
+    {
+        SDL_SetRenderTarget(Game_Renderer, SMK_ScaledTexture[SMK_CurrentTexture]);
+        SDL_RenderCopy(Game_Renderer, SMK_Texture[SMK_CurrentTexture], NULL, NULL);
+        SDL_RenderPresent(Game_Renderer);
+
+        SDL_SetRenderTarget(Game_Renderer, NULL);
+        SDL_RenderCopy(Game_Renderer, SMK_ScaledTexture[SMK_CurrentTexture], NULL, NULL);
+    }
+    else
+    {
+        SDL_RenderCopy(Game_Renderer, SMK_Texture[SMK_CurrentTexture], NULL, NULL);
+    }
+
     SDL_RenderPresent(Game_Renderer);
 
     SMK_CurrentTexture++;
@@ -617,7 +937,14 @@ static void eventloop_flip(void)
     {
         glBindTexture(GL_TEXTURE_2D, SMK_GLTexture[SMK_CurrentTexture]);
 
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ((SMK_double_pixels)?640:320), ((SMK_double_pixels)?400:200), GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, SMK_TextureData);
+        if (Scaler_ScaleTextureData)
+        {
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SMK_ScaleFactor * 320, SMK_ScaleFactor * 200, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, SMK_ScaledTextureData);
+        }
+        else
+        {
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ((SMK_double_pixels)?640:320), ((SMK_double_pixels)?400:200), GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, SMK_TextureData);
+        }
 
         glEnable(GL_TEXTURE_2D);
 
@@ -633,9 +960,32 @@ static void eventloop_flip(void)
             1.0f, 1.0f,
             0.0f, 1.0f
         };
+        static const GLfloat QuadScaleTexCoords[2*4] = {
+            0.0f, 1.0f,
+            1.0f, 1.0f,
+            1.0f, 0.0f,
+            0.0f, 0.0f,
+        };
 
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+        if (Scaler_ScaleTexture)
+        {
+            gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, SMK_GLFramebuffer[SMK_CurrentTexture]);
+
+            glViewport(0, 0, SMK_ScaledTextureWidth, SMK_ScaledTextureHeight);
+
+            glVertexPointer(2, GL_FLOAT, 0, &(QuadVertices[0]));
+            glTexCoordPointer(2, GL_FLOAT, 0, &(QuadScaleTexCoords[0]));
+            glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+            gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+
+            glViewport(Picture_Position_UL_X, Picture_Position_UL_Y, Picture_Width, Picture_Height);
+
+            glBindTexture(GL_TEXTURE_2D, SMK_GLScaledTexture[SMK_CurrentTexture]);
+        }
 
         glVertexPointer(2, GL_FLOAT, 0, &(QuadVertices[0]));
         glTexCoordPointer(2, GL_FLOAT, 0, &(QuadTexCoords[0]));
@@ -661,7 +1011,18 @@ static int initialize_display(void)
 {
     SDL_Event event;
 
-    SMK_double_pixels = ((Display_Width >= 640) && (Display_Height >= 400))?1:0;
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+    if (Game_AdvancedScaling)
+    {
+        SMK_ScaleFactor = Game_ScaleFactor;
+
+        SMK_double_pixels = 0;
+    }
+    else
+#endif
+    {
+        SMK_double_pixels = ((Display_Width >= 640) && (Display_Height >= 400))?1:0;
+    }
 
     if (SMK_double_pixels)
     {
@@ -840,6 +1201,11 @@ static void BufferToScreen(void)
         {
             blit_normal_height(NULL, SMK_TextureData);
         }
+
+        if (Scaler_ScaleTextureData)
+        {
+            ScalerPlugin_scale(SMK_ScaleFactor, SMK_TextureData, SMK_ScaledTextureData, 320, 200, 1);
+        }
     }
 #if !defined(USE_SDL2)
     else
@@ -906,6 +1272,12 @@ static void play_smk(const char *filename)
     int index;
     Uint32 lastticks, ticks;
     int delay;
+
+#ifdef USE_SDL2
+    if (Game_Window == NULL) return;
+#else
+    if (Game_Screen == NULL) return;
+#endif
 
     // stop timer, events, ...
     SMK_Playing = 1;

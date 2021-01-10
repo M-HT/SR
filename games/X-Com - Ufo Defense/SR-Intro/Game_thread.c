@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -32,6 +32,7 @@
 #endif
 #include "Game_defs.h"
 #include "Game_vars.h"
+#include "Game_scalerplugin.h"
 #include "Game_thread.h"
 #include "Intro-proc-events.h"
 #include "main.h"
@@ -230,11 +231,21 @@ fprintf(stderr, "fps: %.3f    tps: %.3f\n", (float) NumDisplay * 1000 / (Current
         {
         #ifdef USE_SDL2
             Display_Flip_Procedure(Game_FrameBuffer, Game_TextureData);
+
+            if (Scaler_ScaleTextureData)
+            {
+                ScalerPlugin_scale(Scaler_ScaleFactor, Game_TextureData, Game_ScaledTextureData, Render_Width, Render_Height, 1);
+            }
         #else
         #ifdef ALLOW_OPENGL
             if (Game_UseOpenGL)
             {
                 Display_Flip_Procedure(Game_FrameBuffer, Game_TextureData);
+
+                if (Scaler_ScaleTextureData)
+                {
+                    ScalerPlugin_scale(Scaler_ScaleFactor, Game_TextureData, Game_ScaledTextureData, Render_Width, Render_Height, 1);
+                }
             }
             else
         #endif

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -33,6 +33,9 @@ static int DisplayMode;
 static int ScaleOutput, ScaledWidth, ScaledHeight, Fullscreen;
 static uint32_t *ScaleSrc;
 
+#if defined(USE_SDL2) || defined(ALLOW_OPENGL)
+static pixel_format_disp Game_PaletteAlpha[256];
+#endif
 static uint32_t interpolation_matrix2[256*256];
 #define IM2_LOOKUP(a, b) ( interpolation_matrix2[(((uint32_t) (a)) << 8) + ((uint32_t) (b))] )
 
@@ -40,6 +43,13 @@ static void Set_Palette_Value2(uint32_t index, uint32_t r, uint32_t g, uint32_t 
 {
     uint32_t *val1, *val2;
     pixel_format_disp pixel;
+
+#if defined(USE_SDL2) || defined(ALLOW_OPENGL)
+    Game_PaletteAlpha[index].s.r = r;
+    Game_PaletteAlpha[index].s.g = g;
+    Game_PaletteAlpha[index].s.b = b;
+    Game_PaletteAlpha[index].s.a = 255;
+#endif
 
 #define MAXDIFF 128
 #define INTERPOLATE(a, b) (((a) >= (b)) ? ( ((a) - (b) >= MAXDIFF) ? ((3 * (a) + (b)) / 4) : (((a) + (b)) / 2) ) : ( ((b) - (a) >= MAXDIFF) ? ((3 * (b) + (a)) / 4) : (((a) + (b)) / 2) ) )
@@ -64,6 +74,369 @@ static void Set_Palette_Value2(uint32_t index, uint32_t r, uint32_t g, uint32_t 
 #undef INTERPOLATE
 #undef MAXDIFF
 }
+
+#if defined(USE_SDL2) || defined(ALLOW_OPENGL)
+static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, uint32_t *dst2, int *dst2_used)
+{
+    int counter, DrawOverlay;
+
+    DrawOverlay = Get_DrawOverlay(src, 1);
+    *dst2_used = DrawOverlay;
+
+    if (DrawOverlay)
+    {
+        uint8_t *zalsrc, *src2, *orig;
+        uint32_t *zaldst1, *zaldst2;
+        int x, y, ViewportX2;
+
+        // display part above the viewport
+        if (Game_OverlayDisplay.ViewportY != 0)
+        {
+            for (counter = 360 * Game_OverlayDisplay.ViewportY; counter != 0; counter -= 8)
+            {
+                dst1[0] = Game_PaletteAlpha[src[0]].pix;
+                dst1[1] = Game_PaletteAlpha[src[1]].pix;
+                dst1[2] = Game_PaletteAlpha[src[2]].pix;
+                dst1[3] = Game_PaletteAlpha[src[3]].pix;
+                dst1[4] = Game_PaletteAlpha[src[4]].pix;
+                dst1[5] = Game_PaletteAlpha[src[5]].pix;
+                dst1[6] = Game_PaletteAlpha[src[6]].pix;
+                dst1[7] = Game_PaletteAlpha[src[7]].pix;
+
+                src += 8;
+                dst1 += 8;
+            }
+
+            for (counter = Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * Game_OverlayDisplay.ViewportY; counter != 0; counter -= 8)
+            {
+                dst2[0] = 0;
+                dst2[1] = 0;
+                dst2[2] = 0;
+                dst2[3] = 0;
+                dst2[4] = 0;
+                dst2[5] = 0;
+                dst2[6] = 0;
+                dst2[7] = 0;
+
+                dst2 += 8;
+            }
+        }
+
+        zalsrc = src;
+        zaldst1 = dst1;
+        zaldst2 = dst2;
+
+        // display part left of the viewport
+        if (Game_OverlayDisplay.ViewportX != 0)
+        {
+            for (y = Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+            {
+                for (x = Game_OverlayDisplay.ViewportX; x >= 8; x -= 8)
+                {
+                    dst1[0] = Game_PaletteAlpha[src[0]].pix;
+                    dst1[1] = Game_PaletteAlpha[src[1]].pix;
+                    dst1[2] = Game_PaletteAlpha[src[2]].pix;
+                    dst1[3] = Game_PaletteAlpha[src[3]].pix;
+                    dst1[4] = Game_PaletteAlpha[src[4]].pix;
+                    dst1[5] = Game_PaletteAlpha[src[5]].pix;
+                    dst1[6] = Game_PaletteAlpha[src[6]].pix;
+                    dst1[7] = Game_PaletteAlpha[src[7]].pix;
+
+                    src += 8;
+                    dst1 += 8;
+                }
+
+                for (; x != 0; x--)
+                {
+                    dst1[0] = Game_PaletteAlpha[src[0]].pix;
+
+                    src++;
+                    dst1++;
+                }
+
+                src += (360 - Game_OverlayDisplay.ViewportX);
+                dst1 += (360 - Game_OverlayDisplay.ViewportX);
+            }
+
+            for (y = Scaler_ScaleFactor * Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+            {
+                for (x = Scaler_ScaleFactor * Game_OverlayDisplay.ViewportX; x >= 8; x -= 8)
+                {
+                    dst2[0] = 0;
+                    dst2[1] = 0;
+                    dst2[2] = 0;
+                    dst2[3] = 0;
+                    dst2[4] = 0;
+                    dst2[5] = 0;
+                    dst2[6] = 0;
+                    dst2[7] = 0;
+
+                    dst2 += 8;
+                }
+
+                for (; x != 0; x--)
+                {
+                    dst2[0] = 0;
+
+                    dst2++;
+                }
+
+                dst2 += Scaler_ScaleFactor * (360 - Game_OverlayDisplay.ViewportX);
+            }
+        }
+
+        // display part right of the viewport
+        if ((Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth) != 360)
+        {
+            src = zalsrc + (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth);
+            dst1 = zaldst1 + (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth);
+            dst2 = zaldst2 + Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth);
+            ViewportX2 = 360 - (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth);
+
+            for (y = Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+            {
+                for (x = ViewportX2; x >= 8; x -= 8)
+                {
+                    dst1[0] = Game_PaletteAlpha[src[0]].pix;
+                    dst1[1] = Game_PaletteAlpha[src[1]].pix;
+                    dst1[2] = Game_PaletteAlpha[src[2]].pix;
+                    dst1[3] = Game_PaletteAlpha[src[3]].pix;
+                    dst1[4] = Game_PaletteAlpha[src[4]].pix;
+                    dst1[5] = Game_PaletteAlpha[src[5]].pix;
+                    dst1[6] = Game_PaletteAlpha[src[6]].pix;
+                    dst1[7] = Game_PaletteAlpha[src[7]].pix;
+
+                    src += 8;
+                    dst1 += 8;
+                }
+
+                for (; x != 0; x--)
+                {
+                    dst1[0] = Game_PaletteAlpha[src[0]].pix;
+
+                    src++;
+                    dst1++;
+                }
+
+                src += (360 - ViewportX2);
+                dst1 += (360 - ViewportX2);
+            }
+
+            for (y = Scaler_ScaleFactor * Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+            {
+                for (x = Scaler_ScaleFactor * ViewportX2; x >= 8; x -= 8)
+                {
+                    dst2[0] = 0;
+                    dst2[1] = 0;
+                    dst2[2] = 0;
+                    dst2[3] = 0;
+                    dst2[4] = 0;
+                    dst2[5] = 0;
+                    dst2[6] = 0;
+                    dst2[7] = 0;
+
+                    dst2 += 8;
+                }
+
+                for (; x != 0; x--)
+                {
+                    dst2[0] = 0;
+
+                    dst2++;
+                }
+
+                dst2 += Scaler_ScaleFactor * (360 - ViewportX2);
+            }
+        }
+
+        // display part below the viewport
+        src = zalsrc + (360 * Game_OverlayDisplay.ViewportHeight);
+        dst1 = zaldst1 + (360 * Game_OverlayDisplay.ViewportHeight);
+        dst2 = zaldst2 + Scaler_ScaleFactor * Scaler_ScaleFactor * (360 * Game_OverlayDisplay.ViewportHeight);
+
+        for (counter = 360 * (240 - (Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportHeight)); counter != 0; counter -= 8)
+        {
+            dst1[0] = Game_PaletteAlpha[src[0]].pix;
+            dst1[1] = Game_PaletteAlpha[src[1]].pix;
+            dst1[2] = Game_PaletteAlpha[src[2]].pix;
+            dst1[3] = Game_PaletteAlpha[src[3]].pix;
+            dst1[4] = Game_PaletteAlpha[src[4]].pix;
+            dst1[5] = Game_PaletteAlpha[src[5]].pix;
+            dst1[6] = Game_PaletteAlpha[src[6]].pix;
+            dst1[7] = Game_PaletteAlpha[src[7]].pix;
+
+            src += 8;
+            dst1 += 8;
+        }
+
+        for (counter = Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (240 - (Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportHeight)); counter != 0; counter -= 8)
+        {
+            dst2[0] = 0;
+            dst2[1] = 0;
+            dst2[2] = 0;
+            dst2[3] = 0;
+            dst2[4] = 0;
+            dst2[5] = 0;
+            dst2[6] = 0;
+            dst2[7] = 0;
+
+            dst2 += 8;
+        }
+
+        // the viewport
+        src = zalsrc + Game_OverlayDisplay.ViewportX;
+        dst1 = zaldst1 + Game_OverlayDisplay.ViewportX;
+        orig = Game_OverlayDisplay.ScreenViewpartOriginal + 360 * Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportX;
+
+        for (y = Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+        {
+            for (x = Game_OverlayDisplay.ViewportWidth; x >= 8; x -= 8)
+            {
+                dst1[0] = (src[0] == orig[0])?0:Game_PaletteAlpha[src[0]].pix;
+                dst1[1] = (src[1] == orig[1])?0:Game_PaletteAlpha[src[1]].pix;
+                dst1[2] = (src[2] == orig[2])?0:Game_PaletteAlpha[src[2]].pix;
+                dst1[3] = (src[3] == orig[3])?0:Game_PaletteAlpha[src[3]].pix;
+                dst1[4] = (src[4] == orig[4])?0:Game_PaletteAlpha[src[4]].pix;
+                dst1[5] = (src[5] == orig[5])?0:Game_PaletteAlpha[src[5]].pix;
+                dst1[6] = (src[6] == orig[6])?0:Game_PaletteAlpha[src[6]].pix;
+                dst1[7] = (src[7] == orig[7])?0:Game_PaletteAlpha[src[7]].pix;
+
+                src += 8;
+                orig += 8;
+                dst1 += 8;
+            }
+
+            for (; x != 0; x--)
+            {
+                dst1[0] = (src[0] == orig[0])?0:Game_PaletteAlpha[src[0]].pix;
+
+                src++;
+                orig++;
+                dst1++;
+            }
+
+            src += (360 - Game_OverlayDisplay.ViewportWidth);
+            orig += (360 - Game_OverlayDisplay.ViewportWidth);
+            dst1 += (360 - Game_OverlayDisplay.ViewportWidth);
+        }
+
+        dst1 = zaldst1 + Game_OverlayDisplay.ViewportX;
+        dst2 = zaldst2 + Scaler_ScaleFactor * Game_OverlayDisplay.ViewportX;
+        src2 = Game_OverlayDisplay.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * Game_OverlayDisplay.ViewportY + Scaler_ScaleFactor * Game_OverlayDisplay.ViewportX;
+
+        counter = Scaler_ScaleFactor;
+        for (y = Scaler_ScaleFactor * Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+        {
+            int counter2, same;
+
+            counter2 = Scaler_ScaleFactor;
+            same = (dst1[0] == 0)?1:0;
+
+            for (x = Scaler_ScaleFactor * Game_OverlayDisplay.ViewportWidth; x != 0; x--)
+            {
+                dst2[0] = (same)?Game_PaletteAlpha[src2[0]].pix:0;
+
+                src2++;
+                dst2++;
+
+                counter2--;
+                if (counter2 == 0)
+                {
+                    counter2 = Scaler_ScaleFactor;
+                    dst1++;
+                    same = (dst1[0] == 0)?1:0;
+                }
+            }
+
+            src2 += Scaler_ScaleFactor * (360 - Game_OverlayDisplay.ViewportWidth);
+            dst2 += Scaler_ScaleFactor * (360 - Game_OverlayDisplay.ViewportWidth);
+
+            counter--;
+            if (counter == 0)
+            {
+                counter = Scaler_ScaleFactor;
+                dst1 += (360 - Game_OverlayDisplay.ViewportWidth);
+            }
+            else
+            {
+                dst1 -= Game_OverlayDisplay.ViewportWidth;
+            }
+        }
+
+        // markers
+        if (DrawOverlay & 1)
+        {
+            dst1 = zaldst1 + 360 * (Game_OverlayDisplay.ViewportHeight - 2) + (Game_OverlayDisplay.ViewportX + 1);
+
+            for (x = 8; x != 0; x--)
+            {
+                dst1[0] = 0;
+                dst1++;
+            }
+
+            dst2 = zaldst2 + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportHeight - 2) + Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportX + 1);
+            src2 = Game_OverlayDisplay.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportHeight - 2) + Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportX + 1);
+
+            for (y = Scaler_ScaleFactor; y != 0; y--)
+            {
+                for (x = Scaler_ScaleFactor * 8; x != 0; x--)
+                {
+                    dst2[0] = Game_PaletteAlpha[src2[0]].pix;
+                    src2++;
+                    dst2++;
+                }
+
+                src2 += Scaler_ScaleFactor * 352;
+                dst2 += Scaler_ScaleFactor * 352;
+            }
+        }
+
+        if (DrawOverlay & 2)
+        {
+            dst1 = zaldst1 + 360 * (Game_OverlayDisplay.ViewportHeight - 2) + (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth - 10);
+
+            for (x = 8; x != 0; x--)
+            {
+                dst1[0] = 0;
+                dst1++;
+            }
+
+            dst2 = zaldst2 + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportHeight - 2) + Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth - 10);
+            src2 = Game_OverlayDisplay.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportHeight - 2) + Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth - 10);
+
+            for (y = Scaler_ScaleFactor; y != 0; y--)
+            {
+                for (x = Scaler_ScaleFactor * 8; x != 0; x--)
+                {
+                    dst2[0] = Game_PaletteAlpha[src2[0]].pix;
+                    src2++;
+                    dst2++;
+                }
+
+                src2 += Scaler_ScaleFactor * 352;
+                dst2 += Scaler_ScaleFactor * 352;
+            }
+        }
+    }
+    else
+    {
+        for (counter = 360*240; counter != 0; counter -= 8)
+        {
+            dst1[0] = Game_Palette[src[0]].pix;
+            dst1[1] = Game_Palette[src[1]].pix;
+            dst1[2] = Game_Palette[src[2]].pix;
+            dst1[3] = Game_Palette[src[3]].pix;
+            dst1[4] = Game_Palette[src[4]].pix;
+            dst1[5] = Game_Palette[src[5]].pix;
+            dst1[6] = Game_Palette[src[6]].pix;
+            dst1[7] = Game_Palette[src[7]].pix;
+
+            src += 8;
+            dst1 += 8;
+        }
+    }
+}
+#endif
 
 static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
 {
@@ -839,6 +1212,10 @@ void Init_Display2(void)
 
     memset(&(interpolation_matrix2[0]), 0, sizeof(interpolation_matrix2));
 
+#if !defined(USE_SDL2) && !defined(ALLOW_OPENGL)
+    Game_AdvancedScaling = 0;
+#endif
+
     if (Fullscreen && Display_FSType)
     {
         if ((ScaledWidth == 0) || (ScaledHeight == 0))
@@ -886,7 +1263,15 @@ void Init_Display2(void)
     Picture_Position_UL_Y = 0;
     Picture_Position_BR_X = ScaledWidth - 1;
     Picture_Position_BR_Y = ScaledHeight - 1;
-#if !defined(ALLOW_OPENGL) && !defined(USE_SDL2)
+#if defined(USE_SDL2) || defined(ALLOW_OPENGL)
+    if (Game_AdvancedScaling)
+    {
+        Render_Width = 360;
+        Render_Height = 240;
+        Display_Advanced_Flip_Procedure = (Game_Advanced_Flip_Procedure) &Flip_360x240x8_to_360x240x32_advanced;
+    }
+    else
+#else
     if (ScaleOutput)
     {
         Display_Flip_Procedure = (Game_Flip_Procedure) &Flip_360x240x8_to_WxHx32_bilinear;
@@ -959,7 +1344,7 @@ int Change_Display_Mode(int direction)
 {
     int ClearScreen;
 
-    if (ScaleOutput) return 0;
+    if (ScaleOutput || Game_AdvancedScaling) return 0;
 
     ClearScreen = 0;
     DisplayMode = (DisplayMode + direction + 2) % 2;

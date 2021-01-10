@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #
-#  Copyright (C) 2014-2020 Roman Pauer
+#  Copyright (C) 2014-2021 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -189,6 +189,11 @@ class ConfigFile:
         if game == "albion":
             if platform == "pandora" or platform == "pc":
                 self.AddEntry("Display_Enhanced_3D_Rendering", "on/off", "on")
+
+        if platform == "pc":
+            self.AddEntry("Display_Scaling", "basic/basicnb/advanced/advancednb", "basic")
+            self.AddEntry("Display_AdvancedScaler", "normal/hqx/xbrz", "normal")
+            self.AddEntry("Display_ScalerFactor", "max/2/3/4/5/6", "max")
 
         # audio entries
         self.AddEntry("Audio_Channels", "stereo/mono", ("mono" if platform == "gp2x" else "stereo"))
@@ -618,7 +623,7 @@ class ConfigGUI:
                 if self.CfgFile.HasEntry("Display_MouseCursor"):
                     self.CreateSeparator(vbox)
                     self.CreateRadioSet(vbox, "Display MouseCursor:", "Display_MouseCursor", "Select mouse cursor type when the game is displayed in a window.")
-                    if self.CfgFile.HasEntry("Display_Enhanced_3D_Rendering"):
+                    if self.CfgFile.HasEntry("Display_Enhanced_3D_Rendering") or self.CfgFile.HasEntry("Display_Scaling"):
                         vbox = self.AddPageFrameVBox(notebook, "Display 2", "Display")
 
                         IsFirst = True
@@ -626,7 +631,22 @@ class ConfigGUI:
             if self.CfgFile.HasEntry("Display_Enhanced_3D_Rendering"):
                 if not IsFirst:
                     self.CreateSeparator(vbox)
+                IsFirst = False
                 self.CreateRadioSet(vbox, "Enhanced 3D Rendering:", "Display_Enhanced_3D_Rendering", "Enhanced 3D rendering renders the 3d part of the game in the native resolution,\ninstead of rendering it in the original resolution and then scaling it.\n\nThere are some minor issues, read the readme for more information.")
+                if self.CfgFile.HasEntry("Display_Scaling"):
+                    vbox = self.AddPageFrameVBox(notebook, "Display 3", "Display")
+
+                    IsFirst = True
+
+            if self.CfgFile.HasEntry("Display_Scaling"):
+                if not IsFirst:
+                    self.CreateSeparator(vbox)
+                IsFirst = False
+                self.CreateRadioSet2(vbox, "Display Scaling:", "Display_Scaling", None, "Use basic or advanced scaling.\nBy default, bilinear filtering is used.\n Versions ending with -nb mean without bilinear filtering (= nearest neighbour filtering).")
+                self.CreateSeparator(vbox)
+                self.CreateRadioSet2(vbox, "Display Advanced Scaler:", "Display_AdvancedScaler", None, "Advanced scaling algorithm.\nNormal means nearest neighbour.\nHqx supports scaling factors 2-4. Xbrz supports scaling factors 2-6.\nXbrz looks better than hqx but it's about two times slower.")
+                self.CreateSeparator(vbox)
+                self.CreateRadioSet2(vbox, "Display Scaler Factor:", "Display_ScalerFactor", None, "Scaling factor for advanced scaling.\nMax means maximum scaling factor based on selected resolution.")
 
         if self.CfgFile.HasEntry("Use_Alternative_SDL"):
             vbox = self.AddPageFrameVBox(notebook, "SDL", "SDL")
@@ -957,10 +977,13 @@ class ConfigGUI:
         vbox = gtk.VBox(homogeneous=False, spacing=0)
         self.CreateEntryLabel(vbox, entry_label, 5)
 
-        entry_format = entry_values.split("/")
         current_value = self.CfgFile.GetEntryValue(entry_name).lower()
-        if not current_value in entry_format:
-            entry_format.append(current_value)
+        if entry_values is None:
+            entry_format = self.CfgFile.GetEntryFormat(entry_name).split("/")
+        else:
+            entry_format = entry_values.split("/")
+            if not current_value in entry_format:
+                entry_format.append(current_value)
         group = None
 
         hbox = gtk.HBox(homogeneous=False, spacing=0)

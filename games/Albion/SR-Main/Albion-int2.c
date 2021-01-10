@@ -226,15 +226,15 @@ uint32_t Game_int386x(
                                 {
                                     Game_OverlayDisplay = Game_OverlayDraw;
                                     Game_OverlayDraw.Enhanced3DEngineUsed = 0;
-                                    if (Game_OverlayDraw.ScreenViewpartOverlay == Game_ScreenViewpartOverlay)
+                                    if (Game_OverlayDraw.ScreenViewpartOriginal == Game_ScreenViewpartOriginal[0])
                                     {
-                                        Game_OverlayDraw.ScreenViewpartOverlay = Game_ScreenViewpartOverlay + 800 * 384;
-                                        Game_OverlayDraw.ScreenViewpartOriginal = Game_ScreenViewpartOriginal + 360 * 192;
+                                        Game_OverlayDraw.ScreenViewpartOverlay = Game_ScreenViewpartOverlay[1];
+                                        Game_OverlayDraw.ScreenViewpartOriginal = Game_ScreenViewpartOriginal[1];
                                     }
                                     else
                                     {
-                                        Game_OverlayDraw.ScreenViewpartOverlay = Game_ScreenViewpartOverlay;
-                                        Game_OverlayDraw.ScreenViewpartOriginal = Game_ScreenViewpartOriginal;
+                                        Game_OverlayDraw.ScreenViewpartOverlay = Game_ScreenViewpartOverlay[0];
+                                        Game_OverlayDraw.ScreenViewpartOriginal = Game_ScreenViewpartOriginal[0];
                                     }
                                 }
                                 else

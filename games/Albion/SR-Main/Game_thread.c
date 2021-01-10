@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -28,6 +28,7 @@
 #include <malloc.h>
 #include "Game_defs.h"
 #include "Game_vars.h"
+#include "Game_scalerplugin.h"
 #include "Game_thread.h"
 #include "Albion-proc-events.h"
 #include "main.h"
@@ -201,16 +202,54 @@ fprintf(stderr, "fps: %.3f    tps: %.3f\n", (float) NumDisplay * 1000 / (Current
         }
 #endif
 
-    #ifdef USE_SDL2
-        Display_Flip_Procedure(&(Game_FrameBuffer[Game_DisplayStart * 360]), Game_TextureData);
-    #else
-    #ifdef ALLOW_OPENGL
+    #if defined(USE_SDL2) || defined(ALLOW_OPENGL)
+    #if !defined(USE_SDL2)
         if (Game_UseOpenGL)
+    #endif
         {
-            Display_Flip_Procedure(&(Game_FrameBuffer[Game_DisplayStart * 360]), Game_TextureData);
+            if (Game_AdvancedScaling)
+            {
+                Display_Advanced_Flip_Procedure(&(Game_FrameBuffer[Game_DisplayStart * 360]), Game_TextureData, Game_TextureData2, &Game_UseTextureData2);
+            }
+            else
+            {
+                Display_Flip_Procedure(&(Game_FrameBuffer[Game_DisplayStart * 360]), Game_TextureData);
+            }
+
+            if (Scaler_ScaleTextureData)
+            {
+                ScalerPlugin_scale(Scaler_ScaleFactor, Game_TextureData, Game_ScaledTextureData, Render_Width, Render_Height, 1);
+                if (Game_UseTextureData2)
+                {
+                    uint32_t *src, *dst;
+                    int counter;
+
+                    src = (uint32_t *) Game_TextureData2;
+                    dst = (uint32_t *) Game_ScaledTextureData;
+
+                    for (counter = Scaler_ScaleFactor * Render_Width * Scaler_ScaleFactor * Render_Height; counter != 0; counter -= 8)
+                    {
+                        if (src[0]) dst[0] = src[0];
+                        if (src[1]) dst[1] = src[1];
+                        if (src[2]) dst[2] = src[2];
+                        if (src[3]) dst[3] = src[3];
+                        if (src[4]) dst[4] = src[4];
+                        if (src[5]) dst[5] = src[5];
+                        if (src[6]) dst[6] = src[6];
+                        if (src[7]) dst[7] = src[7];
+
+                        src += 8;
+                        dst += 8;
+                    }
+                }
+            }
         }
+    #if !defined(USE_SDL2)
         else
     #endif
+    #endif
+
+    #if !defined(USE_SDL2)
         {
             /* ??? */
 

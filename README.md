@@ -42,6 +42,8 @@ The projects consists of following subprojects (read the readmes in subproject d
   * Libraries that are used by plugins in *midi-plugins* subproject to play MIDI music.
 * **midi-plugins**
   * Plugins used by the DOS games to play MIDI (and other types) music.
+* **scaler-plugins**
+  * Plugins used by the DOS games to enlarge/enhance the displayed image.
 * **pycfg**
   * A configuration utility that can be used on Linux (sorry Windows users) to change settings in the configuration files (without editing the files).
 

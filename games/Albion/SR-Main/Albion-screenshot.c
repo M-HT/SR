@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -32,10 +32,12 @@
     #include <dirent.h>
 #endif
 
+#include <alloca.h>
 #include <stdio.h>
 #include <string.h>
 #include <zlib.h>
 #include "Game_defs.h"
+#include "Game_scalerplugin.h"
 #include "Game_vars.h"
 #include "Albion-proc-vfs.h"
 #include "display/overlay.h"
@@ -108,14 +110,15 @@ static inline uint8_t *write_32le(uint8_t *ptr, uint32_t value)
     return ptr + 4;
 }
 
-static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverlay, int remaining, uint8_t *curptr)
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+static uint8_t *fill_png_pixel_data_advanced(uint32_t *src, int remaining, uint8_t *curptr)
 {
-    int x, y, ret, overlay_y;
-    uint8_t value;
-    uint16_t *dst16;
-    uint8_t *dst8, *src2, *orig;
+    int x, y, ret;
+    uint8_t *dst8;
     z_stream strm;
-    uint8_t pixel_data[724*2];
+    uint8_t *pixel_data;
+
+    pixel_data = (uint8_t *) alloca(360 * 3 * Scaler_ScaleFactor + 4);
 
     strm.zalloc = Z_NULL;
     strm.zfree = Z_NULL;
@@ -132,7 +135,104 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
 
     ret = 0; // silence warning
 
-    if (image_mode == 0)
+    pixel_data[3] = 0; // filter for line
+
+    for (y = Scaler_ScaleFactor * 240; y != 0; y--)
+    {
+        dst8 = &(pixel_data[4]);
+
+        for (x = Scaler_ScaleFactor * 360; x != 0; x--)
+        {
+            dst8[0] = (*src >> 16) & 0xff;
+            dst8[1] = (*src >> 8) & 0xff;
+            dst8[2] = *src & 0xff;
+            dst8 += 3;
+            src++;
+        }
+
+        // write second line with filter
+        strm.avail_in = 360 * 3 * Scaler_ScaleFactor + 1;
+        strm.next_in = &(pixel_data[3]);
+
+        ret = zlib_deflate(&strm, (y == 1)?Z_FINISH:Z_NO_FLUSH);
+        if (ret == Z_STREAM_ERROR)
+        {
+            zlib_deflateEnd(&strm);
+            return NULL;
+        }
+
+        if (strm.avail_in != 0)
+        {
+            zlib_deflateEnd(&strm);
+            return NULL;
+        }
+    }
+
+    if (ret != Z_STREAM_END)
+    {
+        zlib_deflateEnd(&strm);
+        return NULL;
+    }
+
+    curptr += remaining - strm.avail_out;
+
+    zlib_deflateEnd(&strm);
+
+    return curptr;
+}
+#endif
+
+static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverlay, int remaining, uint8_t *curptr)
+{
+    int x, y, ret, overlay_y;
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+    int counter, counter2;
+#endif
+    uint8_t value;
+    uint16_t *dst16;
+    uint8_t *dst8, *src2, *orig;
+    z_stream strm;
+    uint8_t *pixel_data;
+
+    switch (image_mode)
+    {
+        case 0:
+        case 4:
+            pixel_data = (uint8_t *) alloca(364);
+            break;
+        case 1:
+        case 2:
+            pixel_data = (uint8_t *) alloca(724*2);
+            break;
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+        case 5:
+            pixel_data = (uint8_t *) alloca((360 * Scaler_ScaleFactor + 4) * 2);
+            break;
+        case 6:
+            pixel_data = (uint8_t *) alloca((360 * Scaler_ScaleFactor + 4) * Scaler_ScaleFactor);
+            break;
+#endif
+        default:
+            pixel_data = NULL;
+            break;
+    }
+
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    strm.next_in = NULL;
+
+    if (Z_OK != zlib_deflateInit2(&strm, Z_BEST_COMPRESSION, Z_DEFLATED, 15, 8, Z_DEFAULT_STRATEGY))
+    {
+        return NULL;
+    }
+
+    strm.avail_out = remaining;
+    strm.next_out = curptr;
+
+    ret = 0; // silence warning
+
+    if ((image_mode == 0) || (image_mode == 4))
     {
         pixel_data[3] = 0; // filter for line
 
@@ -149,31 +249,46 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
         {
             if (y == overlay_y)
             {
+                unsigned int src2_stride, src2_factor;
+
                 memcpy(&(pixel_data[4]), src, 360);
                 src += 360;
 
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+                if (image_mode != 0)
+                {
+                    src2_stride = Scaler_ScaleFactor * 360;
+                    src2_factor = Scaler_ScaleFactor;
+                }
+                else
+#endif
+                {
+                    src2_stride = 800;
+                    src2_factor = 2;
+                }
+
                 if (DrawOverlay & 1)
                 {
-                    dst8 = &(pixel_data[4 + Game_OverlayDraw.ViewportX + 1]);
-                    src2 = Game_OverlayDraw.ScreenViewpartOverlay + (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2)*2 * 800 + (Game_OverlayDraw.ViewportX + 1)*2;
+                    dst8 = &(pixel_data[4 + (Game_OverlayDraw.ViewportX + 1)]);
+                    src2 = Game_OverlayDraw.ScreenViewpartOverlay + src2_factor * src2_stride * (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2) + src2_factor * (Game_OverlayDraw.ViewportX + 1);
                     for (x = 8; x != 0; x--)
                     {
                         dst8[0] = src2[0];
 
-                        src2+=2;
+                        src2 += src2_factor;
                         dst8++;
                     }
                 }
 
                 if (DrawOverlay & 2)
                 {
-                    dst8 = &(pixel_data[4 + Game_OverlayDraw.ViewportX + Game_OverlayDraw.ViewportWidth - 10]);
-                    src2 = Game_OverlayDraw.ScreenViewpartOverlay + (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2)*2 * 800 + Game_OverlayDraw.ViewportX*2 + 2*(Game_OverlayDraw.ViewportWidth - 10);
+                    dst8 = &(pixel_data[4 + Game_OverlayDraw.ViewportX + (Game_OverlayDraw.ViewportWidth - 10)]);
+                    src2 = Game_OverlayDraw.ScreenViewpartOverlay + src2_factor * src2_stride * (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2) + Game_OverlayDraw.ViewportX*2 + src2_factor * (Game_OverlayDraw.ViewportWidth - 10);
                     for (x = 8; x != 0; x--)
                     {
                         dst8[0] = src2[0];
 
-                        src2+=2;
+                        src2 += src2_factor;
                         dst8++;
                     }
                 }
@@ -290,7 +405,69 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
             }
         }
     }
-    else
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+    else if (image_mode == 5)
+    {
+        pixel_data[3] = 0; // filter for first line
+        pixel_data[3 + (360 * Scaler_ScaleFactor + 4)] = 2;  // filter for next lines
+        memset(&(pixel_data[4 + (360 * Scaler_ScaleFactor + 4)]), 0, 360 * Scaler_ScaleFactor); // next lines
+
+        for (y = 240; y != 0; y--)
+        {
+            // fill first line
+            dst8 = &(pixel_data[4]);
+            for (x = 360; x != 0; x--)
+            {
+                value = *src;
+                src++;
+
+                for (counter = Scaler_ScaleFactor; counter != 0; counter--)
+                {
+                    *dst8 = value;
+                    dst8++;
+                }
+            }
+
+            // write first line with filter
+            strm.avail_in = 360 * Scaler_ScaleFactor + 1;
+            strm.next_in = &(pixel_data[3]);
+
+            ret = zlib_deflate(&strm, Z_NO_FLUSH);
+            if (ret == Z_STREAM_ERROR)
+            {
+                zlib_deflateEnd(&strm);
+                return NULL;
+            }
+
+            if (strm.avail_in != 0)
+            {
+                zlib_deflateEnd(&strm);
+                return NULL;
+            }
+
+            // write next lines with filter
+            for (counter = Scaler_ScaleFactor - 1; counter != 0; counter--)
+            {
+                strm.avail_in = 360 * Scaler_ScaleFactor + 1;
+                strm.next_in = &(pixel_data[3 + (360 * Scaler_ScaleFactor + 4)]);
+
+                ret = zlib_deflate(&strm, ((y == 1) && (counter == 1))?Z_FINISH:Z_NO_FLUSH);
+                if (ret == Z_STREAM_ERROR)
+                {
+                    zlib_deflateEnd(&strm);
+                    return NULL;
+                }
+
+                if (strm.avail_in != 0)
+                {
+                    zlib_deflateEnd(&strm);
+                    return NULL;
+                }
+            }
+        }
+    }
+#endif
+    else if (image_mode == 2)
     {
         pixel_data[3] = 0; // filter for first line
         pixel_data[3 + 724] = 0;  // filter for second line
@@ -512,6 +689,231 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
             }
         }
     }
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+    else if (image_mode == 6)
+    {
+        for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+        {
+            pixel_data[3 + counter * (360 * Scaler_ScaleFactor + 4)] = 0;  // filter for line
+        }
+
+        // part above the viewport
+        for (y = Game_OverlayDraw.ViewportY; y != 0; y--)
+        {
+            // fill first line
+            dst8 = &(pixel_data[4]);
+            for (x = 360; x != 0; x--)
+            {
+                value = *src;
+                src++;
+
+                for (counter = Scaler_ScaleFactor; counter != 0; counter--)
+                {
+                    *dst8 = value;
+                    dst8++;
+                }
+            }
+
+            // write lines with filter
+            for (counter = Scaler_ScaleFactor; counter != 0; counter--)
+            {
+                strm.avail_in = 360 * Scaler_ScaleFactor + 1;
+                strm.next_in = &(pixel_data[3]);
+
+                ret = zlib_deflate(&strm, Z_NO_FLUSH);
+                if (ret == Z_STREAM_ERROR)
+                {
+                    zlib_deflateEnd(&strm);
+                    return NULL;
+                }
+
+                if (strm.avail_in != 0)
+                {
+                    zlib_deflateEnd(&strm);
+                    return NULL;
+                }
+            }
+        }
+
+
+        orig = Game_OverlayDraw.ScreenViewpartOriginal + 360 * Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportX;
+        src2 = Game_OverlayDraw.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * Game_OverlayDraw.ViewportY + Scaler_ScaleFactor * Game_OverlayDraw.ViewportX;
+
+        // the viewport
+        for (y = Game_OverlayDraw.ViewportHeight; y != 0; y--)
+        {
+            dst8 = &(pixel_data[4]);
+
+            // part left of the viewport
+            for (x = Game_OverlayDraw.ViewportX; x != 0; x--)
+            {
+                value = *src;
+                src++;
+
+                for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                {
+                    for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+                    {
+                        dst8[counter + counter2 * (360 * Scaler_ScaleFactor + 4)] = value;
+                    }
+                }
+
+                dst8 += Scaler_ScaleFactor;
+            }
+
+            // the viewport
+            for (x = Game_OverlayDraw.ViewportWidth; x != 0; x--)
+            {
+                value = *src;
+                src++;
+                orig++;
+
+                if (value == orig[-1])
+                {
+                    for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                    {
+                        for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+                        {
+                            dst8[counter + counter2 * (360 * Scaler_ScaleFactor + 4)] = src2[counter + counter2 * (360 * Scaler_ScaleFactor)];
+                        }
+                    }
+                }
+                else
+                {
+                    for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                    {
+                        for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+                        {
+                            dst8[counter + counter2 * (360 * Scaler_ScaleFactor + 4)] = value;
+                        }
+                    }
+                }
+
+                dst8 += Scaler_ScaleFactor;
+                src2 += Scaler_ScaleFactor;
+            }
+
+            orig += 360 - Game_OverlayDraw.ViewportWidth;
+            src2 += (Scaler_ScaleFactor - 1) * Scaler_ScaleFactor * 360 + Scaler_ScaleFactor * (360 - Game_OverlayDraw.ViewportWidth);
+
+            // part right of the viewport
+            for (x = 360 - (Game_OverlayDraw.ViewportX + Game_OverlayDraw.ViewportWidth); x != 0; x--)
+            {
+                value = *src;
+                src++;
+
+                for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                {
+                    for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+                    {
+                        dst8[counter + counter2 * (360 * Scaler_ScaleFactor + 4)] = value;
+                    }
+                }
+
+                dst8 += Scaler_ScaleFactor;
+            }
+
+            if (y == 1)
+            {
+                if (DrawOverlay & 1)
+                {
+                    dst8 = &(pixel_data[4 + 2 * (Game_OverlayDraw.ViewportX + 1)]);
+                    src2 = Game_OverlayDraw.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2) + Scaler_ScaleFactor * (Game_OverlayDraw.ViewportX + 1);
+                    for (x = 8; x != 0; x--)
+                    {
+                        for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                        {
+                            for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+                            {
+                                dst8[counter + counter2 * (360 * Scaler_ScaleFactor + 4)] = src2[counter + counter2 * (360 * Scaler_ScaleFactor)];
+                            }
+                        }
+
+                        src2 += Scaler_ScaleFactor;
+                        dst8 += Scaler_ScaleFactor;
+                    }
+                }
+
+                if (DrawOverlay & 2)
+                {
+                    dst8 = &(pixel_data[4 + 2 * Game_OverlayDraw.ViewportX + 2 * (Game_OverlayDraw.ViewportWidth - 10)]);
+                    src2 = Game_OverlayDraw.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2) + Game_OverlayDraw.ViewportX*2 + Scaler_ScaleFactor * (Game_OverlayDraw.ViewportWidth - 10);
+                    for (x = 8; x != 0; x--)
+                    {
+                        for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                        {
+                            for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+                            {
+                                dst8[counter + counter2 * (360 * Scaler_ScaleFactor + 4)] = src2[counter + counter2 * (360 * Scaler_ScaleFactor)];
+                            }
+                        }
+
+                        src2 += Scaler_ScaleFactor;
+                        dst8 += Scaler_ScaleFactor;
+                    }
+                }
+            }
+
+            // write lines with filter
+            for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+            {
+                strm.avail_in = 360 * Scaler_ScaleFactor + 1;
+                strm.next_in = &(pixel_data[3 + counter * (360 * Scaler_ScaleFactor + 4)]);
+
+                ret = zlib_deflate(&strm, Z_NO_FLUSH);
+                if (ret == Z_STREAM_ERROR)
+                {
+                    zlib_deflateEnd(&strm);
+                    return NULL;
+                }
+
+                if (strm.avail_in != 0)
+                {
+                    zlib_deflateEnd(&strm);
+                    return NULL;
+                }
+            }
+        }
+
+        // part below the viewport
+        for (y = 240 - (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight); y != 0; y--)
+        {
+            // fill first line
+            dst8 = &(pixel_data[4]);
+            for (x = 360; x != 0; x--)
+            {
+                value = *src;
+                src++;
+
+                for (counter = Scaler_ScaleFactor; counter != 0; counter--)
+                {
+                    *dst8 = value;
+                    dst8++;
+                }
+            }
+
+            // write lines with filter
+            for (counter = Scaler_ScaleFactor; counter != 0; counter--)
+            {
+                strm.avail_in = 360 * Scaler_ScaleFactor + 1;
+                strm.next_in = &(pixel_data[3]);
+
+                ret = zlib_deflate(&strm, ((y == 1) && (counter == 1))?Z_FINISH:Z_NO_FLUSH);
+                if (ret == Z_STREAM_ERROR)
+                {
+                    zlib_deflateEnd(&strm);
+                    return NULL;
+                }
+
+                if (strm.avail_in != 0)
+                {
+                    zlib_deflateEnd(&strm);
+                    return NULL;
+                }
+            }
+        }
+    }
+#endif
 
     if (ret != Z_STREAM_END)
     {
@@ -531,11 +933,19 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
 void Game_save_screenshot(const char *filename)
 {
     uint8_t *screenshot_src, *buffer, *curptr, *chunk_size_ptr[2];
+    uint32_t *buf_scaled;
     unsigned int width, height, width_in_file, palette_index;
     FILE *f;
     int image_mode, DrawOverlay;
     const char *extension;
     char *filename2;
+
+    int x, y;
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+    int counter, counter2;
+    uint8_t value;
+#endif
+    uint8_t *src, *orig, *src2, *dst;
 
 #ifdef ZLIB_DYNAMIC
     if (Game_ScreenshotFormat == 5)
@@ -574,31 +984,59 @@ void Game_save_screenshot(const char *filename)
     screenshot_src = &(Game_FrameBuffer[loc_182010 * 360 * 240]);
     DrawOverlay = Get_DrawOverlay(screenshot_src, 0);
 
-    if ((Render_Width == 720) && (Game_ScreenshotEnhancedResolution != 0))
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+    if (Game_AdvancedScaling)
     {
-        if (DrawOverlay)
+        if ((Game_ScreenshotEnhancedResolution != 0) && (Scaler_ScaleFactor > 1))
         {
-            image_mode = 2;
+            width = Scaler_ScaleFactor * 360;
+            height = Scaler_ScaleFactor * 240;
+
+            if (Scaler_ScaleTextureData && (Game_ScreenshotFormat > 2))
+            {
+                image_mode = 11;
+            }
+            else if (DrawOverlay)
+            {
+                image_mode = 6;
+            }
+            else
+            {
+                image_mode = 5;
+            }
         }
         else
         {
-            image_mode = 1;
+            width = 360;
+            height = 240;
+
+            image_mode = 4;
         }
     }
     else
+#endif
     {
-        image_mode = 0;
-    }
+        if ((Render_Width == 720) && (Game_ScreenshotEnhancedResolution != 0))
+        {
+            width = 720;
+            height = 480;
 
-    if (image_mode)
-    {
-        width = 720;
-        height = 480;
-    }
-    else
-    {
-        width = 360;
-        height = 240;
+            if (DrawOverlay)
+            {
+                image_mode = 2;
+            }
+            else
+            {
+                image_mode = 1;
+            }
+        }
+        else
+        {
+            width = 360;
+            height = 240;
+
+            image_mode = 0;
+        }
     }
 
     if (Game_ScreenshotFormat == 2)
@@ -607,19 +1045,30 @@ void Game_save_screenshot(const char *filename)
     }
     else if (Game_ScreenshotFormat == 4)
     {
-        width_in_file = ((width + 3) >> 2) * 4;
+        width_in_file = ((((image_mode == 11)?(3*width):width) + 3) >> 2) * 4;
     }
     else if (Game_ScreenshotFormat == 5)
     {
-        width_in_file = width + 1;
+        width_in_file = ((image_mode == 11)?(3*width):width) + 1;
     }
     else
     {
-        width_in_file = width;
+        width_in_file = (image_mode == 11)?(3*width):width;
     }
 
     buffer = (uint8_t *) malloc(width_in_file * height + 2000);
     if (buffer == NULL) return;
+
+    if (image_mode == 11)
+    {
+        buf_scaled = (uint32_t *) malloc(width * height * sizeof(uint32_t));
+        if (buf_scaled == NULL)
+        {
+            free(buffer);
+            return;
+        }
+    }
+    else buf_scaled = NULL;
 
     curptr = buffer;
 
@@ -651,6 +1100,7 @@ void Game_save_screenshot(const char *filename)
         filename2 = (char *) malloc(10 + 4 + 1 + 3 + 1);
         if (filename2 == NULL)
         {
+            if (buf_scaled != NULL) free(buf_scaled);
             free(buffer);
             return;
         }
@@ -867,21 +1317,21 @@ void Game_save_screenshot(const char *filename)
         curptr++;
 
         // write Color map type (8-bit)
-        *curptr = 1;
+        *curptr = (image_mode == 11)?0:1;
         curptr++;
 
         // write Image type (8-bit)
-        *curptr = 1;
+        *curptr = (image_mode == 11)?2:1;
         curptr++;
 
         // write Color map specification: First entry index (16-bit Little Endian)
         curptr = write_16le(curptr, 0);
 
         // write Color map specification: Color map length (16-bit Little Endian)
-        curptr = write_16le(curptr, 256);
+        curptr = write_16le(curptr, (image_mode == 11)?0:256);
 
         // write Color map specification: Color map entry size (8-bit)
-        *curptr = 24;
+        *curptr = (image_mode == 11)?0:24;
         curptr++;
 
         // write Image specification: X-origin (16-bit Little Endian)
@@ -897,20 +1347,23 @@ void Game_save_screenshot(const char *filename)
         curptr = write_16le(curptr, height);
 
         // write Image specification: Pixel depth (8-bit)
-        *curptr = 8;
+        *curptr = (image_mode == 11)?24:8;
         curptr++;
 
         // write Image specification: Image descriptor (8-bit)
         *curptr = 0x20;
         curptr++;
 
-        // fill palette data
-        for (palette_index = 0; palette_index < 256; palette_index++)
+        if (image_mode != 11)
         {
-            curptr[0] = loc_17E164[4 * palette_index + 2]; // b
-            curptr[1] = loc_17E164[4 * palette_index + 1]; // g
-            curptr[2] = loc_17E164[4 * palette_index];     // r
-            curptr += 3;
+            // fill palette data
+            for (palette_index = 0; palette_index < 256; palette_index++)
+            {
+                curptr[0] = loc_17E164[4 * palette_index + 2]; // b
+                curptr[1] = loc_17E164[4 * palette_index + 1]; // g
+                curptr[2] = loc_17E164[4 * palette_index];     // r
+                curptr += 3;
+            }
         }
     }
     else if (Game_ScreenshotFormat == 4)
@@ -932,7 +1385,7 @@ void Game_save_screenshot(const char *filename)
         curptr = write_16le(curptr, 0);
 
         // write The offset of bitmap image data (32-bit Little Endian)
-        curptr = write_32le(curptr, 14 + 40 + 1024);
+        curptr = write_32le(curptr, (image_mode == 11)?(14 + 40):(14 + 40 + 1024));
 
         // write DIB header size (32-bit Little Endian)
         curptr = write_32le(curptr, 40);
@@ -947,7 +1400,7 @@ void Game_save_screenshot(const char *filename)
         curptr = write_16le(curptr, 1);
 
         // write The number of bits per pixel (16-bit Little Endian)
-        curptr = write_16le(curptr, 8);
+        curptr = write_16le(curptr, (image_mode == 11)?24:8);
 
         // write The compression method (32-bit Little Endian)
         curptr = write_32le(curptr, 0);
@@ -967,14 +1420,17 @@ void Game_save_screenshot(const char *filename)
         // write The number of important colors used (32-bit Little Endian)
         curptr = write_32le(curptr, 0);
 
-        // fill palette data
-        for (palette_index = 0; palette_index < 256; palette_index++)
+        if (image_mode != 11)
         {
-            curptr[0] = loc_17E164[4 * palette_index + 2]; // b
-            curptr[1] = loc_17E164[4 * palette_index + 1]; // g
-            curptr[2] = loc_17E164[4 * palette_index];     // r
-            curptr[3] = 0;                                 // a
-            curptr += 4;
+            // fill palette data
+            for (palette_index = 0; palette_index < 256; palette_index++)
+            {
+                curptr[0] = loc_17E164[4 * palette_index + 2]; // b
+                curptr[1] = loc_17E164[4 * palette_index + 1]; // g
+                curptr[2] = loc_17E164[4 * palette_index];     // r
+                curptr[3] = 0;                                 // a
+                curptr += 4;
+            }
         }
     }
     else if (Game_ScreenshotFormat == 5)
@@ -1013,7 +1469,7 @@ void Game_save_screenshot(const char *filename)
         curptr++;
 
         // write Color type
-        *curptr = 3;
+        *curptr = (image_mode == 11)?2:3;
         curptr++;
 
         // write Compression method
@@ -1042,10 +1498,20 @@ void Game_save_screenshot(const char *filename)
         curptr += 4;
 
         // write Pixels per unit, X axis
-        curptr = write_32be(curptr, 640);
+        curptr = write_32be(curptr,
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+            (Game_AdvancedScaling)?(Scaler_ScaleTextureData * 320):
+#endif
+            640
+        );
 
         // write Pixels per unit, Y axis
-        curptr = write_32be(curptr, 480);
+        curptr = write_32be(curptr,
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+            (Game_AdvancedScaling)?(Scaler_ScaleTextureData * 240):
+#endif
+            480
+        );
 
         // write Unit specifier
         *curptr = 0;
@@ -1054,52 +1520,54 @@ void Game_save_screenshot(const char *filename)
         // write "pHYs" chunk crc32
         curptr = write_32be(curptr, zlib_crc32(0, curptr - (4 + 9), 4 + 9));
 
-
-        // "sBIT" chunk
-
-        // write "sBIT" chunk size
-        curptr = write_32be(curptr, 3);
-
-        // write "sBIT" chunk id
-        memcpy(curptr, "sBIT", 4);
-        curptr += 4;
-
-        // write Significant bits for red component of the palette entries
-        *curptr = 6;
-        curptr++;
-
-        // write Significant bits for green component of the palette entries
-        *curptr = 6;
-        curptr++;
-
-        // write Significant bits for blue component of the palette entries
-        *curptr = 6;
-        curptr++;
-
-        // write "sBIT" chunk crc32
-        curptr = write_32be(curptr, zlib_crc32(0, curptr - (4 + 3), 4 + 3));
-
-
-        // "PLTE" chunk
-
-        // write "PLTE" chunk size
-        curptr = write_32be(curptr, 256 * 3);
-
-        // write "PLTE" chunk id
-        memcpy(curptr, "PLTE", 4);
-        curptr += 4;
-
-        // fill palette data
-        for (palette_index = 0; palette_index < 256; palette_index++)
+        if (image_mode != 11)
         {
-            curptr[0] = loc_17E164[4 * palette_index];     // r
-            curptr[1] = loc_17E164[4 * palette_index + 1]; // g
-            curptr[2] = loc_17E164[4 * palette_index + 2]; // b
-            curptr += 3;
-        }
+            // "sBIT" chunk
 
-        // write "PLTE" chunk crc32
-        curptr = write_32be(curptr, zlib_crc32(0, curptr - (4 + 256 * 3), 4 + 256 * 3));
+            // write "sBIT" chunk size
+            curptr = write_32be(curptr, 3);
+
+            // write "sBIT" chunk id
+            memcpy(curptr, "sBIT", 4);
+            curptr += 4;
+
+            // write Significant bits for red component of the palette entries
+            *curptr = 6;
+            curptr++;
+
+            // write Significant bits for green component of the palette entries
+            *curptr = 6;
+            curptr++;
+
+            // write Significant bits for blue component of the palette entries
+            *curptr = 6;
+            curptr++;
+
+            // write "sBIT" chunk crc32
+            curptr = write_32be(curptr, zlib_crc32(0, curptr - (4 + 3), 4 + 3));
+
+
+            // "PLTE" chunk
+
+            // write "PLTE" chunk size
+            curptr = write_32be(curptr, 256 * 3);
+
+            // write "PLTE" chunk id
+            memcpy(curptr, "PLTE", 4);
+            curptr += 4;
+
+            // fill palette data
+            for (palette_index = 0; palette_index < 256; palette_index++)
+            {
+                curptr[0] = loc_17E164[4 * palette_index];     // r
+                curptr[1] = loc_17E164[4 * palette_index + 1]; // g
+                curptr[2] = loc_17E164[4 * palette_index + 2]; // b
+                curptr += 3;
+            }
+
+            // write "PLTE" chunk crc32
+            curptr = write_32be(curptr, zlib_crc32(0, curptr - (4 + 256 * 3), 4 + 256 * 3));
+        }
 
 
         // "IDAT" chunk
@@ -1114,23 +1582,211 @@ void Game_save_screenshot(const char *filename)
     }
 
     // fill pixel data
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+    if (image_mode == 11)
+    {
+        uint32_t *palette, *buf_unscaled, *src32, *dst32;
+
+        // temporary data
+        palette = (uint32_t *) ((3 + (uintptr_t)curptr) & ~(uintptr_t)3);
+        buf_unscaled = palette + 256;
+
+        // palette data
+        for (palette_index = 0; palette_index < 256; palette_index++)
+        {
+            palette[palette_index] =  loc_17E164[4 * palette_index + 2]        // b
+                                   | (loc_17E164[4 * palette_index + 1] <<  8) // g
+                                   | (loc_17E164[4 * palette_index    ] << 16) // r
+                                   | 0xff000000;                               // a
+        }
+
+        if (DrawOverlay)
+        {
+            src = screenshot_src;
+            dst32 = buf_unscaled;
+
+            // part above the viewport
+            for (counter = 360 * Game_OverlayDraw.ViewportY; counter != 0; counter--)
+            {
+                dst32[0] = palette[src[0]];
+
+                src++;
+                dst32++;
+            }
+
+            orig = Game_OverlayDraw.ScreenViewpartOriginal + 360 * Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportX;
+
+            // the viewport
+            for (y = Game_OverlayDraw.ViewportHeight; y != 0; y--)
+            {
+                // part left of the viewport
+                for (x = Game_OverlayDraw.ViewportX; x != 0; x--)
+                {
+                    dst32[0] = palette[src[0]];
+                    src++;
+                    dst32++;
+                }
+
+                // the viewport
+                for (x = Game_OverlayDraw.ViewportWidth; x != 0; x--)
+                {
+                    value = *src;
+                    src++;
+                    orig++;
+                    dst32[0] = (value == orig[-1])?0:palette[value];
+                    dst32++;
+                }
+
+                orig += 360 - Game_OverlayDraw.ViewportWidth;
+
+                // part right of the viewport
+                for (x = 360 - (Game_OverlayDraw.ViewportX + Game_OverlayDraw.ViewportWidth); x != 0; x--)
+                {
+                    dst32[0] = palette[src[0]];
+                    src++;
+                    dst32++;
+                }
+            }
+
+            // part below the viewport
+            for (counter = 360 * (240 - (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight)); counter != 0; counter--)
+            {
+                dst32[0] = palette[src[0]];
+
+                src++;
+                dst32++;
+            }
+
+            // markers
+            if (DrawOverlay & 1)
+            {
+                dst32 = buf_unscaled + 360 * (Game_OverlayDraw.ViewportY + Game_OverlayDisplay.ViewportHeight - 2) + (Game_OverlayDisplay.ViewportX + 1);
+
+                for (x = 8; x != 0; x--)
+                {
+                    dst32[0] = 0;
+                    dst32++;
+                }
+            }
+
+            if (DrawOverlay & 2)
+            {
+                dst32 = buf_unscaled + 360 * (Game_OverlayDraw.ViewportY + Game_OverlayDisplay.ViewportHeight - 2) + (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth - 10);
+
+                for (x = 8; x != 0; x--)
+                {
+                    dst32[0] = 0;
+                    dst32++;
+                }
+            }
+        }
+        else
+        {
+            for (counter = 0; counter < 360*240; counter++)
+            {
+                buf_unscaled[counter] = palette[screenshot_src[counter]];
+            }
+        }
+
+        ScalerPlugin_scale(Scaler_ScaleFactor, buf_unscaled, buf_scaled, 360, 240, 0);
+
+        if (DrawOverlay)
+        {
+            src32 = buf_unscaled + 360 * Game_OverlayDraw.ViewportY + Game_OverlayDisplay.ViewportX;
+            dst32 = buf_scaled + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * Game_OverlayDraw.ViewportY + Scaler_ScaleFactor * Game_OverlayDisplay.ViewportX;
+            src2 = Game_OverlayDraw.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * Game_OverlayDraw.ViewportY + Scaler_ScaleFactor * Game_OverlayDraw.ViewportX;
+
+            // the viewport
+            for (y = Game_OverlayDraw.ViewportHeight; y != 0; y--)
+            {
+                // the viewport
+                for (x = Game_OverlayDraw.ViewportWidth; x != 0; x--)
+                {
+                    src32++;
+                    if (src32[-1] == 0)
+                    {
+                        for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                        {
+                            for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+                            {
+                                dst32[counter + counter2 * Scaler_ScaleFactor * 360] = palette[src2[counter + counter2 * Scaler_ScaleFactor * 360]];
+                            }
+                        }
+                    }
+
+                    dst32 += Scaler_ScaleFactor;
+                    src2 += Scaler_ScaleFactor;
+                }
+
+                src32 += 360 - Game_OverlayDraw.ViewportWidth;
+                dst32 += (Scaler_ScaleFactor - 1) * Scaler_ScaleFactor * 360 + Scaler_ScaleFactor * (360 - Game_OverlayDraw.ViewportWidth);
+                src2 += (Scaler_ScaleFactor - 1) * Scaler_ScaleFactor * 360 + Scaler_ScaleFactor * (360 - Game_OverlayDraw.ViewportWidth);
+            }
+        }
+
+        if (Game_ScreenshotFormat == 5)
+        {
+            curptr = fill_png_pixel_data_advanced(buf_scaled, width_in_file * height + (2000 - 16) - (curptr - buffer), curptr);
+            if (curptr == NULL)
+            {
+                if (filename2 != NULL) free(filename2);
+                if (buf_scaled != NULL) free(buf_scaled);
+                free(buffer);
+                return;
+            }
+        }
+        else
+        {
+            src32 = buf_scaled;
+            for (y = height; y != 0; y--)
+            {
+                for (x = width; x != 0; x--)
+                {
+                    curptr[0] = *src32 & 0xff;
+                    curptr[1] = (*src32 >> 8) & 0xff;
+                    curptr[2] = (*src32 >> 16) & 0xff;
+                    curptr += 3;
+                    src32++;
+                }
+
+                memset(curptr, 0, width_in_file - 3 * width);
+                curptr += width_in_file - 3 * width;
+            }
+        }
+
+    }
+    else
+#endif
     if (Game_ScreenshotFormat == 5)
     {
-        curptr = fill_png_pixel_data(screenshot_src, image_mode, DrawOverlay, 721*480 + (2000 - 16) - (curptr - buffer), curptr);
+        curptr = fill_png_pixel_data(screenshot_src, image_mode, DrawOverlay, width_in_file * height + (2000 - 16) - (curptr - buffer), curptr);
         if (curptr == NULL)
         {
             if (filename2 != NULL) free(filename2);
+            if (buf_scaled != NULL) free(buf_scaled);
             free(buffer);
             return;
         }
     }
     else
     {
-        int x, y;
-        uint8_t *src, *orig, *src2, *dst;
-
-        if (image_mode == 0)
+        if ((image_mode == 0) || (image_mode == 4))
         {
+            unsigned int src2_stride, src2_factor;
+
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+            if (image_mode != 0)
+            {
+                src2_stride = Scaler_ScaleFactor * 360;
+                src2_factor = Scaler_ScaleFactor;
+            }
+            else
+#endif
+            {
+                src2_stride = 800;
+                src2_factor = 2;
+            }
+
             if (width_in_file == width)
             {
                 memcpy(curptr, screenshot_src, width * height);
@@ -1153,26 +1809,26 @@ void Game_save_screenshot(const char *filename)
 
             if (DrawOverlay & 1)
             {
-                dst = curptr - width_in_file * height + (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2) * width_in_file + Game_OverlayDraw.ViewportX + 1;
-                src2 = Game_OverlayDraw.ScreenViewpartOverlay + (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2)*2 * 800 + (Game_OverlayDraw.ViewportX + 1)*2;
+                dst = curptr - width_in_file * height + (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2) * width_in_file + (Game_OverlayDraw.ViewportX + 1);
+                src2 = Game_OverlayDraw.ScreenViewpartOverlay + src2_factor * src2_stride * (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2) + src2_factor * (Game_OverlayDraw.ViewportX + 1);
                 for (x = 8; x != 0; x--)
                 {
                     dst[0] = src2[0];
 
-                    src2+=2;
+                    src2 += src2_factor;
                     dst++;
                 }
             }
 
             if (DrawOverlay & 2)
             {
-                dst = curptr - width_in_file * height + (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2) * width_in_file + Game_OverlayDraw.ViewportX + Game_OverlayDraw.ViewportWidth - 10;
-                src2 = Game_OverlayDraw.ScreenViewpartOverlay + (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2)*2 * 800 + Game_OverlayDraw.ViewportX*2 + 2*(Game_OverlayDraw.ViewportWidth - 10);
+                dst = curptr - width_in_file * height + (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2) * width_in_file + Game_OverlayDraw.ViewportX + (Game_OverlayDraw.ViewportWidth - 10);
+                src2 = Game_OverlayDraw.ScreenViewpartOverlay + src2_factor * src2_stride * (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2) + Game_OverlayDraw.ViewportX*2 + src2_factor * (Game_OverlayDraw.ViewportWidth - 10);
                 for (x = 8; x != 0; x--)
                 {
                     dst[0] = src2[0];
 
-                    src2+=2;
+                    src2 += src2_factor;
                     dst++;
                 }
             }
@@ -1198,7 +1854,43 @@ void Game_save_screenshot(const char *filename)
                 curptr += width_in_file;
             }
         }
-        else
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+        else if (image_mode == 5)
+        {
+            src = screenshot_src;
+            for (y = 240; y != 0; y--)
+            {
+                for (x = 360; x != 0; x--)
+                {
+                    value = *src;
+                    src++;
+
+                    for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                    {
+                        for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+                        {
+                            curptr[counter + counter2 * width_in_file] = value;
+                        }
+                    }
+
+                    curptr += Scaler_ScaleFactor;
+                }
+
+                for (x = width_in_file - width; x != 0; x--)
+                {
+                    for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                    {
+                        curptr[counter2 * width_in_file] = 0;
+                    }
+
+                    curptr++;
+                }
+
+                curptr += (Scaler_ScaleFactor - 1) * width_in_file;
+            }
+        }
+#endif
+        else if (image_mode == 2)
         {
             src = screenshot_src;
 
@@ -1327,6 +2019,202 @@ void Game_save_screenshot(const char *filename)
                 curptr += width_in_file;
             }
         }
+#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+        else if (image_mode == 6)
+        {
+            src = screenshot_src;
+
+            // part above the viewport
+            for (y = Game_OverlayDraw.ViewportY; y != 0; y--)
+            {
+                for (x = 360; x != 0; x--)
+                {
+                    value = *src;
+                    src++;
+
+                    for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                    {
+                        for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+                        {
+                            curptr[counter + counter2 * width_in_file] = value;
+                        }
+                    }
+
+                    curptr += Scaler_ScaleFactor;
+                }
+
+                for (x = width_in_file - width; x != 0; x--)
+                {
+                    for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                    {
+                        curptr[counter2 * width_in_file] = 0;
+                    }
+
+                    curptr++;
+                }
+
+                curptr += (Scaler_ScaleFactor - 1) * width_in_file;
+            }
+
+            orig = Game_OverlayDraw.ScreenViewpartOriginal + 360 * Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportX;
+            src2 = Game_OverlayDraw.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * Game_OverlayDraw.ViewportY + Scaler_ScaleFactor * Game_OverlayDraw.ViewportX;
+
+            // the viewport
+            for (y = Game_OverlayDraw.ViewportHeight; y != 0; y--)
+            {
+                // part left of the viewport
+                for (x = Game_OverlayDraw.ViewportX; x != 0; x--)
+                {
+                    value = *src;
+                    src++;
+
+                    for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                    {
+                        for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+                        {
+                            curptr[counter + counter2 * width_in_file] = value;
+                        }
+                    }
+
+                    curptr += Scaler_ScaleFactor;
+                }
+
+                // the viewport
+                for (x = Game_OverlayDraw.ViewportWidth; x != 0; x--)
+                {
+                    value = *src;
+                    src++;
+                    orig++;
+
+                    if (value == orig[-1])
+                    {
+                        for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                        {
+                            for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+                            {
+                                curptr[counter + counter2 * width_in_file] = src2[counter + counter2 * (Scaler_ScaleFactor * 360)];
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                        {
+                            for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+                            {
+                                curptr[counter + counter2 * width_in_file] = value;
+                            }
+                        }
+                    }
+
+                    curptr += Scaler_ScaleFactor;
+                    src2 += Scaler_ScaleFactor;
+                }
+
+                orig += 360 - Game_OverlayDraw.ViewportWidth;
+                src2 += (Scaler_ScaleFactor - 1 ) * Scaler_ScaleFactor * 360 + Scaler_ScaleFactor * (360 - Game_OverlayDraw.ViewportWidth);
+
+                // part right of the viewport
+                for (x = 360 - (Game_OverlayDraw.ViewportX + Game_OverlayDraw.ViewportWidth); x != 0; x--)
+                {
+                    value = *src;
+                    src++;
+
+                    for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                    {
+                        for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+                        {
+                            curptr[counter + counter2 * width_in_file] = value;
+                        }
+                    }
+
+                    curptr += Scaler_ScaleFactor;
+                }
+
+                for (x = width_in_file - width; x != 0; x--)
+                {
+                    for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                    {
+                        curptr[counter2 * width_in_file] = 0;
+                    }
+
+                    curptr++;
+                }
+
+                curptr += (Scaler_ScaleFactor - 1) * width_in_file;
+            }
+
+            if (DrawOverlay & 1)
+            {
+                dst = curptr - 2 * width_in_file * 2 + 2 * (Game_OverlayDraw.ViewportX + 1);
+                src2 = Game_OverlayDraw.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2) + Scaler_ScaleFactor * (Game_OverlayDraw.ViewportX + 1);
+                for (x = 8; x != 0; x--)
+                {
+                    for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                    {
+                        for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+                        {
+                            dst[counter + counter2 * width_in_file] = src2[counter + counter2 * (Scaler_ScaleFactor * 360)];
+                        }
+                    }
+
+                    src2 += Scaler_ScaleFactor;
+                    dst += Scaler_ScaleFactor;
+                }
+            }
+
+            if (DrawOverlay & 2)
+            {
+                dst = curptr - 2 * width_in_file * 2 + 2 * Game_OverlayDraw.ViewportX + 2 * (Game_OverlayDraw.ViewportWidth - 10);
+                src2 = Game_OverlayDraw.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2) + Game_OverlayDraw.ViewportX*2 + Scaler_ScaleFactor * (Game_OverlayDraw.ViewportWidth - 10);
+                for (x = 8; x != 0; x--)
+                {
+                    for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                    {
+                        for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+                        {
+                            dst[counter + counter2 * width_in_file] = src2[counter + counter2 * (Scaler_ScaleFactor * 360)];
+                        }
+                    }
+
+                    src2 += Scaler_ScaleFactor;
+                    dst += Scaler_ScaleFactor;
+                }
+            }
+
+            // part below the viewport
+            for (y = 240 - (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight); y != 0; y--)
+            {
+                for (x = 360; x != 0; x--)
+                {
+                    value = *src;
+                    src++;
+
+                    for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                    {
+                        for (counter = 0; counter < Scaler_ScaleFactor; counter++)
+                        {
+                            curptr[counter + counter2 * width_in_file] = value;
+                        }
+                    }
+
+                    curptr += Scaler_ScaleFactor;
+                }
+
+                for (x = width_in_file - width; x != 0; x--)
+                {
+                    for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
+                    {
+                        curptr[counter2 * width_in_file] = 0;
+                    }
+
+                    curptr++;
+                }
+
+                curptr += (Scaler_ScaleFactor - 1) * width_in_file;
+            }
+        }
+#endif
     }
 
     if ((Game_ScreenshotFormat == 0) || (Game_ScreenshotFormat == 1) || (Game_ScreenshotFormat == 2))
@@ -1379,6 +2267,7 @@ void Game_save_screenshot(const char *filename)
     }
 
     if (filename2 != NULL) free(filename2);
+    if (buf_scaled != NULL) free(buf_scaled);
     free(buffer);
 }
 

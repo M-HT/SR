@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -50,6 +50,9 @@
 
 
 #define GAME_KEYBOARD_TYPE_RATE (30)
+
+
+#define GAME_MAX_SCALE_FACTOR (6)
 
 
 #if !defined(MAX_PATH)

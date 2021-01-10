@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -89,20 +89,37 @@ EXTERNAL_VARIABLE int32_t Picture_Position_BR_Y;	/* picture position - bottom ri
 EXTERNAL_VARIABLE Game_Flip_Procedure Display_Flip_Procedure;	/* flip procedure */
 EXTERNAL_VARIABLE int Font_Size_Shift;				/* font size = font size * 2 ^ Font_Size_Shift */
 
+EXTERNAL_VARIABLE uint32_t Game_AdvancedScaling;	/* advanced scaling enabled ? */
+EXTERNAL_VARIABLE uint32_t Game_ScalingQuality;		/* scaling quality: 0 = nearest neighbour, 1 = bilinear */
+EXTERNAL_VARIABLE uint32_t Game_AdvancedScaler;		/* advanced scaler: 0 = none, 1 = nearest neighbour, 2 = hqx, 3 = xbrz */
+EXTERNAL_VARIABLE int Game_ScaleFactor;				/* factor for advanced scaler: 0 = max */
+EXTERNAL_VARIABLE Game_Advanced_Flip_Procedure Display_Advanced_Flip_Procedure;	/* advanced flip procedure */
+
 #ifdef USE_SDL2
 EXTERNAL_VARIABLE SDL_Window *Game_Window;
 EXTERNAL_VARIABLE SDL_Renderer *Game_Renderer;
 EXTERNAL_VARIABLE SDL_Texture *Game_Texture[3];
+EXTERNAL_VARIABLE SDL_Texture *Game_Texture2[3];
+EXTERNAL_VARIABLE SDL_Texture *Game_ScaledTexture[3];
 #else
 EXTERNAL_VARIABLE SDL_Surface *Game_Screen;
 #ifdef ALLOW_OPENGL
 EXTERNAL_VARIABLE uint32_t Game_UseOpenGL;			/* use OpenGL for drawing ? */
 EXTERNAL_VARIABLE GLuint Game_GLTexture[3];
+EXTERNAL_VARIABLE GLuint Game_GLTexture2[3];
+EXTERNAL_VARIABLE GLuint Game_GLFramebuffer[3];
+EXTERNAL_VARIABLE GLuint Game_GLScaledTexture[3];
 #endif
 #endif
 #if defined(ALLOW_OPENGL) || defined(USE_SDL2)
 EXTERNAL_VARIABLE void *Game_TextureData;
+EXTERNAL_VARIABLE void *Game_TextureData2;
+EXTERNAL_VARIABLE void *Game_ScaledTextureData;
 EXTERNAL_VARIABLE int Game_CurrentTexture;
+EXTERNAL_VARIABLE int Game_UseTextureData2;
+EXTERNAL_VARIABLE int Scaler_ScaleFactor;
+EXTERNAL_VARIABLE int Scaler_ScaleTextureData;
+EXTERNAL_VARIABLE int Scaler_ScaleTexture;
 #endif
 
 // global audio variables
@@ -145,8 +162,8 @@ EXTERNAL_VARIABLE uint32_t Game_TouchscreenButtonEvents;	/* New option, see comm
 // 3d engine variables
 EXTERNAL_VARIABLE volatile uint32_t Game_UseEnhanced3DEngine;
 EXTERNAL_VARIABLE volatile uint32_t Game_UseEnhanced3DEngineNewValue;
-EXTERNAL_VARIABLE uint8_t *Game_ScreenViewpartOverlay;
-EXTERNAL_VARIABLE uint8_t *Game_ScreenViewpartOriginal;
+EXTERNAL_VARIABLE uint8_t *Game_ScreenViewpartOverlay[2];
+EXTERNAL_VARIABLE uint8_t *Game_ScreenViewpartOriginal[2];
 EXTERNAL_VARIABLE Game_OverlayInfo Game_OverlayDraw;
 EXTERNAL_VARIABLE Game_OverlayInfo Game_OverlayDisplay;
 

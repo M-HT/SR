@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -321,6 +321,60 @@ void Game_ReadConfig(void)
                 else if ( strcasecmp(param, "none") == 0 ) // param equals "none"
                 {
                     Game_MouseCursor = 2;
+                }
+            }
+            else if ( strcasecmp(str, "Scaling") == 0 ) // str equals "Scaling"
+            {
+                if ( strcasecmp(param, "basicnb") == 0 ) // param equals "basicnb"
+                {
+                    Game_AdvancedScaling = 0;
+                    Game_ScalingQuality = 0;
+                }
+                else if ( strcasecmp(param, "basic") == 0 ) // param equals "basic"
+                {
+                    Game_AdvancedScaling = 0;
+                    Game_ScalingQuality = 1;
+                }
+                else if ( strcasecmp(param, "advancednb") == 0 ) // param equals "advancednb"
+                {
+                    Game_AdvancedScaling = 1;
+                    Game_ScalingQuality = 0;
+                }
+                else if ( strcasecmp(param, "advanced") == 0 ) // param equals "advanced"
+                {
+                    Game_AdvancedScaling = 1;
+                    Game_ScalingQuality = 1;
+                }
+            }
+            else if ( strcasecmp(str, "AdvancedScaler") == 0 ) // str equals "AdvancedScaler"
+            {
+                if ( strcasecmp(param, "normal") == 0 ) // param equals "normal"
+                {
+                    Game_AdvancedScaler = 1;
+                }
+                else if ( strcasecmp(param, "hqx") == 0 ) // param equals "hqx"
+                {
+                    Game_AdvancedScaler = 2;
+                }
+                else if ( strcasecmp(param, "xbrz") == 0 ) // param equals "xbrz"
+                {
+                    Game_AdvancedScaler = 3;
+                }
+            }
+            else if ( strcasecmp(str, "ScalerFactor") == 0 ) // str equals "ScalerFactor"
+            {
+                if ( strcasecmp(param, "max") == 0 ) // param equals "max"
+                {
+                    Game_ScaleFactor = 0;
+                }
+                else
+                {
+                    num_int = 0;
+                    sscanf(param, "%i", &num_int);
+                    if ((num_int >= 2) && (num_int <= GAME_MAX_SCALE_FACTOR))
+                    {
+                        Game_ScaleFactor = num_int;
+                    }
                 }
             }
         }

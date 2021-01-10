@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -63,7 +63,6 @@ static void Flip_320x200x8_to_640x400x32(uint8_t *src, uint32_t *dst)
 #undef WRITE_PIXEL2
 }
 
-#if !defined(ALLOW_OPENGL) && !defined(USE_SDL2)
 static void Flip_320x200x8_to_320x200x32(const uint8_t *src, uint32_t *dst)
 {
     int counter;
@@ -84,6 +83,7 @@ static void Flip_320x200x8_to_320x200x32(const uint8_t *src, uint32_t *dst)
     }
 }
 
+#if !defined(ALLOW_OPENGL) && !defined(USE_SDL2)
 static void Flip_320x200x8_to_WxHx32_bilinear(uint8_t *src, uint32_t *dst)
 {
     uint32_t src_y, src_ydelta, src_ypos, src_xdelta, src_xpos, src_xpos_0, dst_xlastsize, height, width, val1, val2, dstval;
@@ -271,6 +271,10 @@ void Init_Display2(void)
 {
     Init_Palette();
 
+#if !defined(USE_SDL2) && !defined(ALLOW_OPENGL)
+    Game_AdvancedScaling = 0;
+#endif
+
     if (Fullscreen && Display_FSType)
     {
         if ((ScaledWidth == 0) || (ScaledHeight == 0))
@@ -317,7 +321,15 @@ void Init_Display2(void)
     Picture_Position_UL_Y = 0;
     Picture_Position_BR_X = ScaledWidth-1;
     Picture_Position_BR_Y = ScaledHeight-1;
-#if !defined(ALLOW_OPENGL) && !defined(USE_SDL2)
+#if defined(USE_SDL2) || defined(ALLOW_OPENGL)
+    if (Game_AdvancedScaling)
+    {
+        Render_Width = 320;
+        Render_Height = 200;
+        Display_Flip_Procedure = (Game_Flip_Procedure) &Flip_320x200x8_to_320x200x32;
+    }
+    else
+#else
     if (ScaleOutput)
     {
         Display_Flip_Procedure = (Game_Flip_Procedure) &Flip_320x200x8_to_WxHx32_bilinear;

@@ -26,6 +26,7 @@
 #define _GAME_VARS_H_INCLUDED_
 
 #include <errno.h>
+#include <stdio.h>
 #ifdef USE_SDL2
     #include <SDL2/SDL.h>
 #else

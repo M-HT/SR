@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <memory.h>
+#include <string.h>
 
 #include "Game_defs.h"
 #include "Game_vars.h"

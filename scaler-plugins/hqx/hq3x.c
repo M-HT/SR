@@ -19,7 +19,11 @@
  */
 
 #include <stdint.h>
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#include <malloc.h>
+#else
 #include <alloca.h>
+#endif
 #include "hqx.h"
 #include "hqx-common.h"
 #include "hqx-interp.h"

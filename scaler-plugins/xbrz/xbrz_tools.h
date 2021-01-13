@@ -67,6 +67,7 @@ void fillBlock(Pix* trg, int pitch /*[bytes]*/, Pix col, int blockWidth, int blo
 }
 
 
+#if !defined(NO_EXTRA_SCALERS)
 //nearest-neighbor (going over target image - slow for upscaling, since source is read multiple times missing out on cache! Fast for similar image sizes!)
 template <class PixSrc, class PixTrg, class PixConverter>
 void nearestNeighborScale(const PixSrc* src, int srcWidth, int srcHeight, int srcPitch /*[bytes]*/,
@@ -274,6 +275,7 @@ void bilinearScale(const uint32_t* src, int srcWidth, int srcHeight, int srcPitc
         }
     }
 }
+#endif
 }
 
 #endif //XBRZ_TOOLS_H_825480175091875

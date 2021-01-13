@@ -27,12 +27,13 @@
     #define WIN32_LEAN_AND_MEAN
 
     #include <windows.h>
+    #include <malloc.h>
 #else
     #include <unistd.h>
     #include <dirent.h>
+    #include <alloca.h>
 #endif
 
-#include <alloca.h>
 #include <stdio.h>
 #include <string.h>
 #include <zlib.h>
@@ -72,6 +73,7 @@ static int zlib_state = 0;
 #define zlib_deflateInit2(strm, level, method, windowBits, memLevel, strategy) deflateInit2((strm),(level),(method),(windowBits),(memLevel),(strategy))
 #define zlib_deflate(strm, flush) deflate((strm),(flush))
 #define zlib_deflateEnd(strm) deflateEnd((strm))
+#define zlib_crc32(crc, buf, len) crc32((crc), (buf), (len))
 #endif
 
 

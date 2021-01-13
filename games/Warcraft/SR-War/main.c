@@ -366,9 +366,6 @@ static void Game_Display_Create(void)
     #ifdef ALLOW_OPENGL
         if (Game_UseOpenGL)
         {
-            // flush GL errors
-            while(glGetError() != GL_NO_ERROR);
-
             if (Display_Bitsperpixel == 32)
             {
                 SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 8 );
@@ -434,6 +431,9 @@ static void Game_Display_Create(void)
                 break;
             }
         }
+
+        // flush GL errors
+        while(glGetError() != GL_NO_ERROR);
 
         glViewport(Picture_Position_UL_X, Picture_Position_UL_Y, Picture_Width, Picture_Height);
 

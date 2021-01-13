@@ -27,6 +27,7 @@
 #include "palette32bgra.h"
 #include "overlay.h"
 #include <memory.h>
+#include <strings.h>
 
 static int DisplayMode;
 

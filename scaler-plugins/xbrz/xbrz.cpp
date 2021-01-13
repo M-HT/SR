@@ -17,6 +17,9 @@
 #include "xbrz.h"
 #include <cassert>
 #include <vector>
+#ifdef NO_BUFFER_HEAP_ALLOCATION
+#include <array>
+#endif
 #include <algorithm>
 #include <cmath> //std::sqrt
 #include "xbrz_tools.h"
@@ -190,9 +193,17 @@ double distYCbCrBuffered(uint32_t pix1, uint32_t pix2)
 {
     //30% perf boost compared to plain distYCbCr()!
     //consumes 64 MB memory; using double is only 2% faster, but takes 128 MB
+#ifdef NO_BUFFER_HEAP_ALLOCATION
+    static const std::array<float, 256 * 256 * 256> diffToDist = []
+#else
     static const std::vector<float> diffToDist = []
+#endif
     {
+#ifdef NO_BUFFER_HEAP_ALLOCATION
+        std::array<float, 256 * 256 * 256> tmp;
+#else
         std::vector<float> tmp;
+#endif
 
         for (uint32_t i = 0; i < 256 * 256 * 256; ++i) //startup time: 114 ms on Intel Core i5 (four cores)
         {
@@ -211,7 +222,11 @@ double distYCbCrBuffered(uint32_t pix1, uint32_t pix2)
             const double c_b = scale_b * (b_diff - y);
             const double c_r = scale_r * (r_diff - y);
 
+#ifdef NO_BUFFER_HEAP_ALLOCATION
+            tmp[i] = static_cast<float>(std::sqrt(square(y) + square(c_b) + square(c_r)));
+#else
             tmp.push_back(static_cast<float>(std::sqrt(square(y) + square(c_b) + square(c_r))));
+#endif
         }
         return tmp;
     }();
@@ -1277,6 +1292,7 @@ bool xbrz::equalColorTest(uint32_t col1, uint32_t col2, ColorFormat colFmt, doub
 }
 
 
+#if !defined(NO_EXTRA_SCALERS)
 void xbrz::bilinearScale(const uint32_t* src, int srcWidth, int srcHeight,
                          /**/  uint32_t* trg, int trgWidth, int trgHeight)
 {
@@ -1293,6 +1309,7 @@ void xbrz::nearestNeighborScale(const uint32_t* src, int srcWidth, int srcHeight
                          trg, trgWidth, trgHeight, trgWidth * sizeof(uint32_t),
     0, trgHeight, [](uint32_t pix) { return pix; });
 }
+#endif
 
 
 #if 0

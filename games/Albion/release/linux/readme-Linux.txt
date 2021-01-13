@@ -1,5 +1,5 @@
 Albion for Linux (x86)
-Version 1.6.1
+Version 1.7.0
 
 Original Albion version 1.38 is required for playing.
 (English version preferred, but other languages should also work)
@@ -52,6 +52,7 @@ ALSA sequencer, WildMIDI, BASSMIDI, ADLMIDI, SDL_mixer
 
 ADLMIDI is the default library, others can be selected in the configuration file.
 ALSA sequencer can use hardware or software synth (like Fluidsynth or TiMidity++).
+ADLMIDI requires no additional files for MIDI playback,
 WildMIDI and SDL_mixer require GUS patches for MIDI playback,
 BASSMIDI requires a soundfont for MIDI playback,
 ADLMIDI uses OPL3 emulator for MIDI playback.
@@ -69,8 +70,9 @@ in the configuration file.
 
 Enhanced 3D rendering
 ---------------------
-Enhanced 3D rendering renders the 3d part of the game in double resolution,
+Enhanced 3D rendering renders the 3d part of the game in double (or more) resolution,
 instead of rendering it in the original resolution and then scaling it.
+Rendering in more than double resolution is only available in advanced scaling mode.
 There are some minor issues:
  - it works best when the 3D window size is set to 100%
  - when toggling scaling or enhanced 3D rendering and the game is in 3D mode
@@ -93,6 +95,8 @@ Misc
 
 WildMIDI library uses version 3 of the GNU Lesser General Public License (LGPLv3).
 ADLMIDI library uses version 3 of the GNU Lesser General Public License (LGPLv3).
+HQX scaler uses version 2.1 of the GNU Lesser General Public License (LGPLv2.1).
+xBRZ scaler uses version 3 of the GNU General Public License (GPLv3).
 
 Playback of background sound/music effects (played using music driver) uses modified WildMIDI library.
 
@@ -105,6 +109,15 @@ it sounds worse and can't play more than one MIDI stream simultaneously
 
 Changes
 -------
+
+v1.7.0 (2021-01-13)
+* add advanced scaling options - nearest neighbour, scaler plugins: hqx, xbrz
+* integrate video playing (intro and credits) into main executable
+* change how fullscreen works
+* add several options for making screenshots
+* fix bug in the original code
+* minor bug fixes
+
 
 v1.6.1 (2018-01-01)
 * add new MIDI plugin: adlmidi - it plays MIDI music using OPL3 emulator

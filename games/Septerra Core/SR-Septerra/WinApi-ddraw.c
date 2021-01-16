@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -150,7 +150,7 @@ struct IDirectDraw_c {
 #if SDL_VERSION_ATLEAST(2,0,0)
     SDL_Window *Window;
     SDL_Renderer *Renderer;
-    SDL_Texture *Texture;
+    SDL_Texture *Texture[3];
 #else
     SDL_Surface *Screen;
 #endif
@@ -160,8 +160,9 @@ struct IDirectDrawSurface_c {
     void *lpVtbl;
     uint32_t RefCount;
 #if SDL_VERSION_ATLEAST(2,0,0)
+    int current_texture;
     SDL_Renderer *Renderer;
-    SDL_Texture *Texture;
+    SDL_Texture *Texture[3];
 #endif
     SDL_Surface *Surface;
     int primary, backbuffer, mustlock, was_flipped;
@@ -399,10 +400,14 @@ uint32_t IDirectDraw_Release_c(struct IDirectDraw_c *lpThis)
     if (lpThis->RefCount == 0)
     {
 #if SDL_VERSION_ATLEAST(2,0,0)
-        if (lpThis->Texture != NULL)
+        if (lpThis->Texture[0] != NULL)
         {
-            SDL_DestroyTexture(lpThis->Texture);
-            lpThis->Texture = NULL;
+            SDL_DestroyTexture(lpThis->Texture[2]);
+            lpThis->Texture[2] = NULL;
+            SDL_DestroyTexture(lpThis->Texture[1]);
+            lpThis->Texture[1] = NULL;
+            SDL_DestroyTexture(lpThis->Texture[0]);
+            lpThis->Texture[0] = NULL;
         }
         if (lpThis->Renderer != NULL)
         {
@@ -497,8 +502,11 @@ uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsur
         lpDDS_c->was_flipped = 0;
 
 #if SDL_VERSION_ATLEAST(2,0,0)
+        lpDDS_c->current_texture = 0;
         lpDDS_c->Renderer = lpThis->Renderer;
-        lpDDS_c->Texture = lpThis->Texture;
+        lpDDS_c->Texture[0] = lpThis->Texture[0];
+        lpDDS_c->Texture[1] = lpThis->Texture[1];
+        lpDDS_c->Texture[2] = lpThis->Texture[2];
         lpDDS_c->Surface = NULL;
         lpDDS_c->mustlock = 1;
 #else
@@ -528,7 +536,7 @@ uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsur
         Uint32 format;
         int width, height;
 
-        if (0 == SDL_QueryTexture(lpThis->Texture, &format, NULL, &width, &height))
+        if (0 == SDL_QueryTexture(lpThis->Texture[0], &format, NULL, &width, &height))
         {
             int bpp;
             Uint32 Rmask, Gmask, Bmask, Amask;
@@ -839,7 +847,7 @@ uint32_t IDirectDraw_SetDisplayMode_c(struct IDirectDraw_c *lpThis, uint32_t dwW
         return DDERR_UNSUPPORTEDMODE;
     }
 
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, (Display_ScalingQuality)?"linear":"nearest");
 
     if (0 != SDL_RenderSetLogicalSize(lpThis->Renderer, dwWidth, dwHeight))
     {
@@ -866,9 +874,23 @@ uint32_t IDirectDraw_SetDisplayMode_c(struct IDirectDraw_c *lpThis, uint32_t dwW
         }
     }
 
-    lpThis->Texture = SDL_CreateTexture(lpThis->Renderer, texture_format, SDL_TEXTUREACCESS_STREAMING, dwWidth, dwHeight);
-    if (lpThis->Texture == NULL)
+    int index;
+    for (index = 0; index < 3; index++)
     {
+        lpThis->Texture[index] = SDL_CreateTexture(lpThis->Renderer, texture_format, SDL_TEXTUREACCESS_STREAMING, dwWidth, dwHeight);
+    }
+
+    if ((lpThis->Texture[0] == NULL) || (lpThis->Texture[1] == NULL) || (lpThis->Texture[2] == NULL))
+    {
+        for (index = 2; index >= 0; index--)
+        {
+            if (lpThis->Texture[index] != NULL)
+            {
+                SDL_DestroyTexture(lpThis->Texture[index]);
+                lpThis->Texture[index] = NULL;
+            }
+        }
+
         SDL_DestroyRenderer(lpThis->Renderer);
         lpThis->Renderer = NULL;
         SDL_DestroyWindow(lpThis->Window);
@@ -1229,7 +1251,7 @@ uint32_t IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, struct _r
 #if SDL_VERSION_ATLEAST(2,0,0)
         if (lpThis->primary)
         {
-            if (0 != SDL_LockTexture(lpThis->Texture, NULL, (void **)&(lpThis->Surface->pixels), &(lpThis->Surface->pitch)))
+            if (0 != SDL_LockTexture(lpThis->Texture[lpThis->current_texture], NULL, (void **)&(lpThis->Surface->pixels), &(lpThis->Surface->pitch)))
             {
 #ifdef DEBUG_DDRAW
                 eprintf("error\n");
@@ -1281,7 +1303,7 @@ uint32_t IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, struct _r
 #if SDL_VERSION_ATLEAST(2,0,0)
             if (lpThis->primary)
             {
-                SDL_UnlockTexture(lpThis->Texture);
+                SDL_UnlockTexture(lpThis->Texture[lpThis->current_texture]);
             }
 #endif
 #ifdef DEBUG_DDRAW
@@ -1293,10 +1315,16 @@ uint32_t IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, struct _r
         if (lpThis->primary)
         {
 #if SDL_VERSION_ATLEAST(2,0,0)
-            SDL_UnlockTexture(lpThis->Texture);
+            SDL_UnlockTexture(lpThis->Texture[lpThis->current_texture]);
 
-            SDL_RenderCopy(lpThis->Renderer, lpThis->Texture, NULL, NULL);
+            SDL_RenderCopy(lpThis->Renderer, lpThis->Texture[lpThis->current_texture], NULL, NULL);
             SDL_RenderPresent(lpThis->Renderer);
+
+            lpThis->current_texture++;
+            if (lpThis->current_texture > 2)
+            {
+                lpThis->current_texture = 0;
+            }
 
             // clear next frame
             SDL_SetRenderDrawColor(lpThis->Renderer, 0, 0, 0, 255);
@@ -1428,9 +1456,15 @@ uint32_t IDirectDrawSurface_Flip_c(struct IDirectDrawSurface_c *lpThis, struct I
     if (lpDDSurfaceTargetOverride == NULL)
     {
 #if SDL_VERSION_ATLEAST(2,0,0)
-        CopyBackbufferSurfaceToTexture(lpThis->lpBackbuffer->Surface, lpThis->Texture);
-        SDL_RenderCopy(lpThis->Renderer, lpThis->Texture, NULL, NULL);
+        CopyBackbufferSurfaceToTexture(lpThis->lpBackbuffer->Surface, lpThis->Texture[lpThis->current_texture]);
+        SDL_RenderCopy(lpThis->Renderer, lpThis->Texture[lpThis->current_texture], NULL, NULL);
         SDL_RenderPresent(lpThis->Renderer);
+
+        lpThis->current_texture++;
+        if (lpThis->current_texture > 2)
+        {
+            lpThis->current_texture = 0;
+        }
 
         // clear next frame
         SDL_SetRenderDrawColor(lpThis->Renderer, 0, 0, 0, 255);
@@ -1664,7 +1698,7 @@ uint32_t IDirectDrawSurface_IsLost_c(struct IDirectDrawSurface_c *lpThis)
     }
 
 #if SDL_VERSION_ATLEAST(2,0,0)
-    if ((lpThis->primary && (lpThis->Texture == NULL)) ||
+    if ((lpThis->primary && (lpThis->Texture[0] == NULL)) ||
         (!lpThis->primary && (lpThis->Surface == NULL))
        )
 #else

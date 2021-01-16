@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -31,15 +31,16 @@
 #define GAME_CONFIG_STORAGE extern
 #endif
 
-GAME_CONFIG_STORAGE int Intro_Play;         /* play intro movies ? */
+GAME_CONFIG_STORAGE int Intro_Play;             /* play intro movies ? */
 
-GAME_CONFIG_STORAGE int Display_Mode;       /* display mode - 0 = window; 1 = desktop; 2 = fullscreen */
-GAME_CONFIG_STORAGE int Display_VSync;      /* vsync enabled ? */
-GAME_CONFIG_STORAGE int Display_Width;      /* horizontal size */
-GAME_CONFIG_STORAGE int Display_Height;     /* vertical size */
-GAME_CONFIG_STORAGE int Display_Resizable;  /* resizable window ? */
+GAME_CONFIG_STORAGE int Display_Mode;           /* display mode - 0 = window; 1 = desktop; 2 = fullscreen */
+GAME_CONFIG_STORAGE int Display_VSync;          /* vsync enabled ? */
+GAME_CONFIG_STORAGE int Display_Width;          /* horizontal size */
+GAME_CONFIG_STORAGE int Display_Height;         /* vertical size */
+GAME_CONFIG_STORAGE int Display_Resizable;      /* resizable window ? */
+GAME_CONFIG_STORAGE int Display_ScalingQuality; /* scaling quality: 0 = nearest neighbour, 1 = bilinear */
 
-GAME_CONFIG_STORAGE int Audio_BufferSize;   /* audio buffer size (in samples) */
+GAME_CONFIG_STORAGE int Audio_BufferSize;       /* audio buffer size (in samples) */
 
 void ReadConfiguration(void);
 

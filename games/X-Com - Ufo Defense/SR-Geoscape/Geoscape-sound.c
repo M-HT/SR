@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -100,6 +100,7 @@ void Game_ProcessAudio(void)
     }
 }
 
+#if !defined(USE_SDL2)
 static int Is_MulPow2(uint32_t src_rate, uint32_t dst_rate)
 {
     uint32_t higher, lower;
@@ -124,6 +125,7 @@ static int Is_MulPow2(uint32_t src_rate, uint32_t dst_rate)
     }
     return 0;
 }
+#endif
 
 // returns dst size in bytes
 static uint32_t Get_Resampled_Size(int _stereo, int _16bit, uint32_t src_rate, uint32_t dst_rate, uint32_t src_size_bytes, uint32_t *dst_size_samples)
@@ -310,6 +312,7 @@ static void Resample(int _stereo, int _16bit, uint32_t src_rate, uint32_t dst_ra
     }
 }
 
+#if !defined(USE_SDL2)
 static void Interpolated_Resample(int _stereo, int _16bit, int _signed, uint32_t src_rate, uint32_t dst_rate, uint8_t *srcbuf, uint8_t *dstbuf, uint32_t src_size, uint32_t dst_size)
 {
     uint32_t src_delta, src_pos, dst_lastsize;
@@ -440,6 +443,7 @@ static void Interpolated_Resample(int _stereo, int _16bit, int _signed, uint32_t
 #undef CALC_MONO
 #undef RESAMPLE
 }
+#endif
 
 static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
 {
@@ -500,6 +504,7 @@ static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
 
         if (Game_InterpolateAudio)
         {
+#if !defined(USE_SDL2)
             if (Game_AudioRate != sample->playback_rate)
             {
                 // interpolated resampling
@@ -535,15 +540,18 @@ static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
                 cvt.len = newlen_bytes * form_mult;
                 Interpolated_Resample(sample->_stereo, sample->_16bit, sample->_signed, sample->playback_rate, Game_AudioRate, (uint8_t *) sample->sound, cvt.buf, sample->len, newlen_samples);
             }
+#endif
         }
         else
         {
-            // SDL supports resampling only when higher frequency equals lower frequency multiplied by power of 2,
+            // SDL1 supports resampling only when higher frequency equals lower frequency multiplied by power of 2,
             // so I'm using my resampling when it's not the case
             // or when the target frequency is lower than the source frequency to use less memory
+#if !defined(USE_SDL2)
             if (Game_AudioRate < sample->playback_rate ||
                 (Is_MulPow2(Game_AudioRate, sample->playback_rate) == 0)
                )
+#endif
             {
                 // near-neighbour resampling
                 uint32_t newlen_bytes, newlen_samples;

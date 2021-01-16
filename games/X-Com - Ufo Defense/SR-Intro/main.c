@@ -1199,7 +1199,7 @@ static int Game_Initialize(void)
 static void Game_Initialize2(void)
 {
     uint32_t Sound, Music;
-    int frequency, channels;
+    int frequency, channels, audio_ok;
     Uint16 format;
 
     if (Game_Sound || Game_Music)
@@ -1215,6 +1215,53 @@ static void Game_Initialize2(void)
             format = Game_AudioFormat;
             channels = Game_AudioChannels;
 
+            audio_ok = 0;
+#if defined(USE_SDL2) && (SDL_VERSIONNUM(SDL_MIXER_MAJOR_VERSION, SDL_MIXER_MINOR_VERSION, SDL_MIXER_PATCHLEVEL) >= SDL_VERSIONNUM(2, 0, 2))
+            const SDL_version *link_version = Mix_Linked_Version();
+            if (SDL_VERSIONNUM(link_version->major, link_version->minor, link_version->patch) >= SDL_VERSIONNUM(2,0,2))
+            {
+                if ( Mix_OpenAudioDevice(frequency, format, channels, Game_AudioBufferSize, NULL, SDL_AUDIO_ALLOW_ANY_CHANGE) == 0)
+                {
+                    if ( Mix_QuerySpec(&frequency, &format, &channels) )
+                    {
+#if defined(__DEBUG__)
+                        fprintf(stderr, "Audio rate: %i\n", frequency);
+                        fprintf(stderr, "Audio format: 0x%x\n", format);
+                        fprintf(stderr, "Audio channels: %i\n", channels);
+#endif
+                        if ((frequency <= 48000) &&
+                            (channels <= 2) &&
+                            ((format == AUDIO_S8) || (format == AUDIO_U8) || (format == AUDIO_S16LSB) || (format == AUDIO_U16LSB))
+                           )
+                        {
+                            audio_ok = 1;
+                        }
+                    }
+
+                    if (!audio_ok)
+                    {
+                        Mix_CloseAudio();
+
+                        frequency = Game_AudioRate;
+                        format = Game_AudioFormat;
+                        channels = Game_AudioChannels;
+
+                        if ( Mix_OpenAudioDevice(frequency, format, channels, Game_AudioBufferSize, NULL,
+                                #ifdef SDL_AUDIO_ALLOW_SAMPLES_CHANGE
+                                    SDL_AUDIO_ALLOW_SAMPLES_CHANGE
+                                #else
+                                    0
+                                #endif
+                                ) == 0
+                           )
+                        {
+                            audio_ok = 1;
+                        }
+                    }
+                }
+            }
+            else
+#endif
             if ( Mix_OpenAudio(frequency, format, channels, Game_AudioBufferSize) == 0)
             {
                 if ( Mix_QuerySpec(&frequency, &format, &channels) )
@@ -1224,10 +1271,26 @@ static void Game_Initialize2(void)
                     fprintf(stderr, "Audio format: 0x%x\n", format);
                     fprintf(stderr, "Audio channels: %i\n", channels);
 #endif
-                    Game_AudioRate = frequency;
-                    Game_AudioFormat = format;
-                    Game_AudioChannels = channels;
+                    if ((frequency <= 48000) &&
+                        (channels <= 2) &&
+                        ((format == AUDIO_S8) || (format == AUDIO_U8) || (format == AUDIO_S16LSB) || (format == AUDIO_U16LSB))
+                       )
+                    {
+                        audio_ok = 1;
+                    }
                 }
+
+                if (!audio_ok)
+                {
+                    Mix_CloseAudio();
+                }
+            }
+
+            if (audio_ok)
+            {
+                Game_AudioRate = frequency;
+                Game_AudioFormat = format;
+                Game_AudioChannels = channels;
 
                 Mix_AllocateChannels(1);
 

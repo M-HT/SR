@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2020 Roman Pauer
+ *  Copyright (C) 2019-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -972,13 +972,25 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
             return DSERR_OUTOFMEMORY;
         }
 
-#if SDL_VERSION_ATLEAST(2,0,0)
         if ((obtained.channels > 2) || ((obtained.size / (obtained.samples * obtained.channels)) > 2))
         {
+#if SDL_VERSION_ATLEAST(2,0,0)
             SDL_CloseAudioDevice(lpDSB_c->device_id);
 
-            lpDSB_c->device_id = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
+            lpDSB_c->device_id = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE
+                #ifdef SDL_AUDIO_ALLOW_SAMPLES_CHANGE
+                    | SDL_AUDIO_ALLOW_SAMPLES_CHANGE
+                #endif
+            );
             if (lpDSB_c->device_id == 0)
+#else
+            SDL_CloseAudio();
+            if (0 == SDL_OpenAudio(&desired, NULL))
+            {
+                obtained = desired;
+            }
+            else
+#endif
             {
                 free(lpDSB_c);
 
@@ -988,7 +1000,6 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
                 return DSERR_OUTOFMEMORY;
             }
         }
-#endif
 
         if (obtained.channels == 2)
         {
@@ -1687,13 +1698,25 @@ uint32_t IDirectSoundBuffer_SetFormat_c(struct IDirectSoundBuffer_c *lpThis, con
         return DSERR_BADFORMAT;
     }
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     if ((obtained.channels > 2) || ((obtained.size / (obtained.samples * obtained.channels)) > 2))
     {
+#if SDL_VERSION_ATLEAST(2,0,0)
         SDL_CloseAudioDevice(lpThis->device_id);
 
-        lpThis->device_id = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
+        lpThis->device_id = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE
+            #ifdef SDL_AUDIO_ALLOW_SAMPLES_CHANGE
+                | SDL_AUDIO_ALLOW_SAMPLES_CHANGE
+            #endif
+        );
         if (lpThis->device_id == 0)
+#else
+        SDL_CloseAudio();
+        if (0 == SDL_OpenAudio(&desired, NULL))
+        {
+            obtained = desired;
+        }
+        else
+#endif
         {
             lpThis->status = SDL_AUDIO_STOPPED;
 #ifdef DEBUG_DSOUND
@@ -1702,7 +1725,6 @@ uint32_t IDirectSoundBuffer_SetFormat_c(struct IDirectSoundBuffer_c *lpThis, con
             return DSERR_BADFORMAT;
         }
     }
-#endif
 
     lpThis->sample_size_shift = 0;
     if (obtained.channels == 2)

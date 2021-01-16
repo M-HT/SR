@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2020 Roman Pauer
+ *  Copyright (C) 2019-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -119,6 +119,7 @@ typedef struct MovieRecord {
     long audio_sample_rate;
     int decode_raw_audio;
 #if SDL_VERSION_ATLEAST(2,0,0)
+    SDL_AudioDeviceID device_id;
     SDL_AudioFormat audio_format;
 #else
     int audio_format;
@@ -442,7 +443,11 @@ static void *movie_thread(void *arg)
 
         if (movie->play_audio)
         {
+#if SDL_VERSION_ATLEAST(2,0,0)
+            SDL_PauseAudioDevice(movie->device_id, 0);
+#else
             SDL_PauseAudio(0);
+#endif
         }
     }
 
@@ -926,9 +931,15 @@ void StopMovie_c (void *theMovie)
     movie = (Movie)theMovie;
     if (movie->play_audio)
     {
+#if SDL_VERSION_ATLEAST(2,0,0)
+        SDL_LockAudioDevice(movie->device_id);
+        SDL_PauseAudioDevice(movie->device_id, 1);
+        SDL_UnlockAudioDevice(movie->device_id);
+#else
         SDL_LockAudio();
         SDL_PauseAudio(1);
         SDL_UnlockAudio();
+#endif
     }
 
     if (movie->is_playing)
@@ -1606,7 +1617,14 @@ void *NewMovieController_c (void *theMovie, const void *movieRect, int32_t someF
             desired.callback = &fill_audio;
             desired.userdata = movie;
 
+#if SDL_VERSION_ATLEAST(2,0,0)
+            SDL_AudioSpec obtained;
+
+            movie->device_id = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, 0);
+            if (movie->device_id == 0)
+#else
             if (0 != SDL_OpenAudio(&desired, NULL))
+#endif
             {
                 movie->play_audio = 0;
                 SDL_QuitSubSystem(SDL_INIT_AUDIO);
@@ -1623,7 +1641,11 @@ void *NewMovieController_c (void *theMovie, const void *movieRect, int32_t someF
             }
             else
             {
+#if SDL_VERSION_ATLEAST(2,0,0)
+                movie->silence = obtained.silence;
+#else
                 movie->silence = desired.silence;
+#endif
             }
         }
     }
@@ -1650,7 +1672,12 @@ void DisposeMovieController_c (void *mc)
 
     if (movie->play_audio)
     {
+#if SDL_VERSION_ATLEAST(2,0,0)
+        SDL_CloseAudioDevice(movie->device_id);
+        movie->device_id = 0;
+#else
         SDL_CloseAudio();
+#endif
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
 
         if (movie->audio_temp_buffer[0] != NULL)
@@ -1758,9 +1785,15 @@ void *MCIsPlayerEvent_c (void *mc, const void *e)
         {
             if (movie->play_audio)
             {
+#if SDL_VERSION_ATLEAST(2,0,0)
+                SDL_LockAudioDevice(movie->device_id);
+                SDL_PauseAudioDevice(movie->device_id, 1);
+                SDL_UnlockAudioDevice(movie->device_id);
+#else
                 SDL_LockAudio();
                 SDL_PauseAudio(1);
                 SDL_UnlockAudio();
+#endif
             }
 
             movie->stop_playback = 1;

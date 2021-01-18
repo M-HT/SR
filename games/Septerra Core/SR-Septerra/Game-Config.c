@@ -71,8 +71,15 @@ void ReadConfiguration(void)
     Display_Height = 0;
     Display_Resizable = 0;
     Display_ScalingQuality = 1;
+    Display_DelayAfterFlip = 0;
 
     Audio_BufferSize = 0;
+
+    Option_DefaultMovement = 0;
+    Option_MovieResolution = 1;
+    Option_MoviesPlay = 1;
+    Option_PointSoundsPlay = 1;
+    Option_SoundsPlay = 1;
 
 #ifdef _WIN32
     f = fopen(CONFIG_FILE, "rt");
@@ -204,11 +211,20 @@ void ReadConfiguration(void)
                     Display_ScalingQuality = 1;
                 }
             }
+            else if ( strcasecmp(str, "DelayAfterFlip") == 0 ) // str equals "DelayAfterFlip"
+            {
+                num_int = 0;
+                sscanf(param, "%i", &num_int);
+                if ((num_int > 0) && (num_int <= 20))
+                {
+                    Display_DelayAfterFlip = num_int;
+                }
+            }
 
         }
         else if ( strncasecmp(str, "Audio_", 6) == 0 ) // str begins with "Audio_"
         {
-            // display settings
+            // audio settings
 
             str += 6;
 
@@ -216,8 +232,74 @@ void ReadConfiguration(void)
             {
                 num_int = 0;
                 sscanf(param, "%i", &num_int);
-                Audio_BufferSize = num_int;
+                if (num_int > 0)
+                {
+                    Audio_BufferSize = num_int;
+                }
             }
+        }
+        else if ( strncasecmp(str, "Option_", 7) == 0 ) // str begins with "Option_"
+        {
+            // command line options
+
+            str += 7;
+
+            if ( strcasecmp(str, "DefaultMovement") == 0 ) // str equals "DefaultMovement"
+            {
+                if ( strcasecmp(param, "walk") == 0 ) // param equals "walk"
+                {
+                    Option_DefaultMovement = 0;
+                }
+                else if ( strcasecmp(param, "run") == 0 ) // param equals "run"
+                {
+                    Option_DefaultMovement = 1;
+                }
+            }
+            else if ( strcasecmp(str, "MovieResolution") == 0 ) // str equals "MovieResolution"
+            {
+                if ( strcasecmp(param, "native") == 0 ) // param equals "native"
+                {
+                    Option_MovieResolution = 0;
+                }
+                else if ( strcasecmp(param, "doubled") == 0 ) // param equals "doubled"
+                {
+                    Option_MovieResolution = 1;
+                }
+            }
+            else if ( strcasecmp(str, "MoviesPlay") == 0 ) // str equals "MoviesPlay"
+            {
+                if ( strcasecmp(param, "yes") == 0 ) // param equals "yes"
+                {
+                    Option_MoviesPlay = 1;
+                }
+                else if ( strcasecmp(param, "no") == 0 ) // param equals "no"
+                {
+                    Option_MoviesPlay = 0;
+                }
+            }
+            else if ( strcasecmp(str, "PointSoundsPlay") == 0 ) // str equals "PointSoundsPlay"
+            {
+                if ( strcasecmp(param, "yes") == 0 ) // param equals "yes"
+                {
+                    Option_PointSoundsPlay = 1;
+                }
+                else if ( strcasecmp(param, "no") == 0 ) // param equals "no"
+                {
+                    Option_PointSoundsPlay = 0;
+                }
+            }
+            else if ( strcasecmp(str, "SoundsPlay") == 0 ) // str equals "SoundsPlay"
+            {
+                if ( strcasecmp(param, "yes") == 0 ) // param equals "yes"
+                {
+                    Option_SoundsPlay = 1;
+                }
+                else if ( strcasecmp(param, "no") == 0 ) // param equals "no"
+                {
+                    Option_SoundsPlay = 0;
+                }
+            }
+
         }
 
     }

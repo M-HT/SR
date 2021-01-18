@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2020 Roman Pauer
+ *  Copyright (C) 2019-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -50,6 +50,8 @@
 
 extern uint32_t security_cookie_;
 
+static char command_line[16];
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,7 +75,37 @@ extern int WinMain_asm(
 }
 #endif
 
-void init_security_cookie(void)
+static void prepare_command_line(void)
+{
+    command_line[0] = 0;
+
+    if (Option_MovieResolution == 0)
+    {
+        strcat(command_line, " /d");
+    }
+
+    if (!Option_MoviesPlay)
+    {
+        strcat(command_line, " /m");
+    }
+
+    if (!Option_PointSoundsPlay)
+    {
+        strcat(command_line, " /p");
+    }
+
+    if (!Option_SoundsPlay)
+    {
+        strcat(command_line, " /q");
+    }
+
+    if (Option_DefaultMovement != 0)
+    {
+        strcat(command_line, " /r");
+    }
+}
+
+static void init_security_cookie(void)
 {
     srand(time(NULL));
 
@@ -84,7 +116,7 @@ void init_security_cookie(void)
 
 #ifdef _WIN32
 
-void init_libquicktime(void)
+static void init_libquicktime(void)
 {
     if (NULL == getenv("LIBQUICKTIME_PLUGIN_DIR"))
     {
@@ -119,8 +151,10 @@ int CALLBACK WinMain(
 
     ReadConfiguration();
 
+    prepare_command_line();
+
     init_security_cookie();
-    return WinMain_(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
+    return WinMain_(hInstance, hPrevInstance, command_line, nCmdShow);
 }
 
 #else
@@ -129,7 +163,6 @@ void Winapi_InitTicks(void);
 
 int main(int argc, char *argv[])
 {
-    char cmdline;
     if (SDL_Init(SDL_INIT_NOPARACHUTE))
     {
         eprintf("Error: SDL_Init");
@@ -140,12 +173,13 @@ int main(int argc, char *argv[])
 
     ReadConfiguration();
 
+    prepare_command_line();
+
     init_security_cookie();
 
     Winapi_InitTicks();
 
-    cmdline = 0;
-    return WinMain_asm((void *)1, NULL, &cmdline, 5); // 5 = SW_SHOW
+    return WinMain_asm((void *)1, NULL, command_line, 5); // 5 = SW_SHOW
 }
 
 #endif

@@ -38,9 +38,16 @@ GAME_CONFIG_STORAGE int Display_VSync;          /* vsync enabled ? */
 GAME_CONFIG_STORAGE int Display_Width;          /* horizontal size */
 GAME_CONFIG_STORAGE int Display_Height;         /* vertical size */
 GAME_CONFIG_STORAGE int Display_Resizable;      /* resizable window ? */
-GAME_CONFIG_STORAGE int Display_ScalingQuality; /* scaling quality: 0 = nearest neighbour, 1 = bilinear */
+GAME_CONFIG_STORAGE int Display_ScalingQuality; /* scaling quality - 0 = nearest neighbour, 1 = bilinear */
+GAME_CONFIG_STORAGE int Display_DelayAfterFlip; /* delay after image flip in miliseconds */
 
 GAME_CONFIG_STORAGE int Audio_BufferSize;       /* audio buffer size (in samples) */
+
+GAME_CONFIG_STORAGE int Option_DefaultMovement; /* default movement speed - 0 = walk; 1 = run */
+GAME_CONFIG_STORAGE int Option_MovieResolution; /* movie resolution - 0 = native; 1 = doubled */
+GAME_CONFIG_STORAGE int Option_MoviesPlay;      /* play movies ? */
+GAME_CONFIG_STORAGE int Option_PointSoundsPlay; /* play point sounds ? */
+GAME_CONFIG_STORAGE int Option_SoundsPlay;      /* play sounds ? */
 
 void ReadConfiguration(void);
 

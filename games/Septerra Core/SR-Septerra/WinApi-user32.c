@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2020 Roman Pauer
+ *  Copyright (C) 2019-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -53,10 +53,37 @@ unsigned int Winapi_GetTicks(void);
 #define SM_CYSCREEN 1
 #define SM_SWAPBUTTON 23
 
-#define MB_TYPEMASK 15
-#define MB_OK 0
+#define MB_TYPEMASK          0x0000000FL
+#define MB_ICONMASK          0x000000F0L
+#define MB_DEFMASK           0x00000F00L
+#define MB_MODEMASK          0x00003000L
 
-#define IDOK 1
+#define MB_OK                0x00000000L
+#define MB_OKCANCEL          0x00000001L
+#define MB_ABORTRETRYIGNORE  0x00000002L
+#define MB_YESNOCANCEL       0x00000003L
+#define MB_YESNO             0x00000004L
+#define MB_RETRYCANCEL       0x00000005L
+#define MB_CANCELTRYCONTINUE 0x00000006L
+
+#define MB_ICONHAND          0x00000010L
+#define MB_ICONEXCLAMATION   0x00000030L
+#define MB_ICONASTERISK      0x00000040L
+
+#define MB_DEFBUTTON2        0x00000100L
+#define MB_DEFBUTTON3        0x00000200L
+
+#define MB_SYSTEMMODAL       0x00001000L
+
+#define IDOK        1
+#define IDCANCEL    2
+#define IDABORT     3
+#define IDRETRY     4
+#define IDIGNORE    5
+#define IDYES       6
+#define IDNO        7
+#define IDTRYAGAIN 10
+#define IDCONTINUE 11
 
 
 #define WM_NULL 0x0000
@@ -1524,6 +1551,141 @@ void *LoadImageA_c(void *hinst, const char *lpszName, uint32_t uType, int32_t cx
 
 uint32_t MessageBoxA_c(void *hWnd, const char *lpText, const char *lpCaption, uint32_t uType)
 {
+#if SDL_VERSION_ATLEAST(2,0,0)
+    SDL_MessageBoxData data;
+    SDL_MessageBoxButtonData buttons[3];
+
+    data.window = NULL;
+    data.title = lpCaption;
+    data.message = lpText;
+    data.buttons = buttons;
+    data.colorScheme = NULL;
+
+    switch (uType & MB_TYPEMASK)
+    {
+        case MB_OK:
+            data.numbuttons = 1;
+            buttons[0].flags = SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT;
+            buttons[0].buttonid = IDOK;
+            buttons[0].text = "OK";
+            break;
+        case MB_OKCANCEL:
+            data.numbuttons = 2;
+            buttons[0].flags = 0;
+            buttons[0].buttonid = IDOK;
+            buttons[0].text = "OK";
+            buttons[1].flags = SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT;
+            buttons[1].buttonid = IDCANCEL;
+            buttons[1].text = "Cancel";
+            break;
+        case MB_ABORTRETRYIGNORE:
+            data.numbuttons = 3;
+            buttons[0].flags = 0;
+            buttons[0].buttonid = IDABORT;
+            buttons[0].text = "Abort";
+            buttons[1].flags = 0;
+            buttons[1].buttonid = IDRETRY;
+            buttons[1].text = "Retry";
+            buttons[2].flags = SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT;
+            buttons[2].buttonid = IDIGNORE;
+            buttons[2].text = "Ignore";
+            break;
+        case MB_YESNOCANCEL:
+            data.numbuttons = 3;
+            buttons[0].flags = 0;
+            buttons[0].buttonid = IDYES;
+            buttons[0].text = "Yes";
+            buttons[1].flags = 0;
+            buttons[1].buttonid = IDNO;
+            buttons[1].text = "No";
+            buttons[2].flags = SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT;
+            buttons[2].buttonid = IDCANCEL;
+            buttons[2].text = "Cancel";
+            break;
+        case MB_YESNO:
+            data.numbuttons = 2;
+            buttons[0].flags = 0;
+            buttons[0].buttonid = IDYES;
+            buttons[0].text = "Yes";
+            buttons[1].flags = SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT;
+            buttons[1].buttonid = IDNO;
+            buttons[1].text = "No";
+            break;
+        case MB_RETRYCANCEL:
+            data.numbuttons = 2;
+            buttons[0].flags = 0;
+            buttons[0].buttonid = IDRETRY;
+            buttons[0].text = "Retry";
+            buttons[1].flags = SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT;
+            buttons[1].buttonid = IDCANCEL;
+            buttons[1].text = "Cancel";
+            break;
+        case MB_CANCELTRYCONTINUE:
+            data.numbuttons = 3;
+            buttons[0].flags = 0;
+            buttons[0].buttonid = IDCANCEL;
+            buttons[0].text = "Cancel";
+            buttons[1].flags = 0;
+            buttons[1].buttonid = IDTRYAGAIN;
+            buttons[1].text = "Try Again";
+            buttons[2].flags = SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT;
+            buttons[2].buttonid = IDCONTINUE;
+            buttons[2].text = "Continue";
+            break;
+        default:
+            data.numbuttons = 0;
+            break;
+    }
+
+    switch (uType & MB_ICONMASK)
+    {
+        case MB_ICONHAND:
+            data.flags = SDL_MESSAGEBOX_ERROR;
+            break;
+        case MB_ICONEXCLAMATION:
+            data.flags = SDL_MESSAGEBOX_WARNING;
+            break;
+        case MB_ICONASTERISK:
+            data.flags = SDL_MESSAGEBOX_INFORMATION;
+            break;
+        default:
+            data.flags = 0;
+            break;
+    }
+
+    switch (uType & MB_DEFMASK)
+    {
+        case MB_DEFBUTTON2:
+            buttons[1].flags = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT;
+            break;
+        case MB_DEFBUTTON3:
+            buttons[2].flags = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT;
+            break;
+        default:
+            buttons[0].flags = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT;
+            break;
+    }
+
+    if ((hWnd == NULL) && ((uType & MB_MODEMASK) == MB_SYSTEMMODAL) && ((uType & ~(MB_TYPEMASK | MB_ICONMASK | MB_DEFMASK | MB_MODEMASK)) == 0))
+    {
+        if (data.numbuttons == 1)
+        {
+            if (0 == SDL_ShowSimpleMessageBox(data.flags, data.title, data.message, data.window))
+            {
+                return IDOK;
+            }
+        }
+        else if (data.numbuttons > 1)
+        {
+            int buttonid;
+
+            if (0 == SDL_ShowMessageBox(&data, &buttonid))
+            {
+                return buttonid;
+            }
+        }
+    }
+#endif
     eprintf("MessageBoxA: 0x%x\n\tCaption: %s\n\tText: %s\n", uType, lpCaption, lpText);
 
     if ((uType & MB_TYPEMASK) == 0)

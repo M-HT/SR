@@ -1466,12 +1466,16 @@ uint32_t IDirectDrawSurface_Flip_c(struct IDirectDrawSurface_c *lpThis, struct I
             lpThis->current_texture = 0;
         }
 
+        SDL_Delay(Display_DelayAfterFlip);
+
         // clear next frame
         SDL_SetRenderDrawColor(lpThis->Renderer, 0, 0, 0, 255);
         SDL_RenderClear(lpThis->Renderer);
 #else
         SDL_BlitSurface(lpThis->lpBackbuffer->Surface, NULL, lpThis->Surface, NULL);
         SDL_Flip(lpThis->Surface);
+
+        SDL_Delay(Display_DelayAfterFlip);
 #endif
 
         lpThis->was_flipped = 2;

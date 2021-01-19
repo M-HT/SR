@@ -81,6 +81,11 @@ void ReadConfiguration(void)
     Option_PointSoundsPlay = 1;
     Option_SoundsPlay = 1;
 
+    Cheat_ENEMIES = 0;
+    Cheat_SIGHT = 0;
+    Cheat_HIDETEXT = 0;
+    Cheat_FPS = 0;
+
 #ifdef _WIN32
     f = fopen(CONFIG_FILE, "rt");
 #else
@@ -297,6 +302,58 @@ void ReadConfiguration(void)
                 else if ( strcasecmp(param, "no") == 0 ) // param equals "no"
                 {
                     Option_SoundsPlay = 0;
+                }
+            }
+
+        }
+        else if ( strncasecmp(str, "Cheat_", 6) == 0 ) // str begins with "Cheat_"
+        {
+            // command line options
+
+            str += 6;
+
+            if ( strcasecmp(str, "ENEMIES") == 0 ) // str equals "ENEMIES"
+            {
+                if ( strcasecmp(param, "enabled") == 0 ) // param equals "enabled"
+                {
+                    Cheat_ENEMIES = 1;
+                }
+                else if ( strcasecmp(param, "disabled") == 0 ) // param equals "disabled"
+                {
+                    Cheat_ENEMIES = 0;
+                }
+            }
+            else if ( strcasecmp(str, "SIGHT") == 0 ) // str equals "SIGHT"
+            {
+                if ( strcasecmp(param, "enabled") == 0 ) // param equals "enabled"
+                {
+                    Cheat_SIGHT = 1;
+                }
+                else if ( strcasecmp(param, "disabled") == 0 ) // param equals "disabled"
+                {
+                    Cheat_SIGHT = 0;
+                }
+            }
+            else if ( strcasecmp(str, "HIDETEXT") == 0 ) // str equals "HIDETEXT"
+            {
+                if ( strcasecmp(param, "enabled") == 0 ) // param equals "enabled"
+                {
+                    Cheat_HIDETEXT = 1;
+                }
+                else if ( strcasecmp(param, "disabled") == 0 ) // param equals "disabled"
+                {
+                    Cheat_HIDETEXT = 0;
+                }
+            }
+            else if ( strcasecmp(str, "FPS") == 0 ) // str equals "FPS"
+            {
+                if ( strcasecmp(param, "enabled") == 0 ) // param equals "enabled"
+                {
+                    Cheat_FPS = 1;
+                }
+                else if ( strcasecmp(param, "disabled") == 0 ) // param equals "disabled"
+                {
+                    Cheat_FPS = 0;
                 }
             }
 

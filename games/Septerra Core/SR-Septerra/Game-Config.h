@@ -49,6 +49,11 @@ GAME_CONFIG_STORAGE int Option_MoviesPlay;      /* play movies ? */
 GAME_CONFIG_STORAGE int Option_PointSoundsPlay; /* play point sounds ? */
 GAME_CONFIG_STORAGE int Option_SoundsPlay;      /* play sounds ? */
 
+GAME_CONFIG_STORAGE int Cheat_ENEMIES;          /* show enemy status ? */
+GAME_CONFIG_STORAGE int Cheat_SIGHT;            /* show enemy line of sight ? */
+GAME_CONFIG_STORAGE int Cheat_HIDETEXT;         /* hide texts ? */
+GAME_CONFIG_STORAGE int Cheat_FPS;              /* show FPS ? */
+
 void ReadConfiguration(void);
 
 #endif

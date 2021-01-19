@@ -49,6 +49,10 @@
 
 
 extern uint32_t security_cookie_;
+extern uint32_t bShowEnemyStatus;
+extern uint32_t bShowEnemyLOS;
+extern uint32_t bHideText;
+extern uint32_t bShowFPS;
 
 static char command_line[16];
 
@@ -74,6 +78,14 @@ extern int WinMain_asm(
 #ifdef __cplusplus
 }
 #endif
+
+static void apply_cheats(void)
+{
+    bShowEnemyStatus = Cheat_ENEMIES;
+    bShowEnemyLOS = Cheat_SIGHT;
+    bHideText = Cheat_HIDETEXT;
+    bShowFPS = Cheat_FPS;
+}
 
 static void prepare_command_line(void)
 {
@@ -151,6 +163,8 @@ int CALLBACK WinMain(
 
     ReadConfiguration();
 
+    apply_cheats();
+
     prepare_command_line();
 
     init_security_cookie();
@@ -172,6 +186,8 @@ int main(int argc, char *argv[])
     atexit(SDL_Quit);
 
     ReadConfiguration();
+
+    apply_cheats();
 
     prepare_command_line();
 

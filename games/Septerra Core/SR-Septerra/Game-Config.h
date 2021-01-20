@@ -54,6 +54,9 @@ GAME_CONFIG_STORAGE int Cheat_SIGHT;            /* show enemy line of sight ? */
 GAME_CONFIG_STORAGE int Cheat_HIDETEXT;         /* hide texts ? */
 GAME_CONFIG_STORAGE int Cheat_FPS;              /* show FPS ? */
 
+GAME_CONFIG_STORAGE int Keys_SwitchWSAD;        /* switch WSAD keys for arrow keys ? */
+GAME_CONFIG_STORAGE int Keys_SwitchArrowKeys;   /* switch arrow keys for WSAD keys ? */
+
 void ReadConfiguration(void);
 
 #endif

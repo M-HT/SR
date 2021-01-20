@@ -86,6 +86,9 @@ void ReadConfiguration(void)
     Cheat_HIDETEXT = 0;
     Cheat_FPS = 0;
 
+    Keys_SwitchWSAD = 0;
+    Keys_SwitchArrowKeys = 0;
+
 #ifdef _WIN32
     f = fopen(CONFIG_FILE, "rt");
 #else
@@ -308,7 +311,7 @@ void ReadConfiguration(void)
         }
         else if ( strncasecmp(str, "Cheat_", 6) == 0 ) // str begins with "Cheat_"
         {
-            // command line options
+            // cheats settings
 
             str += 6;
 
@@ -354,6 +357,36 @@ void ReadConfiguration(void)
                 else if ( strcasecmp(param, "disabled") == 0 ) // param equals "disabled"
                 {
                     Cheat_FPS = 0;
+                }
+            }
+
+        }
+        else if ( strncasecmp(str, "Keys_", 5) == 0 ) // str begins with "Keys_"
+        {
+            // keys settings
+
+            str += 5;
+
+            if ( strcasecmp(str, "WSAD") == 0 ) // str equals "WSAD"
+            {
+                if ( strcasecmp(param, "WSAD") == 0 ) // param equals "WSAD"
+                {
+                    Keys_SwitchWSAD = 0;
+                }
+                else if ( strcasecmp(param, "ArrowKeys") == 0 ) // param equals "ArrowKeys"
+                {
+                    Keys_SwitchWSAD = 1;
+                }
+            }
+            else if ( strcasecmp(str, "ArrowKeys") == 0 ) // str equals "ArrowKeys"
+            {
+                if ( strcasecmp(param, "WSAD") == 0 ) // param equals "WSAD"
+                {
+                    Keys_SwitchArrowKeys = 1;
+                }
+                else if ( strcasecmp(param, "ArrowKeys") == 0 ) // param equals "ArrowKeys"
+                {
+                    Keys_SwitchArrowKeys = 0;
                 }
             }
 

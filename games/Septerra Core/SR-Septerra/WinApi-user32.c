@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL.h>
+#include "Game-Config.h"
 
 #if (defined(__WIN32__) || defined(__WINDOWS__)) && !defined(_WIN32)
 #define _WIN32
@@ -652,6 +653,31 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event)
             {
                 vkey = vkey_table[event->key.keysym.sym];
                 scancode = scancode_table[event->key.keysym.sym];
+
+                if (Keys_SwitchWSAD)
+                {
+                    switch((int) event->key.keysym.sym)
+                    {
+                    case SDLK_a:
+                        vkey = VK_LEFT;
+                        scancode = 0x4b;
+                        break;
+                    case SDLK_d:
+                        vkey = VK_RIGHT;
+                        scancode = 0x4d;
+                        break;
+                    case SDLK_s:
+                        vkey = VK_DOWN;
+                        scancode = 0x50;
+                        break;
+                    case SDLK_w:
+                        vkey = VK_UP;
+                        scancode = 0x48;
+                        break;
+                    default:
+                        break;
+                    }
+                }
             }
             else
             {
@@ -697,23 +723,55 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event)
 
 
                 case SDLK_UP:
-                    vkey = VK_UP;
-                    scancode = 0x48;
+                    if (Keys_SwitchArrowKeys)
+                    {
+                        vkey = vkey_table['W'];
+                        scancode = scancode_table['W'];
+                    }
+                    else
+                    {
+                        vkey = VK_UP;
+                        scancode = 0x48;
+                    }
                     break;
 
                 case SDLK_DOWN:
-                    vkey = VK_DOWN;
-                    scancode = 0x50;
+                    if (Keys_SwitchArrowKeys)
+                    {
+                        vkey = vkey_table['S'];
+                        scancode = scancode_table['S'];
+                    }
+                    else
+                    {
+                        vkey = VK_DOWN;
+                        scancode = 0x50;
+                    }
                     break;
 
                 case SDLK_RIGHT:
-                    vkey = VK_RIGHT;
-                    scancode = 0x4d;
+                    if (Keys_SwitchArrowKeys)
+                    {
+                        vkey = vkey_table['D'];
+                        scancode = scancode_table['D'];
+                    }
+                    else
+                    {
+                        vkey = VK_RIGHT;
+                        scancode = 0x4d;
+                    }
                     break;
 
                 case SDLK_LEFT:
-                    vkey = VK_LEFT;
-                    scancode = 0x4b;
+                    if (Keys_SwitchArrowKeys)
+                    {
+                        vkey = vkey_table['A'];
+                        scancode = scancode_table['A'];
+                    }
+                    else
+                    {
+                        vkey = VK_LEFT;
+                        scancode = 0x4b;
+                    }
                     break;
 
                 case SDLK_INSERT:

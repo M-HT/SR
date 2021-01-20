@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2020 Roman Pauer
+ *  Copyright (C) 2019-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -175,7 +175,7 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
         ExitWithMessage("Unable to allocate memory for manifest file buffer", 103);
     }
     size_t items = fread(ManifestFileBuffer, 1, ManifestSize, ManifestFILE);
-    if (items != ManifestSize) exit(-1);
+    if (items == 0) exit(-1);
 
     // replace returns with zeros
     char *buf = ManifestFileBuffer;

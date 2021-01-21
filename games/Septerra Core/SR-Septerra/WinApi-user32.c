@@ -225,6 +225,7 @@ typedef struct {
 } wndclassa;
 
 
+static int sdl_versionnum = 0;
 static void *lpfnWndProc = NULL;
 static int cursor_visibility = 0;
 static unsigned int mouse_buttons = 0;
@@ -233,7 +234,7 @@ static int mouse_x = 0;
 static int mouse_y = 0;
 static unsigned int message_time = 0;
 static int mouse_right_button_mod = 0;
-#if !SDL_VERSION_ATLEAST(2,0,2)
+// doubleclick detection - BEGIN
 static const int mouse_doubleclick_max_distance = 10;
 static const int mouse_doubleclick_max_time = 500;
 
@@ -241,7 +242,7 @@ static int mouse_doubleclick = 0;
 static uint32_t mouse_last_time[3], mouse_current_time[3];
 static int mouse_last_x[3], mouse_last_y[3], mouse_current_x[3], mouse_current_y[3];
 static int mouse_last_peep[3];
-#endif
+// doubleclick detection - END
 
 #ifdef __cplusplus
 extern "C" {
@@ -259,9 +260,7 @@ static int find_event(SDL_Event *event, int remove, int wait)
     while (1)
     {
         int num_events, keep_event;
-#if !SDL_VERSION_ATLEAST(2,0,2)
         int mouse_button;
-#endif
 
 
 #if SDL_VERSION_ATLEAST(2,0,0)
@@ -379,15 +378,7 @@ static int find_event(SDL_Event *event, int remove, int wait)
                     }
                 }
             }
-#if SDL_VERSION_ATLEAST(2,0,2)
-            if ((event->button.button == SDL_BUTTON_LEFT) ||
-                (event->button.button == SDL_BUTTON_MIDDLE) ||
-                (event->button.button == SDL_BUTTON_RIGHT)
-               )
-            {
-                keep_event = 1;
-            }
-#else
+
             mouse_doubleclick = 0;
 
             if (event->button.button == SDL_BUTTON_LEFT) mouse_button = 0;
@@ -398,41 +389,45 @@ static int find_event(SDL_Event *event, int remove, int wait)
             {
                 keep_event = 1;
             }
-#endif
+
             if (event->button.state == SDL_PRESSED)
             {
                 mouse_buttons |= SDL_BUTTON(event->button.button);
-#if !SDL_VERSION_ATLEAST(2,0,2)
-                if (mouse_button >= 0)
+
+#if SDL_VERSION_ATLEAST(2,0,2)
+                if (sdl_versionnum < SDL_VERSIONNUM(2,0,2))
+#endif
                 {
-                    if (!mouse_last_peep[mouse_button])
+                    if (mouse_button >= 0)
                     {
+                        if (!mouse_last_peep[mouse_button])
+                        {
 #ifdef _WIN32
-                        mouse_current_time[mouse_button] = GetTickCount();
+                            mouse_current_time[mouse_button] = GetTickCount();
 #else
-                        mouse_current_time[mouse_button] = Winapi_GetTicks();
+                            mouse_current_time[mouse_button] = Winapi_GetTicks();
 #endif
-                        mouse_current_x[mouse_button] = event->button.x;
-                        mouse_current_y[mouse_button] = event->button.y;
-                    }
+                            mouse_current_x[mouse_button] = event->button.x;
+                            mouse_current_y[mouse_button] = event->button.y;
+                        }
 
-                    if ((((uint32_t)(mouse_current_time[mouse_button] - mouse_last_time[mouse_button])) < mouse_doubleclick_max_time) &&
-                        (abs(mouse_current_x[mouse_button] - mouse_last_x[mouse_button]) < mouse_doubleclick_max_distance) &&
-                        (abs(mouse_current_y[mouse_button] - mouse_last_y[mouse_button]) < mouse_doubleclick_max_distance)
-                       )
-                    {
-                        mouse_doubleclick = 1;
-                    }
+                        if ((((uint32_t)(mouse_current_time[mouse_button] - mouse_last_time[mouse_button])) < mouse_doubleclick_max_time) &&
+                            (abs(mouse_current_x[mouse_button] - mouse_last_x[mouse_button]) < mouse_doubleclick_max_distance) &&
+                            (abs(mouse_current_y[mouse_button] - mouse_last_y[mouse_button]) < mouse_doubleclick_max_distance)
+                           )
+                        {
+                            mouse_doubleclick = 1;
+                        }
 
-                    if (remove)
-                    {
-                        mouse_last_time[mouse_button] = mouse_current_time[mouse_button];
-                        mouse_last_x[mouse_button] = mouse_current_x[mouse_button];
-                        mouse_last_y[mouse_button] = mouse_current_y[mouse_button];
+                        if (remove)
+                        {
+                            mouse_last_time[mouse_button] = mouse_current_time[mouse_button];
+                            mouse_last_x[mouse_button] = mouse_current_x[mouse_button];
+                            mouse_last_y[mouse_button] = mouse_current_y[mouse_button];
+                        }
+                        mouse_last_peep[mouse_button] = (remove)?0:1;
                     }
-                    mouse_last_peep[mouse_button] = (remove)?0:1;
                 }
-#endif
             }
             else
             {
@@ -1166,16 +1161,21 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event)
 
         doubleclick = 0;
 #if SDL_VERSION_ATLEAST(2,0,2)
-        if (event->button.clicks > 1)
+        if (sdl_versionnum >= SDL_VERSIONNUM(2,0,2))
         {
-            doubleclick = 1;
+            if (event->button.clicks > 1)
+            {
+                doubleclick = 1;
+            }
         }
-#else
-        if (mouse_doubleclick)
-        {
-            doubleclick = 1;
-        }
+        else
 #endif
+        {
+            if (mouse_doubleclick)
+            {
+                doubleclick = 1;
+            }
+        }
 
         switch (event->button.button)
         {
@@ -1286,6 +1286,18 @@ void *CreateWindowExA_c(uint32_t dwExStyle, const char *lpClassName, const char 
 {
 #ifdef DEBUG_USER32
     eprintf("CreateWindowExA: 0x%x, %s, %s, 0x%x, %i, %i, %i, %i\n", dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight);
+#endif
+
+#if SDL_VERSION_ATLEAST(2,0,0)
+    SDL_version linked;
+
+    SDL_GetVersion(&linked);
+    sdl_versionnum = SDL_VERSIONNUM(linked.major, linked.minor, linked.patch);
+#else
+    const SDL_version *linked;
+
+    linked = SDL_Linked_Version();
+    sdl_versionnum = SDL_VERSIONNUM(linked->major, linked->minor, linked->patch);
 #endif
 
     return (void *)1;

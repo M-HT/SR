@@ -915,7 +915,6 @@ static void eventloop_flip(void)
     {
         SDL_SetRenderTarget(Game_Renderer, SMK_ScaledTexture[SMK_CurrentTexture]);
         SDL_RenderCopy(Game_Renderer, SMK_Texture[SMK_CurrentTexture], NULL, NULL);
-        SDL_RenderPresent(Game_Renderer);
 
         SDL_SetRenderTarget(Game_Renderer, NULL);
         SDL_RenderCopy(Game_Renderer, SMK_ScaledTexture[SMK_CurrentTexture], NULL, NULL);

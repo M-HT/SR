@@ -1874,7 +1874,6 @@ static void Game_Event_Loop(void)
                                 {
                                     SDL_SetRenderTarget(Game_Renderer, Game_ScaledTexture[Game_CurrentTexture]);
                                     SDL_RenderCopy(Game_Renderer, Game_Texture[Game_CurrentTexture], NULL, NULL);
-                                    SDL_RenderPresent(Game_Renderer);
 
                                     SDL_SetRenderTarget(Game_Renderer, NULL);
                                     SDL_RenderCopy(Game_Renderer, Game_ScaledTexture[Game_CurrentTexture], NULL, NULL);

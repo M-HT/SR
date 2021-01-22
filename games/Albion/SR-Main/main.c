@@ -1929,7 +1929,6 @@ static void Game_Event_Loop(void)
                                     SDL_UpdateTexture(Game_Texture2[Game_CurrentTexture], NULL, Game_TextureData2, Scaler_ScaleFactor * Render_Width * Display_Bitsperpixel / 8);
                                     SDL_RenderCopy(Game_Renderer, Game_Texture2[Game_CurrentTexture], NULL, NULL);
                                 }
-                                SDL_RenderPresent(Game_Renderer);
 
                                 SDL_SetRenderTarget(Game_Renderer, NULL);
                                 SDL_RenderCopy(Game_Renderer, Game_ScaledTexture[Game_CurrentTexture], NULL, NULL);

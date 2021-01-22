@@ -1601,7 +1601,10 @@ static void Game_Initialize2(void)
     Init_Input2();
 
 #if !defined(USE_SDL2)
-    SDL_EnableUNICODE(1);
+    if (!Game_SwitchWSAD)
+    {
+        SDL_EnableUNICODE(1);
+    }
 #endif
 
 #if defined(ALLOW_OPENGL) || defined(USE_SDL2)

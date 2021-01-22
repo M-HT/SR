@@ -431,6 +431,35 @@ void Game_ReadConfig(void)
                 }
             }
         }
+        else if ( strncasecmp(str, "Keys_", 5) == 0 ) // str begins with "Keys_"
+        {
+            // keys settings
+
+            str += 5;
+
+            if ( strcasecmp(str, "WSAD") == 0 ) // str equals "WSAD"
+            {
+                if ( strcasecmp(param, "WSAD") == 0 ) // param equals "WSAD"
+                {
+                    Game_SwitchWSAD = 0;
+                }
+                else if ( strcasecmp(param, "ArrowKeys") == 0 ) // param equals "ArrowKeys"
+                {
+                    Game_SwitchWSAD = 1;
+                }
+            }
+            else if ( strcasecmp(str, "ArrowKeys") == 0 ) // str equals "ArrowKeys"
+            {
+                if ( strcasecmp(param, "WSAD") == 0 ) // param equals "WSAD"
+                {
+                    Game_SwitchArrowKeys = 1;
+                }
+                else if ( strcasecmp(param, "ArrowKeys") == 0 ) // param equals "ArrowKeys"
+                {
+                    Game_SwitchArrowKeys = 0;
+                }
+            }
+        }
 
     }
 

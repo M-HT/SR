@@ -240,6 +240,12 @@ class ConfigFile:
             self.AddEntry("Audio_Buffer_Size", "256-8192", ("256" if platform == "gp2x" else ("4096" if platform == "pc" else "2048")))
 
 
+        # keys entries
+        if game == "albion":
+            self.AddEntry("Keys_WSAD", "WSAD/ArrowKeys", "WSAD")
+            self.AddEntry("Keys_ArrowKeys", "ArrowKeys/WSAD", "ArrowKeys")
+
+
         # input entries
         if platform == "pandora":
             self.AddEntry("Input_Mode", "touchscreen_dpad/touchscreen_abxy/keyboard_dpad", "touchscreen_dpad")
@@ -663,6 +669,12 @@ class ConfigGUI:
             self.CreateRadioSet(vbox, "Screenshot Enhanced Resolution:", "Screenshot_Enhanced_Resolution", "if enabled then create screenshots in enhanced resolution (720x480) when it's possible,\notherwise create screenshots in original resolution (360x240)")
             self.CreateRadioSet(vbox, "Screenshot Enabled ?", "Screenshot_Enabled", "select whether making screenshots (using F4 key) is enabled without entering developer mode")
             self.CreateRadioSet(vbox, "Screenshot Automatic Filename ?", "Screenshot_Automatic_Filename", "select whether screenshot filename is generated automatically (Screenshot????.???) or not")
+
+        if self.CfgFile.HasEntry("Keys_WSAD"):
+            vbox = self.AddPageFrameVBox(notebook, "Keys", "Keys")
+
+            self.CreateRadioSet(vbox, "Use WSAD keys as WSAD keys or as arrow keys ?", "Keys_WSAD")
+            self.CreateRadioSet(vbox, "Use arrow keys as arrow keys or as WSAD keys ?", "Keys_ArrowKeys")
 
         if self.CfgFile.HasEntry("Input_Mode") or self.CfgFile.HasEntry("Input_MouseHelper"):
             vbox = self.AddPageFrameVBox(notebook, "Input", "Input")

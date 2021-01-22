@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -1057,28 +1057,49 @@ void Game_ProcessKEvents(void)
                     ascii_code = 0;
                 }
 
-                if (ascii_code != 0)
+                if ((ascii_code == 0) && (cevent->key.keysym.sym < 128))
                 {
-                    // Ok
-                }
-                else if (cevent->key.keysym.sym < 128)
-                {
-                    scancode = scancode_table[cevent->key.keysym.sym];
+                    ascii_code = cevent->key.keysym.sym;
+                    scancode = scancode_table[ascii_code];
 
                     if (((cevent->key.keysym.mod & KMOD_SHIFT) == 0) != ((cevent->key.keysym.mod & KMOD_CAPS) == 0))
                     {
-                        if (cevent->key.keysym.sym >= SDLK_a && cevent->key.keysym.sym <= SDLK_z)
+                        if (ascii_code >= SDLK_a && ascii_code <= SDLK_z)
                         {
-                            ascii_code = cevent->key.keysym.sym - 32;
-                        }
-                        else
-                        {
-                            ascii_code = cevent->key.keysym.sym;
+                            ascii_code -= 32;
                         }
                     }
-                    else
+                }
+
+                if (ascii_code != 0)
+                {
+                    if (Game_SwitchWSAD)
                     {
-                        ascii_code = cevent->key.keysym.sym;
+                        switch(ascii_code)
+                        {
+                        case 'A':
+                        case 'a':
+                            ascii_code = 0;
+                            scancode = 0x4b;
+                            break;
+                        case 'D':
+                        case 'd':
+                            ascii_code = 0;
+                            scancode = 0x4d;
+                            break;
+                        case 'S':
+                        case 's':
+                            ascii_code = 0;
+                            scancode = 0x50;
+                            break;
+                        case 'W':
+                        case 'w':
+                            ascii_code = 0;
+                            scancode = 0x48;
+                            break;
+                        default:
+                            break;
+                        }
                     }
                 }
                 else
@@ -1213,19 +1234,67 @@ void Game_ProcessKEvents(void)
 
                             break;
                         case SDLK_UP:
-                            scancode = 0x48;
+                            if (Game_SwitchArrowKeys)
+                            {
+                                ascii_code = 'w';
+                                scancode = scancode_table[ascii_code];
+                                if (((cevent->key.keysym.mod & KMOD_SHIFT) == 0) != ((cevent->key.keysym.mod & KMOD_CAPS) == 0))
+                                {
+                                    ascii_code -= 32;
+                                }
+                            }
+                            else
+                            {
+                                scancode = 0x48;
+                            }
 
                             break;
                         case SDLK_DOWN:
-                            scancode = 0x50;
+                            if (Game_SwitchArrowKeys)
+                            {
+                                ascii_code = 's';
+                                scancode = scancode_table[ascii_code];
+                                if (((cevent->key.keysym.mod & KMOD_SHIFT) == 0) != ((cevent->key.keysym.mod & KMOD_CAPS) == 0))
+                                {
+                                    ascii_code -= 32;
+                                }
+                            }
+                            else
+                            {
+                                scancode = 0x50;
+                            }
 
                             break;
                         case SDLK_RIGHT:
-                            scancode = 0x4d;
+                            if (Game_SwitchArrowKeys)
+                            {
+                                ascii_code = 'd';
+                                scancode = scancode_table[ascii_code];
+                                if (((cevent->key.keysym.mod & KMOD_SHIFT) == 0) != ((cevent->key.keysym.mod & KMOD_CAPS) == 0))
+                                {
+                                    ascii_code -= 32;
+                                }
+                            }
+                            else
+                            {
+                                scancode = 0x4d;
+                            }
 
                             break;
                         case SDLK_LEFT:
-                            scancode = 0x4b;
+                            if (Game_SwitchArrowKeys)
+                            {
+                                ascii_code = 'a';
+                                scancode = scancode_table[ascii_code];
+                                if (((cevent->key.keysym.mod & KMOD_SHIFT) == 0) != ((cevent->key.keysym.mod & KMOD_CAPS) == 0))
+                                {
+                                    ascii_code -= 32;
+                                }
+                            }
+                            else
+                            {
+                                scancode = 0x4b;
+                            }
 
                             break;
                         case SDLK_INSERT:

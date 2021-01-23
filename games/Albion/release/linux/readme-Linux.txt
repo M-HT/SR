@@ -1,5 +1,5 @@
 Albion for Linux (x86)
-Version 1.7.0
+Version 1.7.1
 
 Original Albion version 1.38 is required for playing.
 (English version preferred, but other languages should also work)
@@ -109,6 +109,12 @@ it sounds worse and can't play more than one MIDI stream simultaneously
 
 Changes
 -------
+
+v1.7.1 (2021-01-23)
+* add options to switch WSAD and arrow keys
+* fix audio when using SDL2
+* fix rendering when using SDL2
+
 
 v1.7.0 (2021-01-13)
 * add advanced scaling options - nearest neighbour, scaler plugins: hqx, xbrz

@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016-2020 Roman Pauer
+#  Copyright (C) 2016-2021 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -83,12 +83,12 @@ elif device == 'arm-linux':
 elif device == 'pc-windows':
     if sdl2 > 0:
         env = Environment(CCFLAGS      = '-m32 -O2 -DUSE_SDL2 -Wall',
-                          LINKFLAGS    = '-m32',
+                          LINKFLAGS    = '-m32 -mwindows',
                           LIBS         = ['mingw32', 'SDL2main', 'SDL2_mixer', 'SDL2', 'pthread', 'z']
                          )
     else:
         env = Environment(CCFLAGS      = '-m32 -O2 -DALLOW_OPENGL -Wall',
-                          LINKFLAGS    = '-m32',
+                          LINKFLAGS    = '-m32 -mwindows',
                           LIBS         = ['mingw32', 'SDLmain', 'SDL_mixer', 'SDL', 'pthread', 'opengl32', 'z']
                          )
 elif device == 'gp2x':

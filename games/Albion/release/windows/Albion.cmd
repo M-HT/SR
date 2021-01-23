@@ -1,3 +1,4 @@
 @echo off
 cd /D "%~dp0"
-SR-Main.exe
+set SDL_STDIO_REDIRECT=0
+start SR-Main.exe

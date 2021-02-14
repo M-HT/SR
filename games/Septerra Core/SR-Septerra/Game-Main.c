@@ -144,46 +144,30 @@ static void init_libquicktime(void)
     }
 }
 
-int CALLBACK WinMain(
-  HINSTANCE hInstance,
-  HINSTANCE hPrevInstance,
-  LPSTR     lpCmdLine,
-  int       nCmdShow
-)
-{
-    if (SDL_Init(SDL_INIT_NOPARACHUTE))
-    {
-        MessageBoxA(NULL, "Error: SDL_Init", "Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
-        ExitProcess(1);
-    }
-
-    atexit(SDL_Quit);
-
-    init_libquicktime();
-
-    ReadConfiguration();
-
-    apply_cheats();
-
-    prepare_command_line();
-
-    init_security_cookie();
-    return WinMain_(hInstance, hPrevInstance, command_line, nCmdShow);
-}
-
 #else
 
 void Winapi_InitTicks(void);
+
+#endif
+
 
 int main(int argc, char *argv[])
 {
     if (SDL_Init(SDL_INIT_NOPARACHUTE))
     {
+#ifdef _WIN32
+        MessageBoxA(NULL, "Error: SDL_Init", "Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
+#else
         eprintf("Error: SDL_Init");
+#endif
         exit(1);
     }
 
     atexit(SDL_Quit);
+
+#ifdef _WIN32
+    init_libquicktime();
+#endif
 
     ReadConfiguration();
 
@@ -193,9 +177,12 @@ int main(int argc, char *argv[])
 
     init_security_cookie();
 
+#ifdef _WIN32
+    return WinMain_((void *)1, NULL, command_line, 5); // 5 = SW_SHOW
+#else
     Winapi_InitTicks();
 
     return WinMain_asm((void *)1, NULL, command_line, 5); // 5 = SW_SHOW
+#endif
 }
 
-#endif

@@ -118,6 +118,8 @@ int32_t _ftol2_sse_c(double *num)
 
     if (*num < 0)
     {
+        if (*num <= -2147483648.0) return 0x80000000;
+
         result.d = *num + doublemagic;  // fast conversion to int,
         num2 = (double)(int32_t)result.low; // result.low contains the result (rounded up or down)
 
@@ -130,7 +132,10 @@ int32_t _ftol2_sse_c(double *num)
     }
     else
     {
+        if (*num >= 2147483648.0) return 0x80000000;
+
         result.d = *num + doublemagic;  // fast conversion to int,
+        if (0 > (int32_t)result.low) return 0x7fffffff;
         num2 = (double)(int32_t)result.low; // result.low contains the result (rounded up or down)
 
         if (num2 > *num) // compare result with original value and if the result was rounded toward positive infinity, then decrease result (truncate toward 0)
@@ -144,12 +149,18 @@ int32_t _ftol2_sse_c(double *num)
 
 int64_t _ftol2_c(double *num)
 {
-    return (int64_t) trunc(*num);
+    double dval;
+
+    dval = trunc(*num);
+    return ((dval < 9223372036854775808.0) && (dval > -9223372036854775808.0))?((int64_t) dval):__INT64_C(0x8000000000000000);
 }
 
 int64_t _ftol_c(double *num)
 {
-    return (int64_t) trunc(*num);
+    double dval;
+
+    dval = trunc(*num);
+    return ((dval < 9223372036854775808.0) && (dval > -9223372036854775808.0))?((int64_t) dval):__INT64_C(0x8000000000000000);
 }
 
 

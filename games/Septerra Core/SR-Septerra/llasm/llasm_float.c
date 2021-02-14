@@ -340,109 +340,114 @@ EXTERNC void x87_fninit_void(CPU)
 
 EXTERNC int32_t x87_fistp_int32(CPU)
 {
-    register int32_t ret;
-    register double num1, num2;
+    register double dval, orig;
+    register int32_t ival;
 
     switch ((st_cw >> X87_RC_SHIFT) & 3)
     {
     case 0: // Round to nearest (even)
-        num1 = ST0;
-        num2 = floor(num1);
-        ret = (int32_t) num2;
-        if (num1 - num2 > 0.5)
+        orig = ST0;
+        dval = floor(orig);
+        if (orig - dval > 0.5)
         {
-            ret++;
+            dval += 1.0;
         }
-        else if (!(num1 - num2 < 0.5))
+        else if (!(orig - dval < 0.5))
         {
-            ret = (ret + 1) & ~(int32_t)1;
+            POP_REGS;
+            if ((dval < 2147483648.0) && (dval > -2147483648.0))
+            {
+                ival = (int32_t) dval;
+                ival += ival & 1;
+            }
+            else
+            {
+                ival = 0x80000000;
+            }
+            return ival;
         }
         break;
     case 1: // Round down (toward -infinity)
-        ret = (int32_t) floor(ST0);
+        dval = floor(ST0);
         break;
     case 2: // Round up (toward +infinity)
-        ret = (int32_t) ceil(ST0);
+        dval = ceil(ST0);
         break;
     case 3: // Round toward zero (Truncate)
-        ret = (int32_t) trunc(ST0);
+        dval = trunc(ST0);
         break;
     }
     POP_REGS;
-    return ret;
+    return ((dval < 2147483648.0) && (dval > -2147483648.0))?((int32_t) dval):0x80000000;
 }
 
 EXTERNC uint32_t x87_fistp_int64(CPU)
 {
+    register double orig, dval;
 #ifdef BIG_ENDIAN_BYTE_ORDER
-    register int_int ret;
+    register int_int uval;
     register le_int *presult;
-    register double num1, num2;
+    #define ival uval.i
+#else
+    register int64_t ival;
+#endif
+
+    orig = ST0;
+    POP_REGS;
+
+    if ((orig >= 9223372036854775808.0) || (orig <= -9223372036854775808.0))
+    {
+#ifdef BIG_ENDIAN_BYTE_ORDER
+        uval.i = __INT64_C(0x8000000000000000);
+
+        presult = (le_int *)&(st_result);
+
+        presult->low = uval.low;
+        presult->high = uval.high;
+
+        return (uint32_t)(uintptr_t)presult;
+#else
+        st_result = __INT64_C(0x8000000000000000);
+        return (uint32_t)(uintptr_t)&(st_result);
+#endif
+    }
 
     switch ((st_cw >> X87_RC_SHIFT) & 3)
     {
     case 0: // Round to nearest (even)
-        num1 = ST0;
-        num2 = floor(num1);
-        ret.i = (int64_t) num2;
-        if (num1 - num2 > 0.5)
+        dval = floor(orig);
+        ival = (int64_t) dval;
+        if (orig - dval > 0.5)
         {
-            ret.i++;
+            ival++;
         }
-        else if (!(num1 - num2 < 0.5))
+        else if (!(orig - dval < 0.5))
         {
-            ret.i = (ret.i + 1) & ~(int64_t)1;
+            ival += ival & 1;
         }
         break;
     case 1: // Round down (toward -infinity)
-        ret.i = (int64_t) floor(ST0);
+        ival = (int64_t) floor(orig);
         break;
     case 2: // Round up (toward +infinity)
-        ret.i = (int64_t) ceil(ST0);
+        ival = (int64_t) ceil(orig);
         break;
     case 3: // Round toward zero (Truncate)
-        ret.i = (int64_t) trunc(ST0);
+        ival = (int64_t) trunc(orig);
         break;
     }
-    POP_REGS;
+
+#ifdef BIG_ENDIAN_BYTE_ORDER
+    #undef ival
 
     presult = (le_int *)&(st_result);
 
-    presult->low = ret.low;
-    presult->high = ret.high;
+    presult->low = uval.low;
+    presult->high = uval.high;
 
     return (uint32_t)(uintptr_t)presult;
 #else
-    register double num1, num2;
-    register int64_t result;
-
-    switch ((st_cw >> X87_RC_SHIFT) & 3)
-    {
-    case 0: // Round to nearest (even)
-        num1 = ST0;
-        num2 = floor(num1);
-        result = (int64_t) num2;
-        if (num1 - num2 > 0.5)
-        {
-            result++;
-        }
-        else if (!(num1 - num2 < 0.5))
-        {
-            result = (result + 1) & ~(int64_t)1;
-        }
-        break;
-    case 1: // Round down (toward -infinity)
-        result = (int64_t) floor(ST0);
-        break;
-    case 2: // Round up (toward +infinity)
-        result = (int64_t) ceil(ST0);
-        break;
-    case 3: // Round toward zero (Truncate)
-        result = (int64_t) trunc(ST0);
-        break;
-    }
-    st_result = result;
-    POP_REGS;
+    st_result = ival;
     return (uint32_t)(uintptr_t)&(st_result);
 #endif
 }
@@ -860,12 +865,6 @@ EXTERNC void x87_ftan_void(CPU)
 // truncate toward zero
 EXTERNC int32_t x87_ftol_int32(CPU)
 {
-    //register int32_t ret;
-
-    //ret = (int32_t) trunc(ST0);
-    //POP_REGS;
-    //return ret;
-
     const static double doublemagic = 6755399441055744.0; // 2^52 * 1.5
 
     double_int result;
@@ -876,6 +875,8 @@ EXTERNC int32_t x87_ftol_int32(CPU)
 
     if (num1 < 0)
     {
+        if (num1 <= -2147483648.0) return 0x80000000;
+
         result.d = num1 + doublemagic;  // fast conversion to int,
         num2 = (double)(int32_t)result.low; // result.low contains the result (rounded up or down)
 
@@ -888,7 +889,10 @@ EXTERNC int32_t x87_ftol_int32(CPU)
     }
     else
     {
+        if (num1 >= 2147483648.0) return 0x80000000;
+
         result.d = num1 + doublemagic;  // fast conversion to int,
+        if (0 > (int32_t)result.low) return 0x7fffffff;
         num2 = (double)(int32_t)result.low; // result.low contains the result (rounded up or down)
 
         if (num2 > num1) // compare result with original value and if the result was rounded toward positive infinity, then decrease result (truncate toward 0)
@@ -903,12 +907,16 @@ EXTERNC int32_t x87_ftol_int32(CPU)
 // truncate toward zero
 EXTERNC uint32_t x87_ftol_int64(CPU)
 {
+    register double orig;
+
+    orig = ST0;
+    POP_REGS;
+
 #ifdef BIG_ENDIAN_BYTE_ORDER
     register int_int ret;
     register le_int *presult;
 
-    ret.i = (int64_t) trunc(ST0);
-    POP_REGS;
+    ret.i = ((orig < 9223372036854775808.0) && (orig > -9223372036854775808.0))?((int64_t) trunc(orig)):__INT64_C(0x8000000000000000);
 
     presult = (le_int *)&(st_result);
 
@@ -917,8 +925,7 @@ EXTERNC uint32_t x87_ftol_int64(CPU)
 
     return (uint32_t)(uintptr_t)presult;
 #else
-    st_result = (int64_t) trunc(ST0);
-    POP_REGS;
+    st_result = ((orig < 9223372036854775808.0) && (orig > -9223372036854775808.0))?((int64_t) trunc(orig)):__INT64_C(0x8000000000000000);
     return (uint32_t)(uintptr_t)&(st_result);
 #endif
 }

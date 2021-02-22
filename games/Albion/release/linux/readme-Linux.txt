@@ -5,6 +5,20 @@ Original Albion version 1.38 is required for playing.
 (English version preferred, but other languages should also work)
 (version from GOG.com can be used for playing)
 
+Libraries
+---------
+The game (SDL1 version) requires following 32-bit libraries: SDL, SDL_mixer, OpenGL
+On debian based distributions these libraries are in following packages: libsdl1.2debian:i386 libsdl-mixer1.2:i386 libgl1:i386
+
+The game (SDL2 version) requires following 32-bit libraries: SDL2, SDL2_mixer
+On debian based distributions these libraries are in following packages: libsdl2-2.0-0:i386 libsdl2-mixer-2.0-0:i386
+
+Following optional 32-bit library is needed only to create screenshots in PNG format (selectable in configuration file): zlib
+On debian based distributions this library is in following package: zlib1g:i386
+
+Some midi plugins may require additional libraries.
+
+
 Installation
 ------------
 

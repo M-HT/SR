@@ -102,7 +102,7 @@ int SR_get_section_reladr(uint_fast32_t Address, uint_fast32_t *SecNum, uint_fas
 		{
 			if (Entry == num_sections) break;
 
-			*SecNum = Entry;
+			*SecNum = Entry - 1;
 			*RelAdr = Address - section[Entry - 1].start;
 
 			return 1;

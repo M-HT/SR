@@ -4367,7 +4367,15 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                 {
                     if (ud_obj.operand[0].base >= UD_R_EAX && ud_obj.operand[0].base <= UD_R_EDI)
                     {
-                        OUTPUT_PARAMSTRING("POP %s\n", X86REGSTR(ud_obj.operand[0].base));
+                        if (ud_obj.operand[0].base == UD_R_ESP)
+                        {
+                            OUTPUT_STRING("POP tmp1\n");
+                            OUTPUT_STRING("mov esp, tmp1\n");
+                        }
+                        else
+                        {
+                            OUTPUT_PARAMSTRING("POP %s\n", X86REGSTR(ud_obj.operand[0].base));
+                        }
                     }
                     else if (ud_obj.operand[0].base >= UD_R_ES && ud_obj.operand[0].base <= UD_R_GS)
                     {
@@ -4419,7 +4427,15 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                 {
                     if (ud_obj.operand[0].base >= UD_R_EAX && ud_obj.operand[0].base <= UD_R_EDI)
                     {
-                        OUTPUT_PARAMSTRING("PUSH %s\n", X86REGSTR(ud_obj.operand[0].base));
+                        if (ud_obj.operand[0].base == UD_R_ESP)
+                        {
+                            OUTPUT_STRING("mov tmp1, esp\n");
+                            OUTPUT_STRING("PUSH tmp1\n");
+                        }
+                        else
+                        {
+                            OUTPUT_PARAMSTRING("PUSH %s\n", X86REGSTR(ud_obj.operand[0].base));
+                        }
                     }
                     else if (ud_obj.operand[0].base >= UD_R_ES && ud_obj.operand[0].base <= UD_R_GS)
                     {
@@ -4427,7 +4443,15 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                     }
                     else if (ud_obj.operand[0].base >= UD_R_AX && ud_obj.operand[0].base <= UD_R_DI)
                     {
-                        OUTPUT_PARAMSTRING("PUSH %s\n", X862LLSTR(ud_obj.operand[0].base));
+                        if (ud_obj.operand[0].base == UD_R_SP)
+                        {
+                            OUTPUT_STRING("mov tmp1, esp\n");
+                            OUTPUT_STRING("PUSH tmp1\n");
+                        }
+                        else
+                        {
+                            OUTPUT_PARAMSTRING("PUSH %s\n", X862LLSTR(ud_obj.operand[0].base));
+                        }
                     }
                 }
                 else if (ud_obj.operand[0].type == UD_OP_MEM &&

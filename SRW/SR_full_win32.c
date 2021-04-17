@@ -1212,7 +1212,21 @@ int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset)
                     ud_obj.pfx_seg == UD_R_FS
                    )
                 {
-                    sprintf(cResult, "push %s\npush %s\ncall x86_write_fs_dword", ud_reg_tab[ud_obj.operand[1].base - UD_R_AL], ud_reg_tab[ud_obj.operand[0].base - UD_R_AL]);
+                    if (ud_obj.operand[0].base == UD_R_ESP)
+                    {
+                        if (ud_obj.operand[1].base == UD_R_ESP)
+                        {
+                            sprintf(cResult, "push esp\npush dword [esp]\npush dword [esp]\ncall x86_write_fs_dword\nadd esp, 4");
+                        }
+                        else
+                        {
+                            sprintf(cResult, "push esp\npush %s\npush dword [esp+4]\ncall x86_write_fs_dword\nadd esp, 4", ud_reg_tab[ud_obj.operand[1].base - UD_R_AL]);
+                        }
+                    }
+                    else
+                    {
+                        sprintf(cResult, "push %s\npush %s\ncall x86_write_fs_dword", ud_reg_tab[ud_obj.operand[1].base - UD_R_AL], ud_reg_tab[ud_obj.operand[0].base - UD_R_AL]);
+                    }
 
                     output->str = strdup(cResult);
 

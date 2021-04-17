@@ -5959,7 +5959,15 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
                 {
                     if (ud_obj.operand[0].base >= UD_R_EAX && ud_obj.operand[0].base <= UD_R_EDI)
                     {
-                        OUTPUT_PARAMSTRING("POP_REG %s\n", X86REGSTR(ud_obj.operand[0].base));
+                        if (ud_obj.operand[0].base == UD_R_ESP)
+                        {
+                            OUTPUT_STRING("POP_REG tmp1\n");
+                            OUTPUT_STRING("mov esp, tmp1\n");
+                        }
+                        else
+                        {
+                            OUTPUT_PARAMSTRING("POP_REG %s\n", X86REGSTR(ud_obj.operand[0].base));
+                        }
                     }
                     else if (ud_obj.operand[0].base >= UD_R_ES && ud_obj.operand[0].base <= UD_R_GS)
                     {

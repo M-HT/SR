@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -311,6 +311,12 @@ static void SR_get_fixup_label(char *cResult, const fixup_data *fixup, const ext
     output_data *output;
     uint_fast32_t sec, ofs;
 
+    if (extrn != NULL)
+    {
+        strcpy(cResult, extrn->proc);
+        return;
+    }
+
     // locate label
     label_value = section_label_list_FindEntryEqual(fixup->tsec, fixup->tofs);
 
@@ -345,17 +351,9 @@ static void SR_get_fixup_label(char *cResult, const fixup_data *fixup, const ext
     }
 
     // print label to string
-    if (extrn != NULL)
-    {
-        strcpy(cLabel, extrn->proc);
-    }
-    else
-    {
-        SR_get_label(cLabel, section[sec].start + ofs);
-    }
+    SR_get_label(cLabel, section[sec].start + ofs);
 
-    if (((sec == fixup->tsec) && (ofs == fixup->tofs)) ||
-        extrn != NULL)
+    if ((sec == fixup->tsec) && (ofs == fixup->tofs))
     {
         strcpy(cResult, cLabel);
     }

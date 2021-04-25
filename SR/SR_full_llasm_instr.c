@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2020 Roman Pauer
+ *  Copyright (C) 2019-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -298,6 +298,12 @@ static void SR_get_fixup_label(char *cResult, const fixup_data *fixup, const ext
     output_data *output;
     uint_fast32_t sec, ofs;
 
+    if (extrn != NULL)
+    {
+        strcpy(cResult, extrn->proc);
+        return;
+    }
+
     // locate label
     label_value = section_label_list_FindEntryEqual(fixup->tsec, fixup->tofs);
 
@@ -332,17 +338,9 @@ static void SR_get_fixup_label(char *cResult, const fixup_data *fixup, const ext
     }
 
     // print label to string
-    if (extrn != NULL)
-    {
-        strcpy(cLabel, extrn->proc);
-    }
-    else
-    {
-        SR_get_label(cLabel, section[sec].start + ofs);
-    }
+    SR_get_label(cLabel, section[sec].start + ofs);
 
-    if (((sec == fixup->tsec) && (ofs == fixup->tofs)) ||
-        extrn != NULL)
+    if ((sec == fixup->tsec) && (ofs == fixup->tofs))
     {
         strcpy(cResult, cLabel);
     }
@@ -1557,6 +1555,13 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                     {
                         if (ud_obj.operand[1].type == UD_OP_REG)
                         {
+                            if (ud_obj.operand[1].base >= UD_R_AL && ud_obj.operand[1].base <= UD_R_BL)
+                            {
+                                SR_llasm_helper_adc_8l(ud_obj.mnemonic, X868L2LLREG(ud_obj.operand[0].base), X868L2LLREG(ud_obj.operand[1].base), 0);
+                            }
+                            else if (ud_obj.operand[1].base >= UD_R_AH && ud_obj.operand[1].base <= UD_R_BH)
+                            {
+                            }
                         }
                         else if (ud_obj.operand[1].type == UD_OP_MEM)
                         {
@@ -1574,6 +1579,24 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                     {
                         if (ud_obj.operand[1].type == UD_OP_REG)
                         {
+                            if (ud_obj.operand[1].base >= UD_R_AL && ud_obj.operand[1].base <= UD_R_BL)
+                            {
+                            }
+                            else if (ud_obj.operand[1].base >= UD_R_AH && ud_obj.operand[1].base <= UD_R_BH)
+                            {
+                                OUTPUT_PARAMSTRING("lshr tmp1, %s, 8\n", X862LLSTR(ud_obj.operand[0].base));
+
+                                if (ud_obj.operand[0].base == ud_obj.operand[1].base)
+                                {
+                                    SR_llasm_helper_adc_8l(ud_obj.mnemonic, LR_TMP1, LR_TMP1, 0);
+                                }
+                                else
+                                {
+                                    SR_llasm_helper_adc_8l(ud_obj.mnemonic, LR_TMP1, X868L2LLREG(ud_obj.operand[1].base), 8);
+                                }
+
+                                OUTPUT_PARAMSTRING("ins8hl %s, %s, tmp1\n", X862LLSTR(ud_obj.operand[0].base), X862LLSTR(ud_obj.operand[0].base));
+                            }
                         }
                         else if (ud_obj.operand[1].type == UD_OP_MEM)
                         {
@@ -2104,6 +2127,33 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                     {
                         if (ud_obj.operand[0].size == 32)
                         {
+                            if (ud_obj.operand[1].type == UD_OP_IMM)
+                            {
+                                uint32_t value;
+
+                                SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_REG, ZERO_EXTEND, &memadr);
+                                memadr.align = 1;
+
+                                value = ud_obj.operand[1].lval.ubyte & 0x1f;
+
+                                if (value >= 8)
+                                {
+                                    OUTPUT_PARAMSTRING("add tmpadr, tmpadr, %i\n", value >> 3);
+
+                                    value &= 7;
+                                }
+
+                                SR_disassemble_read_mem_byte(cOutput, &memadr, LR_TMP1, READ8TO32ZERO);
+
+                                SR_disassemble_change_flags(pOutput, FL_CARRY, 0, 0);
+
+                                if (value != 0)
+                                {
+                                    OUTPUT_PARAMSTRING("lshr tmp1, tmp1, %i\n", value);
+                                }
+                                OUTPUT_STRING("and tmp1, tmp1, CF\n");
+                                OUTPUT_STRING("or eflags, eflags, tmp1\n");
+                            }
                         }
                         else if (ud_obj.operand[0].size == 16)
                         {
@@ -2870,7 +2920,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
 
                             if (flags_to_write & (FL_CARRY | FL_OVERFLOW))
                             {
-                                OUTPUT_PARAMSTRING("imul, %s, tmp1, tmp1, %i\n", X86REGSTR(ud_obj.operand[0].base), value);
+                                OUTPUT_PARAMSTRING("imul %s, tmp1, tmp1, %i\n", X86REGSTR(ud_obj.operand[0].base), value);
 
                                 SR_disassemble_change_flags(pOutput, Tflags_to_write, 0, 0);
 
@@ -2880,7 +2930,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                             }
                             else
                             {
-                                OUTPUT_PARAMSTRING("mul, %s, tmp1, %i\n", X86REGSTR(ud_obj.operand[0].base), value);
+                                OUTPUT_PARAMSTRING("mul %s, tmp1, %i\n", X86REGSTR(ud_obj.operand[0].base), value);
                             }
                         }
                     }
@@ -2919,7 +2969,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
 
                             SR_disassemble_get_madr(cOutput, &(ud_obj.operand[1]), fixup[1], extrn[1], UD_NONE, MADR_READ, SIGN_EXTEND, &memadr);
 
-                            SR_disassemble_read_mem_halfword(cOutput, &memadr, LR_TMP2, READ16TO32SIGN);
+                            SR_disassemble_read_mem_halfword(cOutput, &memadr, LR_TMP1, READ16TO32SIGN);
 
                             OUTPUT_PARAMSTRING("mul tmp1, tmp1, %i\n", value);
                             OUTPUT_PARAMSTRING("ins16 %s, %s, tmp1\n", X862LLSTR(ud_obj.operand[0].base), X862LLSTR(ud_obj.operand[0].base));
@@ -3022,7 +3072,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                             }
                             else
                             {
-                                OUTPUT_PARAMSTRING("mul tmp1, %s, tmp1\n", X862LLSTR(ud_obj.operand[0].base));
+                                OUTPUT_PARAMSTRING("mul tmp1, %s, tmp2\n", X862LLSTR(ud_obj.operand[0].base));
                                 OUTPUT_PARAMSTRING("ins16 %s, %s, tmp1\n", X862LLSTR(ud_obj.operand[0].base), X862LLSTR(ud_obj.operand[0].base));
                             }
                         }
@@ -4281,14 +4331,24 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                         OUTPUT_PARAMSTRING("ins16 %s, %s, tmp1\n", X862LLSTR(ud_obj.operand[0].base), X862LLSTR(ud_obj.operand[0].base));
                     }
                 }
-                else if (ud_obj.operand[0].type == UD_OP_MEM &&
-                        ud_obj.operand[0].size == 32)
+                else if (ud_obj.operand[0].type == UD_OP_MEM)
                 {
-                    SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_WRITE, ZERO_EXTEND, &memadr);
+                    if (ud_obj.operand[0].size == 32)
+                    {
+                        SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_WRITE, ZERO_EXTEND, &memadr);
 
-                    OUTPUT_STRING("POP tmp1\n");
+                        OUTPUT_STRING("POP tmp1\n");
 
-                    SR_disassemble_write_mem_word(cOutput, &memadr, LR_TMP1);
+                        SR_disassemble_write_mem_word(cOutput, &memadr, LR_TMP1);
+                    }
+                    else if (ud_obj.operand[0].size == 16)
+                    {
+                        SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_WRITE, ZERO_EXTEND, &memadr);
+
+                        OUTPUT_STRING("POP tmp1\n");
+
+                        SR_disassemble_write_mem_halfword(cOutput, &memadr, LR_TMP1);
+                    }
                 }
             }
             break;
@@ -4348,14 +4408,24 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                         }
                     }
                 }
-                else if (ud_obj.operand[0].type == UD_OP_MEM &&
-                         ud_obj.operand[0].size == 32)
+                else if (ud_obj.operand[0].type == UD_OP_MEM)
                 {
-                    SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_READ, ZERO_EXTEND, &memadr);
+                    if (ud_obj.operand[0].size == 32)
+                    {
+                        SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_READ, ZERO_EXTEND, &memadr);
 
-                    SR_disassemble_read_mem_word(cOutput, &memadr, LR_TMP1);
+                        SR_disassemble_read_mem_word(cOutput, &memadr, LR_TMP1);
 
-                    OUTPUT_STRING("PUSH tmp1\n");
+                        OUTPUT_STRING("PUSH tmp1\n");
+                    }
+                    else if (ud_obj.operand[0].size == 16)
+                    {
+                        SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_READ, ZERO_EXTEND, &memadr);
+
+                        SR_disassemble_read_mem_halfword(cOutput, &memadr, LR_TMP1, READ16TO32ZERO);
+
+                        OUTPUT_STRING("PUSH tmp1\n");
+                    }
                 }
                 else if (fixup[0] == NULL &&
                          ud_obj.operand[0].type == UD_OP_IMM)
@@ -5871,6 +5941,9 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                         {
                             if (ud_obj.operand[1].base >= UD_R_AL && ud_obj.operand[1].base <= UD_R_BL)
                             {
+                                OUTPUT_PARAMSTRING("mov tmp1, %s\n", X862LLSTR(ud_obj.operand[0].base));
+                                OUTPUT_PARAMSTRING("ins8ll %s, %s, %s\n", X862LLSTR(ud_obj.operand[0].base), X862LLSTR(ud_obj.operand[0].base), X862LLSTR(ud_obj.operand[1].base));
+                                OUTPUT_PARAMSTRING("ins8ll %s, %s, tmp1\n", X862LLSTR(ud_obj.operand[1].base), X862LLSTR(ud_obj.operand[1].base));
                             }
                             else if (ud_obj.operand[1].base >= UD_R_AH && ud_obj.operand[1].base <= UD_R_BH)
                             {
@@ -5945,6 +6018,18 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                     }
 
                 }
+            }
+            break;
+        case UD_Ixlat:
+        case UD_Ixlatb:
+            {
+                /* no flags affected */
+
+                OUTPUT_STRING("and tmp1, eax, 0xff\n");
+                OUTPUT_STRING("add tmp2, ebx, tmp1\n");
+                OUTPUT_STRING("load8z tmp0, tmp2, 1\n");
+                OUTPUT_STRING("and eax, eax, 0xffffff00\n");
+                OUTPUT_STRING("or eax, eax, tmp0\n");
             }
             break;
 #if (EMULATE_FPU)

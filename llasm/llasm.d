@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2020 Roman Pauer
+ *  Copyright (C) 2019-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -3454,7 +3454,7 @@ public int main(string[] args)
         }
 
         add_output_line("%_" ~ dataseg_name ~ " = type <{ " ~ dataseg_type ~ " }>");
-        add_output_line("@" ~ dataseg_name ~ " = " ~ (dataseg.isconstant?"constant":"global") ~ " %_" ~ dataseg_name ~ " <{ " ~ dataseg_values ~ " }>, align 4");
+        add_output_line("@" ~ dataseg_name ~ " = private " ~ (dataseg.isconstant?"constant":"global") ~ " %_" ~ dataseg_name ~ " <{ " ~ dataseg_values ~ " }>, align 4");
 
         foreach (label; dataseg.labels)
         {

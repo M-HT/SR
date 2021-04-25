@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -255,6 +255,8 @@ int init_udis86_dep(void)
 
 	/* X */
 	SET_FLAGS(UD_Ixchg, FL_NONE, FL_NONE);
+	SET_FLAGS(UD_Ixlat, FL_NONE, FL_NONE);
+	SET_FLAGS(UD_Ixlatb, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ixor, FL_NONE, FL_COND);
 
 	return 0;

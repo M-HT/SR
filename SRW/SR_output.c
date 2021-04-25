@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -296,6 +296,7 @@ static void SR_write_output_import(import_data *item, void *data)
 #undef DATA
 }
 
+#if (OUTPUT_TYPE != OUT_LLASM)
 static void SR_write_output_export(export_data *item, void *data)
 {
     char cbuf[16];
@@ -325,8 +326,22 @@ static void SR_write_output_export(export_data *item, void *data)
 
 #undef DATA
 }
+#endif
 
 #if (OUTPUT_TYPE == OUT_LLASM)
+
+static void SR_write_llasm_output_hasdata(output_data *item, void *data)
+{
+#define HAS_DATA (*((uint_fast32_t *) data))
+
+    if (HAS_DATA) return;
+    if (item->type == OT_INSTRUCTION) return;
+    if (item->type == OT_NONE) return;
+
+    HAS_DATA = 1;
+
+#undef HAS_DATA
+}
 
 static void SR_write_llasm_output_function(output_data *item, void *data)
 {
@@ -602,6 +617,14 @@ int SR_write_output(const char *fname)
                 break;
 #elif (OUTPUT_TYPE == OUT_LLASM)
             case ST_CODE:
+                {
+                    uint_fast32_t has_data;
+
+                    has_data = 0;
+                    section_output_list_ForEach(EF.Entry, &SR_write_llasm_output_hasdata, (void *) &has_data);
+
+                    if (!has_data) continue;
+                }
                 fprintf(EF.fout, "\ndatasegment %s constant\n", section[EF.Entry].name);
                 break;
             case ST_DATA:
@@ -640,7 +663,9 @@ int SR_write_output(const char *fname)
 #endif
         }
 
+#if (OUTPUT_TYPE != OUT_LLASM)
         section_export_list_ForEach(EF.Entry, &SR_write_output_export, (void *) &EF);
+#endif
 
         if (section[EF.Entry].type == ST_RSRC)
         {
@@ -683,12 +708,7 @@ int SR_write_output(const char *fname)
             char incname[12];
 
             sprintf((char *) &(incname[0]), "seg%.2i.inc", (unsigned int)(EF.Entry + 1));
-
-        #if (OUTPUT_TYPE == OUT_LLASM)
-            fprintf(EF.fout, ".include \"%s\"\n", (char *) &(incname[0]));
-        #else
             fprintf(EF.fout, "%%include \"%s\"\n", (char *) &(incname[0]));
-        #endif
     #endif
 
             fmain = EF.fout;

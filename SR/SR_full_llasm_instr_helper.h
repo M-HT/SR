@@ -1260,7 +1260,7 @@ static void SR_llasm_helper_add_8l(enum ud_mnemonic_code mnemonic, enum ll_regs 
 
 // add, sub, cmp
 // trashes LR_TMP3, LR_TMP4, LR_TMP5
-static void SR_llasm_helper_add_8h(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, uint8_t src2shiftvalue)
+static void SR_llasm_helper_add_8h(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, uint32_t src2shiftvalue)
 {
     const char *instr;
     int32_t value, overflow_value;

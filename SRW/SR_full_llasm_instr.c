@@ -1592,7 +1592,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                                 }
                                 else
                                 {
-                                    SR_llasm_helper_adc_8l(ud_obj.mnemonic, LR_TMP1, X868L2LLREG(ud_obj.operand[1].base), 8);
+                                    SR_llasm_helper_adc_8l(ud_obj.mnemonic, LR_TMP1, X868H2LLREG(ud_obj.operand[1].base), 8);
                                 }
 
                                 OUTPUT_PARAMSTRING("ins8hl %s, %s, tmp1\n", X862LLSTR(ud_obj.operand[0].base), X862LLSTR(ud_obj.operand[0].base));
@@ -4613,7 +4613,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
 
                                     if (Tflags_to_write & FL_CARRY)
                                     {
-                                        OUTPUT_PARAMSTRING("shl tmp1, %s, 31 - CF_SHIFT\n", X86REGSTR(ud_obj.operand[0].base));
+                                        OUTPUT_PARAMSTRING("lshr tmp1, %s, 31 - CF_SHIFT\n", X86REGSTR(ud_obj.operand[0].base));
                                         OUTPUT_STRING(";and tmp1, tmp1, CF\n");
                                         OUTPUT_STRING("or eflags, eflags, tmp1\n");
                                     }
@@ -4675,7 +4675,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
 
                                     if (Tflags_to_write & FL_CARRY)
                                     {
-                                        OUTPUT_PARAMSTRING("shl tmp1, %s, 15 - CF_SHIFT\n", X862LLSTR(ud_obj.operand[0].base));
+                                        OUTPUT_PARAMSTRING("lshr tmp1, %s, 15 - CF_SHIFT\n", X862LLSTR(ud_obj.operand[0].base));
                                         OUTPUT_STRING("and tmp1, tmp1, CF\n");
                                         OUTPUT_STRING("or eflags, eflags, tmp1\n");
                                     }

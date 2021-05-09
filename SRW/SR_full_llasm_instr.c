@@ -346,7 +346,7 @@ static void SR_get_fixup_label(char *cResult, const fixup_data *fixup, const ext
     }
     else
     {
-        sprintf(cResult, "(%s + (%i))", cLabel, (int)((section[fixup->tsec].start + fixup->tofs) - (section[sec].start + ofs)));
+        sprintf(cResult, "%s[%i]", cLabel, (int)((section[fixup->tsec].start + fixup->tofs) - (section[sec].start + ofs)));
     }
 
 }

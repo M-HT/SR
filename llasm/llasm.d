@@ -77,12 +77,16 @@ struct instruction_struct {
     bool[string] variable_params2;
 }
 
-struct proc_instr_struct
-{
+struct param_struct {
+    string type, value;
+    int ivalue;
+}
+
+struct proc_instr_struct {
     bool is_valid, is_inside_if, func_has_return_value, if_contains_call;
     string[2] write_reg;
     bool[2] last_reg_write;
-    string[2][] params;
+    param_struct[] params;
 }
 
 struct dlabel_struct {
@@ -1110,36 +1114,36 @@ string get_load_type(string type)
     }
 }
 
-string get_parameter_read_value(string[2] param, bool as_pointer = false)
+string get_parameter_read_value(param_struct param, bool as_pointer = false)
 {
-    switch (param[0])
+    switch (param.type)
     {
         case "reg":
             string reg;
 
-            if (is_temporary_register(param[1]))
+            if (is_temporary_register(param.value))
             {
                 if (procedure_optimization_level >= 2)
                 {
-                    if (param[1] in current_temporary_register)
+                    if (param.value in current_temporary_register)
                     {
-                        reg = current_temporary_register[param[1]].idup;
+                        reg = current_temporary_register[param.value].idup;
                     }
                     else
                     {
-                        write_error2("Using uninitialized register: " ~ param[1]);
+                        write_error2("Using uninitialized register: " ~ param.value);
                         return "error";
                     }
                 }
                 else
                 {
                     reg = get_new_temporary_register();
-                    add_output_line(reg ~ " = load " ~ get_load_type("i32") ~ " %" ~ param[1] ~ ", align 4");
+                    add_output_line(reg ~ " = load " ~ get_load_type("i32") ~ " %" ~ param.value ~ ", align 4");
                 }
             }
             else
             {
-                string regnumstr = register_numbers_str[param[1]];
+                string regnumstr = register_numbers_str[param.value];
 
                 if (procedure_optimization_level >= 1)
                 {
@@ -1156,23 +1160,23 @@ string get_parameter_read_value(string[2] param, bool as_pointer = false)
 
                         if (procedure_optimization_level >= 2)
                         {
-                            current_temporary_register[param[1]] = reg.idup;
+                            current_temporary_register[param.value] = reg.idup;
                         }
                         else
                         {
-                            add_output_line("store i32 " ~ reg ~ ", i32* %" ~ param[1] ~ ", align 4");
+                            add_output_line("store i32 " ~ reg ~ ", i32* %" ~ param.value ~ ", align 4");
                         }
                     }
                     else
                     {
                         if (procedure_optimization_level >= 2)
                         {
-                            reg = current_temporary_register[param[1]].idup;
+                            reg = current_temporary_register[param.value].idup;
                         }
                         else
                         {
                             reg = get_new_temporary_register();
-                            add_output_line(reg ~ " = load " ~ get_load_type("i32") ~ " %" ~ param[1] ~ ", align 4");
+                            add_output_line(reg ~ " = load " ~ get_load_type("i32") ~ " %" ~ param.value ~ ", align 4");
                         }
                     }
                 }
@@ -1196,77 +1200,105 @@ string get_parameter_read_value(string[2] param, bool as_pointer = false)
                 return reg;
             }
         case "externaddr":
-            if (!position_independent_code || param[1] in extern_list || dlabel_list[param[1]].isglobal)
+            if (!position_independent_code || param.value in extern_list || dlabel_list[param.value].isglobal)
             {
-                if (as_pointer)
+                if (param.ivalue == 0)
                 {
-                    return "@" ~ param[1];
+                    if (as_pointer)
+                    {
+                        return "@" ~ param.value;
+                    }
+                    else
+                    {
+                        return "ptrtoint (i8* @" ~ param.value ~ " to i32)";
+                    }
                 }
                 else
                 {
-                    return "ptrtoint (i8* @" ~ param[1] ~ " to i32)";
+                    if (as_pointer)
+                    {
+                        return "getelementptr (" ~ get_load_type("i8") ~ " @" ~ param.value ~ ", i32 " ~ to!string(param.ivalue) ~ ")";
+                    }
+                    else
+                    {
+                        return "ptrtoint (i8* getelementptr (" ~ get_load_type("i8") ~ " @" ~ param.value ~ ", i32 " ~ to!string(param.ivalue) ~ ") to i32)";
+                    }
                 }
             }
             else
             {
-                auto addrlabel = dlabel_list[param[1]];
+                auto addrlabel = dlabel_list[param.value];
 
                 if (as_pointer)
                 {
-                    return "getelementptr (" ~ get_load_type("i8") ~ " bitcast (%_" ~ addrlabel.dataseg_name ~ "* @" ~ addrlabel.dataseg_name ~ " to i8*), i32 " ~ to!string(addrlabel.offset) ~ ")";
+                    return "getelementptr (" ~ get_load_type("i8") ~ " bitcast (%_" ~ addrlabel.dataseg_name ~ "* @" ~ addrlabel.dataseg_name ~ " to i8*), i32 " ~ to!string(addrlabel.offset + param.ivalue) ~ ")";
                 }
                 else
                 {
-                    return "ptrtoint (i8* getelementptr (" ~ get_load_type("i8") ~ " bitcast (%_" ~ addrlabel.dataseg_name ~ "* @" ~ addrlabel.dataseg_name ~ " to i8*), i32 " ~ to!string(addrlabel.offset) ~ ") to i32)";
+                    return "ptrtoint (i8* getelementptr (" ~ get_load_type("i8") ~ " bitcast (%_" ~ addrlabel.dataseg_name ~ "* @" ~ addrlabel.dataseg_name ~ " to i8*), i32 " ~ to!string(addrlabel.offset + param.ivalue) ~ ") to i32)";
                 }
             }
         case "procaddr":
             if (as_pointer)
             {
-                return "bitcast (" ~ ((no_tail_calls)?"i8*":"void") ~ "(%_cpu*)* @" ~ param[1] ~ " to i8*)";
+                return "bitcast (" ~ ((no_tail_calls)?"i8*":"void") ~ "(%_cpu*)* @" ~ param.value ~ " to i8*)";
             }
             else
             {
-                return "ptrtoint (" ~ ((no_tail_calls)?"i8*":"void") ~ "(%_cpu*)* @" ~ param[1] ~ " to i32)";
+                return "ptrtoint (" ~ ((no_tail_calls)?"i8*":"void") ~ "(%_cpu*)* @" ~ param.value ~ " to i32)";
             }
         default:
             if (as_pointer)
             {
-                return "inttoptr (i32 (" ~ param[1] ~ ") to i8*)";
+                return "inttoptr (i32 (" ~ param.value ~ ") to i8*)";
             }
             else
             {
-                return param[1];
+                return param.value;
             }
     }
 }
 
-string get_parameter_read_addr(string[2] param, string ptrtype)
+string get_parameter_read_addr(param_struct param, string ptrtype)
 {
-    if (param[0] == "externaddr")
+    if (param.type == "externaddr")
     {
-        if (!position_independent_code || param[1] in extern_list || dlabel_list[param[1]].isglobal)
+        if (!position_independent_code || param.value in extern_list || dlabel_list[param.value].isglobal)
         {
-            if (ptrtype == "i8")
+            if (param.ivalue == 0)
             {
-                return "@" ~ param[1];
+                if (ptrtype == "i8")
+                {
+                    return "@" ~ param.value;
+                }
+                else
+                {
+                    return "bitcast (i8* @" ~ param.value ~ " to " ~ ptrtype ~ "*)";
+                }
             }
             else
             {
-                return "bitcast (i8* @" ~ param[1] ~ " to " ~ ptrtype ~ "*)";
+                if (ptrtype == "i8")
+                {
+                    return "getelementptr (" ~ get_load_type("i8") ~ " @" ~ param.value ~ ", i32 " ~ to!string(param.ivalue) ~ ")";
+                }
+                else
+                {
+                    return "bitcast (i8* getelementptr (" ~ get_load_type("i8") ~ " @" ~ param.value ~ ", i32 " ~ to!string(param.ivalue) ~ ") to " ~ ptrtype ~ "*)";
+                }
             }
         }
         else
         {
-            auto addrlabel = dlabel_list[param[1]];
+            auto addrlabel = dlabel_list[param.value];
 
             if (ptrtype == "i8")
             {
-                return "getelementptr (" ~ get_load_type("i8") ~ " bitcast (%_" ~ addrlabel.dataseg_name ~ "* @" ~ addrlabel.dataseg_name ~ " to i8*), i32 " ~ to!string(addrlabel.offset) ~ ")";
+                return "getelementptr (" ~ get_load_type("i8") ~ " bitcast (%_" ~ addrlabel.dataseg_name ~ "* @" ~ addrlabel.dataseg_name ~ " to i8*), i32 " ~ to!string(addrlabel.offset + param.ivalue) ~ ")";
             }
             else
             {
-                return "bitcast (i8* getelementptr (" ~ get_load_type("i8") ~ " bitcast (%_" ~ addrlabel.dataseg_name ~ "* @" ~ addrlabel.dataseg_name ~ " to i8*), i32 " ~ to!string(addrlabel.offset) ~ ") to " ~ ptrtype ~ "*)";
+                return "bitcast (i8* getelementptr (" ~ get_load_type("i8") ~ " bitcast (%_" ~ addrlabel.dataseg_name ~ "* @" ~ addrlabel.dataseg_name ~ " to i8*), i32 " ~ to!string(addrlabel.offset + param.ivalue) ~ ") to " ~ ptrtype ~ "*)";
             }
         }
     }
@@ -1457,7 +1489,7 @@ bool process_proc_body(string proc_name)
             params = get_current_params();
         }
 
-        string[2][] paramvals;
+        param_struct[] paramvals;
 
         paramvals.length = params.length;
 
@@ -1466,13 +1498,13 @@ bool process_proc_body(string proc_name)
         {
             if (params[i] == "$")
             {
-                paramvals[i] = ["$".idup, "%cpu".idup];
+                paramvals[i] = param_struct("$".idup, "%cpu".idup);
                 continue;
             }
 
             if (params[i] in registers_list)
             {
-                paramvals[i] = ["reg".idup, params[i].idup];
+                paramvals[i] = param_struct("reg".idup, params[i].idup);
 
                 // update list of used registers in procedure
                 used_reg_list[params[i]] = true;
@@ -1482,8 +1514,37 @@ bool process_proc_body(string proc_name)
 
             if (params[i] in func_list)
             {
-                paramvals[i] = ["funcaddr".idup, params[i].idup];
+                paramvals[i] = param_struct("funcaddr".idup, params[i]);
                 continue;
+            }
+
+            long position = params[i].indexOf('[');
+            if (position >= 0)
+            {
+                uint position2 = cast(uint)position;
+                string displacement = params[i][position2+1..$].strip();
+                if (displacement.length > 0 && displacement[displacement.length - 1] == ']')
+                {
+                    displacement = displacement[0..$-1].strip();
+                    string param_base = params[i][0..position2].strip();
+
+                    if (param_base in define_list)
+                    {
+                        param_base = define_list[param_base];
+                    }
+
+                    if (param_base in extern_list || param_base in dlabel_list)
+                    {
+                        if (replace_defines_in_expr(displacement))
+                        {
+                            if (calculate_expr_value(displacement))
+                            {
+                                paramvals[i] = param_struct("externaddr".idup, param_base.idup, cast(int)(to!long(displacement)));
+                                continue;
+                            }
+                        }
+                    }
+                }
             }
 
             string param;
@@ -1498,13 +1559,13 @@ bool process_proc_body(string proc_name)
 
             if (param in extern_list || param in dlabel_list)
             {
-                paramvals[i] = ["externaddr".idup, param.idup];
+                paramvals[i] = param_struct("externaddr".idup, param.idup, 0);
                 continue;
             }
 
             if (param in proc_list)
             {
-                paramvals[i] = ["procaddr".idup, param.idup];
+                paramvals[i] = param_struct("procaddr".idup, param.idup);
                 continue;
             }
 
@@ -1512,7 +1573,7 @@ bool process_proc_body(string proc_name)
             {
                 if (calculate_expr_value(param))
                 {
-                    paramvals[i] = ["const".idup, param.idup];
+                    paramvals[i] = param_struct("const".idup, param.idup, cast(int)(to!long(param)));
                     continue;
                 }
             }
@@ -1526,7 +1587,7 @@ bool process_proc_body(string proc_name)
         {
             for (int i = 0; i < paramvals.length; i++)
             {
-                if (paramvals[i][0] !in instruction.variable_params2)
+                if (paramvals[i].type !in instruction.variable_params2)
                 {
                     write_error2("Wrong instruction parameter type: " ~ current_line.orig);
                     return false;
@@ -1537,7 +1598,7 @@ bool process_proc_body(string proc_name)
         {
             for (int i = 0; i < paramvals.length; i++)
             {
-                if (paramvals[i][0] !in instruction.params2[i])
+                if (paramvals[i].type !in instruction.params2[i])
                 {
                     write_error2("Wrong instruction parameter type: " ~ current_line.orig);
                     return false;
@@ -1566,7 +1627,7 @@ bool process_proc_body(string proc_name)
         switch (current_line.word)
         {
             case "mov": // mov reg, reg/const/addr
-                proc_instr_info[linenum].write_reg[0] = paramvals[0][1];
+                proc_instr_info[linenum].write_reg[0] = paramvals[0].value;
                 break;
             case "add":  // add  reg, reg, reg/const
             case "sub":  // sub  reg, reg/const, reg/const
@@ -1577,16 +1638,16 @@ bool process_proc_body(string proc_name)
             case "or":   // or   reg, reg, reg/const
             case "xor":  // xor  reg, reg, reg/const
             case "mul":  // mul  reg, reg, reg/const
-                proc_instr_info[linenum].write_reg[0] = paramvals[0][1];
+                proc_instr_info[linenum].write_reg[0] = paramvals[0].value;
                 break;
             case "load": // load reg, reg/addr, const
-                proc_instr_info[linenum].write_reg[0] = paramvals[0][1];
+                proc_instr_info[linenum].write_reg[0] = paramvals[0].value;
                 break;
             case "load8s": // load8s reg, reg/addr, const
             case "load8z": // load8z reg, reg/addr, const
             case "load16s": // load16s reg, reg/addr, const
             case "load16z": // load16z reg, reg/addr, const
-                proc_instr_info[linenum].write_reg[0] = paramvals[0][1];
+                proc_instr_info[linenum].write_reg[0] = paramvals[0].value;
                 break;
             case "store": // store reg/const/addr, reg/addr, const
                 break;
@@ -1595,18 +1656,18 @@ bool process_proc_body(string proc_name)
                 break;
             case "ext8s":  // ext8s reg, reg
             case "ext16s": // ext16s reg, reg
-                proc_instr_info[linenum].write_reg[0] = paramvals[0][1];
+                proc_instr_info[linenum].write_reg[0] = paramvals[0].value;
                 break;
             case "ins16": // ins16 reg, reg, reg
             case "ins8ll": // ins8ll reg, reg, reg
-                proc_instr_info[linenum].write_reg[0] = paramvals[0][1];
+                proc_instr_info[linenum].write_reg[0] = paramvals[0].value;
                 break;
             case "ins8lh": // ins8lh reg, reg, reg
             case "ins8hl": // ins8hl reg, reg, reg
-                proc_instr_info[linenum].write_reg[0] = paramvals[0][1];
+                proc_instr_info[linenum].write_reg[0] = paramvals[0].value;
                 break;
             case "ins8hh": // ins8hh reg, reg, reg
-                proc_instr_info[linenum].write_reg[0] = paramvals[0][1];
+                proc_instr_info[linenum].write_reg[0] = paramvals[0].value;
                 break;
             case "tcall": // tcall reg/addr
                 if (linenum + 1 != curproc.lines.length)
@@ -1624,13 +1685,13 @@ bool process_proc_body(string proc_name)
                 }
                 break;
             case "cmovz": // cmovz reg, reg, reg/const, reg/const
-                proc_instr_info[linenum].write_reg[0] = paramvals[1][1];
+                proc_instr_info[linenum].write_reg[0] = paramvals[1].value;
                 break;
             case "cmoveq":  // cmoveq reg, reg/const, reg, reg/const, reg/const
             case "cmovult": // cmovult reg, reg/const, reg, reg/const, reg/const
             case "cmovslt": // cmovslt reg, reg/const, reg, reg/const, reg/const
             case "cmovsgt": // cmovsgt reg, reg/const, reg, reg/const, reg/const
-                proc_instr_info[linenum].write_reg[0] = paramvals[2][1];
+                proc_instr_info[linenum].write_reg[0] = paramvals[2].value;
                 break;
             case "call": // call funcaddr [$/reg/const]
                 if (proc_instr_info[linenum].func_has_return_value)
@@ -1643,8 +1704,8 @@ bool process_proc_body(string proc_name)
                 break;
             case "imul": // imul reg, reg, reg, reg/const
             case "umul": // umul reg, reg, reg, reg/const
-                proc_instr_info[linenum].write_reg[0] = paramvals[0][1];
-                proc_instr_info[linenum].write_reg[1] = paramvals[1][1];
+                proc_instr_info[linenum].write_reg[0] = paramvals[0].value;
+                proc_instr_info[linenum].write_reg[1] = paramvals[1].value;
                 break;
             case "ifz":  // ifz reg
             case "ifnz": // ifnz reg
@@ -1662,10 +1723,10 @@ bool process_proc_body(string proc_name)
                     {
                         if (linenum > 0 && curproc.lines[linenum-1].word == "mov")
                         {
-                            if (proc_instr_info[linenum-1].params[0][1] == paramvals[0][1] && proc_instr_info[linenum-1].params[1][0] == "const")
+                            if (proc_instr_info[linenum-1].params[0].value == paramvals[0].value && proc_instr_info[linenum-1].params[1].type == "const")
                             {
                                 is_static_if = true;
-                                int value = cast(int)(to!long(proc_instr_info[linenum-1].params[1][1]));
+                                int value = proc_instr_info[linenum-1].params[1].ivalue;
 
                                 if (current_line.word == "ifz")
                                 {
@@ -1680,27 +1741,27 @@ bool process_proc_body(string proc_name)
 
                         if (linenum > 1 && curproc.lines[linenum-2].word == "mov" && curproc.lines[linenum-1].word == "cmovslt")
                         {
-                            if (proc_instr_info[linenum-2].params[0][1] == paramvals[0][1] && proc_instr_info[linenum-2].params[1][0] == "const")
+                            if (proc_instr_info[linenum-2].params[0].value == paramvals[0].value && proc_instr_info[linenum-2].params[1].type == "const")
                             {
-                                if (proc_instr_info[linenum-1].params[0][1] == paramvals[0][1] &&
-                                    proc_instr_info[linenum-1].params[1][0] == "const" &&
-                                    proc_instr_info[linenum-1].params[2][1] == paramvals[0][1] &&
-                                    proc_instr_info[linenum-1].params[3][0] == "const" &&
-                                    proc_instr_info[linenum-1].params[4][0] == "const"
+                                if (proc_instr_info[linenum-1].params[0].value == paramvals[0].value &&
+                                    proc_instr_info[linenum-1].params[1].type == "const" &&
+                                    proc_instr_info[linenum-1].params[2].value == paramvals[0].value &&
+                                    proc_instr_info[linenum-1].params[3].type == "const" &&
+                                    proc_instr_info[linenum-1].params[4].type == "const"
                                    )
                                 {
                                     is_static_if = true;
-                                    int value2 = cast(int)(to!long(proc_instr_info[linenum-2].params[1][1]));
-                                    int value1 = cast(int)(to!long(proc_instr_info[linenum-1].params[1][1]));
+                                    int value2 = proc_instr_info[linenum-2].params[1].ivalue;
+                                    int value1 = proc_instr_info[linenum-1].params[1].ivalue;
                                     int value0;
 
                                     if (value2 < value1)
                                     {
-                                        value0 = cast(int)(to!long(proc_instr_info[linenum-1].params[3][1]));
+                                        value0 = proc_instr_info[linenum-1].params[3].ivalue;
                                     }
                                     else
                                     {
-                                        value0 = cast(int)(to!long(proc_instr_info[linenum-1].params[4][1]));
+                                        value0 = proc_instr_info[linenum-1].params[4].ivalue;
                                     }
 
                                     if (current_line.word == "ifz")
@@ -1745,7 +1806,7 @@ bool process_proc_body(string proc_name)
                 }
                 break;
             case "ctlz": // ctlz reg, reg
-                proc_instr_info[linenum].write_reg[0] = paramvals[0][1];
+                proc_instr_info[linenum].write_reg[0] = paramvals[0].value;
                 break;
             default:
                 write_error2("Unhandled instruction: " ~ current_line.orig);
@@ -1869,7 +1930,7 @@ bool process_proc_body(string proc_name)
         add_output_line(";" ~ current_line.orig);
         if (!proc_instr_info[linenum].is_valid) continue;
 
-        string[2][] paramvals = proc_instr_info[linenum].params;
+        param_struct[] paramvals = proc_instr_info[linenum].params;
         bool[2] last_reg_write = proc_instr_info[linenum].last_reg_write;
 
 
@@ -1878,7 +1939,7 @@ bool process_proc_body(string proc_name)
             case "mov": // mov reg, reg/const/addr
                 {
                     string src = get_parameter_read_value(paramvals[1]);
-                    store_temporary_register_to_reg(src, paramvals[0][1], last_reg_write[0]);
+                    store_temporary_register_to_reg(src, paramvals[0].value, last_reg_write[0]);
                 }
                 break;
             case "add":  // add  reg, reg, reg/const
@@ -1897,7 +1958,7 @@ bool process_proc_body(string proc_name)
 
                     add_output_line(dst ~ " = " ~ current_line.word ~ " i32 " ~ src1 ~ ", " ~ src2);
 
-                    store_temporary_register_to_reg(dst, paramvals[0][1], last_reg_write[0]);
+                    store_temporary_register_to_reg(dst, paramvals[0].value, last_reg_write[0]);
                 }
                 break;
             case "load": // load reg, reg/addr, const
@@ -1905,9 +1966,9 @@ bool process_proc_body(string proc_name)
                     string src = get_parameter_read_addr(paramvals[1], "i32");
                     string dst = get_new_temporary_register();
 
-                    add_output_line(dst ~ " = load " ~ get_load_type("i32") ~ " " ~ src ~ ", align " ~ paramvals[2][1]);
+                    add_output_line(dst ~ " = load " ~ get_load_type("i32") ~ " " ~ src ~ ", align " ~ paramvals[2].value);
 
-                    store_temporary_register_to_reg(dst, paramvals[0][1], last_reg_write[0]);
+                    store_temporary_register_to_reg(dst, paramvals[0].value, last_reg_write[0]);
                 }
                 break;
             case "load8s": // load8s reg, reg/addr, const
@@ -1922,10 +1983,10 @@ bool process_proc_body(string proc_name)
                     string tmpdst = get_new_temporary_register();
                     string dst = get_new_temporary_register();
 
-                    add_output_line(tmpdst ~ " = load " ~ get_load_type(srctype) ~ " " ~ src ~ ", align " ~ paramvals[2][1]);
+                    add_output_line(tmpdst ~ " = load " ~ get_load_type(srctype) ~ " " ~ src ~ ", align " ~ paramvals[2].value);
                     add_output_line(dst ~ " = " ~ extinstr ~ " " ~ srctype ~ " " ~ tmpdst ~ " to i32");
 
-                    store_temporary_register_to_reg(dst, paramvals[0][1], last_reg_write[0]);
+                    store_temporary_register_to_reg(dst, paramvals[0].value, last_reg_write[0]);
                 }
                 break;
             case "store": // store reg/const/addr, reg/addr, const
@@ -1933,7 +1994,7 @@ bool process_proc_body(string proc_name)
                     string src = get_parameter_read_value(paramvals[0]);
                     string dst = get_parameter_read_addr(paramvals[1], "i32");
 
-                    add_output_line("store i32 " ~ src ~ ", i32* " ~ dst ~ ", align " ~ paramvals[2][1]);
+                    add_output_line("store i32 " ~ src ~ ", i32* " ~ dst ~ ", align " ~ paramvals[2].value);
                 }
                 break;
             case "store8":  // store8 reg/const, reg/addr, const
@@ -1946,7 +2007,7 @@ bool process_proc_body(string proc_name)
                     string src2 = get_new_temporary_register();
 
                     add_output_line(src2 ~ " = trunc i32 " ~ src ~ " to " ~ srctype);
-                    add_output_line("store " ~ srctype ~ " " ~ src2 ~ ", " ~ srctype ~ "* " ~ dst ~ ", align " ~ paramvals[2][1]);
+                    add_output_line("store " ~ srctype ~ " " ~ src2 ~ ", " ~ srctype ~ "* " ~ dst ~ ", align " ~ paramvals[2].value);
                 }
                 break;
             case "ext8s":  // ext8s reg, reg
@@ -1961,7 +2022,7 @@ bool process_proc_body(string proc_name)
                     add_output_line(src2 ~ " = trunc i32 " ~ src ~ " to " ~ srctype);
                     add_output_line(dst ~ " = sext " ~ srctype ~ " " ~ src2 ~ " to i32");
 
-                    store_temporary_register_to_reg(dst, paramvals[0][1], last_reg_write[0]);
+                    store_temporary_register_to_reg(dst, paramvals[0].value, last_reg_write[0]);
                 }
                 break;
             case "ins16": // ins16 reg, reg, reg
@@ -1982,7 +2043,7 @@ bool process_proc_body(string proc_name)
                     add_output_line(src11 ~ " = and i32 " ~ src1 ~ ", " ~ to!string(andvalue));
                     add_output_line(dst ~ " = or i32 " ~ src11 ~ ", " ~ src22);
 
-                    store_temporary_register_to_reg(dst, paramvals[0][1], last_reg_write[0]);
+                    store_temporary_register_to_reg(dst, paramvals[0].value, last_reg_write[0]);
                 }
                 break;
             case "ins8lh": // ins8lh reg, reg, reg
@@ -2013,7 +2074,7 @@ bool process_proc_body(string proc_name)
 
                     add_output_line(dst ~ " = or i32 " ~ src11 ~ ", " ~ src23);
 
-                    store_temporary_register_to_reg(dst, paramvals[0][1], last_reg_write[0]);
+                    store_temporary_register_to_reg(dst, paramvals[0].value, last_reg_write[0]);
                 }
                 break;
             case "ins8hh": // ins8hh reg, reg, reg
@@ -2028,7 +2089,7 @@ bool process_proc_body(string proc_name)
                     add_output_line(src11 ~ " = and i32 " ~ src1 ~ ", " ~ to!string(0xffff00ff));
                     add_output_line(dst ~ " = or i32 " ~ src11 ~ ", " ~ src21);
 
-                    store_temporary_register_to_reg(dst, paramvals[0][1], last_reg_write[0]);
+                    store_temporary_register_to_reg(dst, paramvals[0].value, last_reg_write[0]);
                 }
                 break;
             case "tcall": // tcall reg/addr
@@ -2045,9 +2106,9 @@ bool process_proc_body(string proc_name)
                     }
                     else
                     {
-                        if (paramvals[0][0] == "procaddr")
+                        if (paramvals[0].type == "procaddr")
                         {
-                            add_output_line("musttail call fastcc void @" ~ paramvals[0][1] ~ "(%_cpu* %cpu) nounwind");
+                            add_output_line("musttail call fastcc void @" ~ paramvals[0].value ~ "(%_cpu* %cpu) nounwind");
                         }
                         else
                         {
@@ -2086,7 +2147,7 @@ bool process_proc_body(string proc_name)
                     }
                     else
                     {
-                        add_output_line("musttail call fastcc void @" ~ paramvals[1][1] ~ "(%_cpu* %cpu) nounwind");
+                        add_output_line("musttail call fastcc void @" ~ paramvals[1].value ~ "(%_cpu* %cpu) nounwind");
 
                         add_output_line("ret void");
                     }
@@ -2104,7 +2165,7 @@ bool process_proc_body(string proc_name)
                     add_output_line(cond ~ " = icmp eq i32 " ~ condreg ~ ", 0");
                     add_output_line(dst ~ " = select i1 " ~ cond ~ ", i32 " ~ src1 ~ ", i32 " ~ src2);
 
-                    store_temporary_register_to_reg(dst, paramvals[1][1], last_reg_write[0]);
+                    store_temporary_register_to_reg(dst, paramvals[1].value, last_reg_write[0]);
                 }
                 break;
             case "cmoveq":  // cmoveq reg, reg/const, reg, reg/const, reg/const
@@ -2124,7 +2185,7 @@ bool process_proc_body(string proc_name)
                     add_output_line(cond ~ " = icmp " ~ condtype ~ " i32 " ~ condreg1 ~ ", " ~ condreg2);
                     add_output_line(dst ~ " = select i1 " ~ cond ~ ", i32 " ~ src1 ~ ", i32 " ~ src2);
 
-                    store_temporary_register_to_reg(dst, paramvals[2][1], last_reg_write[0]);
+                    store_temporary_register_to_reg(dst, paramvals[2].value, last_reg_write[0]);
                 }
                 break;
             case "call": // call funcaddr [$/reg/const]
@@ -2213,8 +2274,8 @@ bool process_proc_body(string proc_name)
                     add_output_line(tmpdst ~ " = lshr i64 " ~ dst ~ ", 32");
                     add_output_line(dsthi ~ " = trunc i64 " ~ tmpdst ~ " to i32");
 
-                    store_temporary_register_to_reg(dstlo, paramvals[0][1], last_reg_write[0]);
-                    store_temporary_register_to_reg(dsthi, paramvals[1][1], last_reg_write[1]);
+                    store_temporary_register_to_reg(dstlo, paramvals[0].value, last_reg_write[0]);
+                    store_temporary_register_to_reg(dsthi, paramvals[1].value, last_reg_write[1]);
                 }
                 break;
             case "ifz":  // ifz reg
@@ -2264,7 +2325,7 @@ bool process_proc_body(string proc_name)
                             {
                                 if (register_state[i] == RegisterState.Empty)
                                 {
-                                    get_parameter_read_value(["reg", registers_base_list[i]]);
+                                    get_parameter_read_value(param_struct("reg", registers_base_list[i]));
                                 }
                                 register_state[i] = RegisterState.Write;
                             }
@@ -2287,7 +2348,7 @@ bool process_proc_body(string proc_name)
 
                     add_output_line(dst ~ " = call i32 @llvm.ctlz.i32(i32 " ~ src ~ ", i1 0)");
 
-                    store_temporary_register_to_reg(dst, paramvals[0][1], last_reg_write[0]);
+                    store_temporary_register_to_reg(dst, paramvals[0].value, last_reg_write[0]);
                 }
                 break;
             default:

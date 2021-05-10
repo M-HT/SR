@@ -4439,7 +4439,19 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                 }
                 else if (ud_obj.operand[0].type == UD_OP_MEM)
                 {
-                    if (ud_obj.operand[0].size == 32)
+                    if (ud_obj.operand[0].base == UD_NONE &&
+                        ud_obj.operand[0].index == UD_NONE &&
+                        ud_obj.operand[0].size == 32 &&
+                        fixup[0] == NULL &&
+                        ud_obj.pfx_seg == UD_R_FS
+                       )
+                    {
+                        // pop dword fs:[const]
+
+                        OUTPUT_STRING("POP tmp1\n");
+                        OUTPUT_PARAMSTRING("call x86_write_fs_dword 0x%x, tmp1\n", ud_obj.operand[0].lval.udword);
+                    }
+                    else if (ud_obj.operand[0].size == 32)
                     {
                         SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_WRITE, ZERO_EXTEND, &memadr);
 
@@ -4516,7 +4528,19 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                 }
                 else if (ud_obj.operand[0].type == UD_OP_MEM)
                 {
-                    if (ud_obj.operand[0].size == 32)
+                    if (ud_obj.operand[0].base == UD_NONE &&
+                        ud_obj.operand[0].index == UD_NONE &&
+                        ud_obj.operand[0].size == 32 &&
+                        fixup[0] == NULL &&
+                        ud_obj.pfx_seg == UD_R_FS
+                       )
+                    {
+                        // push dword fs:[const]
+
+                        OUTPUT_PARAMSTRING("call x86_read_fs_dword 0x%x\n", ud_obj.operand[0].lval.udword);
+                        OUTPUT_STRING("PUSH tmp0\n");
+                    }
+                    else if (ud_obj.operand[0].size == 32)
                     {
                         SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_READ, ZERO_EXTEND, &memadr);
 

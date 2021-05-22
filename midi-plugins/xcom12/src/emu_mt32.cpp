@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -77,6 +77,28 @@ static void strlower(char *str)
     }
 }
 
+static char const *check_file(char const *filename)
+{
+    if (filename == NULL) return NULL;
+    if (*filename == 0) return NULL;
+
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+    DWORD dwAttrib;
+
+    dwAttrib = GetFileAttributesA(filename);
+    if ((dwAttrib == INVALID_FILE_ATTRIBUTES) || (dwAttrib & FILE_ATTRIBUTE_DIRECTORY))
+#else
+    if (access(filename, F_OK))
+#endif
+    {
+        return NULL;
+    }
+    else
+    {
+        return filename;
+    }
+}
+
 extern "C" {
 
 int emu_mt32_init(unsigned int samplerate, char const *mt32_roms)
@@ -113,14 +135,14 @@ int emu_mt32_init(unsigned int samplerate, char const *mt32_roms)
     int control_rom = -1;
     int control_rom_lower = 0;
     strcpy(fileptr, romnames[0]);
-    if (!access(pathname, F_OK))
+    if (check_file(pathname))
     {
         control_rom = 0;
     }
     else
     {
         strlower(fileptr);
-        if (!access(pathname, F_OK))
+        if (check_file(pathname))
         {
             control_rom = 0;
             control_rom_lower = 1;
@@ -132,14 +154,14 @@ int emu_mt32_init(unsigned int samplerate, char const *mt32_roms)
     if (control_rom >= 0)
     {
         strcpy(fileptr, romnames[1]);
-        if (!access(pathname, F_OK))
+        if (check_file(pathname))
         {
             pcm_rom = 1;
         }
         else
         {
             strlower(fileptr);
-            if (!access(pathname, F_OK))
+            if (check_file(pathname))
             {
                 pcm_rom = 1;
                 pcm_rom_lower = 1;
@@ -154,7 +176,7 @@ int emu_mt32_init(unsigned int samplerate, char const *mt32_roms)
     if (control_rom < 0)
     {
         strcpy(fileptr, romnames[2]);
-        if (!access(pathname, F_OK))
+        if (check_file(pathname))
         {
             control_rom = 2;
             control_rom_lower = 0;
@@ -162,7 +184,7 @@ int emu_mt32_init(unsigned int samplerate, char const *mt32_roms)
         else
         {
             strlower(fileptr);
-            if (!access(pathname, F_OK))
+            if (check_file(pathname))
             {
                 control_rom = 2;
                 control_rom_lower = 1;
@@ -172,7 +194,7 @@ int emu_mt32_init(unsigned int samplerate, char const *mt32_roms)
         if (control_rom >= 0)
         {
             strcpy(fileptr, romnames[3]);
-            if (!access(pathname, F_OK))
+            if (check_file(pathname))
             {
                 pcm_rom = 3;
                 pcm_rom_lower = 0;
@@ -180,7 +202,7 @@ int emu_mt32_init(unsigned int samplerate, char const *mt32_roms)
             else
             {
                 strlower(fileptr);
-                if (!access(pathname, F_OK))
+                if (check_file(pathname))
                 {
                     pcm_rom = 3;
                     pcm_rom_lower = 1;

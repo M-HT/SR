@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016-2019 Roman Pauer
+@@  Copyright (C) 2016-2021 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -75,6 +75,10 @@
 .section .note.GNU-stack,"",%progbits
 .section .text
 
+.type Game_ExitMain_Asm, %function
+.type _Game_ExitMain_Asm, %function
+.type _Z17Game_ExitMain_Asmv, %function
+.type __Z17Game_ExitMain_Asmv, %function
 Game_ExitMain_Asm:
 _Game_ExitMain_Asm:
 _Z17Game_ExitMain_Asmv:
@@ -91,6 +95,10 @@ __Z17Game_ExitMain_Asmv:
 
 # end procedure Game_ExitMain_Asm
 
+.type Game_StopMain_Asm, %function
+.type _Game_StopMain_Asm, %function
+.type _Z17Game_StopMain_Asmv, %function
+.type __Z17Game_StopMain_Asmv, %function
 Game_StopMain_Asm:
 _Game_StopMain_Asm:
 _Z17Game_StopMain_Asmv:
@@ -107,6 +115,10 @@ __Z17Game_StopMain_Asmv:
 
 # end procedure Game_Stop_Asm
 
+.type Game_Main_Asm, %function
+.type _Game_Main_Asm, %function
+.type _Z13Game_Main_AsmiPPc, %function
+.type __Z13Game_Main_AsmiPPc, %function
 Game_Main_Asm:
 _Game_Main_Asm:
 _Z13Game_Main_AsmiPPc:
@@ -134,6 +146,10 @@ __Z13Game_Main_AsmiPPc:
         b main_
 # end procedure Game_Main_Asm
 
+.type Game_MouseMove, %function
+.type _Game_MouseMove, %function
+.type _Z14Game_MouseMovejjj, %function
+.type __Z14Game_MouseMovejjj, %function
 Game_MouseMove:
 _Game_MouseMove:
 _Z14Game_MouseMovejjj:
@@ -185,6 +201,10 @@ __Z14Game_MouseMovejjj:
 
 # end procedure Game_MouseMove
 
+.type Game_MouseButton, %function
+.type _Game_MouseButton, %function
+.type _Z16Game_MouseButtonjj, %function
+.type __Z16Game_MouseButtonjj, %function
 Game_MouseButton:
 _Game_MouseButton:
 _Z16Game_MouseButtonjj:
@@ -227,6 +247,10 @@ __Z16Game_MouseButtonjj:
 
 # end procedure Game_MouseButton
 
+.type Game_RunTimer_Asm, %function
+.type _Game_RunTimer_Asm, %function
+.type _Z17Game_RunTimer_Asmv, %function
+.type __Z17Game_RunTimer_Asmv, %function
 Game_RunTimer_Asm:
 _Game_RunTimer_Asm:
 _Z17Game_RunTimer_Asmv:
@@ -244,6 +268,8 @@ __Z17Game_RunTimer_Asmv:
 
 # end procedure Game_RunTimer_Asm
 
+.type Game_RunProcReg1_Asm, %function
+.type _Game_RunProcReg1_Asm, %function
 Game_RunProcReg1_Asm:
 _Game_RunProcReg1_Asm:
 
@@ -269,6 +295,8 @@ _Game_RunProcReg1_Asm:
 
 # end procedure Game_RunProcReg1_Asm
 
+.type Game_RunProcReg2_Asm, %function
+.type _Game_RunProcReg2_Asm, %function
 Game_RunProcReg2_Asm:
 _Game_RunProcReg2_Asm:
 

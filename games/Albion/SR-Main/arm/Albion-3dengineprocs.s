@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016-2019 Roman Pauer
+@@  Copyright (C) 2016-2021 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -89,6 +89,8 @@ _draw_3dscene_proc:
 @ end procedure draw_3dscene_proc
 
 
+.type sub_8B6BB, %function
+.type _sub_8B6BB, %function
 sub_8B6BB:
 _sub_8B6BB:
 

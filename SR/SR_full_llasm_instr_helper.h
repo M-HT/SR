@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -686,11 +686,82 @@ static void SR_llasm_helper_adc_8l(enum ud_mnemonic_code mnemonic, enum ll_regs 
 
 // add, sub, cmp
 // trashes LR_TMP3, LR_TMP4, LR_TMP5
-static void SR_llasm_helper_add_32(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, int32_t value)
+static int SR_llasm_helper_add_32(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, int32_t value)
 {
-    const char *instr;
+    const char *instr, *condsufix;
     int32_t overflow_value;
     enum ll_regs origsrc;
+    int retval;
+
+    retval = 0;
+
+    switch (Tflags_to_write & FL_INST_MASK)
+    {
+        case FL_INST_Z:
+            if (mnemonic == UD_Icmp)
+            {
+                retval = 1;
+                condsufix = "eq";
+            }
+            else
+            {
+                retval = 2;
+            }
+            break;
+        case FL_INST_S:
+            retval = 3;
+            break;
+
+        case FL_INST_B:
+            if (mnemonic != UD_Iadd)
+            {
+                retval = 1;
+                condsufix = "ult";
+            }
+            break;
+        case FL_INST_A:
+            if (mnemonic != UD_Iadd)
+            {
+                retval = 1;
+                condsufix = "ugt";
+            }
+            break;
+        case FL_INST_L:
+            if (mnemonic != UD_Iadd)
+            {
+                retval = 1;
+                condsufix = "slt";
+            }
+            break;
+        case FL_INST_G:
+            if (mnemonic != UD_Iadd)
+            {
+                retval = 1;
+                condsufix = "sgt";
+            }
+            break;
+        default:
+            break;
+    }
+
+    if (retval)
+    {
+        if (retval == 1)
+        {
+            if (src2 != LR_NONE)
+            {
+                OUTPUT_PARAMSTRING("cmov%s %s, %s, tmpcnd, 0, 1\n", condsufix, LLREGSTR(src1), LLREGSTR(src2));
+            }
+            else
+            {
+                OUTPUT_PARAMSTRING("cmov%s %s, %i, tmpcnd, 0, 1\n", condsufix, LLREGSTR(src1), value);
+            }
+
+            if (mnemonic == UD_Icmp) return retval;
+        }
+
+        Tflags_to_write = 0;
+    }
 
     if (mnemonic == UD_Iadd)
     {
@@ -842,17 +913,54 @@ static void SR_llasm_helper_add_32(enum ud_mnemonic_code mnemonic, enum ll_regs 
     }
 
     SR_disassemble_set_flags_AZSP(pOutput, dst, LR_TMP4, 32, 0, mnemonic, Tflags_to_write & ~( ((src2 != LR_NONE) || (value != 0))?0:FL_ADJUST ));
+
+    if (retval == 2)
+    {
+        OUTPUT_PARAMSTRING("mov tmpcnd, %s\n", LLREGSTR(dst));
+    }
+    else if (retval == 3)
+    {
+        OUTPUT_PARAMSTRING("cmovslt %s, 0, tmpcnd, 0, 1\n", LLREGSTR(dst));
+    }
+
+    return retval;
 }
 
 // add, sub, cmp
 // trashes LR_TMP3, LR_TMP4, LR_TMP5
-static void SR_llasm_helper_add_16(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, int32_t value)
+static int SR_llasm_helper_add_16(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, int32_t value)
 {
     const char *instr;
     int32_t overflow_value;
     enum ll_regs dstreg, origsrc;
 
 #define uvalue ((uint32_t) value)
+
+    if ((mnemonic == UD_Icmp) && ((Tflags_to_write & FL_INST_MASK) == FL_INST_Z))
+    {
+        if (src1 == src2)
+        {
+            OUTPUT_STRING("mov tmpcnd, 0\n");
+        }
+        else if (src2 != LR_NONE)
+        {
+            OUTPUT_PARAMSTRING("sub %s, %s, %s\n", LLREGSTR(dst), LLREGSTR(src1), LLREGSTR(src2));
+            OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xffff\n", LLREGSTR(dst));
+        }
+        else if (value == 0)
+        {
+            OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xffff\n", LLREGSTR(src1));
+        }
+        else
+        {
+            OUTPUT_PARAMSTRING("sub %s, %s, %i\n", LLREGSTR(dst), LLREGSTR(src1), value >> 16);
+            OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xffff\n", LLREGSTR(dst));
+        }
+
+        Tflags_to_write = 0;
+
+        return 1;
+    }
 
     if (mnemonic == UD_Iadd)
     {
@@ -1041,12 +1149,14 @@ static void SR_llasm_helper_add_16(enum ud_mnemonic_code mnemonic, enum ll_regs 
 
     SR_disassemble_set_flags_AZSP(pOutput, dst, LR_TMP4, 16, 0, mnemonic, Tflags_to_write & ~( ((src2 != LR_NONE) || (value != 0))?0:FL_ADJUST ));
 
+    return 0;
+
 #undef uvalue
 }
 
 // add, sub, cmp
 // trashes LR_TMP3, LR_TMP4, LR_TMP5
-static void SR_llasm_helper_add_8l(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, uint32_t src2shiftvalue)
+static int SR_llasm_helper_add_8l(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, uint32_t src2shiftvalue)
 {
     const char *instr;
     enum ll_regs src2reg, dstreg, origsrc;
@@ -1054,6 +1164,41 @@ static void SR_llasm_helper_add_8l(enum ud_mnemonic_code mnemonic, enum ll_regs 
 
 #define src2shift src2shiftvalue
 #define uvalue src2shiftvalue
+
+    if ((mnemonic == UD_Icmp) && ((Tflags_to_write & FL_INST_MASK) == FL_INST_Z))
+    {
+        if (src2 != LR_NONE)
+        {
+            if (src2shift)
+            {
+                OUTPUT_PARAMSTRING("lshr tmp5, %s, %i\n", LLREGSTR(src2), src2shift);
+                OUTPUT_PARAMSTRING("sub %s, %s, tmp5\n", LLREGSTR(dst), LLREGSTR(src1));
+                OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xff\n", LLREGSTR(dst));
+            }
+            else if (src1 == src2)
+            {
+                OUTPUT_STRING("mov tmpcnd, 0\n");
+            }
+            else
+            {
+                OUTPUT_PARAMSTRING("sub %s, %s, %s\n", LLREGSTR(dst), LLREGSTR(src1), LLREGSTR(src2));
+                OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xff\n", LLREGSTR(dst));
+            }
+        }
+        else if (uvalue == 0)
+        {
+            OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xff\n", LLREGSTR(src1));
+        }
+        else
+        {
+            OUTPUT_PARAMSTRING("sub %s, %s, %i\n", LLREGSTR(dst), LLREGSTR(src1), ((int32_t)uvalue) >> 24);
+            OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xff\n", LLREGSTR(dst));
+        }
+
+        Tflags_to_write = 0;
+
+        return 1;
+    }
 
     if (mnemonic == UD_Iadd)
     {
@@ -1254,13 +1399,15 @@ static void SR_llasm_helper_add_8l(enum ud_mnemonic_code mnemonic, enum ll_regs 
 
     SR_disassemble_set_flags_AZSP(pOutput, dst, LR_TMP4, 8, 0, mnemonic, Tflags_to_write & ~( ((src2 != LR_NONE) || (value != 0))?0:FL_ADJUST ));
 
+    return 0;
+
 #undef uvalue
 #undef src2shift
 }
 
 // add, sub, cmp
 // trashes LR_TMP3, LR_TMP4, LR_TMP5
-static void SR_llasm_helper_add_8h(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, uint32_t src2shiftvalue)
+static int SR_llasm_helper_add_8h(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, uint32_t src2shiftvalue)
 {
     const char *instr;
     int32_t value, overflow_value;
@@ -1268,6 +1415,45 @@ static void SR_llasm_helper_add_8h(enum ud_mnemonic_code mnemonic, enum ll_regs 
 
 #define src2shift src2shiftvalue
 #define uvalue src2shiftvalue
+
+    if ((mnemonic == UD_Icmp) && ((Tflags_to_write & FL_INST_MASK) == FL_INST_Z))
+    {
+        if (src2 != LR_NONE)
+        {
+            if (src2shift)
+            {
+                if (src1 == src2)
+                {
+                    OUTPUT_STRING("mov tmpcnd, 0\n");
+                }
+                else
+                {
+                    OUTPUT_PARAMSTRING("and tmp5, %s, 0xff00\n", LLREGSTR(src2));
+                    OUTPUT_PARAMSTRING("sub %s, %s, tmp5\n", LLREGSTR(dst), LLREGSTR(src1));
+                    OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xff00\n", LLREGSTR(dst));
+                }
+            }
+            else
+            {
+                OUTPUT_PARAMSTRING("shl tmp5, %s, 8\n", LLREGSTR(src2));
+                OUTPUT_PARAMSTRING("sub %s, %s, tmp5\n", LLREGSTR(dst), LLREGSTR(src1));
+                OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xff00\n", LLREGSTR(dst));
+            }
+        }
+        else if (uvalue == 0)
+        {
+            OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xff00\n", LLREGSTR(src1));
+        }
+        else
+        {
+            OUTPUT_PARAMSTRING("sub %s, %s, %i << 8\n", LLREGSTR(dst), LLREGSTR(src1), ((int32_t)uvalue) >> 24);
+            OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xff00\n", LLREGSTR(dst));
+        }
+
+        Tflags_to_write = 0;
+
+        return 1;
+    }
 
     if (mnemonic == UD_Iadd)
     {
@@ -1493,15 +1679,20 @@ static void SR_llasm_helper_add_8h(enum ud_mnemonic_code mnemonic, enum ll_regs 
 
     SR_disassemble_set_flags_AZSP(pOutput, dst, LR_TMP4, 8, 8, mnemonic, Tflags_to_write & ~( ((src2 != LR_NONE) || (value != 0))?0:FL_ADJUST ));
 
+    return 0;
+
 #undef uvalue
 #undef src2shift
 }
 
 // and, or, xor, test
 // trashes LR_TMP4
-static void SR_llasm_helper_and_32(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, int32_t value)
+static int SR_llasm_helper_and_32(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, int32_t value)
 {
     const char *instr;
+    enum ll_regs result_reg;
+
+    int retval;
 
     if (mnemonic == UD_Ior)
     {
@@ -1516,30 +1707,95 @@ static void SR_llasm_helper_and_32(enum ud_mnemonic_code mnemonic, enum ll_regs 
         instr = "and";
     }
 
+    result_reg = dst;
+
     if (src2 != LR_NONE)
     {
-        OUTPUT_PARAMSTRING("%s %s, %s, %s\n", instr, LLREGSTR(dst), LLREGSTR(src1), LLREGSTR(src2));
+        if ((src1 == src2) && ((mnemonic == UD_Itest) || ((mnemonic != UD_Ixor) && (dst == src1))))
+        {
+            result_reg = src1;
+        }
+        else
+        {
+            OUTPUT_PARAMSTRING("%s %s, %s, %s\n", instr, LLREGSTR(dst), LLREGSTR(src1), LLREGSTR(src2));
+        }
     }
     else
     {
         OUTPUT_PARAMSTRING("%s %s, %s, 0x%x\n", instr, LLREGSTR(dst), LLREGSTR(src1), value);
     }
 
+
+    retval = 0;
+
+    switch (Tflags_to_write & FL_INST_MASK)
+    {
+        case FL_INST_Z:
+        case FL_INST_A:
+            retval = 2;
+            OUTPUT_PARAMSTRING("mov tmpcnd, %s\n", LLREGSTR(result_reg));
+            break;
+        case FL_INST_S:
+        case FL_INST_L:
+            retval = 3;
+            OUTPUT_PARAMSTRING("cmovslt %s, 0, tmpcnd, 0, 1\n", LLREGSTR(result_reg));
+            break;
+
+        case FL_INST_B:
+            retval = 1;
+            OUTPUT_STRING("mov tmpcnd, 1\n");
+            break;
+        case FL_INST_G:
+            retval = 4;
+            OUTPUT_PARAMSTRING("cmovsgt %s, 0, tmpcnd, 0, 1\n", LLREGSTR(result_reg));
+            break;
+        default:
+            break;
+    }
+
+    if (retval)
+    {
+        Tflags_to_write = 0;
+    }
+
     if (Tflags_to_write & ~FL_ADJUST)
     {
         SR_disassemble_change_flags(pOutput, Tflags_to_write, 0, 0);
 
-        SR_disassemble_set_flags_AZSP(pOutput, dst, LR_TMP4, 32, 0, mnemonic, Tflags_to_write & ~FL_ADJUST);
+        SR_disassemble_set_flags_AZSP(pOutput, result_reg, LR_TMP4, 32, 0, mnemonic, Tflags_to_write & ~FL_ADJUST);
     }
+
+    return retval;
 }
 
 // and, or, xor, test
 // trashes LR_TMP4
-static void SR_llasm_helper_and_16(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, int32_t value)
+static int SR_llasm_helper_and_16(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, int32_t value)
 {
     const char *instr;
 
 #define uvalue ((uint32_t) value)
+
+    if ((mnemonic == UD_Itest) && (((Tflags_to_write & FL_INST_MASK) == FL_INST_Z) || ((Tflags_to_write & FL_INST_MASK) == FL_INST_A)))
+    {
+        if (src1 == src2)
+        {
+            OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xffff\n", LLREGSTR(src1));
+        }
+        else if (src2 != LR_NONE)
+        {
+            OUTPUT_PARAMSTRING("and %s, %s, %s\n", LLREGSTR(dst), LLREGSTR(src1), LLREGSTR(src2));
+            OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xffff\n", LLREGSTR(dst));
+        }
+        else
+        {
+            OUTPUT_PARAMSTRING("and tmpcnd, %s, 0x%x\n", LLREGSTR(src1), uvalue >> 16);
+        }
+
+        Tflags_to_write = 0;
+
+        return 1;
+    }
 
     if (mnemonic == UD_Ior)
     {
@@ -1594,17 +1850,49 @@ static void SR_llasm_helper_and_16(enum ud_mnemonic_code mnemonic, enum ll_regs 
         SR_disassemble_set_flags_AZSP(pOutput, dst, LR_TMP4, 16, 0, mnemonic, Tflags_to_write & ~FL_ADJUST);
     }
 
+    return 0;
+
 #undef uvalue
 }
 
 // and, or, xor, test
 // trashes LR_TMP4
-static void SR_llasm_helper_and_8l(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, unsigned int src2shiftvalue)
+static int SR_llasm_helper_and_8l(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, unsigned int src2shiftvalue)
 {
     const char *instr;
 
 #define src2shift src2shiftvalue
 #define value src2shiftvalue
+
+    if ((mnemonic == UD_Itest) && (((Tflags_to_write & FL_INST_MASK) == FL_INST_Z) || ((Tflags_to_write & FL_INST_MASK) == FL_INST_A)))
+    {
+        if (src2 != LR_NONE)
+        {
+            if (src2shift)
+            {
+                OUTPUT_PARAMSTRING("lshr tmp4, %s, 8\n", LLREGSTR(src2));
+                OUTPUT_PARAMSTRING("and %s, %s, tmp4\n", LLREGSTR(dst), LLREGSTR(src1));
+                OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xff\n", LLREGSTR(dst));
+            }
+            else if (src1 == src2)
+            {
+                OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xff\n", LLREGSTR(src1));
+            }
+            else
+            {
+                OUTPUT_PARAMSTRING("and %s, %s, %s\n", LLREGSTR(dst), LLREGSTR(src1), LLREGSTR(src2));
+                OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xff\n", LLREGSTR(dst));
+            }
+        }
+        else
+        {
+            OUTPUT_PARAMSTRING("and tmpcnd, %s, 0x%x\n", LLREGSTR(src1), value >> 24);
+        }
+
+        Tflags_to_write = 0;
+
+        return 1;
+    }
 
     if (mnemonic == UD_Ior)
     {
@@ -1681,18 +1969,53 @@ static void SR_llasm_helper_and_8l(enum ud_mnemonic_code mnemonic, enum ll_regs 
         SR_disassemble_set_flags_AZSP(pOutput, dst, LR_TMP4, 8, 0, mnemonic, Tflags_to_write & ~FL_ADJUST);
     }
 
+    return 0;
+
 #undef src2shift
 #undef value
 }
 
 // and, or, xor, test
 // trashes LR_TMP4
-static void SR_llasm_helper_and_8h(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, unsigned int src2shiftvalue)
+static int SR_llasm_helper_and_8h(enum ud_mnemonic_code mnemonic, enum ll_regs dst, enum ll_regs src1, enum ll_regs src2, unsigned int src2shiftvalue)
 {
     const char *instr;
 
 #define src2shift src2shiftvalue
 #define value src2shiftvalue
+
+    if ((mnemonic == UD_Itest) && (((Tflags_to_write & FL_INST_MASK) == FL_INST_Z) || ((Tflags_to_write & FL_INST_MASK) == FL_INST_A)))
+    {
+        if (src2 != LR_NONE)
+        {
+            if (src2shift)
+            {
+                if (src1 == src2)
+                {
+                    OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xff00\n", LLREGSTR(src1));
+                }
+                else
+                {
+                    OUTPUT_PARAMSTRING("and %s, %s, %s\n", LLREGSTR(dst), LLREGSTR(src1), LLREGSTR(src2));
+                    OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xff00\n", LLREGSTR(dst));
+                }
+            }
+            else
+            {
+                OUTPUT_PARAMSTRING("shl tmp4, %s, 8\n", LLREGSTR(src2));
+                OUTPUT_PARAMSTRING("and %s, %s, tmp4\n", LLREGSTR(dst), LLREGSTR(src1));
+                OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xff00\n", LLREGSTR(dst));
+            }
+        }
+        else
+        {
+            OUTPUT_PARAMSTRING("and tmpcnd, %s, 0x%x\n", LLREGSTR(src1), (value >> 16) & 0xff00);
+        }
+
+        Tflags_to_write = 0;
+
+        return 1;
+    }
 
     if (mnemonic == UD_Ior)
     {
@@ -1769,15 +2092,58 @@ static void SR_llasm_helper_and_8h(enum ud_mnemonic_code mnemonic, enum ll_regs 
         SR_disassemble_set_flags_AZSP(pOutput, dst, LR_TMP4, 8, 8, mnemonic, Tflags_to_write & ~FL_ADJUST);
     }
 
+    return 0;
+
 #undef src2shift
 #undef value
 }
 
 // dec, inc
 // trashes LR_TMP3, LR_TMP4
-static void SR_llasm_helper_dec_32(enum ud_mnemonic_code mnemonic, enum ll_regs dst)
+static int SR_llasm_helper_dec_32(enum ud_mnemonic_code mnemonic, enum ll_regs dst)
 {
-    const char *instr;
+    const char *instr, *condsufix;
+    int retval;
+
+    retval = 0;
+
+    switch (Tflags_to_write & FL_INST_MASK)
+    {
+        case FL_INST_Z:
+            retval = 2;
+            break;
+        case FL_INST_S:
+            retval = 3;
+            break;
+
+        case FL_INST_L:
+            if (mnemonic == UD_Idec)
+            {
+                retval = 1;
+                condsufix = "slt";
+            }
+            break;
+        case FL_INST_G:
+            if (mnemonic == UD_Idec)
+            {
+                retval = 1;
+                condsufix = "sgt";
+            }
+            break;
+
+        default:
+            break;
+    }
+
+    if (retval)
+    {
+        if (retval == 1)
+        {
+            OUTPUT_PARAMSTRING("cmov%s %s, 1, tmpcnd, 0, 1\n", condsufix, LLREGSTR(dst));
+        }
+
+        Tflags_to_write = 0;
+    }
 
     if (mnemonic == UD_Iinc)
     {
@@ -1810,13 +2176,33 @@ static void SR_llasm_helper_dec_32(enum ud_mnemonic_code mnemonic, enum ll_regs 
     }
 
     SR_disassemble_set_flags_AZSP(pOutput, dst, LR_TMP4, 32, 0, mnemonic, Tflags_to_write);
+
+    if (retval == 2)
+    {
+        OUTPUT_PARAMSTRING("mov tmpcnd, %s\n", LLREGSTR(dst));
+    }
+    else if (retval == 3)
+    {
+        OUTPUT_PARAMSTRING("cmovslt %s, 0, tmpcnd, 0, 1\n", LLREGSTR(dst));
+    }
+
+    return retval;
 }
 
 // dec, inc
 // trashes LR_TMP3, LR_TMP4
-static void SR_llasm_helper_dec_16(enum ud_mnemonic_code mnemonic, enum ll_regs dst)
+static int SR_llasm_helper_dec_16(enum ud_mnemonic_code mnemonic, enum ll_regs dst)
 {
     const char *instr;
+    int retval;
+
+    retval = 0;
+
+    if ((Tflags_to_write & FL_INST_MASK) == FL_INST_Z)
+    {
+        retval = 2;
+        Tflags_to_write = 0;
+    }
 
     if (mnemonic == UD_Iinc)
     {
@@ -1852,13 +2238,29 @@ static void SR_llasm_helper_dec_16(enum ud_mnemonic_code mnemonic, enum ll_regs 
     }
 
     SR_disassemble_set_flags_AZSP(pOutput, dst, LR_TMP4, 16, 0, mnemonic, Tflags_to_write);
+
+    if (retval == 2)
+    {
+        OUTPUT_PARAMSTRING("and tmpcnd, %s, 0xffff\n", LLREGSTR(dst));
+    }
+
+    return retval;
 }
 
 // dec, inc
 // trashes LR_TMP3, LR_TMP4
-static void SR_llasm_helper_dec_8(enum ud_mnemonic_code mnemonic, enum ll_regs dst, unsigned int dstshift)
+static int SR_llasm_helper_dec_8(enum ud_mnemonic_code mnemonic, enum ll_regs dst, unsigned int dstshift)
 {
     const char *instr;
+    int retval;
+
+    retval = 0;
+
+    if ((Tflags_to_write & FL_INST_MASK) == FL_INST_Z)
+    {
+        retval = 2;
+        Tflags_to_write = 0;
+    }
 
     if (mnemonic == UD_Iinc)
     {
@@ -1910,6 +2312,13 @@ static void SR_llasm_helper_dec_8(enum ud_mnemonic_code mnemonic, enum ll_regs d
     }
 
     SR_disassemble_set_flags_AZSP(pOutput, dst, LR_TMP4, 8, dstshift, mnemonic, Tflags_to_write);
+
+    if (retval == 2)
+    {
+        OUTPUT_PARAMSTRING("and tmpcnd, %s, 0x%x\n", LLREGSTR(dst), 0xff << dstshift);
+    }
+
+    return retval;
 }
 
 // neg

@@ -25,6 +25,7 @@
 .global calculate_pattern
 
 .align 4
+.type calculate_pattern, %function
 calculate_pattern:
 
 // r0     = const uint32_t *yuvsrc1  (aligned to 8 bytes (64 bits))
@@ -371,6 +372,7 @@ calculate_pattern:
 .global calculate_pattern
 
 .align 4
+.type calculate_pattern, %function
 calculate_pattern:
 
 // r0     = const uint32_t *yuvsrc1  (aligned to 8 bytes (64 bits))

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -83,6 +83,14 @@ typedef enum _x86_flags_ {
 	             | FL_CARRY_SUB_INVERTED
 #endif
 	             ,
+
+	FL_INST_Z    = 0x00100000,
+	FL_INST_S    = 0x00200000,
+	FL_INST_B    = 0x00300000,
+	FL_INST_A    = 0x00400000,
+	FL_INST_L    = 0x00500000,
+	FL_INST_G    = 0x00600000,
+	FL_INST_MASK = 0x00700000,
 
 	FL_WEAK      = 0x10000000,
 	FL_SPECIFIC  = 0x80000000

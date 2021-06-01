@@ -23,6 +23,17 @@ endm
 macro ACTION_CONDITIONAL_JUMP_FORWARD
 endm
 
+macro ACTION_OPTIMIZED_CONDITIONAL_JUMP_BACKWARD
+    and eflags, eflags, ~CF
+    cmovz tmpcnd, tmpcnd, 0, CF
+    or eflags, eflags, tmpcnd
+    call SR_CheckTimer
+    and tmpcnd, eflags, CF
+endm
+
+macro ACTION_OPTIMIZED_CONDITIONAL_JUMP_FORWARD
+endm
+
 macro ACTION_CALL
     call SR_CheckTimer
 endm

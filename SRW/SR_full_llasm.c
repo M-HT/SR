@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -39,7 +39,6 @@ int SR_disassemble_region_llasm(unsigned int Entry, region_data *region)
     bound_data *iflags;
     int *ua_ebp_area_value, *ua_esp_area_value;
     Word_t ua_ebp_area_index, ua_esp_area_index;
-    // todo: arm
 
     cur_ofs = region->end_ofs;
     finished = 0;
@@ -152,6 +151,13 @@ int SR_disassemble_region_llasm(unsigned int Entry, region_data *region)
             iflags = section_iflags_list_FindEntryEqual(Entry, cur_ofs);
             if (iflags)
             {
+                if (flags_to_write & FL_INST_MASK)
+                {
+                    fprintf(stderr, "Error: mixing flags and instruction flags - %i - %i (0x%x) - %s\n", Entry, (unsigned int)cur_ofs, (unsigned int)(section[Entry].start + cur_ofs), output->str);
+
+                    return 5;
+                }
+
                 flags_to_write |= (uint32_t) iflags->begin;
             }
 
@@ -231,6 +237,13 @@ int SR_disassemble_region_llasm(unsigned int Entry, region_data *region)
             }
 
             last_instruction = 0;
+
+            if ((flags_to_write & FL_INST_MASK) && (flags_read || (flags_write & ~FL_INST_MASK)))
+            {
+                fprintf(stderr, "Error: unprocessed instruction flags - %i - %i (0x%x) - %s\n", Entry, (unsigned int)cur_ofs, (unsigned int)(section[Entry].start + cur_ofs), output->str);
+
+                return 5;
+            }
 
             flags_to_write &= ~flags_write;
             if (flags_to_write == FL_WEAK) flags_to_write = FL_NONE;

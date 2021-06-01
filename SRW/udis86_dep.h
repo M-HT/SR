@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -56,6 +56,14 @@ typedef enum _x86_flags_ {
 	FL_COND      = FL_CARRY | FL_PARITY | FL_ADJUST | FL_ZERO | FL_SIGN | FL_OVERFLOW,
 	FL_COND_ALL  = FL_CARRY | FL_PARITY | FL_ADJUST | FL_ZERO | FL_SIGN | FL_OVERFLOW,
 	FL_ALL       = FL_CARRY | FL_PARITY | FL_ADJUST | FL_ZERO | FL_SIGN | FL_OVERFLOW | FL_DIRECTION | FL_INTERRUPT | FL_TASK,
+
+	FL_INST_Z    = 0x00010000,
+	FL_INST_S    = 0x00020000,
+	FL_INST_B    = 0x00030000,
+	FL_INST_A    = 0x00040000,
+	FL_INST_L    = 0x00050000,
+	FL_INST_G    = 0x00060000,
+	FL_INST_MASK = 0x00070000,
 
 	FL_WEAK      = 0x10000000,
 	FL_SPECIFIC  = 0x80000000

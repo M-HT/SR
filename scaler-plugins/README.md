@@ -4,7 +4,7 @@ Plugins used by the DOS games to enlarge/enhance the displayed image.
 
 To compile the plugins run the *komp-x86.sh* script (or the *komp-arm.sh* script, if compiling on ARM).
 
-If you do not want (or you are not able to) compile it by yourself, you can try to use the DLLs, or SO files from the Albion release whiche has these precompiled.  
+If you do not want (or you are not able to) compile it by yourself, you can try to use the DLLs, or SO files from the Albion release which has these precompiled.  
 
 ## General plugins
 

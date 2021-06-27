@@ -1,0 +1,138 @@
+;;
+;;  Copyright (C) 2021 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+include llasm.llinc
+include asm-calls.llinc
+
+func video_RegisterClass_PRE_Video
+func video_Open_PRE_Video *path
+func video_Close_PRE_Video
+func video_Play_PRE_Video zoomed
+func video_RegisterClass_POST_Video
+func video_Open_POST_Video *path
+func video_Close_POST_Video
+func video_Play_POST_Video zoomed
+func video_RegisterClass_SS_Video
+
+proc video_RegisterClass_PRE_Video_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 video_RegisterClass_PRE_Video
+
+        Call_Asm_Return 0
+
+endp ; end procedure video_RegisterClass_PRE_Video_asm2c
+
+
+proc video_Open_PRE_Video_asm2c public
+
+; [esp +   4] = const char *path
+; [esp      ] = return address
+
+        Call_Asm_Stack1 video_Open_PRE_Video
+
+        Call_Asm_Return 1
+
+endp ; end procedure video_Open_PRE_Video_asm2c
+
+
+proc video_Close_PRE_Video_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 video_Close_PRE_Video
+
+        Call_Asm_Return 0
+
+endp ; end procedure video_Close_PRE_Video_asm2c
+
+
+proc video_Play_PRE_Video_asm2c public
+
+; [esp +   4] = uint32_t zoomed
+; [esp      ] = return address
+
+        Call_Asm_Stack1 video_Play_PRE_Video
+
+        Call_Asm_Return 1
+
+endp ; end procedure video_Play_PRE_Video_asm2c
+
+
+proc video_RegisterClass_POST_Video_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 video_RegisterClass_POST_Video
+
+        Call_Asm_Return 0
+
+endp ; end procedure video_RegisterClass_POST_Video_asm2c
+
+
+proc video_Open_POST_Video_asm2c public
+
+; [esp +   4] = const char *path
+; [esp      ] = return address
+
+        Call_Asm_Stack1 video_Open_POST_Video
+
+        Call_Asm_Return 1
+
+endp ; end procedure video_Open_POST_Video_asm2c
+
+
+proc video_Close_POST_Video_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 video_Close_POST_Video
+
+        Call_Asm_Return 0
+
+endp ; end procedure video_Close_POST_Video_asm2c
+
+
+proc video_Play_POST_Video_asm2c public
+
+; [esp +   4] = uint32_t zoomed
+; [esp      ] = return address
+
+        Call_Asm_Stack1 video_Play_POST_Video
+
+        Call_Asm_Return 1
+
+endp ; end procedure video_Play_POST_Video_asm2c
+
+
+proc video_RegisterClass_SS_Video_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 video_RegisterClass_SS_Video
+
+        Call_Asm_Return 0
+
+endp ; end procedure video_RegisterClass_SS_Video_asm2c
+
+

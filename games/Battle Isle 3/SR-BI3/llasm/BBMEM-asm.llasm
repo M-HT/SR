@@ -1,0 +1,186 @@
+;;
+;;  Copyright (C) 2020-2021 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+include llasm.llinc
+include asm-calls.llinc
+
+func MEM_Init_c
+funcv MEM_Exit_c
+func MEM_malloc_c size, *module_name, *object_type, line, type
+funcv MEM_free_c *mem_ptr
+funcv MEM_Take_Snapshot_c *name
+funcv MEM_Check_Snapshot_c
+funcv MEM_SwitchSecurity_c security
+func BASEMEM_Alloc_c size
+func BASEMEM_Free_c *mem_ptr
+funcv BASEMEM_CopyMem_c *src, *dst, length
+funcv BASEMEM_FillMemByte_c *dst, length, c
+func BBMEM_GetPoolPointer_c
+
+proc MEM_Init public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 MEM_Init_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure MEM_Init
+
+
+proc MEM_Exit public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0_void MEM_Exit_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure MEM_Exit
+
+
+proc MEM_malloc public
+
+; [esp + 5*4] = int type
+; [esp + 4*4] = unsigned int line
+; [esp + 3*4] = const char * object_type
+; [esp + 2*4] = const char * module_name
+; [esp +   4] = unsigned int size
+; [esp      ] = return address
+
+        Call_Asm_Stack5 MEM_malloc_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure MEM_malloc
+
+
+proc MEM_free public
+
+; [esp +   4] = void * mem_ptr
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void MEM_free_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure MEM_free
+
+
+proc MEM_Take_Snapshot public
+
+; [esp +   4] = const char * name
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void MEM_Take_Snapshot_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure MEM_Take_Snapshot
+
+
+proc MEM_Check_Snapshot public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0_void MEM_Check_Snapshot_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure MEM_Check_Snapshot
+
+
+proc MEM_SwitchSecurity public
+
+; [esp +   4] = unsigned int security
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void MEM_SwitchSecurity_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure MEM_SwitchSecurity
+
+
+proc BASEMEM_Alloc public
+
+; [esp +   4] = unsigned int size
+; [esp      ] = return address
+
+        Call_Asm_Stack1 BASEMEM_Alloc_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure BASEMEM_Alloc
+
+
+proc BASEMEM_Free public
+
+; [esp +   4] = void * mem_ptr
+; [esp      ] = return address
+
+        Call_Asm_Stack1 BASEMEM_Free_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure BASEMEM_Free
+
+
+proc BASEMEM_CopyMem public
+
+; [esp + 3*4] = unsigned int length
+; [esp + 2*4] = void * dst
+; [esp +   4] = const void * src
+; [esp      ] = return address
+
+        Call_Asm_Stack3_void BASEMEM_CopyMem_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure BASEMEM_CopyMem
+
+
+proc BASEMEM_FillMemByte public
+
+; [esp + 3*4] = int c
+; [esp + 2*4] = unsigned int length
+; [esp +   4] = void * dst
+; [esp      ] = return address
+
+        Call_Asm_Stack3_void BASEMEM_FillMemByte_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure BASEMEM_FillMemByte
+
+
+proc BBMEM_GetPoolPointer public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 BBMEM_GetPoolPointer_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure BBMEM_GetPoolPointer
+
+

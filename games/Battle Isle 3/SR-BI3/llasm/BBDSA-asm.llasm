@@ -1,0 +1,534 @@
+;;
+;;  Copyright (C) 2020-2021 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+include llasm.llinc
+include asm-calls.llinc
+
+funcv DSA_ReuseStaticColors_c osVersions
+funcv DSA_FreeStaticColors_c osVersions
+funcv DSAWIN_PrepareInit_c *hInstance
+func DSAWIN_GetMainWindowHandle_c
+func DSAWIN_GetInstance_c
+func DSA_Init_c
+funcv DSA_Exit_c
+func DSA_OpenScreen_c *screen, *opm, param3, *windowName, x, y, type
+funcv DSA_CloseScreen_c *screen
+funcv DSA_CopyMainOPMToScreen_c *screen, onlyModified
+funcv DSA_StretchOPMToScreen_c *screen, xDst, yDst, widthDst, heightDst, *opm, xSrc, ySrc, widthSrc, heightSrc
+funcv DSA_CopyOPMToScreenEx_c *screen, xDst, yDst, width, height, *opm, xSrc, ySrc
+funcv DSA_TotalRepaint_c
+funcv DSA_MoveScreen_c *screen, changeX, changeY
+func DSA_ResizeScreen_c *screen, *opm, redraw
+func DSA_DrawSizingScreen_c *screen, *rect
+funcv DSA_EnterResizingMode_c *screen
+funcv DSA_LeaveResizingMode_c *screen
+funcv DSA_GetDSAMetrics_c *screen, *x, *y, *width, *height, *isVisible
+funcv DSA_SetDSAPos_c *screen, x, y, repaint
+funcv DSA_GetScreenExtends_c *width, *height
+func DSA_GetActiveScreen_c
+funcv DSA_SetActiveScreen_c *screen
+func DSA_GetLastTouchedScreen_c
+funcv DSA_CopyPartOPMToScreen_c *screen, x, y, width, height
+func DSA_ScreenVisibility_c *screen, show
+func DSA_LoadBackground_c *path
+funcv DSA_FixBackground_c isFixed
+funcv DSA_SetCapture_c *screen
+func DSA_SetBackgroundInRAM_c value
+funcv DSA_SetPal_c unused, *palette, src_start_entry, num_entries, dst_start_entry
+funcv DSA_ActivatePal_c
+funcv DSA_PreventPaletteRemapping_c valueAdd
+func DSA_GetBackgroundOffset_c *offsetX, *offsetY
+funcv DSA_SetBackground2Black_c isBlack
+func DSA_MarkBitmapAsDirty_c param1, param2
+
+proc DSA_ReuseStaticColors public
+
+; [esp +   4] = unsigned int osVersions
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void DSA_ReuseStaticColors_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_ReuseStaticColors
+
+
+proc DSA_FreeStaticColors public
+
+; [esp +   4] = unsigned int osVersions
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void DSA_FreeStaticColors_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_FreeStaticColors
+
+
+proc DSAWIN_PrepareInit public
+
+; [esp +   4] = void * hInstance
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void DSAWIN_PrepareInit_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSAWIN_PrepareInit
+
+
+proc DSAWIN_GetMainWindowHandle public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 DSAWIN_GetMainWindowHandle_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSAWIN_GetMainWindowHandle
+
+
+proc DSAWIN_GetInstance public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 DSAWIN_GetInstance_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSAWIN_GetInstance
+
+
+proc DSA_Init public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 DSA_Init_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_Init
+
+
+proc DSA_Exit public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0_void DSA_Exit_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_Exit
+
+
+proc DSA_OpenScreen public
+
+; [esp + 7*4] = int type
+; [esp + 6*4] = int y
+; [esp + 5*4] = int x
+; [esp + 4*4] = const char * windowName
+; [esp + 3*4] = int param3
+; [esp + 2*4] = OPM_struct * opm
+; [esp +   4] = DSA_Screen * screen
+; [esp      ] = return address
+
+        Call_Asm_Stack7 DSA_OpenScreen_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_OpenScreen
+
+
+proc DSA_CloseScreen public
+
+; [esp +   4] = DSA_Screen * screen
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void DSA_CloseScreen_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_CloseScreen
+
+
+proc DSA_CopyMainOPMToScreen public
+
+; [esp + 2*4] = int onlyModified
+; [esp +   4] = DSA_Screen * screen
+; [esp      ] = return address
+
+        Call_Asm_Stack2_void DSA_CopyMainOPMToScreen_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_CopyMainOPMToScreen
+
+
+proc DSA_StretchOPMToScreen public
+
+; [esp + 10*4] = int heightSrc
+; [esp + 9*4] = int widthSrc
+; [esp + 8*4] = int ySrc
+; [esp + 7*4] = int xSrc
+; [esp + 6*4] = OPM_struct * opm
+; [esp + 5*4] = int heightDst
+; [esp + 4*4] = int widthDst
+; [esp + 3*4] = int yDst
+; [esp + 2*4] = int xDst
+; [esp +   4] = DSA_Screen * screen
+; [esp      ] = return address
+
+        Call_Asm_Stack10_void DSA_StretchOPMToScreen_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_StretchOPMToScreen
+
+
+proc DSA_CopyOPMToScreenEx public
+
+; [esp + 8*4] = int ySrc
+; [esp + 7*4] = int xSrc
+; [esp + 6*4] = OPM_struct * opm
+; [esp + 5*4] = int height
+; [esp + 4*4] = int width
+; [esp + 3*4] = int yDst
+; [esp + 2*4] = int xDst
+; [esp +   4] = DSA_Screen * screen
+; [esp      ] = return address
+
+        Call_Asm_Stack8_void DSA_CopyOPMToScreenEx_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_CopyOPMToScreenEx
+
+
+proc DSA_TotalRepaint public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0_void DSA_TotalRepaint_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_TotalRepaint
+
+
+proc DSA_MoveScreen public
+
+; [esp + 3*4] = int changeY
+; [esp + 2*4] = int changeX
+; [esp +   4] = DSA_Screen * screen
+; [esp      ] = return address
+
+        Call_Asm_Stack3_void DSA_MoveScreen_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_MoveScreen
+
+
+proc DSA_ResizeScreen public
+
+; [esp + 3*4] = int redraw
+; [esp + 2*4] = OPM_struct * opm
+; [esp +   4] = DSA_Screen * screen
+; [esp      ] = return address
+
+        Call_Asm_Stack3 DSA_ResizeScreen_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_ResizeScreen
+
+
+proc DSA_DrawSizingScreen public
+
+; [esp + 2*4] = int16_t * rect
+; [esp +   4] = DSA_Screen * screen
+; [esp      ] = return address
+
+        Call_Asm_Stack2 DSA_DrawSizingScreen_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_DrawSizingScreen
+
+
+proc DSA_EnterResizingMode public
+
+; [esp +   4] = DSA_Screen * screen
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void DSA_EnterResizingMode_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_EnterResizingMode
+
+
+proc DSA_LeaveResizingMode public
+
+; [esp +   4] = DSA_Screen * screen
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void DSA_LeaveResizingMode_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_LeaveResizingMode
+
+
+proc DSA_GetDSAMetrics public
+
+; [esp + 6*4] = uint8_t * isVisible
+; [esp + 5*4] = int32_t * height
+; [esp + 4*4] = int32_t * width
+; [esp + 3*4] = int32_t * y
+; [esp + 2*4] = int32_t * x
+; [esp +   4] = DSA_Screen * screen
+; [esp      ] = return address
+
+        Call_Asm_Stack6_void DSA_GetDSAMetrics_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_GetDSAMetrics
+
+
+proc DSA_SetDSAPos public
+
+; [esp + 4*4] = int repaint
+; [esp + 3*4] = int y
+; [esp + 2*4] = int x
+; [esp +   4] = DSA_Screen * screen
+; [esp      ] = return address
+
+        Call_Asm_Stack4_void DSA_SetDSAPos_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_SetDSAPos
+
+
+proc DSA_GetScreenExtends public
+
+; [esp + 2*4] = int32_t * height
+; [esp +   4] = int32_t * width
+; [esp      ] = return address
+
+        Call_Asm_Stack2_void DSA_GetScreenExtends_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_GetScreenExtends
+
+
+proc DSA_GetActiveScreen public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 DSA_GetActiveScreen_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_GetActiveScreen
+
+
+proc DSA_SetActiveScreen public
+
+; [esp +   4] = DSA_Screen * screen
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void DSA_SetActiveScreen_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_SetActiveScreen
+
+
+proc DSA_GetLastTouchedScreen public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 DSA_GetLastTouchedScreen_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_GetLastTouchedScreen
+
+
+proc DSA_CopyPartOPMToScreen public
+
+; [esp + 5*4] = int height
+; [esp + 4*4] = int width
+; [esp + 3*4] = int y
+; [esp + 2*4] = int x
+; [esp +   4] = DSA_Screen * screen
+; [esp      ] = return address
+
+        Call_Asm_Stack5_void DSA_CopyPartOPMToScreen_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_CopyPartOPMToScreen
+
+
+proc DSA_ScreenVisibility public
+
+; [esp + 2*4] = int show
+; [esp +   4] = DSA_Screen * screen
+; [esp      ] = return address
+
+        Call_Asm_Stack2 DSA_ScreenVisibility_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_ScreenVisibility
+
+
+proc DSA_LoadBackground public
+
+; [esp +   4] = const char * path
+; [esp      ] = return address
+
+        Call_Asm_Stack1 DSA_LoadBackground_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_LoadBackground
+
+
+proc DSA_FixBackground public
+
+; [esp +   4] = int isFixed
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void DSA_FixBackground_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_FixBackground
+
+
+proc DSA_SetCapture public
+
+; [esp +   4] = DSA_Screen * screen
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void DSA_SetCapture_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_SetCapture
+
+
+proc DSA_SetBackgroundInRAM public
+
+; [esp +   4] = int value
+; [esp      ] = return address
+
+        Call_Asm_Stack1 DSA_SetBackgroundInRAM_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_SetBackgroundInRAM
+
+
+proc DSA_SetPal public
+
+; [esp + 5*4] = unsigned int dst_start_entry
+; [esp + 4*4] = unsigned int num_entries
+; [esp + 3*4] = unsigned int src_start_entry
+; [esp + 2*4] = DSA_Palette * palette
+; [esp +   4] = int unused
+; [esp      ] = return address
+
+        Call_Asm_Stack5_void DSA_SetPal_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_SetPal
+
+
+proc DSA_ActivatePal public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0_void DSA_ActivatePal_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_ActivatePal
+
+
+proc DSA_PreventPaletteRemapping public
+
+; [esp +   4] = int valueAdd
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void DSA_PreventPaletteRemapping_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_PreventPaletteRemapping
+
+
+proc DSA_GetBackgroundOffset public
+
+; [esp + 2*4] = int32_t * offsetY
+; [esp +   4] = int32_t * offsetX
+; [esp      ] = return address
+
+        Call_Asm_Stack2 DSA_GetBackgroundOffset_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_GetBackgroundOffset
+
+
+proc DSA_SetBackground2Black public
+
+; [esp +   4] = int isBlack
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void DSA_SetBackground2Black_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_SetBackground2Black
+
+
+proc DSA_MarkBitmapAsDirty public
+
+; [esp + 2*4] = int param2
+; [esp +   4] = int param1
+; [esp      ] = return address
+
+        Call_Asm_Stack2 DSA_MarkBitmapAsDirty_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure DSA_MarkBitmapAsDirty
+
+

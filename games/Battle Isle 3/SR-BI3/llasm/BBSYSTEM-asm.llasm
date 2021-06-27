@@ -1,0 +1,161 @@
+;;
+;;  Copyright (C) 2020-2021 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+include llasm.llinc
+include asm-calls.llinc
+
+funcv SYSTEM_SetInitValues_c type, *value
+funcv SYSTEM_SystemTask_c
+func SYSTEM_Init_c
+funcv SYSTEM_Exit_c
+func SYSTEM_GetTicks_c
+func SYSTEM_IsApplicationActive_c
+funcv SYSTEM_WaitTicks_c ticks
+funcv SYSTEM_EnterCriticalSection_c
+funcv SYSTEM_LeaveCriticalSection_c
+func SYSTEM_InCriticalSection_c
+func SYSTEM_GetOS_c
+
+proc SYSTEM_SetInitValues public
+
+; [esp + 2*4] = const char * value
+; [esp +   4] = int type
+; [esp      ] = return address
+
+        Call_Asm_Stack2_void SYSTEM_SetInitValues_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure SYSTEM_SetInitValues
+
+
+proc SYSTEM_SystemTask public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0_void SYSTEM_SystemTask_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure SYSTEM_SystemTask
+
+
+proc SYSTEM_Init public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 SYSTEM_Init_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure SYSTEM_Init
+
+
+proc SYSTEM_Exit public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0_void SYSTEM_Exit_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure SYSTEM_Exit
+
+
+proc SYSTEM_GetTicks public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 SYSTEM_GetTicks_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure SYSTEM_GetTicks
+
+
+proc SYSTEM_IsApplicationActive public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 SYSTEM_IsApplicationActive_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure SYSTEM_IsApplicationActive
+
+
+proc SYSTEM_WaitTicks public
+
+; [esp +   4] = unsigned int ticks
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void SYSTEM_WaitTicks_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure SYSTEM_WaitTicks
+
+
+proc SYSTEM_EnterCriticalSection public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0_void SYSTEM_EnterCriticalSection_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure SYSTEM_EnterCriticalSection
+
+
+proc SYSTEM_LeaveCriticalSection public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0_void SYSTEM_LeaveCriticalSection_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure SYSTEM_LeaveCriticalSection
+
+
+proc SYSTEM_InCriticalSection public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 SYSTEM_InCriticalSection_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure SYSTEM_InCriticalSection
+
+
+proc SYSTEM_GetOS public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 SYSTEM_GetOS_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure SYSTEM_GetOS
+
+

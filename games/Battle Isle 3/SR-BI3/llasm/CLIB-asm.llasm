@@ -1,0 +1,422 @@
+;;
+;;  Copyright (C) 2019-2021 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+include llasm.llinc
+include asm-calls.llinc
+
+func memcmp_c *s1, *s2, n
+func memcpy_c *dest, *src, n
+func memset_c *s, c, n
+
+func strcat_c *dest, *src
+func strcmp_c *s1, *s2
+func strcpy_c *dest, *src
+func strlen_c *s
+func strncpy_c *dest, *src, n
+func _strnicmp_c *s1, *s2, n
+func strstr_c *haystack, *needle
+
+func printf2_c *format, *ap
+func sprintf2_c *str, *format, *ap
+
+funcv ms_srand_c seed
+func ms_rand_c
+func wc_rand_c
+
+func atoi_c *nptr
+func atol_c *nptr
+func _ltoa_c value, *buffer, radix
+
+func isalnum_c c
+
+func _except_handler3_c *exception_record, *registration, *context, *dispatcher
+
+funcv sync_c
+
+
+proc ms_memcmp_asm2c public
+
+; [esp + 3*4] = uint32_t n
+; [esp + 2*4] = const void *s2
+; [esp +   4] = const void *s1
+; [esp      ] = return address
+
+        Call_Asm_Stack3 memcmp_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms_memcmp_asm2c
+
+
+proc ms_memcpy_asm2c public
+
+; [esp + 3*4] = uint32_t n
+; [esp + 2*4] = const void *src
+; [esp +   4] = void *dest
+; [esp      ] = return address
+
+        Call_Asm_Stack3 memcpy_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms_memcpy_asm2c
+
+
+proc wc_memset_asm2c public
+        tcall ms_memset_asm2c
+endp
+proc ms_memset_asm2c public
+
+; [esp + 3*4] = uint32_t n
+; [esp + 2*4] = int32_t c
+; [esp +   4] = void *s
+; [esp      ] = return address
+
+        Call_Asm_Stack3 memset_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms_memset_asm2c
+
+
+proc ms_strcat_asm2c public
+
+; [esp + 2*4] = const char *src
+; [esp +   4] = char *dest
+; [esp      ] = return address
+
+        Call_Asm_Stack2 strcat_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms_strcat_asm2c
+
+
+proc wc_strcmp_asm2c public
+        tcall ms_strcmp_asm2c
+endp
+proc ms_strcmp_asm2c public
+
+; [esp + 2*4] = const char *s2
+; [esp +   4] = const char *s1
+; [esp      ] = return address
+
+        Call_Asm_Stack2 strcmp_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms_strcmp_asm2c
+
+
+proc wc_strcpy_asm2c public
+        tcall ms_strcpy_asm2c
+endp
+proc ms_strcpy_asm2c public
+
+; [esp + 2*4] = const char *src
+; [esp +   4] = char *dest
+; [esp      ] = return address
+
+        Call_Asm_Stack2 strcpy_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms_strcpy_asm2c
+
+
+proc ms_strlen_asm2c public
+
+; [esp +   4] = const char *s
+; [esp      ] = return address
+
+        Call_Asm_Stack1 strlen_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms_strlen_asm2c
+
+
+proc ms_strncpy_asm2c public
+
+; [esp + 3*4] = uint32_t n
+; [esp + 2*4] = const char *src
+; [esp +   4] = char *dest
+; [esp      ] = return address
+
+        Call_Asm_Stack3 strncpy_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms_strncpy_asm2c
+
+
+proc ms__strnicmp_asm2c public
+
+; [esp + 3*4] = uint32_t n
+; [esp + 2*4] = const char *s2
+; [esp +   4] = const char *s1
+; [esp      ] = return address
+
+        Call_Asm_Stack3 _strnicmp_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms__strnicmp_asm2c
+
+
+proc ms_strstr_asm2c public
+
+; [esp + 2*4] = const char *needle
+; [esp +   4] = const char *haystack
+; [esp      ] = return address
+
+        Call_Asm_Stack2 strstr_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms_strstr_asm2c
+
+
+proc ms__alloca_probe_asm2c public
+
+; eax = uint32_t size
+; [esp] = return address
+
+        ; push ecx
+        sub esp, esp, 4
+        store ecx, esp, 4
+
+        ; lea ecx, [esp+4]
+        add ecx, esp, 4
+
+        ; sub ecx, eax
+        ; sbb eax, eax
+        ; not eax
+        ; and ecx, eax
+        sub tmp1, ecx, eax
+        cmovult ecx, eax, ecx, 0, tmp1
+
+        ; mov eax, esp
+        ; and eax, 0FFFFF000h
+        and eax, esp, 0xfffff000
+
+        tcall ms__alloca_probe_cs10
+
+endp ; end procedure ms__alloca_probe_asm2c
+
+proc ms__alloca_probe_cs10
+
+        ; cmp ecx, eax
+        ; jb short cs20
+        cmovult ecx, eax, tmp1, 1, 0
+        ctcallnz tmp1, ms__alloca_probe_cs20
+
+        tcall ms__alloca_probe_cs15
+
+endp ; end procedure ms__alloca_probe_cs10
+
+proc ms__alloca_probe_cs15
+        ; mov eax, ecx
+        mov tmpadr, ecx
+
+        ; pop ecx
+        load ecx, esp, 4
+        add esp, esp, 4
+
+        ; xchg eax, esp
+        ; mov eax, [eax]
+        ; mov [esp+0], eax
+        ; retn
+        load tmp1, esp, 4
+        add esp, tmpadr, 4
+        tcall tmp1
+
+endp ; end procedure ms__alloca_probe_cs15
+
+proc ms__alloca_probe_cs20
+
+        ; sub eax, 1000h
+        sub eax, eax, 0x1000
+
+        ; test [eax], eax
+        mov tmp1, 0
+        store tmp1, eax, 4
+
+        ; jmp short cs10
+        tcall ms__alloca_probe_cs10
+
+endp ; end procedure ms__alloca_probe_cs20
+
+
+proc ms_printf_asm2c public
+
+; [esp + 2*4] = ...
+; [esp +   4] = const char *format
+; [esp      ] = return address
+
+        Call_Asm_VariableStack1 printf2_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms_printf_asm2c
+
+
+proc wc_sprintf_asm2c public
+
+; [esp + 3*4] = ...
+; [esp + 2*4] = const char *format
+; [esp +   4] = char *str
+; [esp      ] = return address
+
+        Call_Asm_VariableStack2 sprintf2_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure wc_sprintf_asm2c
+
+
+proc ms__ftol_asm2c public
+
+; st0   = num
+; [esp] = return address
+
+        FTOL_INT64
+
+        load eax, tmp0, 4
+        add tmpadr, tmp0, 4
+        load edx, tmpadr, 4
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms__ftol_asm2c
+
+
+proc ms_srand_asm2c public
+
+; [esp + 4] = uint32_t seed
+; [esp    ] = return address
+
+        Call_Asm_Stack1_void ms_srand_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms_srand_asm2c
+
+
+proc ms_rand_asm2c public
+
+; [esp] = return address
+
+        Call_Asm_Stack0 ms_rand_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms_rand_asm2c
+
+
+proc wc_rand_asm2c public
+
+; [esp] = return address
+
+        Call_Asm_Stack0 wc_rand_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure wc_rand_asm2c
+
+
+proc ms_atoi_asm2c public
+
+; [esp + 4] = const char *nptr
+; [esp    ] = return address
+
+        Call_Asm_Stack1 atoi_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms_atoi_asm2c
+
+
+proc ms_atol_asm2c public
+
+; [esp + 4] = const char *nptr
+; [esp    ] = return address
+
+        Call_Asm_Stack1 atol_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms_atol_asm2c
+
+
+proc ms__ltoa_asm2c public
+
+; [esp + 3*4] = int radix
+; [esp + 2*4] = char *buffer
+; [esp +   4] = long value
+; [esp      ] = return address
+
+        Call_Asm_Stack3 _ltoa_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms__ltoa_asm2c
+
+
+proc ms_isalnum_asm2c public
+
+; [esp + 4] = int c
+; [esp    ] = return address
+
+        Call_Asm_Stack1 isalnum_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms_isalnum_asm2c
+
+
+proc ms__except_handler3_asm2c public
+
+; [esp + 4*4] = PEXCEPTION_REGISTRATION dispatcher
+; [esp + 3*4] = PCONTEXT context
+; [esp + 2*4] = PEXCEPTION_REGISTRATION registration
+; [esp +   4] = PEXCEPTION_RECORD exception_record
+; [esp      ] = return address
+
+        Call_Asm_Stack4 _except_handler3_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ms__except_handler3_asm2c
+
+
+proc sync_asm2c public
+
+; [esp] = return address
+
+        Call_Asm_Stack0_void sync_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure sync_asm2c
+
+

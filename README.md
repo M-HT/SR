@@ -12,6 +12,7 @@ Following DOS games are supported:
 Following Windows games are supported:
 
 * [Septerra Core: Legacy of the Creator](https://en.wikipedia.org/wiki/Septerra_Core "Septerra Core: Legacy of the Creator")
+* [Battle Isle 3: Shadow of the Emperor (Battle Isle 2220: Shadow of the Emperor)](https://en.wikipedia.org/wiki/Battle_Isle_2220 "Battle Isle 3: Shadow of the Emperor (Battle Isle 2220: Shadow of the Emperor)")
 
 The source code is released with MIT license (except libraries, etc. by other people, which have their own license).
 For the purpose of using the code in GPL projects, the source code is also released with GPLv2 or later and LGPLv2.1 or later.
@@ -37,11 +38,11 @@ The projects consists of following subprojects (read the readmes in subproject d
 * **games**
   * Game specific source code.
   * Together with the generated assembler versions of the executables, these files can be used to build Windows or Linux (x86 or arm) versions of the games.
-  * Uses plugins to play (or play better) music (in DOS games).
+  * Uses plugins to play (or play better) music.
 * **midi-libs**
   * Libraries that are used by plugins in *midi-plugins* subproject to play MIDI music.
 * **midi-plugins**
-  * Plugins used by the DOS games to play MIDI (and other types) music.
+  * Plugins used by the games to play MIDI (and other types) music.
 * **scaler-plugins**
   * Plugins used by the DOS games to enlarge/enhance the displayed image.
 * **pycfg**

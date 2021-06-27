@@ -1,0 +1,139 @@
+;;
+;;  Copyright (C) 2020-2021 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+include llasm.llinc
+include asm-calls.llinc
+
+func midi_OpenSDIMusic *filename
+func midi_GetSDIMusicID
+func midi_PlaySDIMusic
+func midi_CloseSDIMusic
+func midi_IsPlaying musicID
+func midi_OpenTestMusic
+func midi_PlayTestMusic
+func midi_CloseTestMusic
+func midi_GetErrorString error, *text, length
+
+proc midi_OpenSDIMusic_asm2c public
+
+; [esp +   4] = const char *filename
+; [esp      ] = return address
+
+        Call_Asm_Stack1 midi_OpenSDIMusic
+
+        Call_Asm_Return 1
+
+endp ; end procedure midi_OpenSDIMusic_asm2c
+
+
+proc midi_GetSDIMusicID_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 midi_GetSDIMusicID
+
+        Call_Asm_Return 0
+
+endp ; end procedure midi_GetSDIMusicID_asm2c
+
+
+proc midi_PlaySDIMusic_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 midi_PlaySDIMusic
+
+        Call_Asm_Return 0
+
+endp ; end procedure midi_PlaySDIMusic_asm2c
+
+
+proc midi_CloseSDIMusic_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 midi_CloseSDIMusic
+
+        Call_Asm_Return 0
+
+endp ; end procedure midi_CloseSDIMusic_asm2c
+
+
+proc midi_IsPlaying_asm2c public
+
+; [esp +   4] = unsigned int musicID
+; [esp      ] = return address
+
+        Call_Asm_Stack1 midi_IsPlaying
+
+        Call_Asm_Return 1
+
+endp ; end procedure midi_IsPlaying_asm2c
+
+
+proc midi_OpenTestMusic_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 midi_OpenTestMusic
+
+        Call_Asm_Return 0
+
+endp ; end procedure midi_OpenTestMusic_asm2c
+
+
+proc midi_PlayTestMusic_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 midi_PlayTestMusic
+
+        Call_Asm_Return 0
+
+endp ; end procedure midi_PlayTestMusic_asm2c
+
+
+proc midi_CloseTestMusic_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 midi_CloseTestMusic
+
+        Call_Asm_Return 0
+
+endp ; end procedure midi_CloseTestMusic_asm2c
+
+
+proc midi_GetErrorString_asm2c public
+
+; [esp + 3*4] = unsigned int length
+; [esp + 2*4] = char *text
+; [esp +   4] = int error
+; [esp      ] = return address
+
+        Call_Asm_Stack3 midi_GetErrorString
+
+        Call_Asm_Return 3
+
+endp ; end procedure midi_GetErrorString_asm2c
+
+

@@ -1,0 +1,251 @@
+;;
+;;  Copyright (C) 2021 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+include llasm.llinc
+include asm-calls.llinc
+
+func CloseHandle_c *hObject
+func CreateFileA_c *lpFileName, dwDesiredAccess, dwShareMode, *lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, *hTemplateFile
+func FindClose_c *hFindFile
+func FindFirstFileA_c *lpFileName, *lpFindFileData
+func FindNextFileA_c *hFindFile, *lpFindFileData
+func GetCurrentDirectoryA_c nBufferLength, *lpBuffer
+func GetPrivateProfileIntA_c *lpAppName, *lpKeyName, nDefault, *lpFileName
+func GetPrivateProfileStringA_c *lpAppName, *lpKeyName, *lpDefault, *lpReturnedString, nSize, *lpFileName
+func GetTickCount_c
+funcv GlobalMemoryStatus_c *lpBuffer
+func ReadFile_c *hFile, *lpBuffer, nNumberOfBytesToRead, *lpNumberOfBytesRead, *lpOverlapped
+func SetCurrentDirectoryA_c *lpPathName
+func SetFilePointer_c *hFile, lDistanceToMove, *lpDistanceToMoveHigh, dwMoveMethod
+func WriteFile_c *hFile, *lpBuffer, nNumberOfBytesToWrite, *lpNumberOfBytesWritten, *lpOverlapped
+func WritePrivateProfileStringA_c *lpAppName, *lpKeyName, *lpString, *lpFileName
+
+proc CloseHandle_asm2c public
+
+; [esp +   4] = HANDLE hObject
+; [esp      ] = return address
+
+        Call_Asm_Stack1 CloseHandle_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure CloseHandle_asm2c
+
+
+proc CreateFileA_asm2c public
+
+; [esp + 7*4] = HANDLE hTemplateFile
+; [esp + 6*4] = DWORD dwFlagsAndAttributes
+; [esp + 5*4] = DWORD dwCreationDisposition
+; [esp + 4*4] = LPSECURITY_ATTRIBUTES lpSecurityAttributes
+; [esp + 3*4] = DWORD dwShareMode
+; [esp + 2*4] = DWORD dwDesiredAccess
+; [esp +   4] = LPCSTR lpFileName
+; [esp      ] = return address
+
+        Call_Asm_Stack7 CreateFileA_c
+
+        Call_Asm_Return 7
+
+endp ; end procedure CreateFileA_asm2c
+
+
+proc FindClose_asm2c public
+
+; [esp +   4] = HANDLE hFindFile
+; [esp      ] = return address
+
+        Call_Asm_Stack1 FindClose_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure FindClose_asm2c
+
+
+proc FindFirstFileA_asm2c public
+
+; [esp + 2*4] = LPWIN32_FIND_DATAA lpFindFileData
+; [esp +   4] = LPCSTR lpFileName
+; [esp      ] = return address
+
+        Call_Asm_Stack2 FindFirstFileA_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure FindFirstFileA_asm2c
+
+
+proc FindNextFileA_asm2c public
+
+; [esp + 2*4] = LPWIN32_FIND_DATAA lpFindFileData
+; [esp +   4] = HANDLE hFindFile
+; [esp      ] = return address
+
+        Call_Asm_Stack2 FindNextFileA_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure FindNextFileA_asm2c
+
+
+proc GetCurrentDirectoryA_asm2c public
+
+; [esp + 2*4] = LPSTR lpBuffer
+; [esp +   4] = DWORD nBufferLength
+; [esp      ] = return address
+
+        Call_Asm_Stack2 GetCurrentDirectoryA_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure GetCurrentDirectoryA_asm2c
+
+
+proc GetPrivateProfileIntA_asm2c public
+
+; [esp + 4*4] = LPCSTR lpFileName
+; [esp + 3*4] = INT nDefault
+; [esp + 2*4] = LPCSTR lpKeyName
+; [esp +   4] = LPCSTR lpAppName
+; [esp      ] = return address
+
+        Call_Asm_Stack4 GetPrivateProfileIntA_c
+
+        Call_Asm_Return 4
+
+endp ; end procedure GetPrivateProfileIntA_asm2c
+
+
+proc GetPrivateProfileStringA_asm2c public
+
+; [esp + 6*4] = LPCSTR lpFileName
+; [esp + 5*4] = DWORD nSize
+; [esp + 4*4] = LPSTR lpReturnedString
+; [esp + 3*4] = LPCSTR lpDefault
+; [esp + 2*4] = LPCSTR lpKeyName
+; [esp +   4] = LPCSTR lpAppName
+; [esp      ] = return address
+
+        Call_Asm_Stack6 GetPrivateProfileStringA_c
+
+        Call_Asm_Return 6
+
+endp ; end procedure GetPrivateProfileStringA_asm2c
+
+
+proc GetTickCount_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 GetTickCount_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure GetTickCount_asm2c
+
+
+proc GlobalMemoryStatus_asm2c public
+
+; [esp +   4] = LPMEMORYSTATUS lpBuffer
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void GlobalMemoryStatus_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure GlobalMemoryStatus_asm2c
+
+
+proc ReadFile_asm2c public
+
+; [esp + 5*4] = LPOVERLAPPED lpOverlapped
+; [esp + 4*4] = LPDWORD lpNumberOfBytesRead
+; [esp + 3*4] = DWORD nNumberOfBytesToRead
+; [esp + 2*4] = LPVOID lpBuffer
+; [esp +   4] = HANDLE hFile
+; [esp      ] = return address
+
+        Call_Asm_Stack5 ReadFile_c
+
+        Call_Asm_Return 5
+
+endp ; end procedure ReadFile_asm2c
+
+
+proc SetCurrentDirectoryA_asm2c public
+
+; [esp +   4] = LPCSTR lpPathName
+; [esp      ] = return address
+
+        Call_Asm_Stack1 SetCurrentDirectoryA_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure SetCurrentDirectoryA_asm2c
+
+
+proc SetFilePointer_asm2c public
+
+; [esp + 4*4] = DWORD dwMoveMethod
+; [esp + 3*4] = PLONG lpDistanceToMoveHigh
+; [esp + 2*4] = LONG lDistanceToMove
+; [esp +   4] = HANDLE hFile
+; [esp      ] = return address
+
+        Call_Asm_Stack4 SetFilePointer_c
+
+        Call_Asm_Return 4
+
+endp ; end procedure SetFilePointer_asm2c
+
+
+proc WriteFile_asm2c public
+
+; [esp + 5*4] = LPOVERLAPPED lpOverlapped
+; [esp + 4*4] = LPDWORD lpNumberOfBytesWritten
+; [esp + 3*4] = DWORD nNumberOfBytesToWrite
+; [esp + 2*4] = LPCVOID lpBuffer
+; [esp +   4] = HANDLE hFile
+; [esp      ] = return address
+
+        Call_Asm_Stack5 WriteFile_c
+
+        Call_Asm_Return 5
+
+endp ; end procedure WriteFile_asm2c
+
+
+proc WritePrivateProfileStringA_asm2c public
+
+; [esp + 4*4] = LPCSTR lpFileName
+; [esp + 3*4] = LPCSTR lpString
+; [esp + 2*4] = LPCSTR lpKeyName
+; [esp +   4] = LPCSTR lpAppName
+; [esp      ] = return address
+
+        Call_Asm_Stack4 WritePrivateProfileStringA_c
+
+        Call_Asm_Return 4
+
+endp ; end procedure WritePrivateProfileStringA_asm2c
+
+

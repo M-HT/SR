@@ -1,0 +1,147 @@
+;;
+;;  Copyright (C) 2020-2021 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+include llasm.llinc
+include asm-calls.llinc
+
+func RNG_Init_c
+funcv RNG_Exit_c
+func RNG_NewBuffer_c element_size, num_elements
+funcv RNG_DelBuffer_c *buffer
+func RNG_In_c *buffer, *element
+func RNG_Out_c *buffer, *element
+func RNG_Peek_c *buffer, *element
+funcv RNG_Replace_c *buffer, *element
+funcv RNG_PutFirst_c *buffer, *element
+
+proc RNG_Init public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 RNG_Init_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure RNG_Init
+
+
+proc RNG_Exit public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0_void RNG_Exit_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure RNG_Exit
+
+
+proc RNG_NewBuffer public
+
+; [esp + 2*4] = int num_elements
+; [esp +   4] = int element_size
+; [esp      ] = return address
+
+        Call_Asm_Stack2 RNG_NewBuffer_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure RNG_NewBuffer
+
+
+proc RNG_DelBuffer public
+
+; [esp +   4] = void * buffer
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void RNG_DelBuffer_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure RNG_DelBuffer
+
+
+proc RNG_In public
+
+; [esp + 2*4] = const void * element
+; [esp +   4] = void * buffer
+; [esp      ] = return address
+
+        Call_Asm_Stack2 RNG_In_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure RNG_In
+
+
+proc RNG_Out public
+
+; [esp + 2*4] = void * element
+; [esp +   4] = void * buffer
+; [esp      ] = return address
+
+        Call_Asm_Stack2 RNG_Out_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure RNG_Out
+
+
+proc RNG_Peek public
+
+; [esp + 2*4] = void * element
+; [esp +   4] = void * buffer
+; [esp      ] = return address
+
+        Call_Asm_Stack2 RNG_Peek_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure RNG_Peek
+
+
+proc RNG_Replace public
+
+; [esp + 2*4] = const void * element
+; [esp +   4] = void * buffer
+; [esp      ] = return address
+
+        Call_Asm_Stack2_void RNG_Replace_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure RNG_Replace
+
+
+proc RNG_PutFirst public
+
+; [esp + 2*4] = const void * element
+; [esp +   4] = void * buffer
+; [esp      ] = return address
+
+        Call_Asm_Stack2_void RNG_PutFirst_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure RNG_PutFirst
+
+

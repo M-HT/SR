@@ -1,0 +1,420 @@
+;;
+;;  Copyright (C) 2021 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+include llasm.llinc
+include asm-calls.llinc
+
+func ClientToScreen_c *hWnd, *lpPoint
+func ClipCursor_c *lpRect
+func CreateWindowExA_c dwExStyle, *lpClassName, *lpWindowName, dwStyle, X, Y, nWidth, nHeight, *hWndParent, *hMenu, *hInstance, *lpParam
+func GetActiveWindow_c
+func GetCursorPos_c *lpPoint
+func GetDC_c *hWnd
+func GetWindowRect_c *hWnd, *lpRect
+func IsIconic_c *hWnd
+func IsWindowVisible_c *hWnd
+func LoadCursorA_c *hInstance, *lpCursorName
+func LoadStringA_c *hInstance, uID, *lpBuffer, cchBufferMax
+func MessageBoxA_c *hWnd, *lpText, *lpCaption, uType
+func MoveWindow_c *hWnd, X, Y, nWidth, nHeight, bRepaint
+func ReleaseCapture_c
+func ReleaseDC_c *hWnd, *hDC
+func ScreenToClient_c *hWnd, *lpPoint
+func SendMessageA_c *hWnd, Msg, wParam, lParam
+func SetActiveWindow_c *hWnd
+func SetCursor_c *hCursor
+func SetCursorPos_c X, Y
+func SetRect_c *lprc, xLeft, yTop, xRight, yBottom
+func SetRectEmpty_c *lprc
+func SetWindowPos_c *hWnd, *hWndInsertAfter, X, Y, cx, cy, uFlags
+func ShowCursor_c bShow
+func ShowWindow_c *hWnd, nCmdShow
+func UnregisterClassA_c *lpClassName, *hInstance
+func wsprintfA2_c *param1, *param2, *ap
+
+proc ClientToScreen_asm2c public
+
+; [esp + 2*4] = LPPOINT lpPoint
+; [esp +   4] = HWND hWnd
+; [esp      ] = return address
+
+        Call_Asm_Stack2 ClientToScreen_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure ClientToScreen_asm2c
+
+
+proc ClipCursor_asm2c public
+
+; [esp +   4] = CONST RECT * lpRect
+; [esp      ] = return address
+
+        Call_Asm_Stack1 ClipCursor_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure ClipCursor_asm2c
+
+
+proc CreateWindowExA_asm2c public
+
+; [esp + 12*4] = LPVOID lpParam
+; [esp + 11*4] = HINSTANCE hInstance
+; [esp + 10*4] = HMENU hMenu
+; [esp + 9*4] = HWND hWndParent
+; [esp + 8*4] = int nHeight
+; [esp + 7*4] = int nWidth
+; [esp + 6*4] = int Y
+; [esp + 5*4] = int X
+; [esp + 4*4] = DWORD dwStyle
+; [esp + 3*4] = LPCSTR lpWindowName
+; [esp + 2*4] = LPCSTR lpClassName
+; [esp +   4] = DWORD dwExStyle
+; [esp      ] = return address
+
+        Call_Asm_Stack12 CreateWindowExA_c
+
+        Call_Asm_Return 12
+
+endp ; end procedure CreateWindowExA_asm2c
+
+
+proc GetActiveWindow_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 GetActiveWindow_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure GetActiveWindow_asm2c
+
+
+proc GetCursorPos_asm2c public
+
+; [esp +   4] = LPPOINT lpPoint
+; [esp      ] = return address
+
+        Call_Asm_Stack1 GetCursorPos_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure GetCursorPos_asm2c
+
+
+proc GetDC_asm2c public
+
+; [esp +   4] = HWND hWnd
+; [esp      ] = return address
+
+        Call_Asm_Stack1 GetDC_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure GetDC_asm2c
+
+
+proc GetWindowRect_asm2c public
+
+; [esp + 2*4] = LPRECT lpRect
+; [esp +   4] = HWND hWnd
+; [esp      ] = return address
+
+        Call_Asm_Stack2 GetWindowRect_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure GetWindowRect_asm2c
+
+
+proc IsIconic_asm2c public
+
+; [esp +   4] = HWND hWnd
+; [esp      ] = return address
+
+        Call_Asm_Stack1 IsIconic_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure IsIconic_asm2c
+
+
+proc IsWindowVisible_asm2c public
+
+; [esp +   4] = HWND hWnd
+; [esp      ] = return address
+
+        Call_Asm_Stack1 IsWindowVisible_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure IsWindowVisible_asm2c
+
+
+proc LoadCursorA_asm2c public
+
+; [esp + 2*4] = LPCSTR lpCursorName
+; [esp +   4] = HINSTANCE hInstance
+; [esp      ] = return address
+
+        Call_Asm_Stack2 LoadCursorA_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure LoadCursorA_asm2c
+
+
+proc LoadStringA_asm2c public
+
+; [esp + 4*4] = int cchBufferMax
+; [esp + 3*4] = LPSTR lpBuffer
+; [esp + 2*4] = UINT uID
+; [esp +   4] = HINSTANCE hInstance
+; [esp      ] = return address
+
+        Call_Asm_Stack4 LoadStringA_c
+
+        Call_Asm_Return 4
+
+endp ; end procedure LoadStringA_asm2c
+
+
+proc MessageBoxA_asm2c public
+
+; [esp + 4*4] = UINT uType
+; [esp + 3*4] = LPCSTR lpCaption
+; [esp + 2*4] = LPCSTR lpText
+; [esp +   4] = HWND hWnd
+; [esp      ] = return address
+
+        Call_Asm_Stack4 MessageBoxA_c
+
+        Call_Asm_Return 4
+
+endp ; end procedure MessageBoxA_asm2c
+
+
+proc MoveWindow_asm2c public
+
+; [esp + 6*4] = WINBOOL bRepaint
+; [esp + 5*4] = int nHeight
+; [esp + 4*4] = int nWidth
+; [esp + 3*4] = int Y
+; [esp + 2*4] = int X
+; [esp +   4] = HWND hWnd
+; [esp      ] = return address
+
+        Call_Asm_Stack6 MoveWindow_c
+
+        Call_Asm_Return 6
+
+endp ; end procedure MoveWindow_asm2c
+
+
+proc ReleaseCapture_asm2c public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 ReleaseCapture_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure ReleaseCapture_asm2c
+
+
+proc ReleaseDC_asm2c public
+
+; [esp + 2*4] = HDC hDC
+; [esp +   4] = HWND hWnd
+; [esp      ] = return address
+
+        Call_Asm_Stack2 ReleaseDC_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure ReleaseDC_asm2c
+
+
+proc ScreenToClient_asm2c public
+
+; [esp + 2*4] = LPPOINT lpPoint
+; [esp +   4] = HWND hWnd
+; [esp      ] = return address
+
+        Call_Asm_Stack2 ScreenToClient_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure ScreenToClient_asm2c
+
+
+proc SendMessageA_asm2c public
+
+; [esp + 4*4] = LPARAM lParam
+; [esp + 3*4] = WPARAM wParam
+; [esp + 2*4] = UINT Msg
+; [esp +   4] = HWND hWnd
+; [esp      ] = return address
+
+        Call_Asm_Stack4 SendMessageA_c
+
+        Call_Asm_Return 4
+
+endp ; end procedure SendMessageA_asm2c
+
+
+proc SetActiveWindow_asm2c public
+
+; [esp +   4] = HWND hWnd
+; [esp      ] = return address
+
+        Call_Asm_Stack1 SetActiveWindow_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure SetActiveWindow_asm2c
+
+
+proc SetCursor_asm2c public
+
+; [esp +   4] = HCURSOR hCursor
+; [esp      ] = return address
+
+        Call_Asm_Stack1 SetCursor_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure SetCursor_asm2c
+
+
+proc SetCursorPos_asm2c public
+
+; [esp + 2*4] = int Y
+; [esp +   4] = int X
+; [esp      ] = return address
+
+        Call_Asm_Stack2 SetCursorPos_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure SetCursorPos_asm2c
+
+
+proc SetRect_asm2c public
+
+; [esp + 5*4] = int yBottom
+; [esp + 4*4] = int xRight
+; [esp + 3*4] = int yTop
+; [esp + 2*4] = int xLeft
+; [esp +   4] = LPRECT lprc
+; [esp      ] = return address
+
+        Call_Asm_Stack5 SetRect_c
+
+        Call_Asm_Return 5
+
+endp ; end procedure SetRect_asm2c
+
+
+proc SetRectEmpty_asm2c public
+
+; [esp +   4] = LPRECT lprc
+; [esp      ] = return address
+
+        Call_Asm_Stack1 SetRectEmpty_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure SetRectEmpty_asm2c
+
+
+proc SetWindowPos_asm2c public
+
+; [esp + 7*4] = UINT uFlags
+; [esp + 6*4] = int cy
+; [esp + 5*4] = int cx
+; [esp + 4*4] = int Y
+; [esp + 3*4] = int X
+; [esp + 2*4] = HWND hWndInsertAfter
+; [esp +   4] = HWND hWnd
+; [esp      ] = return address
+
+        Call_Asm_Stack7 SetWindowPos_c
+
+        Call_Asm_Return 7
+
+endp ; end procedure SetWindowPos_asm2c
+
+
+proc ShowCursor_asm2c public
+
+; [esp +   4] = WINBOOL bShow
+; [esp      ] = return address
+
+        Call_Asm_Stack1 ShowCursor_c
+
+        Call_Asm_Return 1
+
+endp ; end procedure ShowCursor_asm2c
+
+
+proc ShowWindow_asm2c public
+
+; [esp + 2*4] = int nCmdShow
+; [esp +   4] = HWND hWnd
+; [esp      ] = return address
+
+        Call_Asm_Stack2 ShowWindow_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure ShowWindow_asm2c
+
+
+proc UnregisterClassA_asm2c public
+
+; [esp + 2*4] = HINSTANCE hInstance
+; [esp +   4] = LPCSTR lpClassName
+; [esp      ] = return address
+
+        Call_Asm_Stack2 UnregisterClassA_c
+
+        Call_Asm_Return 2
+
+endp ; end procedure UnregisterClassA_asm2c
+
+
+proc wsprintfA_asm2c public
+
+; [esp + 3*4] = ...
+; [esp + 2*4] = LPCSTR param2
+; [esp +   4] = LPSTR param1
+; [esp      ] = return address
+
+        Call_Asm_VariableStack2 wsprintfA2_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure wsprintfA_asm2c
+
+

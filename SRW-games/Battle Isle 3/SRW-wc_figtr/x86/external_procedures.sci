@@ -1,0 +1,5 @@
+loc_4231B0,wc_memset_asm2c
+loc_4231E0,wc_strcmp_asm2c
+loc_42328C,wc_strcpy_asm2c
+loc_4232C8,wc_sprintf_asm2c
+loc_423305,wc_rand_asm2c

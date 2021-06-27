@@ -113,6 +113,7 @@ struct dataseg_struct {
 enum RegisterState { Empty, Read, Write }
 
 string input_filename, output_filename, input_directory, return_procedure, dispatcher_procedure;
+string[] include_directories;
 bool output_preprocessed_file, input_reading_proc, input_reading_dataseg, position_independent_code, old_bitcode, no_tail_calls;
 uint global_optimization_level, procedure_optimization_level;
 
@@ -142,7 +143,7 @@ int num_output_lines;
 string[] output_lines;
 
 immutable int num_regs = 9;
-string[] registers_base_list = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", "eflags", "tmpadr", "tmp0", "tmp1", "tmp2", "tmp3", "tmp4", "tmp5", "tmp6", "tmp7", "tmp8", "tmp9", "tmp10", "tmp11", "tmp12", "tmp13", "tmp14", "tmp15", "tmp16", "tmp17", "tmp18", "tmp19"];
+string[] registers_base_list = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", "eflags", "tmpadr", "tmpcnd", "tmp0", "tmp1", "tmp2", "tmp3", "tmp4", "tmp5", "tmp6", "tmp7", "tmp8", "tmp9", "tmp10", "tmp11", "tmp12", "tmp13", "tmp14", "tmp15", "tmp16", "tmp17", "tmp18", "tmp19"];
 string[] keywords_base_list = ["proc", "extern", "define", "macro", "func", "funcv", "include", "endp", "endm", "datasegment", "dlabel", "dalign", "db", "daddr", "dskip", "endd"];
 string[] instructions_base_list = [
     "mov reg, reg/const/procaddr/externaddr",
@@ -175,6 +176,7 @@ string[] instructions_base_list = [
     "cmovz reg, reg, reg/const, reg/const",
     "cmoveq reg, reg/const, reg, reg/const, reg/const",
     "cmovult reg, reg/const, reg, reg/const, reg/const",
+    "cmovugt reg, reg/const, reg, reg/const, reg/const",
     "cmovslt reg, reg/const, reg, reg/const, reg/const",
     "cmovsgt reg, reg/const, reg, reg/const, reg/const",
     "call funcaddr [$/reg/const]",
@@ -442,6 +444,26 @@ bool add_include_to_stack(string include_name)
         if (exists(path))
         {
             fullpath = absolutePath(path);
+        }
+        else
+        {
+            for (int i = 0; i < include_directories.length; i++)
+            {
+                if (isAbsolute(include_directories[i]))
+                {
+                    path = buildPath(include_directories[i], include_name);
+                }
+                else
+                {
+                    path = buildPath(input_directory, include_directories[i], include_name);
+                }
+
+                if (exists(path))
+                {
+                    fullpath = absolutePath(path);
+                    break;
+                }
+            }
         }
     }
 
@@ -1689,6 +1711,7 @@ bool process_proc_body(string proc_name)
                 break;
             case "cmoveq":  // cmoveq reg, reg/const, reg, reg/const, reg/const
             case "cmovult": // cmovult reg, reg/const, reg, reg/const, reg/const
+            case "cmovugt": // cmovugt reg, reg/const, reg, reg/const, reg/const
             case "cmovslt": // cmovslt reg, reg/const, reg, reg/const, reg/const
             case "cmovsgt": // cmovsgt reg, reg/const, reg, reg/const, reg/const
                 proc_instr_info[linenum].write_reg[0] = paramvals[2].value;
@@ -2170,6 +2193,7 @@ bool process_proc_body(string proc_name)
                 break;
             case "cmoveq":  // cmoveq reg, reg/const, reg, reg/const, reg/const
             case "cmovult": // cmovult reg, reg/const, reg, reg/const, reg/const
+            case "cmovugt": // cmovugt reg, reg/const, reg, reg/const, reg/const
             case "cmovslt": // cmovslt reg, reg/const, reg, reg/const, reg/const
             case "cmovsgt": // cmovsgt reg, reg/const, reg, reg/const, reg/const
                 {
@@ -2395,6 +2419,7 @@ public int main(string[] args)
     output_filename = "";
     return_procedure = "";
     dispatcher_procedure = "";
+    include_directories.length = 0;
     output_preprocessed_file = false;
     global_optimization_level = 0;
     position_independent_code = false;
@@ -2412,6 +2437,17 @@ public int main(string[] args)
                 }
 
                 output_filename = args[i + 1].idup;
+                i++;
+                break;
+            case "-I":
+                if (i + 1 == args.length)
+                {
+                    stderr.writeln("Missing argument: " ~ args[i]);
+                    return 2;
+                }
+
+                include_directories.length++;
+                include_directories[include_directories.length - 1] = args[i + 1].idup;
                 i++;
                 break;
             case "-O":

@@ -1,0 +1,233 @@
+;;
+;;  Copyright (C) 2020-2021 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+include llasm.llinc
+include asm-calls.llinc
+
+func OPM_Init_c
+funcv OPM_Exit_c
+func OPM_New_c width, height, bytes_per_pixel, *pixel_map, *buffer
+funcv OPM_Del_c *pixel_map
+funcv OPM_CreateVirtualOPM_c *base_pixel_map, *virtual_pixel_map, virtual_x, virtual_y, virtual_width, virtual_height
+func OPM_CreateSecondaryOPM_c width, height, bytes_per_pixel, *pixel_map, *buffer
+funcv OPM_SetPixel_c *pixel_map, x, y, color
+funcv OPM_HorLine_c *pixel_map, x, y, length, color
+funcv OPM_VerLine_c *pixel_map, x, y, length, color
+funcv OPM_FillBox_c *pixel_map, x, y, width, height, color
+funcv OPM_CopyGFXOPM_c *pixel_map, *gfx, pos_x, pos_y, value_add
+funcv OPM_CopyOPMOPM_c *src_pixel_map, *dst_pixel_map, src_x, src_y, copy_width, copy_height, dst_x, dst_y
+funcv OPM_AccessBitmap_c *pixel_map
+
+proc OPM_Init public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0 OPM_Init_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure OPM_Init
+
+
+proc OPM_Exit public
+
+; [esp      ] = return address
+
+        Call_Asm_Stack0_void OPM_Exit_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure OPM_Exit
+
+
+proc OPM_New public
+
+; [esp + 5*4] = uint8_t * buffer
+; [esp + 4*4] = OPM_struct * pixel_map
+; [esp + 3*4] = unsigned int bytes_per_pixel
+; [esp + 2*4] = unsigned int height
+; [esp +   4] = unsigned int width
+; [esp      ] = return address
+
+        Call_Asm_Stack5 OPM_New_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure OPM_New
+
+
+proc OPM_Del public
+
+; [esp +   4] = OPM_struct * pixel_map
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void OPM_Del_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure OPM_Del
+
+
+proc OPM_CreateVirtualOPM public
+
+; [esp + 6*4] = int virtual_height
+; [esp + 5*4] = int virtual_width
+; [esp + 4*4] = int virtual_y
+; [esp + 3*4] = int virtual_x
+; [esp + 2*4] = OPM_struct * virtual_pixel_map
+; [esp +   4] = OPM_struct * base_pixel_map
+; [esp      ] = return address
+
+        Call_Asm_Stack6_void OPM_CreateVirtualOPM_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure OPM_CreateVirtualOPM
+
+
+proc OPM_CreateSecondaryOPM public
+
+; [esp + 5*4] = uint8_t * buffer
+; [esp + 4*4] = OPM_struct * pixel_map
+; [esp + 3*4] = int bytes_per_pixel
+; [esp + 2*4] = int height
+; [esp +   4] = int width
+; [esp      ] = return address
+
+        Call_Asm_Stack5 OPM_CreateSecondaryOPM_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure OPM_CreateSecondaryOPM
+
+
+proc OPM_SetPixel public
+
+; [esp + 4*4] = uint8_t color
+; [esp + 3*4] = int y
+; [esp + 2*4] = int x
+; [esp +   4] = OPM_struct * pixel_map
+; [esp      ] = return address
+
+        Call_Asm_Stack4_void OPM_SetPixel_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure OPM_SetPixel
+
+
+proc OPM_HorLine public
+
+; [esp + 5*4] = uint8_t color
+; [esp + 4*4] = unsigned int length
+; [esp + 3*4] = int y
+; [esp + 2*4] = int x
+; [esp +   4] = OPM_struct * pixel_map
+; [esp      ] = return address
+
+        Call_Asm_Stack5_void OPM_HorLine_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure OPM_HorLine
+
+
+proc OPM_VerLine public
+
+; [esp + 5*4] = uint8_t color
+; [esp + 4*4] = unsigned int length
+; [esp + 3*4] = int y
+; [esp + 2*4] = int x
+; [esp +   4] = OPM_struct * pixel_map
+; [esp      ] = return address
+
+        Call_Asm_Stack5_void OPM_VerLine_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure OPM_VerLine
+
+
+proc OPM_FillBox public
+
+; [esp + 6*4] = uint8_t color
+; [esp + 5*4] = unsigned int height
+; [esp + 4*4] = unsigned int width
+; [esp + 3*4] = int y
+; [esp + 2*4] = int x
+; [esp +   4] = OPM_struct * pixel_map
+; [esp      ] = return address
+
+        Call_Asm_Stack6_void OPM_FillBox_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure OPM_FillBox
+
+
+proc OPM_CopyGFXOPM public
+
+; [esp + 5*4] = uint8_t value_add
+; [esp + 4*4] = int pos_y
+; [esp + 3*4] = int pos_x
+; [esp + 2*4] = GFX_struct * gfx
+; [esp +   4] = OPM_struct * pixel_map
+; [esp      ] = return address
+
+        Call_Asm_Stack5_void OPM_CopyGFXOPM_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure OPM_CopyGFXOPM
+
+
+proc OPM_CopyOPMOPM public
+
+; [esp + 8*4] = int dst_y
+; [esp + 7*4] = int dst_x
+; [esp + 6*4] = int copy_height
+; [esp + 5*4] = int copy_width
+; [esp + 4*4] = int src_y
+; [esp + 3*4] = int src_x
+; [esp + 2*4] = OPM_struct * dst_pixel_map
+; [esp +   4] = OPM_struct * src_pixel_map
+; [esp      ] = return address
+
+        Call_Asm_Stack8_void OPM_CopyOPMOPM_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure OPM_CopyOPMOPM
+
+
+proc OPM_AccessBitmap public
+
+; [esp +   4] = OPM_struct * pixel_map
+; [esp      ] = return address
+
+        Call_Asm_Stack1_void OPM_AccessBitmap_c
+
+        Call_Asm_Return 0
+
+endp ; end procedure OPM_AccessBitmap
+
+

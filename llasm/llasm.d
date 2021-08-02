@@ -139,12 +139,14 @@ func_struct[string] func_list;
 proc_struct[string] proc_list;
 string[] local_proc_names;
 
+bool used_ctlz_intrinsics, used_bswap_intrinsics;
+
 int num_output_lines;
 string[] output_lines;
 
 immutable int num_regs = 9;
 string[] registers_base_list = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", "eflags", "tmpadr", "tmpcnd", "tmp0", "tmp1", "tmp2", "tmp3", "tmp4", "tmp5", "tmp6", "tmp7", "tmp8", "tmp9", "tmp10", "tmp11", "tmp12", "tmp13", "tmp14", "tmp15", "tmp16", "tmp17", "tmp18", "tmp19"];
-string[] keywords_base_list = ["proc", "extern", "define", "macro", "func", "funcv", "include", "endp", "endm", "datasegment", "dlabel", "dalign", "db", "daddr", "dskip", "endd"];
+string[] keywords_base_list = ["proc", "extern", "define", "macro", "func", "funcv", "include", "endp", "endm", "datasegment", "dlabel", "dalign", "db", "dinclude", "daddr", "dskip", "endd"];
 string[] instructions_base_list = [
     "mov reg, reg/const/procaddr/externaddr",
     "add reg, reg, reg/const",
@@ -186,7 +188,8 @@ string[] instructions_base_list = [
     "ifz reg",
     "ifnz reg",
     "endif",
-    "ctlz reg, reg"
+    "ctlz reg, reg",
+    "bswap reg, reg"
 ];
 
 bool[string] keywords_list, registers_list, temp_regs_list;
@@ -318,6 +321,9 @@ void initialize()
         instructions_list[instruction_name] = newinstruction;
     }
     instructions_list = instructions_list.rehash;
+
+    used_ctlz_intrinsics = false;
+    used_bswap_intrinsics = false;
 }
 
 void read_next_line()
@@ -612,6 +618,15 @@ bool check_instruction_pass1(ref input_line_struct instr_line)
                     return false;
                 }
             }
+        }
+
+        if (instr_line.word == "ctlz")
+        {
+            used_ctlz_intrinsics = true;
+        }
+        if (instr_line.word == "bswap")
+        {
+            used_bswap_intrinsics = true;
         }
     }
     else
@@ -1831,6 +1846,9 @@ bool process_proc_body(string proc_name)
             case "ctlz": // ctlz reg, reg
                 proc_instr_info[linenum].write_reg[0] = paramvals[0].value;
                 break;
+            case "bswap": // bswap reg, reg
+                proc_instr_info[linenum].write_reg[0] = paramvals[0].value;
+                break;
             default:
                 write_error2("Unhandled instruction: " ~ current_line.orig);
                 return false;
@@ -2371,6 +2389,16 @@ bool process_proc_body(string proc_name)
                     string dst = get_new_temporary_register();
 
                     add_output_line(dst ~ " = call i32 @llvm.ctlz.i32(i32 " ~ src ~ ", i1 0)");
+
+                    store_temporary_register_to_reg(dst, paramvals[0].value, last_reg_write[0]);
+                }
+                break;
+            case "bswap": // bswap reg, reg
+                {
+                    string src = get_parameter_read_value(paramvals[0]);
+                    string dst = get_new_temporary_register();
+
+                    add_output_line(dst ~ " = call i32 @llvm.bswap.i32(i32 " ~ src ~ ")");
 
                     store_temporary_register_to_reg(dst, paramvals[0].value, last_reg_write[0]);
                 }
@@ -3267,30 +3295,145 @@ public int main(string[] args)
             continue;
         }
 
-        if (current_line.word == "daddr")
+        if (current_line.word == "dinclude")
         {
             if (!input_reading_dataseg)
             {
-                write_error("Daddr outside dataseg");
+                write_error("Dinclude outside dataseg");
                 return 62;
             }
 
             if (current_dataseg_isuninitialized)
             {
-                write_error("Daddr inside uninitialized dataseg");
+                write_error("Dinclude inside uninitialized dataseg");
                 return 63;
+            }
+
+
+            if (current_line.params == "")
+            {
+                write_error("Dinclude filename missing");
+                return 64;
+            }
+
+            string fullpath = null;
+
+            if (!isAbsolute(current_line.params))
+            {
+                string path = buildPath(input_directory, current_line.params);
+                if (exists(path))
+                {
+                    fullpath = absolutePath(path);
+                }
+                else
+                {
+                    for (int i = 0; i < include_directories.length; i++)
+                    {
+                        if (isAbsolute(include_directories[i]))
+                        {
+                            path = buildPath(include_directories[i], current_line.params);
+                        }
+                        else
+                        {
+                            path = buildPath(input_directory, include_directories[i], current_line.params);
+                        }
+
+                        if (exists(path))
+                        {
+                            fullpath = absolutePath(path);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (fullpath == null)
+            {
+                if (exists(current_line.params))
+                {
+                    fullpath = absolutePath(current_line.params);
+                }
+                else
+                {
+                    write_error("Dinclude not found: " ~ current_line.params);
+                    return 65;
+                }
+            }
+
+            ubyte[] values;
+
+            File fd;
+            fd.open(fullpath);
+            values.length = fd.size;
+            if (values.length > 0)
+            {
+                fd.rawRead(values);
+            }
+
+            fd.close();
+
+            if (values.length > 0)
+            {
+                if (current_dataseg_numdata > 0 && !dataseg_data[current_dataseg_numdata - 1].isaddr)
+                {
+                    // extend existing data
+                    int datalen = dataseg_data[current_dataseg_numdata - 1].datalen;
+
+                    if (datalen + values.length - 1 >= dataseg_data[current_dataseg_numdata - 1].data.length)
+                    {
+                        dataseg_data[current_dataseg_numdata - 1].data.length = values.length + 1 + 2 * dataseg_data[current_dataseg_numdata - 1].data.length;
+                    }
+
+                    dataseg_data[current_dataseg_numdata - 1].data[datalen..datalen + values.length] = values;
+
+                    dataseg_data[current_dataseg_numdata - 1].datalen += values.length;
+                }
+                else
+                {
+                    // add data
+                    if (current_dataseg_numdata >= dataseg_data.length)
+                    {
+                        dataseg_data.length = 4 + 2 * dataseg_data.length;
+                    }
+
+                    dataseg_data[current_dataseg_numdata].isaddr = false;
+                    dataseg_data[current_dataseg_numdata].data = values;
+                    dataseg_data[current_dataseg_numdata].datalen = to!int(values.length);
+                    dataseg_data[current_dataseg_numdata].addr = "";
+
+                    current_dataseg_numdata++;
+                }
+
+                current_dataseg_offset += values.length;
+            }
+
+            continue;
+        }
+
+        if (current_line.word == "daddr")
+        {
+            if (!input_reading_dataseg)
+            {
+                write_error("Daddr outside dataseg");
+                return 66;
+            }
+
+            if (current_dataseg_isuninitialized)
+            {
+                write_error("Daddr inside uninitialized dataseg");
+                return 67;
             }
 
             if (current_line.param1 == "")
             {
                 write_error("Daddr parameter missing");
-                return 64;
+                return 68;
             }
 
             if (current_line.param1 != current_line.params)
             {
                 write_error("Unknown aditional data after daddr: " ~ current_line.params);
-                return 65;
+                return 69;
             }
 
             string param;
@@ -3330,31 +3473,31 @@ public int main(string[] args)
             if (!input_reading_dataseg)
             {
                 write_error("Dskip outside dataseg");
-                return 66;
+                return 70;
             }
 
             if (!current_dataseg_isuninitialized)
             {
                 write_error("Dskip inside initialized dataseg");
-                return 67;
+                return 71;
             }
 
             if (current_line.param1 == "")
             {
                 write_error("Dskip parameter missing");
-                return 68;
+                return 72;
             }
 
             if (!is_number(current_line.param1))
             {
                 write_error("Dskip parameter is not a number: " ~ current_line.param1);
-                return 69;
+                return 73;
             }
 
             if (current_line.param1 != current_line.params)
             {
                 write_error("Unknown aditional data after dskip: " ~ current_line.params);
-                return 70;
+                return 74;
             }
 
             int value = to!int(get_number_value(current_line.param1));
@@ -3362,7 +3505,7 @@ public int main(string[] args)
             if (value < 1)
             {
                 write_error("Dskip parameter is less than 1: " ~ current_line.param1);
-                return 71;
+                return 75;
             }
 
             if (current_dataseg_numdata > 0)
@@ -3407,19 +3550,19 @@ public int main(string[] args)
             if (!input_reading_dataseg)
             {
                 write_error("Endd outside dataseg");
-                return 72;
+                return 76;
             }
 
             if (current_line.param1 != current_line.params)
             {
                 write_error("Unknown aditional data after endd: " ~ current_line.params);
-                return 73;
+                return 77;
             }
 
             if (current_dataseg_offset == 0)
             {
                 write_error("Empty dataseg: " ~ current_dataseg);
-                return 74;
+                return 78;
             }
 
             if (current_dataseg_numdata > 0 && !dataseg_data[current_dataseg_numdata - 1].isaddr)
@@ -3441,19 +3584,19 @@ public int main(string[] args)
 
 
         write_error("Unknown word: " ~ current_line.word);
-        return 75;
+        return 79;
     }
 
     if (input_reading_proc)
     {
         stderr.writeln("Missing end of proc");
-        return 76;
+        return 80;
     }
 
     if (input_reading_dataseg)
     {
         stderr.writeln("Missing end of datasegment");
-        return 77;
+        return 81;
     }
 
     foreach (ref dataseg; dataseg_list)
@@ -3465,7 +3608,7 @@ public int main(string[] args)
                 if (data.addr !in proc_list && data.addr !in dlabel_list)
                 {
                     stderr.writeln("Daddr not a proc nor a dlabel: " ~ data.addr);
-                    return 78;
+                    return 82;
                 }
             }
         }
@@ -3617,6 +3760,17 @@ public int main(string[] args)
         {
             //add_output_line("@" ~ proc.alias_name ~ " = external alias void(%_cpu*)* @" ~ proc_name);
         }
+    }
+
+    add_output_line("");
+    add_output_line("; intrinsics");
+    if (used_ctlz_intrinsics)
+    {
+        add_output_line("declare i32 @llvm.ctlz.i32(i32, i1)");
+    }
+    if (used_bswap_intrinsics)
+    {
+        add_output_line("declare i32 @llvm.bswap.i32(i32)");
     }
 
     add_output_line("");

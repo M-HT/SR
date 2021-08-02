@@ -2147,6 +2147,15 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                 }
             }
             break;
+        case UD_Ibswap:
+            {
+                /* no flags affected */
+                if (ud_obj.operand[0].base >= UD_R_EAX && ud_obj.operand[0].base <= UD_R_EDI)
+                {
+                    OUTPUT_PARAMSTRING("bswap %s, %s\n", X86REGSTR(ud_obj.operand[0].base), X86REGSTR(ud_obj.operand[0].base));
+                }
+            }
+            break;
         case UD_Ibt:
             {
                 /* ZF,OF,AF,SF,PF undefined, CF - modified */
@@ -2216,6 +2225,41 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                     OUTPUT_STRING("NOP\n");
                 }
 
+            }
+            break;
+        case UD_Ibts:
+            {
+                /* ZF,OF,AF,SF,PF undefined, CF - modified */
+
+                if (ud_obj.operand[0].type == UD_OP_REG)
+                {
+                    if (ud_obj.operand[0].base >= UD_R_EAX && ud_obj.operand[0].base <= UD_R_EDI)
+                    {
+                        if (ud_obj.operand[1].type == UD_OP_REG)
+                        {
+                        }
+                        else if (ud_obj.operand[1].type == UD_OP_IMM)
+                        {
+                            if (flags_to_write & FL_CARRY)
+                            {
+                                SR_disassemble_change_flags(pOutput, FL_CARRY, 0, 0);
+
+                                if (ud_obj.operand[1].lval.ubyte & 0x1f)
+                                {
+                                    OUTPUT_PARAMSTRING("lshr tmp1, %s, %i\n", X86REGSTR(ud_obj.operand[0].base), ud_obj.operand[1].lval.ubyte & 0x1f);
+                                    OUTPUT_STRING("and tmp1, tmp1, CF\n");
+                                }
+                                else
+                                {
+                                    OUTPUT_PARAMSTRING("and tmp1, %s, CF\n", X86REGSTR(ud_obj.operand[0].base));
+                                }
+                                OUTPUT_STRING("or eflags, eflags, tmp1\n");
+                            }
+
+                            OUTPUT_PARAMSTRING("or %s, %s, (1 << %i)\n", X86REGSTR(ud_obj.operand[0].base), X86REGSTR(ud_obj.operand[0].base), ud_obj.operand[1].lval.ubyte & 0x1f);
+                        }
+                    }
+                }
             }
             break;
         case UD_Icall:
@@ -2669,6 +2713,54 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                                 flags_write = flags_to_write;
                             }
                         }
+                    }
+                }
+
+            }
+            break;
+        case UD_Icmpsb:
+            {
+                /* OS,SF,ZF,AF,PF,CF - modified */
+
+                if (ud_obj.pfx_rep || ud_obj.pfx_repe || ud_obj.pfx_repne)
+                {
+                    OUTPUT_STRING("ifnz ecx\n");
+
+                    if (ud_obj.pfx_repne)
+                    {
+                        OUTPUT_STRING("REPNE_CMPSB\n");
+                    }
+                    else
+                    {
+                        OUTPUT_STRING("REPE_CMPSB\n");
+                    }
+
+                    if (flags_to_write)
+                    {
+                        SR_llasm_helper_add_8l(UD_Icmp, LR_TMP1, LR_TMP0, LR_TMP0, 8);
+                    }
+
+                    OUTPUT_STRING("endif\n");
+                }
+                else
+                {
+                    if (flags_to_write)
+                    {
+                        OUTPUT_STRING("load8z tmp1, esi, 1\n");
+                        OUTPUT_STRING("load8z tmp2, edi, 1\n");
+                        OUTPUT_STRING("and tmp3, eflags, DF\n");
+                        OUTPUT_STRING("cmovz tmp3, tmp3, 1, -1\n");
+                        OUTPUT_STRING("add esi, esi, tmp3\n");
+                        OUTPUT_STRING("add edi, edi, tmp3\n");
+
+                        SR_llasm_helper_add_8l(UD_Icmp, LR_TMP3, LR_TMP1, LR_TMP2, 0);
+                    }
+                    else
+                    {
+                        OUTPUT_STRING("and tmp3, eflags, DF\n");
+                        OUTPUT_STRING("cmovz tmp3, tmp3, 1, -1\n");
+                        OUTPUT_STRING("add esi, esi, tmp3\n");
+                        OUTPUT_STRING("add edi, edi, tmp3\n");
                     }
                 }
 

@@ -1,7 +1,7 @@
 ;part of static recompiler -- do not edit
 
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2021 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -121,6 +121,7 @@ funcv x87_fatan2_void $
 funcv x87_fatan2r_void $
 funcv x87_flog_void $
 funcv x87_flog10_void $
+funcv x87_floor_double $, num_low, num_high
 funcv x87_fmod_void $
 funcv x87_fmodr_void $
 funcv x87_fpow_void $
@@ -464,6 +465,10 @@ endm
 
 macro FLOG10_VOID
     call x87_flog10_void $
+endm
+
+macro FLOOR_DOUBLE num_low, num_high
+    call x87_floor_double $, \num_low, \num_high
 endm
 
 macro FMOD_VOID

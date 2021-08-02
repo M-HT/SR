@@ -49,7 +49,9 @@ int init_udis86_dep(void)
 
 	/* B */
 	SET_FLAGS(UD_Ibsr, FL_NONE, FL_COND);
+	SET_FLAGS(UD_Ibswap, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ibt, FL_NONE, FL_COND);
+	SET_FLAGS(UD_Ibts, FL_NONE, FL_COND);
 
 	/* C */
 	SET_FLAGS(UD_Icall, FL_NONE, FL_NONE);

@@ -1,7 +1,7 @@
 ;part of static recompiler -- do not edit
 
 ;;
-;;  Copyright (C) 2019-2021 Roman Pauer
+;;  Copyright (C) 2021 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -22,38 +22,13 @@
 ;;  SOFTWARE.
 ;;
 
-macro NOP
+func x86_repe_cmpsb $
+func x86_repne_cmpsb $
+
+macro REPE_CMPSB
+    call x86_repe_cmpsb $
 endm
 
-define CF_SHIFT 0
-define PF_SHIFT 2
-define AF_SHIFT 4
-define ZF_SHIFT 6
-define SF_SHIFT 7
-define OF_SHIFT 11
-
-define IF_SHIFT 9
-define DF_SHIFT 10
-
-define CF 0x01
-define PF 0x04
-define AF 0x10
-define ZF 0x40
-define SF 0x80
-define OF 0x0800
-
-define IF 0x0200
-define DF 0x0400
-
-include llasm_cmps.llinc
-include llasm_divide.llinc
-include llasm_float.llinc
-include llasm_fs_mem.llinc
-include llasm_inout.llinc
-include llasm_int.llinc
-include llasm_movmem.llinc
-include llasm_movs.llinc
-include llasm_pushx.llinc
-include llasm_scas.llinc
-include llasm_stos.llinc
-include llasm_xti.llinc
+macro REPNE_CMPSB
+    call x86_repne_cmpsb $
+endm

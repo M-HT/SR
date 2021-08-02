@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -800,6 +800,19 @@ EXTERNC void x87_flog_void(CPU)
 EXTERNC void x87_flog10_void(CPU)
 {
     ST0 = log10(ST0);
+}
+
+// double floor(double x);
+// x = stack
+// return value = ST0
+EXTERNC void x87_floor_double(CPU, uint32_t num_low, uint32_t num_high)
+{
+    register double_int num;
+
+    PUSH_REGS;
+    num.low = num_low;
+    num.high = num_high;
+    ST0 = floor(num.d);
 }
 
 // double fmod(double x, double y);

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2020 Roman Pauer
+ *  Copyright (C) 2019-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -635,7 +635,7 @@ int SRW_LoadFile(const char *fname)
     if ( Header->FileHeader.Machine != 0x014c || // 386 or later
          Header->FileHeader.SizeOfOptionalHeader < sizeof(_IMAGE_OPTIONAL_HEADER) || // optional header size
          Header->OptionalHeader.Magic != 0x10b || // normal (PE32) executable
-         Header->OptionalHeader.Subsystem != 2 || // Windows GUI subsystem
+         (Header->OptionalHeader.Subsystem != 2 && Header->OptionalHeader.Subsystem != 3) || // Windows GUI/CUI subsystem
          Header->OptionalHeader.NumberOfRvaAndSizes < 16 // optional header contents
         )
     {

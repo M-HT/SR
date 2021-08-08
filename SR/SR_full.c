@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -108,17 +108,131 @@ static void SR_disassemble_replace_instructions(replace_data *item, void *data)
 #endif
 
 #if ((OUTPUT_TYPE == OUT_X86) || (OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
+static void SR_remove_nops(unsigned int Entry, uint_fast32_t begin_ofs, uint_fast32_t end_ofs)
+{
+    output_data *first;
+
+    if (begin_ofs == 0)
+    {
+        first = section_output_list_FindEntryFirst(Entry);
+        begin_ofs = (first != NULL)?first->ofs:end_ofs;
+    }
+
+    for (; begin_ofs < end_ofs; begin_ofs++)
+    {
+        section_output_list_Delete(Entry, begin_ofs);
+    }
+}
+
 static void SR_disassemble_create_aligns_code(output_data *item, void *data)
 {
 #define DATA ((Entry_region *) data)
 
-// first instruction after data gets aligned
-    if (DATA->isregion != OT_INSTRUCTION && item->type == OT_INSTRUCTION && item->align == 0)
+    switch (DATA->isregion)
     {
-        item->align = 4;
-    }
+    case 0: // data
+        if (item->type == OT_INSTRUCTION)
+        {
+            if (item->align == 0)
+            {
+                // first instruction after data gets aligned
+                item->align = 4;
+            }
+            DATA->isregion = 1;
+        }
+        break;
+    case 1: // instructions
+        if (item->type != OT_INSTRUCTION)
+        {
+            if (item->type == OT_OFFSET && item->has_label && (item->align == 0 || item->align == 4))
+            {
+                // jump table after instructions
+                DATA->isregion = 3;
+            }
+            else if (item->type == OT_UNKNOWN && item->len == 0 && item->str == NULL && item->has_label == 0 && item->align == 0 && (section[DATA->Entry].adr[item->ofs] == 0x90 || section[DATA->Entry].adr[item->ofs] == 0xCC))
+            {
+                DATA->isregion = 2;
+                DATA->begin_ofs = item->ofs;
+            }
+            else
+            {
+                DATA->isregion = 0;
+            }
+        }
+        break;
+    case 2: // nops after instructions
+        if (item->type == OT_INSTRUCTION)
+        {
+            if (item->has_label && item->align == 0 && (item->ofs & 0x03) == 0)
+            {
+                item->align = 4;
 
-    DATA->isregion = item->type;
+                // remove nops before alignment
+                SR_remove_nops(DATA->Entry, DATA->begin_ofs, item->ofs);
+            }
+            else if (item->align == 0)
+            {
+                // first instruction after data gets aligned
+                item->align = 4;
+            }
+
+            DATA->isregion = 1;
+        }
+        else if (item->type == OT_OFFSET)
+        {
+            if (item->has_label && (item->align == 0 || item->align == 4))
+            {
+                // jump table after instructions
+                item->align = 4;
+
+                // remove nops before alignment
+                SR_remove_nops(DATA->Entry, DATA->begin_ofs, item->ofs);
+            }
+
+            DATA->isregion = 3;
+        }
+        else if (item->type == OT_NONE)
+        {
+            output_data *last;
+
+            last = section_output_list_FindEntryLast(DATA->Entry);
+            if (last != NULL && last->ofs == item->ofs)
+            {
+                // remove nops before end
+                SR_remove_nops(DATA->Entry, DATA->begin_ofs, item->ofs);
+            }
+
+            DATA->isregion = 0;
+        }
+        else if (item->type != OT_UNKNOWN || item->len || item->str || item->has_label || item->align || (section[DATA->Entry].adr[item->ofs] != 0x90 && section[DATA->Entry].adr[item->ofs] != 0xCC))
+        {
+            DATA->isregion = 0;
+        }
+        break;
+    case 3: // jump table
+        if (item->type != OT_OFFSET)
+        {
+            if (item->type == OT_INSTRUCTION)
+            {
+                if (item->align == 0)
+                {
+                    // first instruction after data gets aligned
+                    item->align = 4;
+                }
+                DATA->isregion = 1;
+            }
+            else if (item->type == OT_UNKNOWN && item->len == 0 && item->str == NULL && item->has_label == 0 && item->align == 0 && (section[DATA->Entry].adr[item->ofs] == 0x90 || section[DATA->Entry].adr[item->ofs] == 0xCC))
+            {
+                DATA->isregion = 2;
+                DATA->begin_ofs = item->ofs;
+            }
+            else
+            {
+                DATA->isregion = 0;
+            }
+        }
+        break;
+    }
 
 #undef DATA
 }
@@ -294,7 +408,8 @@ int SR_full_disassembly(void)
         if (section[index].type != ST_CODE) continue;
 
         ER.Entry = index;
-        ER.isregion = OT_UNKNOWN;
+        ER.begin_ofs = 0;
+        ER.isregion = 2;
 
         section_output_list_ForEach(index, &SR_disassemble_create_aligns_code, (void *) &ER);
 

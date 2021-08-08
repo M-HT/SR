@@ -89,6 +89,13 @@ static void SR_write_output_line(output_data *item, void *data)
 
     if ( (item->str != NULL) || (item->type <= 0) || (item->type == OT_NONE))
     {
+#if (OUTPUT_TYPE == OUT_LLASM)
+        if (item->type == OT_INSTRUCTION)
+        {
+            return;
+        }
+#endif
+
         if ( item->align != 0 )
         {
 #if (OUTPUT_TYPE == OUT_LLASM)
@@ -99,13 +106,6 @@ static void SR_write_output_line(output_data *item, void *data)
             fprintf(DATA->fout, "align %i%s\n", item->align, ((section[DATA->Entry].type == ST_CODE)?"":", db 0"));
 #endif
         }
-
-#if (OUTPUT_TYPE == OUT_LLASM)
-        if (item->type == OT_INSTRUCTION)
-        {
-            return;
-        }
-#endif
 
         if ( (item->ofs == 0) || (item->has_label != 0) )
         {

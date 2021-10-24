@@ -2245,6 +2245,12 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                     }
                     else
                     {
+                        if ( SR_disassemble_find_noret(address) )
+                        {
+                            strcpy(cLabel, "0 ; no return");
+                            last_instruction = -2;
+                        }
+
                         SR_get_label(cAddress, address);
                     }
 

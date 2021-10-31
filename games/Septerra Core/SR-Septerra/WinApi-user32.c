@@ -255,7 +255,9 @@ extern uint32_t RunWndProc_asm(void *hwnd, uint32_t uMsg, uint32_t wParam, uint3
 
 static int find_event(SDL_Event *event, int remove, int wait)
 {
-    SDL_PumpEvents();
+    int pump_events;
+
+    pump_events = 1;
 
     while (1)
     {
@@ -274,6 +276,25 @@ static int find_event(SDL_Event *event, int remove, int wait)
             if (wait)
             {
                 if (SDL_WaitEvent(NULL)) continue;
+            }
+            else if (pump_events)
+            {
+                pump_events = 0;
+
+                // Send Septerra Core to sleep to prevent it from consuming too much cpu
+#ifdef _WIN32
+                Sleep(1);
+#else
+                struct timespec _tp;
+
+                _tp.tv_sec = 0;
+                _tp.tv_nsec = 1000000;
+
+                nanosleep(&_tp, NULL);
+#endif
+
+                SDL_PumpEvents();
+                continue;
             }
 
             return 0;
@@ -1792,18 +1813,6 @@ uint32_t PeekMessageA_c(void *lpMsg, void *hWnd, uint32_t wMsgFilterMin, uint32_
     if ((hWnd == NULL) && (wMsgFilterMin == 0) && (wMsgFilterMax == 0) && ((wRemoveMsg == 0) || (wRemoveMsg == 1)))
     {
         SDL_Event event;
-
-        // Send Septerra Core to sleep to prevent it from consuming too much cpu
-#ifdef _WIN32
-        Sleep(1);
-#else
-        struct timespec _tp;
-
-        _tp.tv_sec = 0;
-        _tp.tv_nsec = 1000000;
-
-        nanosleep(&_tp, NULL);
-#endif
 
         if (!find_event(&event, wRemoveMsg, 0)) return 0;
 

@@ -89,6 +89,8 @@ void ReadConfiguration(void)
     Keys_SwitchWSAD = 0;
     Keys_SwitchArrowKeys = 0;
 
+    CPU_SleepMode = 0;
+
 #ifdef _WIN32
     f = fopen(CONFIG_FILE, "rt");
 #else
@@ -391,7 +393,28 @@ void ReadConfiguration(void)
             }
 
         }
+        else if ( strncasecmp(str, "CPU_", 4) == 0 ) // str begins with "CPU_"
+        {
+            // CPU settings
 
+            str += 4;
+
+            if ( strcasecmp(str, "SleepMode") == 0 ) // str equals "SleepMode"
+            {
+                if ( strcasecmp(param, "standard") == 0 ) // param equals "standard"
+                {
+                    CPU_SleepMode = 0;
+                }
+                else if ( strcasecmp(param, "reduced") == 0 ) // param equals "reduced"
+                {
+                    CPU_SleepMode = 1;
+                }
+                else if ( strcasecmp(param, "nosleep") == 0 ) // param equals "nosleep"
+                {
+                    CPU_SleepMode = 2;
+                }
+            }
+        }
     }
 
     fclose(f);

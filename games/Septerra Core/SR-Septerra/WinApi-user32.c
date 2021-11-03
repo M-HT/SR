@@ -40,6 +40,7 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <mmsystem.h>
 #else
 #include <time.h>
 #include "CLIB.h"
@@ -253,6 +254,86 @@ extern uint32_t RunWndProc_asm(void *hwnd, uint32_t uMsg, uint32_t wParam, uint3
 #endif
 
 
+#ifdef _WIN32
+static LONG(__stdcall *NtDelayExecution)(BOOL Alertable, PLARGE_INTEGER DelayInterval);
+static LONG(__stdcall *NtSetTimerResolution)(IN ULONG RequestedResolution, IN BOOLEAN Set, OUT PULONG ActualResolution);
+static LONG(__stdcall *NtQueryTimerResolution)(OUT PULONG CoarsestResolution, OUT PULONG FinestResolution, OUT PULONG ActualResolution);
+
+static int use_nt_delay;
+static ULONG original_timer_resolution;
+
+static UINT timer_period;
+
+static void restore_timer_resolution(void)
+{
+    ULONG actual_resolution;
+
+    NtSetTimerResolution(original_timer_resolution, TRUE, &actual_resolution);
+}
+
+static void end_timer_period(void)
+{
+    timeEndPeriod(timer_period);
+}
+
+void init_sleepmode(void)
+{
+    use_nt_delay = 0;
+
+    if (CPU_SleepMode)
+    {
+        HMODULE ntdll_handle;
+
+        ntdll_handle = GetModuleHandleA("ntdll.dll");
+        if (ntdll_handle != NULL)
+        {
+            NtDelayExecution = (LONG(__stdcall*)(BOOL, PLARGE_INTEGER)) GetProcAddress(ntdll_handle, "NtDelayExecution");
+            NtSetTimerResolution = (LONG(__stdcall*)(ULONG, BOOLEAN, PULONG)) GetProcAddress(ntdll_handle, "NtSetTimerResolution");
+            NtQueryTimerResolution = (LONG(__stdcall*)(PULONG, PULONG, PULONG)) GetProcAddress(ntdll_handle, "NtQueryTimerResolution");
+
+            if ((NtDelayExecution != NULL) && (NtSetTimerResolution != NULL) && (NtQueryTimerResolution != NULL))
+            {
+                ULONG coarsest_resolution, finest_resolution, actual_resolution, requested_resolution;
+
+                if (0 <= NtQueryTimerResolution(&coarsest_resolution, &finest_resolution, &actual_resolution))
+                {
+                    use_nt_delay = 1;
+
+                    requested_resolution = (finest_resolution < 5000)?5000:finest_resolution;
+
+                    if (requested_resolution < actual_resolution)
+                    {
+                        original_timer_resolution = actual_resolution;
+
+                        if (0 <= NtSetTimerResolution(requested_resolution, TRUE, &actual_resolution))
+                        {
+                            if (actual_resolution != original_timer_resolution)
+                            {
+                                atexit(restore_timer_resolution);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (CPU_SleepMode && !use_nt_delay)
+    {
+        TIMECAPS tc;
+
+        if (MMSYSERR_NOERROR == timeGetDevCaps(&tc, sizeof(tc)))
+        {
+            timer_period = tc.wPeriodMin;
+            if (MMSYSERR_NOERROR == timeBeginPeriod(tc.wPeriodMin))
+            {
+                atexit(end_timer_period);
+            }
+        }
+    }
+}
+#endif
+
 static int find_event(SDL_Event *event, int remove, int wait)
 {
     int pump_events;
@@ -281,17 +362,30 @@ static int find_event(SDL_Event *event, int remove, int wait)
             {
                 pump_events = 0;
 
-                // Send Septerra Core to sleep to prevent it from consuming too much cpu
+                if (CPU_SleepMode != 2)
+                {
+                    // Send Septerra Core to sleep to prevent it from consuming too much cpu
 #ifdef _WIN32
-                Sleep(1);
+                    if (use_nt_delay)
+                    {
+                        LARGE_INTEGER delay;
+
+                        delay.QuadPart = -5000;
+                        NtDelayExecution(FALSE, &delay);
+                    }
+                    else
+                    {
+                        Sleep(1);
+                    }
 #else
-                struct timespec _tp;
+                    struct timespec _tp;
 
-                _tp.tv_sec = 0;
-                _tp.tv_nsec = 1000000;
+                    _tp.tv_sec = 0;
+                    _tp.tv_nsec = (CPU_SleepMode == 0)?1000000:500000;
 
-                nanosleep(&_tp, NULL);
+                    nanosleep(&_tp, NULL);
 #endif
+                }
 
                 SDL_PumpEvents();
                 continue;

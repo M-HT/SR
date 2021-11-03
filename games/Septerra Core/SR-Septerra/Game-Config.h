@@ -57,6 +57,8 @@ GAME_CONFIG_STORAGE int Cheat_FPS;              /* show FPS ? */
 GAME_CONFIG_STORAGE int Keys_SwitchWSAD;        /* switch WSAD keys for arrow keys ? */
 GAME_CONFIG_STORAGE int Keys_SwitchArrowKeys;   /* switch arrow keys for WSAD keys ? */
 
+GAME_CONFIG_STORAGE int CPU_SleepMode;          /* cpu sleep mode - 0 = standard; 1 = reduced; 2 = no sleep */
+
 void ReadConfiguration(void);
 
 #endif

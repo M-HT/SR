@@ -54,6 +54,11 @@ extern uint32_t bShowEnemyLOS;
 extern uint32_t bHideText;
 extern uint32_t bShowFPS;
 
+#ifdef _WIN32
+extern void init_sleepmode(void);
+#endif
+
+
 static char command_line[16];
 
 
@@ -170,6 +175,10 @@ int main(int argc, char *argv[])
 #endif
 
     ReadConfiguration();
+
+#ifdef _WIN32
+    init_sleepmode();
+#endif
 
     apply_cheats();
 

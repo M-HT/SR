@@ -3364,7 +3364,7 @@ public int main(string[] args)
 
             File fd;
             fd.open(fullpath);
-            values.length = fd.size;
+            values.length = cast(uint)(fd.size);
             if (values.length > 0)
             {
                 fd.rawRead(values);

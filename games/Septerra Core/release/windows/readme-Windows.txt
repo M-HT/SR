@@ -1,5 +1,5 @@
 Septerra Core for Windows (x86)
-Version 1.04.0.5
+Version 1.04.0.6
 
 Original Septerra Core version 1.04 is required for playing.
 (version from GOG.com can be used for playing)
@@ -30,9 +30,15 @@ intl from gettext (https://www.gnu.org/software/gettext/)
 
 Source code is available on GitHub: https://github.com/M-HT/SR
 
+Using mouse polling rate higher than default 125Hz can result in mouse stuttering.
+Setting CPU_SleepMode (in configuration file) to "reduced" can help. If not, then set CPU_SleepMode to "nosleep".
+
 
 Changes
 -------
+v1.04.0.6 (2021-11-04)
+* add option to reduce cpu sleep, to help with higher mouse poll rates
+
 v1.04.0.5 (2021-01-21)
 * add scaling option without bilinear filtering
 * add options to set command line parameters

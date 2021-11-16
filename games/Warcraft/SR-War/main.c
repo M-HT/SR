@@ -1547,6 +1547,7 @@ static void Game_Event_Loop(void)
             case SDL_KEYUP:
                 if (
                 #ifdef USE_SDL2
+                    !event.key.repeat &&
                     Game_Window != NULL
                 #else
                     Game_Screen != NULL

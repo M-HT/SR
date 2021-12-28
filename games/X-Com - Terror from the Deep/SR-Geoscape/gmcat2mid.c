@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -80,7 +80,7 @@
 typedef struct _subsequence_
 {
     uint8_t *data;
-    uint32_t midi_size;
+    uint32_t midi_size_melodic, midi_size_rhythm;
 } subsequence;
 
 typedef struct _seq_track_
@@ -88,6 +88,12 @@ typedef struct _seq_track_
     uint8_t *data;
     uint32_t midi_size, channel;
 } seq_track;
+
+
+enum _midi_device_ {
+    DEVICE_GM,
+    DEVICE_MT32
+};
 
 
 static const int8_t instrument_velocity[128] = {
@@ -100,7 +106,7 @@ static const int8_t instrument_velocity[128] = {
 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64,
 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64 };
 
-static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequence *subsequences, unsigned int time_division, uint32_t *program_number, int *midi_loop)
+static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequence *subsequences, unsigned int time_division, uint32_t *program_number, int *midi_loop, enum _midi_device_ device)
 {
     unsigned int last_event, event_type, interval;
     uint32_t prog_num;
@@ -125,7 +131,7 @@ static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequ
         READ_VARLEN(interval, track);
         interval_size = track - oldtrack;
 
-        if (track[0] >= 0x80)
+        if (track[0] >= 0x80) // not running status
         {
             last_event = track[0];
             event_type = track[0] & 0xf0;
@@ -147,7 +153,13 @@ static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequ
                 {
                     midi[0] = MIDI_STATUS_NOTE_ON | channel;
                     midi[1] = track[0];
-                    midi[2] = 0;
+                    midi[2] = 0; // note off
+                }
+                else if (device == DEVICE_MT32)
+                {
+                    midi[0] = MIDI_STATUS_NOTE_ON | channel;
+                    midi[1] = track[0];
+                    midi[2] = track[1];
                 }
                 else if (channel == 9)
                 {
@@ -168,7 +180,26 @@ static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequ
                 break;
 
             case MIDI_STATUS_CONTROLLER:
-                if ( (track[0] == 0x7e) || (track[0] == 0 && track[1] == 0) )
+                if (device == DEVICE_MT32 && track[0] == 7 && channel == 9) // Main Volume on rhythm channel
+                {
+                    while (interval_size != 0)
+                    {
+                        *midi = *oldtrack;
+                        midi++;
+                        oldtrack++;
+                        interval_size--;
+                    }
+                    midi[0] = event_type | channel;
+                    midi[1] = track[0];
+                    midi[2] = track[1] - 3;
+
+                    midi+=3;
+                    track+=2;
+
+                    break;
+                }
+
+                if ( (device == DEVICE_GM && track[0] == 0x7e) || (track[0] == 0 && track[1] == 0) )
                 {
                     // don't write event if possible, otherwise write meaningless event
                     if (interval)
@@ -191,7 +222,7 @@ static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequ
                     break;
                 }
 
-                if (track[0] == 0)
+                if (track[0] == 0) // change tempo
                 {
                     unsigned int newtempo;
 
@@ -217,7 +248,7 @@ static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequ
 
                     break;
                 }
-                else if (track[0] == 0x5b)
+                else if (device == DEVICE_GM && track[0] == 0x5b) // Effects 1 Depth (formerly External Effects Depth)
                 {
                     while (interval_size != 0)
                     {
@@ -228,7 +259,7 @@ static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequ
                     }
                     midi[0] = event_type | channel;
                     midi[1] = track[0];
-                    midi[2] = track[1];
+                    midi[2] = 30;
 
                     midi+=3;
                     track+=2;
@@ -236,7 +267,8 @@ static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequ
                     break;
                 }
 
-            case MIDI_STATUS_AFTERTOUCH:
+                // fallthrough
+            case MIDI_STATUS_AFTERTOUCH: // ignored by the driver
             case MIDI_STATUS_PITCH_WHEEL:
                 while (interval_size != 0)
                 {
@@ -255,7 +287,7 @@ static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequ
                 break;
 
             case MIDI_STATUS_PROG_CHANGE:
-                if (track[0] == 0x7e)
+                if (track[0] == 0x7e) // enable looping
                 {
                     // don't write event if possible, otherwise write meaningless event
                     if (interval)
@@ -283,13 +315,36 @@ static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequ
                     break;
                 }
 
+                if (device == DEVICE_MT32 && channel == 9)
+                {
+                    // don't write event if possible, otherwise write meaningless event
+                    if (interval)
+                    {
+                        while (interval_size != 0)
+                        {
+                            *midi = *oldtrack;
+                            midi++;
+                            oldtrack++;
+                            interval_size--;
+                        }
+                        midi[0] = 0xff; // meta event
+                        midi[1] = 0x06; // marker
+                        midi[2] = 0;    // event length
+
+                        midi+=3;
+                    }
+
+                    track++;
+                    break;
+                }
+
                 prog_num = track[0];
                 if (program_number != NULL)
                 {
                     *program_number = prog_num;
                 }
 
-                if (track[0] == 0x57 || track[0] == 0x3f)
+                if (device == DEVICE_GM && (track[0] == 0x57 || track[0] == 0x3f)) // Lead 8 (bass and lead) / Synth Brass 2
                 {
                     while (interval_size != 0)
                     {
@@ -299,7 +354,7 @@ static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequ
                         interval_size--;
                     }
                     midi[0] = event_type | channel;
-                    midi[1] = 0x3e;
+                    midi[1] = 0x3e; // Synth Brass 1
 
                     midi+=2;
                     track++;
@@ -307,7 +362,8 @@ static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequ
                     break;
                 }
 
-            case MIDI_STATUS_PRESSURE:
+                // fallthrough
+            case MIDI_STATUS_PRESSURE: // ignored by the driver
                 while (interval_size != 0)
                 {
                     *midi = *oldtrack;
@@ -326,7 +382,7 @@ static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequ
             case MIDI_STATUS_SYSEX:
                 switch (last_event)
                 {
-                    case 0xff:
+                    case 0xff: // end of track
                         while (interval_size != 0)
                         {
                             *midi = *oldtrack;
@@ -339,7 +395,7 @@ static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequ
                         midi[2] = 0;    // event length
 
                         return;
-                    case 0xfe:
+                    case 0xfe: // play subsequence
                         // don't write event if possible, otherwise write meaningless event
                         if (interval)
                         {
@@ -357,11 +413,11 @@ static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequ
                             midi+=3;
                         }
 
-                        write_track(channel, midi, subsequences[track[0]].data, subsequences, time_division, &prog_num, midi_loop);
-                        midi += subsequences[track[0]].midi_size;
+                        write_track(channel, midi, subsequences[track[0]].data, subsequences, time_division, &prog_num, midi_loop, device);
+                        midi += (channel == 9) ? subsequences[track[0]].midi_size_rhythm : subsequences[track[0]].midi_size_melodic;
                         track++;
                         break;
-                    case 0xfd:
+                    case 0xfd: // return from subsequence
                         // don't write event if possible, otherwise write meaningless event
                         if (interval)
                         {
@@ -384,7 +440,7 @@ static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequ
     }
 }
 
-static unsigned int get_midi_size(uint8_t *gmcat, subsequence *subsequences)
+static unsigned int get_midi_size(uint8_t *gmcat, subsequence *subsequences, enum _midi_device_ device, int rhythm_channel)
 {
     unsigned int last_event, interval, midi_size;
 
@@ -400,7 +456,7 @@ static unsigned int get_midi_size(uint8_t *gmcat, subsequence *subsequences)
         READ_VARLEN(interval, gmcat);
         interval_size = gmcat - oldgmcat;
 
-        if (gmcat[0] >= 0x80)
+        if (gmcat[0] >= 0x80) // not running status
         {
             last_event = gmcat[0];
             gmcat++;
@@ -408,7 +464,7 @@ static unsigned int get_midi_size(uint8_t *gmcat, subsequence *subsequences)
         switch (last_event & 0xf0)
         {
             case MIDI_STATUS_CONTROLLER:
-                if ( (gmcat[0] == 0x7e) || (gmcat[0] == 0 && gmcat[1] == 0) )
+                if ( (device == DEVICE_GM && gmcat[0] == 0x7e) || (gmcat[0] == 0 && gmcat[1] == 0) )
                 {
                     if (interval)
                     {
@@ -419,23 +475,26 @@ static unsigned int get_midi_size(uint8_t *gmcat, subsequence *subsequences)
                     break;
                 }
 
-                if (gmcat[0] == 0)
+                if (gmcat[0] == 0) // change tempo
                 {
                     midi_size += 6 + interval_size;
                     gmcat+=2;
                     break;
                 }
 
+                // fallthrough
             case MIDI_STATUS_NOTE_OFF:
             case MIDI_STATUS_NOTE_ON:
-            case MIDI_STATUS_AFTERTOUCH:
+            case MIDI_STATUS_AFTERTOUCH: // ignored by the driver
             case MIDI_STATUS_PITCH_WHEEL:
                 midi_size += 3 + interval_size;
                 gmcat+=2;
                 break;
 
             case MIDI_STATUS_PROG_CHANGE:
-                if (gmcat[0] == 0x7e)
+                if ((gmcat[0] == 0x7e) || // enable looping
+                    (device == DEVICE_MT32 && rhythm_channel)
+                   )
                 {
                     if (interval)
                     {
@@ -446,7 +505,8 @@ static unsigned int get_midi_size(uint8_t *gmcat, subsequence *subsequences)
                     break;
                 }
 
-            case MIDI_STATUS_PRESSURE:
+                // fallthrough
+            case MIDI_STATUS_PRESSURE: // ignored by the driver
                 midi_size += 2 + interval_size;
                 gmcat++;
                 break;
@@ -454,18 +514,35 @@ static unsigned int get_midi_size(uint8_t *gmcat, subsequence *subsequences)
             case MIDI_STATUS_SYSEX:
                 switch (last_event)
                 {
-                    case 0xff:
+                    case 0xff: // end of track
                         return midi_size + interval_size + 3;
-                    case 0xfe:
+                    case 0xfe: // play subsequence
                         if (interval)
                         {
                             midi_size += 3 + interval_size;
                         }
 
-                        midi_size += subsequences[gmcat[0]].midi_size;
+                        if (rhythm_channel)
+                        {
+                            if (subsequences[gmcat[0]].midi_size_rhythm == 0)
+                            {
+                                // count subsequence midi size (rhythm)
+                                subsequences[gmcat[0]].midi_size_rhythm = get_midi_size(subsequences[gmcat[0]].data, subsequences, device, 1);
+                            }
+                            midi_size += subsequences[gmcat[0]].midi_size_rhythm;
+                        }
+                        else
+                        {
+                            if (subsequences[gmcat[0]].midi_size_melodic == 0)
+                            {
+                                // count subsequence midi size (melodic)
+                                subsequences[gmcat[0]].midi_size_melodic = get_midi_size(subsequences[gmcat[0]].data, subsequences, device, 0);
+                            }
+                            midi_size += subsequences[gmcat[0]].midi_size_melodic;
+                        }
                         gmcat++;
                         break;
-                    case 0xfd:
+                    case 0xfd: // return from subsequence
                         if (interval)
                         {
                             midi_size += 3 + interval_size;
@@ -478,10 +555,10 @@ static unsigned int get_midi_size(uint8_t *gmcat, subsequence *subsequences)
     }
 }
 
-uint8_t *gmcat2mid(uint8_t *gmcat, unsigned int *res_midi_size, int *midi_loop)
+static uint8_t *midicat2mid(enum _midi_device_ device, uint8_t *gmcat, unsigned int *res_midi_size, int *midi_loop)
 {
     uint8_t *midi, *midi_track;
-    unsigned int time_division, num_subsequences, num_tracks, midi_size;
+    unsigned int time_division, num_subsequences, num_tracks, midi_size, loop;
 
     subsequence subsequences[256];
     seq_track tracks[16];
@@ -491,55 +568,39 @@ uint8_t *gmcat2mid(uint8_t *gmcat, unsigned int *res_midi_size, int *midi_loop)
     gmcat+=2;
 
     // read subsequences
+    for (loop = 0; loop < num_subsequences; loop++)
     {
-        register unsigned int loop;
-        for (loop = 0; loop < num_subsequences; loop++)
-        {
-            register unsigned int subsequence_len;
+        register unsigned int subsequence_len;
 
-            subsequence_len = GETU16FLE(gmcat);
-            subsequences[loop].data = gmcat+4;
-            gmcat+=subsequence_len;
-        }
+        subsequence_len = GETU16FLE(gmcat);
+        subsequences[loop].data = gmcat+4;
+        subsequences[loop].midi_size_melodic = 0;
+        subsequences[loop].midi_size_rhythm = 0;
+        gmcat+=subsequence_len;
     }
 
     num_tracks = gmcat[0];
     gmcat++;
 
     // read tracks
+    for (loop = 0; loop < num_tracks; loop++)
     {
-        register unsigned int loop;
-        for (loop = 0; loop < num_tracks; loop++)
-        {
-            register unsigned int track_len;
+        register unsigned int track_len;
 
-            tracks[loop].channel = gmcat[0];
-            gmcat++;
+        tracks[loop].channel = gmcat[0];
+        gmcat++;
 
-            track_len = GETU16FLE(gmcat);
-            tracks[loop].data = gmcat+4;
-            gmcat+=track_len;
-        }
-    }
-
-    // count subsequences midi size
-    {
-        unsigned int loop;
-        for (loop = 0; loop < num_subsequences; loop++)
-        {
-            subsequences[loop].midi_size = get_midi_size(subsequences[loop].data, &(subsequences[0]));
-        }
+        track_len = GETU16FLE(gmcat);
+        tracks[loop].data = gmcat+4;
+        gmcat+=track_len;
     }
 
     midi_size = 14;
     // count final midi size
+    for (loop = 0; loop < num_tracks; loop++)
     {
-        unsigned int loop;
-        for (loop = 0; loop < num_tracks; loop++)
-        {
-            tracks[loop].midi_size = get_midi_size(tracks[loop].data, &(subsequences[0]));
-            midi_size += 8 + tracks[loop].midi_size;
-        }
+        tracks[loop].midi_size = get_midi_size(tracks[loop].data, &(subsequences[0]), device, (tracks[loop].channel == 9)?1:0);
+        midi_size += 8 + tracks[loop].midi_size;
     }
 
     if (res_midi_size != NULL)
@@ -582,31 +643,36 @@ uint8_t *gmcat2mid(uint8_t *gmcat, unsigned int *res_midi_size, int *midi_loop)
     midi_track = &(midi[14]);
 
     // write midi tracks
+    for (loop = 0; loop < num_tracks; loop++)
     {
-        unsigned int loop;
-        for (loop = 0; loop < num_tracks; loop++)
-        {
-            // chunk
-            midi_track[0] = 'M';
-            midi_track[1] = 'T';
-            midi_track[2] = 'r';
-            midi_track[3] = 'k';
-            // chunk length
-            midi_track[4] = (tracks[loop].midi_size >> 24) & 0xff;
-            midi_track[5] = (tracks[loop].midi_size >> 16) & 0xff;
-            midi_track[6] = (tracks[loop].midi_size >> 8) & 0xff;
-            midi_track[7] = tracks[loop].midi_size & 0xff;
+        // chunk
+        midi_track[0] = 'M';
+        midi_track[1] = 'T';
+        midi_track[2] = 'r';
+        midi_track[3] = 'k';
+        // chunk length
+        midi_track[4] = (tracks[loop].midi_size >> 24) & 0xff;
+        midi_track[5] = (tracks[loop].midi_size >> 16) & 0xff;
+        midi_track[6] = (tracks[loop].midi_size >> 8) & 0xff;
+        midi_track[7] = tracks[loop].midi_size & 0xff;
 
-            write_track(tracks[loop].channel, &(midi_track[8]), tracks[loop].data, &(subsequences[0]), time_division, NULL, midi_loop);
+        write_track(tracks[loop].channel, &(midi_track[8]), tracks[loop].data, &(subsequences[0]), time_division, NULL, midi_loop, device);
 
-            midi_track += 8 + tracks[loop].midi_size;
-        }
+        midi_track += 8 + tracks[loop].midi_size;
     }
 
-
     return midi;
+}
+
+uint8_t *gmcat2mid(uint8_t *gmcat, unsigned int *res_midi_size, int *midi_loop)
+{
+    return midicat2mid(DEVICE_GM, gmcat, res_midi_size, midi_loop);
+}
+
+uint8_t *rolandcat2mid(uint8_t *rolandcat, unsigned int *res_midi_size, int *midi_loop)
+{
+    return midicat2mid(DEVICE_MT32, rolandcat, res_midi_size, midi_loop);
+}
 
 // http://jedi.ks.uiuc.edu/~johns/links/music/midifile.html
 // http://www.sonicspot.com/guide/midifiles.html
-}
-

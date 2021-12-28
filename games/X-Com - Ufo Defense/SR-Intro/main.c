@@ -748,7 +748,6 @@ static void Game_Display_Destroy(int post)
     Game_Texture[1] = NULL;
     SDL_DestroyTexture(Game_Texture[0]);
     Game_Texture[0] = NULL;
-    SDL_DestroyRenderer(Game_Renderer);
 
     if (Game_ScaledTexture[0] != NULL)
     {
@@ -760,6 +759,7 @@ static void Game_Display_Destroy(int post)
         Game_ScaledTexture[0] = NULL;
     }
 
+    SDL_DestroyRenderer(Game_Renderer);
     Game_Renderer = NULL;
     SDL_DestroyWindow(Game_Window);
     Game_Window = NULL;
@@ -1297,7 +1297,7 @@ static void Game_Initialize2(void)
                 if (Music && Game_MidiSubsystem)
                 {
                     // check for possible fallback to adlib
-                    if (Game_MidiSubsystem == 11)
+                    if (Game_MidiSubsystem == 11 || Game_MidiSubsystem > 30)
                     {
                         FILE *f;
                         f = Game_fopen("C:\\SOUND\\ROLAND.CAT", "rb");
@@ -1373,7 +1373,7 @@ static void Game_Initialize2(void)
             Game_SoundCfg.MusicDriver = 0;          // adlib / soundblaster fm
             Game_SoundCfg.MusicBasePort = 0x0388;   // adlib base port
         }
-        else if (Game_MidiSubsystem == 11)
+        else if (Game_MidiSubsystem == 11 || Game_MidiSubsystem > 30)
         {
             Game_SoundCfg.MusicDriver = 1;          // roland lapc-1 / mt32
             Game_SoundCfg.MusicBasePort = 0x0330;   // MT32 base port

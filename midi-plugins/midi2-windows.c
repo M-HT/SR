@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -31,7 +31,7 @@
 #include <stdint.h>
 #include "midi-plugins2.h"
 
-static char *midi_device_name = NULL;
+static unsigned char *reset_controller_events = NULL;
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 static HMIDISTRM hStream = NULL;
@@ -582,6 +582,66 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 }
 
 
+static void send_initial_sysex_events(unsigned char const *sysex_events)
+{
+	if (hStream == NULL) return;
+
+	while (*sysex_events == 0xf0)
+	{
+		int len;
+		MIDIHDR midihdr;
+
+		len = 2;
+		while (sysex_events[len - 1] != 0xf7) len++;
+
+		midihdr.lpData = (LPSTR)sysex_events;
+		midihdr.dwBufferLength = len;
+		midihdr.dwFlags = 0;
+
+		sysex_events += len;
+
+		midiOutPrepareHeader((HMIDIOUT)hStream, &midihdr, sizeof(midihdr));
+		midiOutLongMsg((HMIDIOUT)hStream, &midihdr, sizeof(midihdr));
+		midiOutUnprepareHeader((HMIDIOUT)hStream, &midihdr, sizeof(midihdr));
+	};
+}
+
+
+static void reset_playing(void)
+{
+	int chan;
+
+	if (hStream == NULL) return;
+
+	for (chan = 0xb0; chan <= 0xbf; chan++)
+	{
+		midiOutShortMsg((HMIDIOUT)hStream, chan | (0x78 << 8) | (0x00 << 16)); // All sounds off (abrupt stop of sound on channel)
+		// running status
+		midiOutShortMsg((HMIDIOUT)hStream, 0x79 | (0x00 << 8)); // All controllers off (this message clears all the controller values for this channel, back to their default values)
+		midiOutShortMsg((HMIDIOUT)hStream, 0x7b | (0x00 << 8)); // All notes off (this message stops all the notes that are currently playing)
+
+		if (reset_controller_events != NULL)
+		{
+			unsigned char *controller_events;
+
+			controller_events = reset_controller_events;
+			while (*controller_events != 0xff)
+			{
+				midiOutShortMsg((HMIDIOUT)hStream, controller_events[0] | (controller_events[1] << 8));
+				controller_events += 2;
+			}
+		}
+	}
+
+	midiOutShortMsg((HMIDIOUT)hStream, 0xc9 | (0x00 << 8));
+
+	for (chan = 0xe0; chan <= 0xef; chan++)
+	{
+		midiOutShortMsg((HMIDIOUT)hStream, chan | (0x00 << 8) | (0x40 << 16));
+	}
+}
+
+
 static void close_midi(void)
 {
 	if (!midi_loaded) return;
@@ -610,6 +670,8 @@ static void close_midi(void)
 	midi_loaded = 0;
 
 	LeaveCriticalSection(&midi_critical_section);
+
+	reset_playing();
 }
 
 #endif
@@ -798,7 +860,14 @@ static void shutdown_plugin(void)
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 	if (hStream != NULL)
 	{
-		close_midi();
+		if (midi_loaded)
+		{
+			close_midi();
+		}
+		else
+		{
+			reset_playing();
+		}
 	}
 
 	if (midi_thread_handle != NULL)
@@ -819,10 +888,10 @@ static void shutdown_plugin(void)
 	}
 #endif
 
-    if (midi_device_name != NULL)
+    if (reset_controller_events != NULL)
     {
-        free(midi_device_name);
-        midi_device_name = NULL;
+        free(reset_controller_events);
+        reset_controller_events = NULL;
     }
 }
 
@@ -830,18 +899,35 @@ static void shutdown_plugin(void)
 int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plugin2_functions *functions)
 {
     char const *device_name;
+    unsigned char const *sysex_events, *controller_events;
 
     if (functions == NULL) return -3;
 
     device_name = NULL;
+    sysex_events = NULL;
+    controller_events = NULL;
     if (parameters != NULL)
     {
         device_name = parameters->midi_device_name;
+        sysex_events = parameters->initial_sysex_events;
+        controller_events = parameters->reset_controller_events;
     }
 
-    if ((device_name != NULL) && (*device_name != 0))
+    if (controller_events != NULL && *controller_events == 0xb0)
     {
-        midi_device_name = strdup(device_name);
+        int len;
+
+        len = 1;
+        while (controller_events[len] != 0xff) len++;
+
+        if (len > 1)
+        {
+            reset_controller_events = (unsigned char *)malloc(len);
+            if (reset_controller_events != NULL)
+            {
+                memcpy(reset_controller_events, controller_events + 1, len);
+            }
+        }
     }
 
     functions->play = &play;
@@ -861,7 +947,7 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 	numDevices = midiOutGetNumDevs();
 	if (numDevices == 0) return -4;
 
-	if (midi_device_name == NULL)
+	if (device_name == NULL || *device_name == 0)
 	{
 		uDeviceID = MIDI_MAPPER;
 	}
@@ -872,7 +958,7 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 		{
 			if (MMSYSERR_NOERROR != midiOutGetDevCaps(devid, &midicaps, sizeof(midicaps))) continue;
 
-			if (0 == strcmp(midi_device_name, midicaps.szPname))
+			if (0 == strcmp(device_name, midicaps.szPname))
 			{
 				uDeviceID = devid;
 				break;
@@ -884,7 +970,7 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 
 	if (MMSYSERR_NOERROR != midiStreamOpen(&hStream, &uDeviceID, 1, 0, 0, CALLBACK_NULL))
 	{
-		if (midi_device_name != NULL) return -6;
+		if (device_name != NULL && *device_name != 0) return -6;
 
 		uDeviceID = 0;
 		if (MMSYSERR_NOERROR != midiStreamOpen(&hStream, &uDeviceID, 1, 0, 0, CALLBACK_NULL))
@@ -892,6 +978,13 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 			return -6;
 		}
 	}
+
+	if (sysex_events != NULL && *sysex_events == 0xf0)
+	{
+		send_initial_sysex_events(sysex_events);
+	}
+
+	reset_playing();
 
 	midi_thread_handle = CreateThread(NULL, 4096, &MidiThreadProc, NULL, 0, NULL);
 	if (midi_thread_handle == NULL)

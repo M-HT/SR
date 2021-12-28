@@ -238,6 +238,14 @@ void Game_ReadConfig(void)
                 {
                     Game_MidiSubsystem = 11;
                 }
+                else if ( strcasecmp(param, "mt32-nativewindows") == 0 ) // param equals "mt32-nativewindows"
+                {
+                    Game_MidiSubsystem = 31;
+                }
+                else if ( strcasecmp(param, "mt32-alsa") == 0 ) // param equals "mt32-alsa"
+                {
+                    Game_MidiSubsystem = 32;
+                }
             }
             else if ( strcasecmp(str, "SoundFont_Path") == 0 ) // str equals "SoundFont_Path"
             {

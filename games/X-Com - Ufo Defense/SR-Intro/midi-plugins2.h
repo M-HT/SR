@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -27,6 +27,9 @@
 
 typedef struct _midi_plugin2_parameters_ {
     char const *midi_device_name;
+    unsigned char const *initial_sysex_events;
+    unsigned char const *reset_controller_events;
+    int midi_type; // 0 = GM, 1 = MT-32
 } midi_plugin2_parameters;
 
 typedef struct _midi_plugin2_functions_ {

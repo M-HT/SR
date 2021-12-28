@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -38,7 +38,7 @@ void Init_Audio(void)
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     Game_MidiSubsystem = 21;
 #else
-    Game_MidiSubsystem = 1;
+    Game_MidiSubsystem = 10;
 #endif
 }
 

@@ -1467,7 +1467,7 @@ static void Game_Initialize2(void)
             Game_SoundCfg.MusicDriver = 0;          // adlib / soundblaster fm
             Game_SoundCfg.MusicBasePort = 0x0388;   // adlib base port
         }
-        else if (Game_MidiSubsystem == 11)
+        else if (Game_MidiSubsystem == 11 || Game_MidiSubsystem > 30)
         {
             Game_SoundCfg.MusicDriver = 1;          // roland lapc-1 / mt32
             Game_SoundCfg.MusicBasePort = 0x0330;   // MT32 base port

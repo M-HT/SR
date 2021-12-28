@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2021 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,6 +25,7 @@
 #if !defined(_GMCAT2MID_H_INCLUDED_)
 #define _GMCAT2MID_H_INCLUDED_
 
-uint8_t *gmcat2mid(uint8_t *track, unsigned int *res_midi_size, int *midi_loop);
+uint8_t *gmcat2mid(uint8_t *gmcat, unsigned int *res_midi_size, int *midi_loop);
+uint8_t *rolandcat2mid(uint8_t *rolandcat, unsigned int *res_midi_size, int *midi_loop);
 
 #endif /* _GMCAT2MID_H_INCLUDED_ */

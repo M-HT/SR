@@ -205,18 +205,22 @@ class ConfigFile:
             self.AddEntry("Audio_MIDI_Subsystem", "wildmidi/adlmidi/sdl_mixer", "sdl_mixer")
         else:
             midi_values = "alsa/wildmidi"
+            midi_default_value = "wildmidi"
             if game != "warcraft":
                 midi_values += "/bassmidi"
             if game == "albion" or game == "warcraft":
                 midi_values += "/adlmidi"
+                midi_default_value = "adlmidi"
             midi_values += "/sdl_mixer"
             if game == "xcom1" or game == "xcom2":
                 midi_values += "/adlib-dosbox_opl"
                 if platform == "pc":
                     midi_values += "/mt32-munt"
-            self.AddEntry("Audio_MIDI_Subsystem", midi_values, ("adlmidi" if game == "albion" or game == "warcraft" else "wildmidi"))
+                    midi_default_value = "adlib-dosbox_opl"
+                midi_values += "/mt32-alsa"
+            self.AddEntry("Audio_MIDI_Subsystem", midi_values, midi_default_value)
 
-            if "alsa" in midi_values:
+            if "alsa" in midi_values or "mt32-alsa" in midi_values:
                 self.AddEntry("Audio_MIDI_Device", "*", "")
 
             if "bassmidi" in midi_values:
@@ -530,11 +534,11 @@ class ConfigGUI:
             description = "Select library for music playback."
 
             if "adlib-dosbox_opl" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
-                description += "\nGeneral MIDI music (ALSA sequencer or WildMIDI, BASSMIDI, SDL_mixer library)"
+                description += "\nGeneral MIDI music (ALSA sequencer or WildMIDI, BASSMIDI, SDL_mixer library),\n  Adlib music or MT-32 music"
                 if self.CfgFile.HasEntry("Audio_MT32_Roms_Path"):
-                    description += ", Adlib music or MT-32 music."
+                    description += " (MUNT emulator or ALSA sequencer)."
                 else:
-                    description += " or Adlib music."
+                    description += " (ALSA sequencer)."
 
             if "alsa" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
                 description += "\nALSA sequencer can use hardware or software synth (like Fluidsynth or TiMidity++)."
@@ -552,12 +556,12 @@ class ConfigGUI:
                 description += "\nADLMIDI uses OPL3 emulator for playback."
 
             if "adlib-dosbox_opl" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
-                description += "\nAdlib music is played using 'compat' OPL emulator from DOSBox.\n(Works only for the DOS game version.)"
+                description += "\nAdlib music is played using 'compat' OPL emulator from DOSBox.\n  (Works only for the DOS game version.)"
 
             if self.CfgFile.HasEntry("Audio_MT32_Roms_Path"):
-                description += "\nMT-32 music is played using MUNT emulator. (Works only for the DOS game version.)"
-                if game == "xcom1":
-                    description += "\n\tIn the intro the playback falls back to adlib music when MT-32 music for intro is not present."
+                description += "\nMT-32 music is played using MUNT emulator or ALSA sequencer.\n  (Works only for the DOS game version.)"
+            elif "mt32-alsa" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
+                description += "\nMT-32 music is played using ALSA sequencer.\n  (Works only for the DOS game version.)"
 
             self.CreateRadioSet(vbox, "MIDI Subsystem:", "Audio_MIDI_Subsystem", description)
 

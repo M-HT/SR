@@ -28,4 +28,6 @@
 uint8_t *gmcat2mid(uint8_t *gmcat, unsigned int *res_midi_size, int *midi_loop);
 uint8_t *rolandcat2mid(uint8_t *rolandcat, unsigned int *res_midi_size, int *midi_loop);
 
+void gmcat2rolandcat(uint8_t *gmcat);
+
 #endif /* _GMCAT2MID_H_INCLUDED_ */

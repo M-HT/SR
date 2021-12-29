@@ -152,6 +152,7 @@ EXTERNAL_VARIABLE int Game_MidiSubsystem;			/* MIDI subsystem
                                                        22: ALSA
                                                        31: MT32 - native Windows
                                                        32: MT32 - ALSA */
+EXTERNAL_VARIABLE int Game_MidiRemapGM2MT32;		// Remap General MIDI to MT32
 EXTERNAL_VARIABLE char *Game_SoundFontPath;			/* Path to SoundFont file */
 EXTERNAL_VARIABLE char *Game_MT32RomsPath;			/* Path to MT32 roms */
 EXTERNAL_VARIABLE char *Game_MidiDevice;			/* MIDI device name */

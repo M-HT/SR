@@ -1004,7 +1004,8 @@ static int find_dst_port(const char *midi_address, int midi_type)
 {
     snd_seq_client_info_t *cinfo;
     snd_seq_port_info_t *pinfo;
-    int client_id, port_id;
+    int client_id[3], port_id[3];
+    unsigned int ptype;
 
     if (midi_address != NULL && *midi_address != 0)
     {
@@ -1029,7 +1030,9 @@ static int find_dst_port(const char *midi_address, int midi_type)
     }
     else
     {
-        client_id = -1;
+        client_id[0] = -1;
+        client_id[1] = -1;
+        client_id[2] = -1;
 
         snd_seq_client_info_alloca(&cinfo);
         snd_seq_port_info_alloca(&pinfo);
@@ -1042,35 +1045,54 @@ static int find_dst_port(const char *midi_address, int midi_type)
 
             while (snd_seq_query_next_port(midi_seq, pinfo) >= 0)
             {
-                if ( ((snd_seq_port_info_get_capability(pinfo) & (SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE | SND_SEQ_PORT_CAP_NO_EXPORT)) == (SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE)) &&
-                     (snd_seq_port_info_get_type(pinfo) & (SND_SEQ_PORT_TYPE_MIDI_GENERIC | ( (midi_type)?SND_SEQ_PORT_TYPE_MIDI_MT32:SND_SEQ_PORT_TYPE_MIDI_GM )))
-                   )
+                if ( (snd_seq_port_info_get_capability(pinfo) & (SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE | SND_SEQ_PORT_CAP_NO_EXPORT)) == (SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE) )
                 {
-                    if (snd_seq_port_info_get_midi_channels(pinfo))
+                    ptype = snd_seq_port_info_get_type(pinfo);
+                    if (ptype & ( (midi_type)?SND_SEQ_PORT_TYPE_MIDI_MT32:(SND_SEQ_PORT_TYPE_MIDI_GENERIC | SND_SEQ_PORT_TYPE_MIDI_GM) ))
                     {
-                        dst_client_id = snd_seq_client_info_get_client(cinfo);
-                        dst_port_id = snd_seq_port_info_get_port(pinfo);
-                        return 0;
+                        if (snd_seq_port_info_get_midi_channels(pinfo))
+                        {
+                            dst_client_id = snd_seq_client_info_get_client(cinfo);
+                            dst_port_id = snd_seq_port_info_get_port(pinfo);
+                            return 0;
+                        }
+                        else if (client_id[0] == -1)
+                        {
+                            client_id[0] = snd_seq_client_info_get_client(cinfo);
+                            port_id[0] = snd_seq_port_info_get_port(pinfo);
+                        }
                     }
-                    else if (client_id == -1)
+                    else if (midi_type && (ptype & SND_SEQ_PORT_TYPE_MIDI_GENERIC))
                     {
-                        client_id = snd_seq_client_info_get_client(cinfo);
-                        port_id = snd_seq_port_info_get_port(pinfo);
+                        if (snd_seq_port_info_get_midi_channels(pinfo))
+                        {
+                            if (client_id[1] == -1)
+                            {
+                                client_id[1] = snd_seq_client_info_get_client(cinfo);
+                                port_id[1] = snd_seq_port_info_get_port(pinfo);
+                            }
+                        }
+                        else if (client_id[2] == -1)
+                        {
+                            client_id[2] = snd_seq_client_info_get_client(cinfo);
+                            port_id[2] = snd_seq_port_info_get_port(pinfo);
+                        }
                     }
                 }
             }
         }
 
-        if (client_id != -1)
+        for (ptype = 0; ptype <= 2; ptype++)
         {
-            dst_client_id = client_id;
-            dst_port_id = port_id;
-            return 0;
+            if (client_id[ptype] != -1)
+            {
+                dst_client_id = client_id[ptype];
+                dst_port_id = port_id[ptype];
+                return 0;
+            }
         }
-        else
-        {
-            return -4;
-        }
+
+        return -4;
     }
 }
 

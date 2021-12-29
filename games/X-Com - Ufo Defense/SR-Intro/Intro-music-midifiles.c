@@ -29,6 +29,7 @@
 #include "Game_vars.h"
 #include "virtualfs.h"
 #include "Intro-proc-vfs.h"
+#include "gmcat2mid.h"
 
 const static struct {
     char *filename;
@@ -163,6 +164,11 @@ int Game_ReadSong(const char *catalog_name, int index, uint8_t *buf)
     }
 
     if (fread(buf, 1, file_size, f) != file_size) goto read_song_error;
+
+    if (Game_MidiRemapGM2MT32)
+    {
+        gmcat2rolandcat(buf);
+    }
 
     fclose(f);
     return 1;

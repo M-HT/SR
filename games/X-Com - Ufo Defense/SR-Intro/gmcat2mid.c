@@ -106,6 +106,155 @@ static const int8_t instrument_velocity[128] = {
 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64,
 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64 };
 
+
+static const int8_t midi_gm2mt32[128] = {
+    // Piano
+    5, // 1 Acoustic Grand Piano -> Elec Piano 3
+    -1, // 2 Bright Acoustic Piano
+    2, // 3 Electric Grand Piano -> Acou Piano 3
+    -1, // 4 Honky-tonk Piano
+    3, // 5 Electric Piano 1 -> Elec Piano 1
+    -1, // 6 Electric Piano 2
+    -1, // 7 Harpsichord
+    21, // 8 Clavinet -> Clavi 3
+    // Chromatic Percussion
+    -1, // 9 Celesta
+    101, // 10 Glockenspiel -> Glock
+    -1, // 11 Music Box
+    -1, // 12 Vibraphone
+    -1, // 13 Marimba
+    -1, // 14 Xylophone
+    -1, // 15 Tubular Bells
+    -1, // 16 Dulcimer
+    // Organ
+    -1, // 17 Drawbar Organ
+    -1, // 18 Percussive Organ
+    -1, // 19 Rock Organ
+    -1, // 20 Church Organ
+    -1, // 21 Reed Organ
+    -1, // 22 Accordion
+    -1, // 23 Harmonica
+    -1, // 24 Tango Accordion
+    // Guitar
+    -1, // 25 Acoustic Guitar (nylon)
+    -1, // 26 Acoustic Guitar (steel)
+    -1, // 27 Electric Guitar (jazz)
+    59, // 28 Electric Guitar (clean) -> Guitar 1
+    -1, // 29 Electric Guitar (muted)
+    62, // 30 Electric Guitar (overdriven) -> Elec Guitar 2
+    48, // 31 Electric Guitar (distortion) -> Str Sect 1
+    -1, // 32 Electric Guitar (harmonics)
+    // Bass
+    -1, // 33 Acoustic Bass
+    -1, // 34 Electric Bass (finger)
+    65, // 35 Electric Bass (picked) -> Acou Bass 2
+    -1, // 36 Fretless Bass
+    68, // 37 Slap Bass 1 -> Slap Bass 1
+    69, // 38 Slap Bass 2 -> Slap Bass 2
+    -1, // 39 Synth Bass 1
+    -1, // 40 Synth Bass 2
+    // Strings
+    -1, // 41 Violin
+    -1, // 42 Viola
+    -1, // 43 Cello
+    -1, // 44 Contrabass
+    -1, // 45 Tremolo Strings
+    -1, // 46 Pizzicato Strings
+    -1, // 47 Orchestral Harp
+    112, // 48 Timpani -> Timpani
+    // Ensemble
+    52, // 49 String Ensemble 1 -> Violin 1
+    -1, // 50 String Ensemble 2
+    49, // 51 Synth Strings 1 -> Str Sect 2
+    -1, // 52 Synth Strings 2
+    34, // 53 Choir Aahs -> Chorale
+    -1, // 54 Voice Oohs
+    -1, // 55 Synth Voice or Solo Vox
+    -1, // 56 Orchestra Hit
+    // Brass
+    -1, // 57 Trumpet
+    -1, // 58 Trombone
+    -1, // 59 Tuba
+    -1, // 60 Muted Trumpet
+    -1, // 61 French Horn
+    -1, // 62 Brass Section
+    42, // 63 Synth Brass 1 -> Oboe 2001
+    43, // 64 Synth Brass 2 -> Echo Pan
+    // Reed
+    -1, // 65 Soprano Sax
+    -1, // 66 Alto Sax
+    -1, // 67 Tenor Sax
+    -1, // 68 Baritone Sax
+    -1, // 69 Oboe
+    -1, // 70 English Horn
+    -1, // 71 Bassoon
+    -1, // 72 Clarinet
+    // Pipe
+    -1, // 73 Piccolo
+    -1, // 74 Flute
+    -1, // 75 Recorder
+    -1, // 76 Pan Flute
+    -1, // 77 Blown bottle
+    -1, // 78 Shakuhachi
+    -1, // 79 Whistle
+    -1, // 80 Ocarina
+    // Synth Lead
+    -1, // 81 Lead 1 (square)
+    -1, // 82 Lead 2 (sawtooth)
+    -1, // 83 Lead 3 (calliope)
+    -1, // 84 Lead 4 (chiff)
+    -1, // 85 Lead 5 (charang)
+    -1, // 86 Lead 6 (space voice)
+    -1, // 87 Lead 7 (fifths)
+    -1, // 88 Lead 8 (bass and lead)
+    // Synth Pad
+    -1, // 89 Pad 1 (new age or fantasia)
+    33, // 90 Pad 2 (warm) -> Harmo Pan
+    -1, // 91 Pad 3 (polysynth or poly)
+    -1, // 92 Pad 4 (choir)
+    -1, // 93 Pad 5 (bowed glass or bowed)
+    -1, // 94 Pad 6 (metallic)
+    -1, // 95 Pad 7 (halo)
+    -1, // 96 Pad 8 (sweep)
+    // Synth Effects
+    -1, // 97 FX 1 (rain)
+    -1, // 98 FX 2 (soundtrack)
+    -1, // 99 FX 3 (crystal)
+    -1, // 100 FX 4 (atmosphere)
+    -1, // 101 FX 5 (brightness)
+    -1, // 102 FX 6 (goblins)
+    -1, // 103 FX 7 (echoes or echo drops)
+    -1, // 104 FX 8 (sci-fi or star theme)
+    // Ethnic
+    -1, // 105 Sitar
+    -1, // 106 Banjo
+    -1, // 107 Shamisen
+    -1, // 108 Koto
+    -1, // 109 Kalimba
+    -1, // 110 Bag pipe
+    -1, // 111 Fiddle
+    -1, // 112 Shanai
+    // Percussive
+    -1, // 113 Tinkle Bell
+    -1, // 114 Agogô
+    -1, // 115 Steel Drums
+    -1, // 116 Woodblock
+    -1, // 117 Taiko Drum
+    -1, // 118 Melodic Tom or 808 Toms
+    -1, // 119 Synth Drum
+    -1, // 120 Reverse Cymbal
+    // Sound Effects
+    -1, // 121 Guitar Fret Noise
+    -1, // 122 Breath Noise
+    -1, // 123 Seashore
+    -1, // 124 Bird Tweet
+    -1, // 125 Telephone Ring
+    -1, // 126 Helicopter
+    -1, // 127 Applause
+    -1, // 128 Gunshot
+};
+
+
 static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequence *subsequences, unsigned int time_division, uint32_t *program_number, int *midi_loop, enum _midi_device_ device)
 {
     unsigned int last_event, event_type, interval;
@@ -672,6 +821,124 @@ uint8_t *gmcat2mid(uint8_t *gmcat, unsigned int *res_midi_size, int *midi_loop)
 uint8_t *rolandcat2mid(uint8_t *rolandcat, unsigned int *res_midi_size, int *midi_loop)
 {
     return midicat2mid(DEVICE_MT32, rolandcat, res_midi_size, midi_loop);
+}
+
+
+static void remap_track(uint8_t *track, subsequence *subsequences)
+{
+    unsigned int last_event, event_type, interval;
+
+    last_event = 0xff;
+    event_type = 0xf0;
+
+    while (1)
+    {
+        READ_VARLEN(interval, track);
+
+        if (track[0] >= 0x80) // not running status
+        {
+            last_event = track[0];
+            event_type = track[0] & 0xf0;
+            track++;
+        }
+        switch (event_type)
+        {
+            case MIDI_STATUS_NOTE_OFF:
+            case MIDI_STATUS_NOTE_ON:
+            case MIDI_STATUS_CONTROLLER:
+            case MIDI_STATUS_AFTERTOUCH: // ignored by the driver
+            case MIDI_STATUS_PITCH_WHEEL:
+                track+=2;
+                break;
+
+            case MIDI_STATUS_PROG_CHANGE:
+                if (track[0] == 0x7e) // enable looping
+                {
+                    track++;
+                    break;
+                }
+
+                if (midi_gm2mt32[track[0]] < 0)
+                {
+                    // unmapped instrument
+                }
+                else
+                {
+                    track[0] = midi_gm2mt32[track[0]];
+                }
+
+                // fallthrough
+            case MIDI_STATUS_PRESSURE: // ignored by the driver
+                track++;
+                break;
+
+            case MIDI_STATUS_SYSEX:
+                switch (last_event)
+                {
+                    case 0xff: // end of track
+                        return;
+                    case 0xfe: // play subsequence
+                        if (subsequences[track[0]].midi_size_melodic == 0)
+                        {
+                            subsequences[track[0]].midi_size_melodic = 1;
+                            remap_track(subsequences[track[0]].data, subsequences);
+                        }
+
+                        track++;
+                        break;
+                    case 0xfd: // return from subsequence
+                        return;
+                }
+            break;
+        }
+    }
+}
+
+void gmcat2rolandcat(uint8_t *gmcat)
+{
+    unsigned int num_subsequences, num_tracks, loop;
+
+    subsequence subsequences[256];
+    seq_track tracks[16];
+
+    num_subsequences = gmcat[1];
+    gmcat+=2;
+
+    // read subsequences
+    for (loop = 0; loop < num_subsequences; loop++)
+    {
+        register unsigned int subsequence_len;
+
+        subsequence_len = GETU16FLE(gmcat);
+        subsequences[loop].data = gmcat+4;
+        subsequences[loop].midi_size_melodic = 0;
+        gmcat+=subsequence_len;
+    }
+
+    num_tracks = gmcat[0];
+    gmcat++;
+
+    // read tracks
+    for (loop = 0; loop < num_tracks; loop++)
+    {
+        register unsigned int track_len;
+
+        tracks[loop].channel = gmcat[0];
+        gmcat++;
+
+        track_len = GETU16FLE(gmcat);
+        tracks[loop].data = gmcat+4;
+        gmcat+=track_len;
+    }
+
+    // remap midi tracks
+    for (loop = 0; loop < num_tracks; loop++)
+    {
+        if (tracks[loop].channel != 9)
+        {
+            remap_track(tracks[loop].data, &(subsequences[0]));
+        }
+    }
 }
 
 // http://jedi.ks.uiuc.edu/~johns/links/music/midifile.html

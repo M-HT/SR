@@ -1072,6 +1072,7 @@ static int Game_Initialize(void)
     Display_ChangeMode = 0;
     Game_VolumeDelta = 0;
 
+    Game_MidiRemapGM2MT32 = 0;
     Game_SoundFontPath = NULL;
     Game_MT32RomsPath = NULL;
     Game_MidiDevice = NULL;
@@ -1309,8 +1310,8 @@ static void Game_Initialize2(void)
                                 num_files >>= 3;
                                 if (num_files <= 19)
                                 {
-                                    // fallback to adlib, because intro songs for mt32 don't exist
-                                    Game_MidiSubsystem = 10;
+                                    // use General MIDI songs, because intro songs for MT-32 don't exist
+                                    Game_MidiRemapGM2MT32 = 1;
                                 }
                             }
 
@@ -1373,7 +1374,7 @@ static void Game_Initialize2(void)
             Game_SoundCfg.MusicDriver = 0;          // adlib / soundblaster fm
             Game_SoundCfg.MusicBasePort = 0x0388;   // adlib base port
         }
-        else if (Game_MidiSubsystem == 11 || Game_MidiSubsystem > 30)
+        else if ((Game_MidiSubsystem == 11 || Game_MidiSubsystem > 30) && !Game_MidiRemapGM2MT32)
         {
             Game_SoundCfg.MusicDriver = 1;          // roland lapc-1 / mt32
             Game_SoundCfg.MusicBasePort = 0x0330;   // MT32 base port

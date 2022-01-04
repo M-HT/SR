@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2021 Roman Pauer
+ *  Copyright (C) 2019-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -39,6 +39,7 @@ GAME_CONFIG_STORAGE int Display_Width;          /* horizontal size */
 GAME_CONFIG_STORAGE int Display_Height;         /* vertical size */
 GAME_CONFIG_STORAGE int Display_Resizable;      /* resizable window ? */
 GAME_CONFIG_STORAGE int Display_ScalingQuality; /* scaling quality - 0 = nearest neighbour, 1 = bilinear */
+GAME_CONFIG_STORAGE int Display_IntegerScaling; /* integer scaling ? */
 GAME_CONFIG_STORAGE int Display_DelayAfterFlip; /* delay after image flip in miliseconds */
 
 GAME_CONFIG_STORAGE int Audio_BufferSize;       /* audio buffer size (in samples) */

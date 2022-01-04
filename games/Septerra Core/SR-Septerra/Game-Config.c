@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2021 Roman Pauer
+ *  Copyright (C) 2019-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -71,6 +71,7 @@ void ReadConfiguration(void)
     Display_Height = 0;
     Display_Resizable = 0;
     Display_ScalingQuality = 1;
+    Display_IntegerScaling = 0;
     Display_DelayAfterFlip = 0;
 
     Audio_BufferSize = 0;
@@ -219,6 +220,17 @@ void ReadConfiguration(void)
                 else if ( strcasecmp(param, "basic") == 0 ) // param equals "basic"
                 {
                     Display_ScalingQuality = 1;
+                }
+            }
+            else if ( strcasecmp(str, "IntegerScaling") == 0 ) // str equals "IntegerScaling"
+            {
+                if ( strcasecmp(param, "yes") == 0 ) // param equals "yes"
+                {
+                    Display_IntegerScaling = 1;
+                }
+                else if ( strcasecmp(param, "no") == 0 ) // param equals "no"
+                {
+                    Display_IntegerScaling = 0;
                 }
             }
             else if ( strcasecmp(str, "DelayAfterFlip") == 0 ) // str equals "DelayAfterFlip"

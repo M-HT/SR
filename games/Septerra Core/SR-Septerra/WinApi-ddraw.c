@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2021 Roman Pauer
+ *  Copyright (C) 2019-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -295,6 +295,8 @@ typedef struct _ddbltfx
 
 extern uint32_t IDirectDrawVtbl_asm2c;
 extern uint32_t IDirectDrawSurfaceVtbl_asm2c;
+
+extern int sdl_versionnum;
 
 
 #if SDL_VERSION_ATLEAST(2,0,0)
@@ -848,6 +850,16 @@ uint32_t IDirectDraw_SetDisplayMode_c(struct IDirectDraw_c *lpThis, uint32_t dwW
     }
 
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, (Display_ScalingQuality)?"linear":"nearest");
+
+#if SDL_VERSION_ATLEAST(2,0,5)
+    if (Display_IntegerScaling)
+    {
+        if (sdl_versionnum >= SDL_VERSIONNUM(2,0,5))
+        {
+            SDL_RenderSetIntegerScale(lpThis->Renderer, SDL_TRUE);
+        }
+    }
+#endif
 
     if (0 != SDL_RenderSetLogicalSize(lpThis->Renderer, dwWidth, dwHeight))
     {

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2021 Roman Pauer
+ *  Copyright (C) 2019-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -226,7 +226,7 @@ typedef struct {
 } wndclassa;
 
 
-static int sdl_versionnum = 0;
+int sdl_versionnum = 0;
 static void *lpfnWndProc = NULL;
 static int cursor_visibility = 0;
 static unsigned int mouse_buttons = 0;

@@ -195,7 +195,8 @@ static size_t _out_rev(out_fct_type out, char* buffer, size_t idx, size_t maxlen
 
   // pad spaces up to given width
   if (!(flags & FLAGS_LEFT) && !(flags & FLAGS_ZEROPAD)) {
-    for (size_t i = len; i < width; i++) {
+    size_t i;
+    for (i = len; i < width; i++) {
       out(' ', buffer, idx++, maxlen);
     }
   }

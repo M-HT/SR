@@ -1,5 +1,5 @@
 Septerra Core for Linux (x86)
-Version 1.04.0.6
+Version 1.04.0.7
 
 Original Septerra Core version 1.04 is required for playing.
 (version from GOG.com can be used for playing)
@@ -30,6 +30,9 @@ Setting CPU_SleepMode (in configuration file) to "reduced" can help. If not, the
 
 Changes
 -------
+v1.04.0.7 (2022-01-08)
+* add option to only use integer scaling
+
 v1.04.0.6 (2021-11-04)
 * add option to reduce cpu sleep, to help with higher mouse poll rates
 

@@ -872,6 +872,9 @@ void Game_ProcessKEvents(void)
         0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f, /* 112-127 */
     };
 
+    static int alt_code_state = 0;
+    static unsigned int alt_code_value;
+
     VSyncTick = Game_VSyncTick;
     finish = 0;
 
@@ -885,6 +888,7 @@ void Game_ProcessKEvents(void)
             case SDL_KEYUP:
                 if (cevent->key.keysym.sym == SDLK_PAUSE)
                 {
+                    if (alt_code_state >= 1) alt_code_state = -1;
             #ifdef USE_SDL2
                     goto _after_switch1;
             #else
@@ -1396,6 +1400,7 @@ void Game_ProcessKEvents(void)
 
                             break;
                         case SDLK_F15:
+                            if (alt_code_state >= 1) alt_code_state = -1;
                     #ifdef USE_SDL2
                             goto _after_switch1;
                     #else
@@ -1441,19 +1446,23 @@ void Game_ProcessKEvents(void)
 
                             break;
                         case SDLK_RCTRL:
-                            scancode = 0x1d;
-
-                            break;
                         case SDLK_LCTRL:
                             scancode = 0x1d;
 
                             break;
                         case SDLK_RALT:
-                            scancode = 0x38;
-
-                            break;
                         case SDLK_LALT:
                             scancode = 0x38;
+
+                            if (cevent->type == SDL_KEYDOWN)
+                            {
+                                alt_code_state = 1;
+                                alt_code_value = 0;
+                            }
+                            else
+                            {
+                                alt_code_state = (alt_code_state == 2)?3:0;
+                            }
 
                             break;
                     #ifdef USE_SDL2
@@ -1482,9 +1491,25 @@ void Game_ProcessKEvents(void)
                             break;
 
                         default:
+                            if (alt_code_state >= 1) alt_code_state = -1;
                             goto _after_switch1;
                     }
                 }
+
+                if (cevent->type == SDL_KEYDOWN && alt_code_state >= 1)
+                {
+                    if (ascii_code >= '0' && ascii_code <= '9')
+                    {
+                        alt_code_state = 2;
+                        alt_code_value = alt_code_value * 10 + (ascii_code - '0');
+                        ascii_code = 0;
+                    }
+                    else
+                    {
+                        if (scancode != 0x38) alt_code_state = -1;
+                    }
+                }
+
                 if (cevent->key.state == SDL_RELEASED)
                 {
                     scancode |= 0x80;
@@ -1495,9 +1520,17 @@ void Game_ProcessKEvents(void)
                     keyboard_keys[scancode & 0x7f] = (cevent->key.state == SDL_PRESSED)?1:0;
                 }
 
-                if (cevent->key.state == SDL_PRESSED)
+                if (cevent->key.state == SDL_PRESSED || alt_code_state == 3)
                 {
-                    key_code = (scancode << 24) | (bios_scancode_table[scancode & 0x7f] << 8) | ascii_code;
+                    if (cevent->key.state == SDL_PRESSED)
+                    {
+                        key_code = (scancode << 24) | (bios_scancode_table[scancode & 0x7f] << 8) | ascii_code;
+                    }
+                    else
+                    {
+                        key_code = alt_code_value & 0xff;
+                        alt_code_state = 0;
+                    }
 
                     if ( ( (Game_KBufferWrite + 1) & (GAME_KBUFFER_LENGTH - 1) ) == Game_KBufferRead )
                     {

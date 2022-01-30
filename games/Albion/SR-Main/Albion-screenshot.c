@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -984,7 +984,7 @@ void Game_save_screenshot(const char *filename)
 #endif
 
     screenshot_src = &(Game_FrameBuffer[loc_182010 * 360 * 240]);
-    DrawOverlay = Get_DrawOverlay(screenshot_src, 0);
+    DrawOverlay = Get_DrawOverlay(screenshot_src, &Game_OverlayDraw);
 
 #if defined(ALLOW_OPENGL) || defined(USE_SDL2)
     if (Game_AdvancedScaling)
@@ -1662,7 +1662,7 @@ void Game_save_screenshot(const char *filename)
             // markers
             if (DrawOverlay & 1)
             {
-                dst32 = buf_unscaled + 360 * (Game_OverlayDraw.ViewportY + Game_OverlayDisplay.ViewportHeight - 2) + (Game_OverlayDisplay.ViewportX + 1);
+                dst32 = buf_unscaled + 360 * (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2) + (Game_OverlayDraw.ViewportX + 1);
 
                 for (x = 8; x != 0; x--)
                 {
@@ -1673,7 +1673,7 @@ void Game_save_screenshot(const char *filename)
 
             if (DrawOverlay & 2)
             {
-                dst32 = buf_unscaled + 360 * (Game_OverlayDraw.ViewportY + Game_OverlayDisplay.ViewportHeight - 2) + (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth - 10);
+                dst32 = buf_unscaled + 360 * (Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportHeight - 2) + (Game_OverlayDraw.ViewportX + Game_OverlayDraw.ViewportWidth - 10);
 
                 for (x = 8; x != 0; x--)
                 {
@@ -1694,8 +1694,8 @@ void Game_save_screenshot(const char *filename)
 
         if (DrawOverlay)
         {
-            src32 = buf_unscaled + 360 * Game_OverlayDraw.ViewportY + Game_OverlayDisplay.ViewportX;
-            dst32 = buf_scaled + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * Game_OverlayDraw.ViewportY + Scaler_ScaleFactor * Game_OverlayDisplay.ViewportX;
+            src32 = buf_unscaled + 360 * Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportX;
+            dst32 = buf_scaled + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * Game_OverlayDraw.ViewportY + Scaler_ScaleFactor * Game_OverlayDraw.ViewportX;
             src2 = Game_OverlayDraw.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * Game_OverlayDraw.ViewportY + Scaler_ScaleFactor * Game_OverlayDraw.ViewportX;
 
             // the viewport

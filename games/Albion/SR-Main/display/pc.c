@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -80,8 +80,10 @@ static void Set_Palette_Value2(uint32_t index, uint32_t r, uint32_t g, uint32_t 
 static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, uint32_t *dst2, int *dst2_used)
 {
     int counter, DrawOverlay;
+    Game_OverlayInfo OverlayInfo;
 
-    DrawOverlay = Get_DrawOverlay(src, 1);
+    OverlayInfo = Game_OverlayDisplay;
+    DrawOverlay = Get_DrawOverlay(src, &OverlayInfo);
     *dst2_used = DrawOverlay;
 
     if (DrawOverlay)
@@ -91,9 +93,9 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
         int x, y, ViewportX2;
 
         // display part above the viewport
-        if (Game_OverlayDisplay.ViewportY != 0)
+        if (OverlayInfo.ViewportY != 0)
         {
-            for (counter = 360 * Game_OverlayDisplay.ViewportY; counter != 0; counter -= 8)
+            for (counter = 360 * OverlayInfo.ViewportY; counter != 0; counter -= 8)
             {
                 dst1[0] = Game_PaletteAlpha[src[0]].pix;
                 dst1[1] = Game_PaletteAlpha[src[1]].pix;
@@ -108,7 +110,7 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
                 dst1 += 8;
             }
 
-            for (counter = Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * Game_OverlayDisplay.ViewportY; counter != 0; counter -= 8)
+            for (counter = Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * OverlayInfo.ViewportY; counter != 0; counter -= 8)
             {
                 dst2[0] = 0;
                 dst2[1] = 0;
@@ -128,11 +130,11 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
         zaldst2 = dst2;
 
         // display part left of the viewport
-        if (Game_OverlayDisplay.ViewportX != 0)
+        if (OverlayInfo.ViewportX != 0)
         {
-            for (y = Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+            for (y = OverlayInfo.ViewportHeight; y != 0; y--)
             {
-                for (x = Game_OverlayDisplay.ViewportX; x >= 8; x -= 8)
+                for (x = OverlayInfo.ViewportX; x >= 8; x -= 8)
                 {
                     dst1[0] = Game_PaletteAlpha[src[0]].pix;
                     dst1[1] = Game_PaletteAlpha[src[1]].pix;
@@ -155,13 +157,13 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
                     dst1++;
                 }
 
-                src += (360 - Game_OverlayDisplay.ViewportX);
-                dst1 += (360 - Game_OverlayDisplay.ViewportX);
+                src += (360 - OverlayInfo.ViewportX);
+                dst1 += (360 - OverlayInfo.ViewportX);
             }
 
-            for (y = Scaler_ScaleFactor * Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+            for (y = Scaler_ScaleFactor * OverlayInfo.ViewportHeight; y != 0; y--)
             {
-                for (x = Scaler_ScaleFactor * Game_OverlayDisplay.ViewportX; x >= 8; x -= 8)
+                for (x = Scaler_ScaleFactor * OverlayInfo.ViewportX; x >= 8; x -= 8)
                 {
                     dst2[0] = 0;
                     dst2[1] = 0;
@@ -182,19 +184,19 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
                     dst2++;
                 }
 
-                dst2 += Scaler_ScaleFactor * (360 - Game_OverlayDisplay.ViewportX);
+                dst2 += Scaler_ScaleFactor * (360 - OverlayInfo.ViewportX);
             }
         }
 
         // display part right of the viewport
-        if ((Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth) != 360)
+        if ((OverlayInfo.ViewportX + OverlayInfo.ViewportWidth) != 360)
         {
-            src = zalsrc + (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth);
-            dst1 = zaldst1 + (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth);
-            dst2 = zaldst2 + Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth);
-            ViewportX2 = 360 - (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth);
+            src = zalsrc + (OverlayInfo.ViewportX + OverlayInfo.ViewportWidth);
+            dst1 = zaldst1 + (OverlayInfo.ViewportX + OverlayInfo.ViewportWidth);
+            dst2 = zaldst2 + Scaler_ScaleFactor * (OverlayInfo.ViewportX + OverlayInfo.ViewportWidth);
+            ViewportX2 = 360 - (OverlayInfo.ViewportX + OverlayInfo.ViewportWidth);
 
-            for (y = Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+            for (y = OverlayInfo.ViewportHeight; y != 0; y--)
             {
                 for (x = ViewportX2; x >= 8; x -= 8)
                 {
@@ -223,7 +225,7 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
                 dst1 += (360 - ViewportX2);
             }
 
-            for (y = Scaler_ScaleFactor * Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+            for (y = Scaler_ScaleFactor * OverlayInfo.ViewportHeight; y != 0; y--)
             {
                 for (x = Scaler_ScaleFactor * ViewportX2; x >= 8; x -= 8)
                 {
@@ -251,11 +253,11 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
         }
 
         // display part below the viewport
-        src = zalsrc + (360 * Game_OverlayDisplay.ViewportHeight);
-        dst1 = zaldst1 + (360 * Game_OverlayDisplay.ViewportHeight);
-        dst2 = zaldst2 + Scaler_ScaleFactor * Scaler_ScaleFactor * (360 * Game_OverlayDisplay.ViewportHeight);
+        src = zalsrc + (360 * OverlayInfo.ViewportHeight);
+        dst1 = zaldst1 + (360 * OverlayInfo.ViewportHeight);
+        dst2 = zaldst2 + Scaler_ScaleFactor * Scaler_ScaleFactor * (360 * OverlayInfo.ViewportHeight);
 
-        for (counter = 360 * (240 - (Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportHeight)); counter != 0; counter -= 8)
+        for (counter = 360 * (240 - (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight)); counter != 0; counter -= 8)
         {
             dst1[0] = Game_PaletteAlpha[src[0]].pix;
             dst1[1] = Game_PaletteAlpha[src[1]].pix;
@@ -270,7 +272,7 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
             dst1 += 8;
         }
 
-        for (counter = Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (240 - (Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportHeight)); counter != 0; counter -= 8)
+        for (counter = Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (240 - (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight)); counter != 0; counter -= 8)
         {
             dst2[0] = 0;
             dst2[1] = 0;
@@ -285,13 +287,13 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
         }
 
         // the viewport
-        src = zalsrc + Game_OverlayDisplay.ViewportX;
-        dst1 = zaldst1 + Game_OverlayDisplay.ViewportX;
-        orig = Game_OverlayDisplay.ScreenViewpartOriginal + 360 * Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportX;
+        src = zalsrc + OverlayInfo.ViewportX;
+        dst1 = zaldst1 + OverlayInfo.ViewportX;
+        orig = OverlayInfo.ScreenViewpartOriginal + 360 * OverlayInfo.ViewportY + OverlayInfo.ViewportX;
 
-        for (y = Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+        for (y = OverlayInfo.ViewportHeight; y != 0; y--)
         {
-            for (x = Game_OverlayDisplay.ViewportWidth; x >= 8; x -= 8)
+            for (x = OverlayInfo.ViewportWidth; x >= 8; x -= 8)
             {
                 dst1[0] = (src[0] == orig[0])?0:Game_PaletteAlpha[src[0]].pix;
                 dst1[1] = (src[1] == orig[1])?0:Game_PaletteAlpha[src[1]].pix;
@@ -316,24 +318,24 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
                 dst1++;
             }
 
-            src += (360 - Game_OverlayDisplay.ViewportWidth);
-            orig += (360 - Game_OverlayDisplay.ViewportWidth);
-            dst1 += (360 - Game_OverlayDisplay.ViewportWidth);
+            src += (360 - OverlayInfo.ViewportWidth);
+            orig += (360 - OverlayInfo.ViewportWidth);
+            dst1 += (360 - OverlayInfo.ViewportWidth);
         }
 
-        dst1 = zaldst1 + Game_OverlayDisplay.ViewportX;
-        dst2 = zaldst2 + Scaler_ScaleFactor * Game_OverlayDisplay.ViewportX;
-        src2 = Game_OverlayDisplay.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * Game_OverlayDisplay.ViewportY + Scaler_ScaleFactor * Game_OverlayDisplay.ViewportX;
+        dst1 = zaldst1 + OverlayInfo.ViewportX;
+        dst2 = zaldst2 + Scaler_ScaleFactor * OverlayInfo.ViewportX;
+        src2 = OverlayInfo.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * OverlayInfo.ViewportY + Scaler_ScaleFactor * OverlayInfo.ViewportX;
 
         counter = Scaler_ScaleFactor;
-        for (y = Scaler_ScaleFactor * Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+        for (y = Scaler_ScaleFactor * OverlayInfo.ViewportHeight; y != 0; y--)
         {
             int counter2, same;
 
             counter2 = Scaler_ScaleFactor;
             same = (dst1[0] == 0)?1:0;
 
-            for (x = Scaler_ScaleFactor * Game_OverlayDisplay.ViewportWidth; x != 0; x--)
+            for (x = Scaler_ScaleFactor * OverlayInfo.ViewportWidth; x != 0; x--)
             {
                 dst2[0] = (same)?Game_PaletteAlpha[src2[0]].pix:0;
 
@@ -349,25 +351,25 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
                 }
             }
 
-            src2 += Scaler_ScaleFactor * (360 - Game_OverlayDisplay.ViewportWidth);
-            dst2 += Scaler_ScaleFactor * (360 - Game_OverlayDisplay.ViewportWidth);
+            src2 += Scaler_ScaleFactor * (360 - OverlayInfo.ViewportWidth);
+            dst2 += Scaler_ScaleFactor * (360 - OverlayInfo.ViewportWidth);
 
             counter--;
             if (counter == 0)
             {
                 counter = Scaler_ScaleFactor;
-                dst1 += (360 - Game_OverlayDisplay.ViewportWidth);
+                dst1 += (360 - OverlayInfo.ViewportWidth);
             }
             else
             {
-                dst1 -= Game_OverlayDisplay.ViewportWidth;
+                dst1 -= OverlayInfo.ViewportWidth;
             }
         }
 
         // markers
         if (DrawOverlay & 1)
         {
-            dst1 = zaldst1 + 360 * (Game_OverlayDisplay.ViewportHeight - 2) + (Game_OverlayDisplay.ViewportX + 1);
+            dst1 = zaldst1 + 360 * (OverlayInfo.ViewportHeight - 2) + (OverlayInfo.ViewportX + 1);
 
             for (x = 8; x != 0; x--)
             {
@@ -375,8 +377,8 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
                 dst1++;
             }
 
-            dst2 = zaldst2 + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportHeight - 2) + Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportX + 1);
-            src2 = Game_OverlayDisplay.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportHeight - 2) + Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportX + 1);
+            dst2 = zaldst2 + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (OverlayInfo.ViewportHeight - 2) + Scaler_ScaleFactor * (OverlayInfo.ViewportX + 1);
+            src2 = OverlayInfo.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight - 2) + Scaler_ScaleFactor * (OverlayInfo.ViewportX + 1);
 
             for (y = Scaler_ScaleFactor; y != 0; y--)
             {
@@ -394,7 +396,7 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
 
         if (DrawOverlay & 2)
         {
-            dst1 = zaldst1 + 360 * (Game_OverlayDisplay.ViewportHeight - 2) + (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth - 10);
+            dst1 = zaldst1 + 360 * (OverlayInfo.ViewportHeight - 2) + (OverlayInfo.ViewportX + OverlayInfo.ViewportWidth - 10);
 
             for (x = 8; x != 0; x--)
             {
@@ -402,8 +404,8 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
                 dst1++;
             }
 
-            dst2 = zaldst2 + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportHeight - 2) + Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth - 10);
-            src2 = Game_OverlayDisplay.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportHeight - 2) + Scaler_ScaleFactor * (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth - 10);
+            dst2 = zaldst2 + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (OverlayInfo.ViewportHeight - 2) + Scaler_ScaleFactor * (OverlayInfo.ViewportX + OverlayInfo.ViewportWidth - 10);
+            src2 = OverlayInfo.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight - 2) + Scaler_ScaleFactor * (OverlayInfo.ViewportX + OverlayInfo.ViewportWidth - 10);
 
             for (y = Scaler_ScaleFactor; y != 0; y--)
             {
@@ -442,10 +444,12 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
 static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
 {
     int x, y, DrawOverlay, ViewportX2;
+    Game_OverlayInfo OverlayInfo;
 
 #define WRITE_PIXEL2(_x) dst[2 * (_x)] = dst[1 + (2 * (_x))] = dst[720 + (2 * (_x))] = dst[721 + (2 * (_x))] = Game_Palette[src[(_x)]].pix;
 
-    DrawOverlay = Get_DrawOverlay(src, 1);
+    OverlayInfo = Game_OverlayDisplay;
+    DrawOverlay = Get_DrawOverlay(src, &OverlayInfo);
 
     if (DrawOverlay)
     {
@@ -453,7 +457,7 @@ static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
         uint32_t *zaldst;
 
         // display part above the viewport
-        for (y = Game_OverlayDisplay.ViewportY; y != 0; y--)
+        for (y = OverlayInfo.ViewportY; y != 0; y--)
         {
             for (x = 360; x != 0; x-=9)
             {
@@ -477,29 +481,29 @@ static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
         zaldst = dst;
 
         // display part left of the viewport
-        if (Game_OverlayDisplay.ViewportX != 0)
+        if (OverlayInfo.ViewportX != 0)
         {
-            for (y = Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+            for (y = OverlayInfo.ViewportHeight; y != 0; y--)
             {
-                for (x = Game_OverlayDisplay.ViewportX; x != 0; x--)
+                for (x = OverlayInfo.ViewportX; x != 0; x--)
                 {
                     WRITE_PIXEL2(0)
 
                     src++;
                     dst+=2;
                 }
-                src+=(360-Game_OverlayDisplay.ViewportX);
-                dst+=720+(720-2*Game_OverlayDisplay.ViewportX);
+                src+=(360-OverlayInfo.ViewportX);
+                dst+=720+(720-2*OverlayInfo.ViewportX);
             }
         }
 
         // display part right of the viewport
-        if ((Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth) != 360)
+        if ((OverlayInfo.ViewportX + OverlayInfo.ViewportWidth) != 360)
         {
-            src = zalsrc + Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth;
-            dst = zaldst + 2 * (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth);
-            ViewportX2 = 360 - (Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth);
-            for (y = Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+            src = zalsrc + OverlayInfo.ViewportX + OverlayInfo.ViewportWidth;
+            dst = zaldst + 2 * (OverlayInfo.ViewportX + OverlayInfo.ViewportWidth);
+            ViewportX2 = 360 - (OverlayInfo.ViewportX + OverlayInfo.ViewportWidth);
+            for (y = OverlayInfo.ViewportHeight; y != 0; y--)
             {
                 for (x = ViewportX2; x != 0; x--)
                 {
@@ -514,9 +518,9 @@ static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
         }
 
         // display part below the viewport
-        src = zalsrc + 360 * Game_OverlayDisplay.ViewportHeight;
-        dst = zaldst + 720 * 2 * Game_OverlayDisplay.ViewportHeight;
-        for (y = 240 - (Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportHeight); y != 0; y--)
+        src = zalsrc + 360 * OverlayInfo.ViewportHeight;
+        dst = zaldst + 720 * 2 * OverlayInfo.ViewportHeight;
+        for (y = 240 - (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight); y != 0; y--)
         {
             for (x = 360; x != 0; x-=9)
             {
@@ -537,13 +541,13 @@ static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
         }
 
         // the viewport
-        src = zalsrc + Game_OverlayDisplay.ViewportX;
-        orig = Game_OverlayDisplay.ScreenViewpartOriginal + 360 * Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportX;
-        dst = zaldst + 2 * Game_OverlayDisplay.ViewportX;
-        src2 = Game_OverlayDisplay.ScreenViewpartOverlay + Game_OverlayDisplay.ViewportY*2 * 800 + Game_OverlayDisplay.ViewportX*2;
-        for (y = Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+        src = zalsrc + OverlayInfo.ViewportX;
+        orig = OverlayInfo.ScreenViewpartOriginal + 360 * OverlayInfo.ViewportY + OverlayInfo.ViewportX;
+        dst = zaldst + 2 * OverlayInfo.ViewportX;
+        src2 = OverlayInfo.ScreenViewpartOverlay + OverlayInfo.ViewportY*2 * 800 + OverlayInfo.ViewportX*2;
+        for (y = OverlayInfo.ViewportHeight; y != 0; y--)
         {
-            for (x = Game_OverlayDisplay.ViewportWidth; x != 0; x--)
+            for (x = OverlayInfo.ViewportWidth; x != 0; x--)
             {
                 if (*src == *orig)
                 {
@@ -562,16 +566,16 @@ static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
                 src2+=2;
                 dst+=2;
             }
-            src+=(360 - Game_OverlayDisplay.ViewportWidth);
-            orig+=(360 - Game_OverlayDisplay.ViewportWidth);
-            src2+=800 + (800 - 2*Game_OverlayDisplay.ViewportWidth);
-            dst+=720 + (720 - 2 * Game_OverlayDisplay.ViewportWidth);
+            src+=(360 - OverlayInfo.ViewportWidth);
+            orig+=(360 - OverlayInfo.ViewportWidth);
+            src2+=800 + (800 - 2*OverlayInfo.ViewportWidth);
+            dst+=720 + (720 - 2 * OverlayInfo.ViewportWidth);
         }
 
         if (DrawOverlay & 1)
         {
-            dst = zaldst + 720 * 2 * (Game_OverlayDisplay.ViewportHeight - 2) + 2 * (Game_OverlayDisplay.ViewportX + 1);
-            src2 = Game_OverlayDisplay.ScreenViewpartOverlay + (Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportHeight - 2)*2 * 800 + (Game_OverlayDisplay.ViewportX + 1)*2;
+            dst = zaldst + 720 * 2 * (OverlayInfo.ViewportHeight - 2) + 2 * (OverlayInfo.ViewportX + 1);
+            src2 = OverlayInfo.ScreenViewpartOverlay + (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight - 2)*2 * 800 + (OverlayInfo.ViewportX + 1)*2;
             for (x = 8; x != 0; x--)
             {
                 dst[0] = Game_Palette[src2[0]].pix;
@@ -586,8 +590,8 @@ static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
 
         if (DrawOverlay & 2)
         {
-            dst = zaldst + 720 * 2 * (Game_OverlayDisplay.ViewportHeight - 2) + 2 * Game_OverlayDisplay.ViewportX + 2 * (Game_OverlayDisplay.ViewportWidth - 10);
-            src2 = Game_OverlayDisplay.ScreenViewpartOverlay + (Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportHeight - 2)*2 * 800 + Game_OverlayDisplay.ViewportX*2 + 2*(Game_OverlayDisplay.ViewportWidth - 10);
+            dst = zaldst + 720 * 2 * (OverlayInfo.ViewportHeight - 2) + 2 * OverlayInfo.ViewportX + 2 * (OverlayInfo.ViewportWidth - 10);
+            src2 = OverlayInfo.ScreenViewpartOverlay + (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight - 2)*2 * 800 + OverlayInfo.ViewportX*2 + 2*(OverlayInfo.ViewportWidth - 10);
             for (x = 8; x != 0; x--)
             {
                 dst[0] = Game_Palette[src2[0]].pix;
@@ -768,6 +772,7 @@ static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2(uint8_t *src, 
 static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2_lt(uint8_t *src, uint32_t *dst)
 {
     int x, y, DrawOverlay, ViewportX_9, ViewportWidth_9, ViewportX2_9;
+    Game_OverlayInfo OverlayInfo;
 
 #define WRITE_PIXEL2(x1, x2) dst[(x2)] = dst[1 + (x2)] = dst[720 + (x2)] = dst[721 + (x2)] = Game_Palette[src[(x1)]].pix;
 #define WRITE_PIXEL3(x1, x2) \
@@ -832,7 +837,8 @@ static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2_lt(uint8_t *sr
         } \
     }
 
-    DrawOverlay = Get_DrawOverlay(src, 1);
+    OverlayInfo = Game_OverlayDisplay;
+    DrawOverlay = Get_DrawOverlay(src, &OverlayInfo);
 
     dst += 40;
 
@@ -842,7 +848,7 @@ static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2_lt(uint8_t *sr
         uint32_t *zaldst, *tmpdst;
 
         // display part above the viewport
-        for (y = Game_OverlayDisplay.ViewportY; y != 0; y--)
+        for (y = OverlayInfo.ViewportY; y != 0; y--)
         {
             for (x = 360; x != 0; x-=9)
             {
@@ -868,10 +874,10 @@ static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2_lt(uint8_t *sr
         zaldst = dst;
 
         // display part left of the viewport
-        ViewportX_9 = Game_OverlayDisplay.ViewportX - (Game_OverlayDisplay.ViewportX % 9);
+        ViewportX_9 = OverlayInfo.ViewportX - (OverlayInfo.ViewportX % 9);
         if (ViewportX_9 != 0)
         {
-            for (y = Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+            for (y = OverlayInfo.ViewportHeight; y != 0; y--)
             {
                 tmpdst = dst;
                 for (x = ViewportX_9; x != 0; x-=9)
@@ -897,7 +903,7 @@ static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2_lt(uint8_t *sr
         }
 
         // display part right of the viewport
-        ViewportWidth_9 = Game_OverlayDisplay.ViewportWidth + (Game_OverlayDisplay.ViewportX - ViewportX_9);
+        ViewportWidth_9 = OverlayInfo.ViewportWidth + (OverlayInfo.ViewportX - ViewportX_9);
         if ( (ViewportWidth_9 % 9) != 0)
         {
             ViewportWidth_9 = ViewportWidth_9 + 9 - (ViewportWidth_9 % 9);
@@ -907,7 +913,7 @@ static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2_lt(uint8_t *sr
             src = zalsrc + ViewportX_9 + ViewportWidth_9;
             dst = zaldst + (((ViewportX_9 + ViewportWidth_9) * 16) / 9);
             ViewportX2_9 = 360 - (ViewportX_9 + ViewportWidth_9);
-            for (y = Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+            for (y = OverlayInfo.ViewportHeight; y != 0; y--)
             {
                 tmpdst = dst;
                 for (x = ViewportX2_9; x != 0; x-=9)
@@ -934,9 +940,9 @@ static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2_lt(uint8_t *sr
         }
 
         // display part below the viewport
-        src = zalsrc + 360 * Game_OverlayDisplay.ViewportHeight;
-        dst = zaldst + 720 * 2 * Game_OverlayDisplay.ViewportHeight;
-        for (y = 240 - (Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportHeight); y != 0; y--)
+        src = zalsrc + 360 * OverlayInfo.ViewportHeight;
+        dst = zaldst + 720 * 2 * OverlayInfo.ViewportHeight;
+        for (y = 240 - (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight); y != 0; y--)
         {
             for (x = 360; x != 0; x-=9)
             {
@@ -960,10 +966,10 @@ static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2_lt(uint8_t *sr
 
         // the viewport
         src = zalsrc + ViewportX_9;
-        orig = Game_OverlayDisplay.ScreenViewpartOriginal + 360 * Game_OverlayDisplay.ViewportY + ViewportX_9;
+        orig = OverlayInfo.ScreenViewpartOriginal + 360 * OverlayInfo.ViewportY + ViewportX_9;
         dst = zaldst + ((ViewportX_9 * 16) / 9);
-        src2 = Game_OverlayDisplay.ScreenViewpartOverlay + Game_OverlayDisplay.ViewportY*2 * 800 + ((ViewportX_9 * 16) / 9);
-        for (y = Game_OverlayDisplay.ViewportHeight; y != 0; y--)
+        src2 = OverlayInfo.ScreenViewpartOverlay + OverlayInfo.ViewportY*2 * 800 + ((ViewportX_9 * 16) / 9);
+        for (y = OverlayInfo.ViewportHeight; y != 0; y--)
         {
             tmpsrc2 = src2;
             tmpdst = dst;
@@ -994,8 +1000,8 @@ static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2_lt(uint8_t *sr
 
         if (DrawOverlay & 1)
         {
-            dst = zaldst + 720 * 2 * (Game_OverlayDisplay.ViewportHeight - 2) + (((Game_OverlayDisplay.ViewportX + 1) * 16) / 9);
-            src2 = Game_OverlayDisplay.ScreenViewpartOverlay + (Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportHeight - 2)*2 * 800 + (((Game_OverlayDisplay.ViewportX + 1) * 16) / 9);
+            dst = zaldst + 720 * 2 * (OverlayInfo.ViewportHeight - 2) + (((OverlayInfo.ViewportX + 1) * 16) / 9);
+            src2 = OverlayInfo.ScreenViewpartOverlay + (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight - 2)*2 * 800 + (((OverlayInfo.ViewportX + 1) * 16) / 9);
             for (x = 8; x != 0; x--)
             {
                 dst[0] = Game_Palette[src2[0]].pix;
@@ -1010,8 +1016,8 @@ static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2_lt(uint8_t *sr
 
         if (DrawOverlay & 2)
         {
-            dst = zaldst + 720 * 2 * (Game_OverlayDisplay.ViewportHeight - 2) + (((Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth - 10) * 16) / 9);
-            src2 = Game_OverlayDisplay.ScreenViewpartOverlay + (Game_OverlayDisplay.ViewportY + Game_OverlayDisplay.ViewportHeight - 2)*2 * 800 + (((Game_OverlayDisplay.ViewportX + Game_OverlayDisplay.ViewportWidth - 10) * 16) / 9);
+            dst = zaldst + 720 * 2 * (OverlayInfo.ViewportHeight - 2) + (((OverlayInfo.ViewportX + OverlayInfo.ViewportWidth - 10) * 16) / 9);
+            src2 = OverlayInfo.ScreenViewpartOverlay + (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight - 2)*2 * 800 + (((OverlayInfo.ViewportX + OverlayInfo.ViewportWidth - 10) * 16) / 9);
             for (x = 8; x != 0; x--)
             {
                 dst[0] = Game_Palette[src2[0]].pix;

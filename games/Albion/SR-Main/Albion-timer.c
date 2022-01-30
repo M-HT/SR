@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -55,10 +55,19 @@ void Game_RunTimer(void)
                 if (Game_InterruptTable[9] != NULL)
                 {
                     int ret;
+                    SDL_Event event;
 
                     Game_TimerRunning = 1;
                     ret = Game_ProcessMEvents();
                     if (!ret) Game_ProcessKEvents();
+
+                    event.type = SDL_USEREVENT;
+                    event.user.code = EC_DISPLAY_FLIP_START;
+                    event.user.data1 = NULL;
+                    event.user.data2 = NULL;
+
+                    SDL_PushEvent(&event);
+
                     Game_TimerRunning = 0;
                 }
             }

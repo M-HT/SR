@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,13 +22,11 @@
  *
  */
 
-static int Get_DrawOverlay(uint8_t *src, int display)
+static int Get_DrawOverlay(uint8_t *src, Game_OverlayInfo *OverlayInfo)
 {
     int DrawOverlay;
-    Game_OverlayInfo *OverlayInfo;
 
     DrawOverlay = 0;
-    OverlayInfo = (display)?&Game_OverlayDisplay:&Game_OverlayDraw;
     if ((OverlayInfo->Enhanced3DEngineUsed >= 0) && (OverlayInfo->ViewportWidth != 0))
     {
         uint8_t *ptr;

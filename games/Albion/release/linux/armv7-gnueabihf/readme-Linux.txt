@@ -1,5 +1,5 @@
 Albion for Linux (armv7-gnueabihf)
-Version 1.7.1
+Version 1.7.2
 
 Original Albion version 1.38 is required for playing.
 (English version preferred, but other languages should also work)
@@ -125,6 +125,14 @@ HQX scaler uses neon instructions.
 
 Changes
 -------
+
+v1.7.2 (2022-01-30)
+* ignore repeated keys when using SDL2
+* fix Shift+Key ascii codes
+* add support for inputing characters using Alt codes
+* screen redraw 60 times per second
+* minor bug fixes
+
 
 v1.7.1 (2021-05-21)
 first Linux (armv7-gnueabihf) version

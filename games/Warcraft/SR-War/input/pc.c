@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -67,7 +67,7 @@ static void EmulateDelay(int delay)
 
     pump_event.type = SDL_USEREVENT;
     pump_event.user.code = EC_DELAY;
-    pump_event.user.data1 = (void *) delay;
+    pump_event.user.data1 = (void *)(intptr_t) delay;
     SDL_PushEvent(&pump_event);
 }
 
@@ -78,8 +78,8 @@ static void EmulateMouseButton(int type, int button)
 
     pump_event.type = SDL_USEREVENT;
     pump_event.user.code = EC_INPUT_MOUSE_BUTTON;
-    pump_event.user.data1 = (void *) button;
-    pump_event.user.data2 = (void *) type;
+    pump_event.user.data1 = (void *)(intptr_t) button;
+    pump_event.user.data2 = (void *)(intptr_t) type;
 
     SDL_PushEvent(&pump_event);
 }
@@ -245,8 +245,8 @@ int Handle_Input_Event(SDL_Event *_event)
 
                         SDL_GetMouseState(&mousex, &mousey);
 
-                        _event->type = (int) _event->user.data2;
-                        _event->button.button = (int) _event->user.data1;
+                        _event->type = (intptr_t) _event->user.data2;
+                        _event->button.button = (intptr_t) _event->user.data1;
                         _event->button.state = (_event->type == SDL_MOUSEBUTTONUP)?SDL_RELEASED:SDL_PRESSED;
                         _event->button.x = mousex;
                         _event->button.y = mousey;

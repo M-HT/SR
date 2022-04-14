@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -478,8 +478,8 @@ void Game_RepositionMouse(int mousex, int mousey)
 
     event.type = SDL_USEREVENT;
     event.user.code = EC_MOUSE_SET;
-    event.user.data1 = (void *) Game_Picture2DeviceX((mousex * Game_VideoAspectXR + 32767) >> 16);
-    event.user.data2 = (void *) Game_Picture2DeviceY((mousey * Game_VideoAspectYR + 32767) >> 16);
+    event.user.data1 = (void *)(intptr_t) Game_Picture2DeviceX((mousex * Game_VideoAspectXR + 32767) >> 16);
+    event.user.data2 = (void *)(intptr_t) Game_Picture2DeviceY((mousey * Game_VideoAspectYR + 32767) >> 16);
 
     SDL_PushEvent(&event);
 }

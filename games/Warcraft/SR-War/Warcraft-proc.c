@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -152,7 +152,7 @@ uint64_t Game_fmemcpy(void *dest, uint32_t dest_seg, const void *src, uint32_t s
 {
     uint32_t ret2;
 
-    ret2 = (uint32_t) memcpy(dest, src, n);
+    ret2 = (uintptr_t) memcpy(dest, src, n);
 
     return ret2 + ( ((uint64_t) dest_seg) << 32 );
 }
@@ -161,7 +161,7 @@ uint64_t Game_fmemset(void *s, uint32_t s_seg, int c, size_t n)
 {
     uint32_t ret2;
 
-    ret2 = (uint32_t) memset(s, c, n);
+    ret2 = (uintptr_t) memset(s, c, n);
 
     return ret2 + ( ((uint64_t) s_seg) << 32 );
 }

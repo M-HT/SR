@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -58,7 +58,7 @@ off_t Game_filelength(int fd)
 
 uint64_t Game_dos_getvect(const int32_t intnum)
 {
-    return (uint64_t) ((uint32_t) Game_InterruptTable[intnum & 0xff]);
+    return (uint64_t) ((uintptr_t) Game_InterruptTable[intnum & 0xff]);
 }
 
 #define WATCOM_BUFSIZ 0x1000
@@ -74,7 +74,7 @@ void Game_dos_setvect(const int32_t intnum, const uint32_t handler_low, const ui
     fprintf(stderr, "Setting interrupt vector: %i\n", intnum & 0xff);
 #endif
 
-    Game_InterruptTable[intnum & 0xff] = (void *) handler_low;
+    Game_InterruptTable[intnum & 0xff] = (void *)(uintptr_t) handler_low;
 }
 
 off_t Game_tell(int handle)

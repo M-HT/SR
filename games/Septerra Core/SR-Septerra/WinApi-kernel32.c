@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2020 Roman Pauer
+ *  Copyright (C) 2019-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,6 +26,7 @@
 #define _SVID_SOURCE 1
 #define _DEFAULT_SOURCE 1
 #define _FILE_OFFSET_BITS 64
+#include <inttypes.h>
 #include "WinApi-kernel32.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -349,7 +350,7 @@ uint32_t Beep_c(uint32_t dwFreq, uint32_t dwDuration)
 uint32_t CloseHandle_c(void *hObject)
 {
 #ifdef DEBUG_KERNEL32
-    eprintf("CloseHandle: 0x%x\n", (uintptr_t) hObject);
+    eprintf("CloseHandle: 0x%" PRIxPTR "\n", (uintptr_t) hObject);
 #endif
 
     if (hObject == NULL)
@@ -386,7 +387,7 @@ uint32_t CloseHandle_c(void *hObject)
 #ifdef _WIN32
                 CloseHandle((HANDLE)hPipe->pp);
 #else
-                close((int)hPipe->pp);
+                close((intptr_t)hPipe->pp);
 #endif
             }
 
@@ -406,7 +407,7 @@ uint32_t CloseHandle_c(void *hObject)
 uint32_t CreateDirectoryA_c(const char *lpPathName, void *lpSecurityAttributes)
 {
 #ifdef DEBUG_KERNEL32
-    eprintf("CreateDirectoryA: %s, 0x%x\n", lpPathName, (uintptr_t)lpSecurityAttributes);
+    eprintf("CreateDirectoryA: %s, 0x%" PRIxPTR "\n", lpPathName, (uintptr_t)lpSecurityAttributes);
 #endif
 
     if (lpPathName == NULL)
@@ -635,7 +636,7 @@ void *CreateFileA_c(const char *lpFileName, uint32_t dwDesiredAccess, uint32_t d
     }
 
 #ifdef DEBUG_KERNEL32
-    eprintf("0x%x\n", (uintptr_t)ret);
+    eprintf("0x%" PRIxPTR "\n", (uintptr_t)ret);
 #endif
     return ret;
 }
@@ -653,7 +654,7 @@ uint32_t CreatePipe_c(void **hReadPipe, void **hWritePipe, void *lpPipeAttribute
     int ret;
 
 #ifdef DEBUG_KERNEL32
-    eprintf("CreatePipe: 0x%x, 0x%x, 0x%x, %i - ", (uintptr_t)hReadPipe, (uintptr_t)hWritePipe, (uintptr_t)lpPipeAttributes, nSize);
+    eprintf("CreatePipe: 0x%" PRIxPTR ", 0x%" PRIxPTR ", 0x%" PRIxPTR ", %i - ", (uintptr_t)hReadPipe, (uintptr_t)hWritePipe, (uintptr_t)lpPipeAttributes, nSize);
 #endif
 
     if ((hReadPipe == NULL) || (hWritePipe == NULL))
@@ -703,8 +704,8 @@ uint32_t CreatePipe_c(void **hReadPipe, void **hWritePipe, void *lpPipeAttribute
         }
         else
         {
-            hread->pph.pp = (void *)pipefd[0];
-            hwrite->pph.pp = (void *)pipefd[1];
+            hread->pph.pp = (void *)(intptr_t)pipefd[0];
+            hwrite->pph.pp = (void *)(intptr_t)pipefd[1];
             ret = 1;
         }
 #endif
@@ -724,7 +725,7 @@ uint32_t CreatePipe_c(void **hReadPipe, void **hWritePipe, void *lpPipeAttribute
         *hWritePipe = hwrite;
 
 #ifdef DEBUG_KERNEL32
-        eprintf("OK: 0x%x, 0x%x\n", (uintptr_t)hread, (uintptr_t)hwrite);
+        eprintf("OK: 0x%" PRIxPTR ", 0x%" PRIxPTR "\n", (uintptr_t)hread, (uintptr_t)hwrite);
 #endif
 
         return 1;
@@ -737,7 +738,7 @@ uint32_t CreatePipe_c(void **hReadPipe, void **hWritePipe, void *lpPipeAttribute
 void DeleteCriticalSection_c(void *lpCriticalSection)
 {
 #ifdef DEBUG_KERNEL32
-    eprintf("DeleteCriticalSection: 0x%x\n", (uintptr_t)lpCriticalSection);
+    eprintf("DeleteCriticalSection: 0x%" PRIxPTR "\n", (uintptr_t)lpCriticalSection);
 #endif
 
 #ifdef _WIN32
@@ -761,7 +762,7 @@ uint32_t DeleteFileA_c(const char *lpFileName)
 void EnterCriticalSection_c(void *lpCriticalSection)
 {
 #ifdef DEBUG_KERNEL32
-    eprintf("EnterCriticalSection: 0x%x\n", (uintptr_t)lpCriticalSection);
+    eprintf("EnterCriticalSection: 0x%" PRIxPTR "\n", (uintptr_t)lpCriticalSection);
 #endif
 
 #ifdef _WIN32
@@ -853,7 +854,7 @@ uint32_t FileTimeToSystemTime_c(const void *lpFileTime, void *lpSystemTime)
 uint32_t FindClose_c(void *hFindFile)
 {
 #ifdef DEBUG_KERNEL32
-    eprintf("FindClose: 0x%x\n", (uintptr_t) hFindFile);
+    eprintf("FindClose: 0x%" PRIxPTR "\n", (uintptr_t) hFindFile);
 #endif
 
     if (hFindFile == NULL)
@@ -908,7 +909,7 @@ void *FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
     handle ret;
 
 #ifdef DEBUG_KERNEL32
-    eprintf("FindFirstFileA: %s, 0x%x\n", lpFileName, (uintptr_t) lpFindFileData);
+    eprintf("FindFirstFileA: %s, 0x%" PRIxPTR "\n", lpFileName, (uintptr_t) lpFindFileData);
 #endif
 
     if ((lpFileName == NULL) || (lpFindFileData == NULL))
@@ -1161,7 +1162,7 @@ void *FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
 uint32_t FindNextFileA_c(void *hFindFile, void *lpFindFileData)
 {
 #ifdef DEBUG_KERNEL32
-    eprintf("FindNextFileA: 0x%x, 0x%x\n", (uintptr_t) hFindFile, (uintptr_t) lpFindFileData);
+    eprintf("FindNextFileA: 0x%" PRIxPTR ", 0x%" PRIxPTR "\n", (uintptr_t) hFindFile, (uintptr_t) lpFindFileData);
 #endif
 
     if (hFindFile == NULL || lpFindFileData == NULL)
@@ -1268,7 +1269,7 @@ uint32_t GetFullPathNameA_c(const char *lpFileName, uint32_t nBufferLength, char
     char *p1, *p2;
 
 #ifdef DEBUG_KERNEL32
-    eprintf("GetFullPathNameA: %s, %i, 0x%x, 0x%x\n", lpFileName, nBufferLength, (uintptr_t)lpBuffer, (uintptr_t)lpFilePart);
+    eprintf("GetFullPathNameA: %s, %i, 0x%" PRIxPTR ", 0x%" PRIxPTR "\n", lpFileName, nBufferLength, (uintptr_t)lpBuffer, (uintptr_t)lpFilePart);
 #endif
 
     if (lpFileName == NULL)
@@ -1335,7 +1336,7 @@ uint32_t GetPrivateProfileStringA_c(const char *lpAppName, const char *lpKeyName
     char buf[8192];
 
 #ifdef DEBUG_KERNEL32
-    eprintf("GetPrivateProfileStringA: %s, %s, %s, %i, %i, %s\n", lpAppName, lpKeyName, lpDefault, (int)lpReturnedString, nSize, lpFileName);
+    eprintf("GetPrivateProfileStringA: %s, %s, %s, 0x%" PRIxPTR ", %i, %s\n", lpAppName, lpKeyName, lpDefault, (uintptr_t)lpReturnedString, nSize, lpFileName);
 #endif
 
     if ((lpReturnedString == NULL) || (nSize == 0))
@@ -1606,7 +1607,7 @@ uint32_t GetPrivateProfileStringA_c(const char *lpAppName, const char *lpKeyName
 void InitializeCriticalSection_c(void *lpCriticalSection)
 {
 #ifdef DEBUG_KERNEL32
-    eprintf("InitializeCriticalSection: 0x%x\n", (uintptr_t)lpCriticalSection);
+    eprintf("InitializeCriticalSection: 0x%" PRIxPTR "\n", (uintptr_t)lpCriticalSection);
 #endif
 
 #ifdef _WIN32
@@ -1636,7 +1637,7 @@ InitializeCriticalSection_error:
 void LeaveCriticalSection_c(void *lpCriticalSection)
 {
 #ifdef DEBUG_KERNEL32
-    eprintf("LeaveCriticalSection: 0x%x\n", (uintptr_t)lpCriticalSection);
+    eprintf("LeaveCriticalSection: 0x%" PRIxPTR "\n", (uintptr_t)lpCriticalSection);
 #endif
 
 #ifdef _WIN32
@@ -1673,7 +1674,7 @@ uint32_t QueryPerformanceFrequency_c(void *lpFrequency)
 uint32_t ReadFile_c(void *hFile, void *lpBuffer, uint32_t nNumberOfBytesToRead, uint32_t *lpNumberOfBytesRead, void *lpOverlapped)
 {
 #ifdef DEBUG_KERNEL32
-    eprintf("ReadFile: 0x%x, %i\n", (uintptr_t) hFile, nNumberOfBytesToRead);
+    eprintf("ReadFile: 0x%" PRIxPTR ", %i\n", (uintptr_t) hFile, nNumberOfBytesToRead);
 #endif
 
     if (lpNumberOfBytesRead != NULL)
@@ -1712,7 +1713,7 @@ uint32_t ReadFile_c(void *hFile, void *lpBuffer, uint32_t nNumberOfBytesToRead, 
 #else
         ssize_t ret;
 
-        ret = read((int)((handle)hFile)->pph.pp, lpBuffer, nNumberOfBytesToRead);
+        ret = read((intptr_t)((handle)hFile)->pph.pp, lpBuffer, nNumberOfBytesToRead);
 
         if (ret == -1)
         {
@@ -1819,7 +1820,7 @@ uint32_t SetFilePointer_c(void *hFile, uint32_t lDistanceToMove, uint32_t *lpDis
 uint32_t SetPriorityClass_c(void *hProcess, uint32_t fdwPriority)
 {
 #ifdef DEBUG_KERNEL32
-    eprintf("SetPriorityClass: %i, %i\n", (intptr_t) hProcess, fdwPriority);
+    eprintf("SetPriorityClass: 0x%" PRIxPTR ", %i\n", (uintptr_t) hProcess, fdwPriority);
 #endif
 
     if (((intptr_t)hProcess) == -1)
@@ -1839,7 +1840,7 @@ uint32_t SetPriorityClass_c(void *hProcess, uint32_t fdwPriority)
 uint32_t SetThreadPriority_c(void *hThread, int32_t nPriority)
 {
 #ifdef DEBUG_KERNEL32
-    eprintf("SetThreadPriority: %i, %i\n", (intptr_t) hThread, nPriority);
+    eprintf("SetThreadPriority: 0x%" PRIxPTR ", %i\n", (uintptr_t) hThread, nPriority);
 #endif
 
     if (((intptr_t)hThread) == -2)
@@ -1895,7 +1896,7 @@ void Sleep_c(uint32_t cMilliseconds)
 uint32_t WriteFile_c(void *hFile, const void *lpBuffer, uint32_t nNumberOfBytesToWrite, uint32_t *lpNumberOfBytesWritten, void *lpOverlapped)
 {
 #ifdef DEBUG_KERNEL32
-    eprintf("WriteFile: 0x%x, %i\n", (uintptr_t) hFile, nNumberOfBytesToWrite);
+    eprintf("WriteFile: 0x%" PRIxPTR ", %i\n", (uintptr_t) hFile, nNumberOfBytesToWrite);
 #endif
 
     if (lpNumberOfBytesWritten != NULL)
@@ -1934,7 +1935,7 @@ uint32_t WriteFile_c(void *hFile, const void *lpBuffer, uint32_t nNumberOfBytesT
 #else
         ssize_t ret;
 
-        ret = write((int)((handle)hFile)->pph.pp, lpBuffer, nNumberOfBytesToWrite);
+        ret = write((intptr_t)((handle)hFile)->pph.pp, lpBuffer, nNumberOfBytesToWrite);
 
         if (ret == -1)
         {

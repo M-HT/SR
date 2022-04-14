@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2020 Roman Pauer
+ *  Copyright (C) 2019-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -23,6 +23,7 @@
  */
 
 #define _FILE_OFFSET_BITS 64
+#include <inttypes.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "CLIB.h"
@@ -57,7 +58,7 @@ extern void run_thread_asm(void *arglist, void(*start_address)(void *));
 void *memset_c(void *s, int32_t c, uint32_t n)
 {
 #ifdef DEBUG_CLIB
-    eprintf("memset: 0x%x, 0x%x, %i\n", (uintptr_t) s, c, n);
+    eprintf("memset: 0x%" PRIxPTR ", 0x%x, %i\n", (uintptr_t) s, c, n);
 #endif
 
     return memset(s, c, n);
@@ -66,7 +67,7 @@ void *memset_c(void *s, int32_t c, uint32_t n)
 void *memcpy_c(void *dest, const void *src, uint32_t n)
 {
 #ifdef DEBUG_CLIB
-    eprintf("memcpy: 0x%x, 0x%x, %i\n", (uintptr_t) dest, (uintptr_t) src, n);
+    eprintf("memcpy: 0x%" PRIxPTR ", 0x%" PRIxPTR ", %i\n", (uintptr_t) dest, (uintptr_t) src, n);
 #endif
 
     // either IDA misidentified memmove as memcpy
@@ -79,7 +80,7 @@ void *memcpy_c(void *dest, const void *src, uint32_t n)
 int32_t _stricmp_c(const char *s1, const char *s2)
 {
 #ifdef DEBUG_CLIB
-    eprintf("_stricmp: 0x%x (%s), 0x%x (%s) - %i\n", (uintptr_t) s1, s1, (uintptr_t) s2, s2, strcasecmp(s1, s2));
+    eprintf("_stricmp: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s) - %i\n", (uintptr_t) s1, s1, (uintptr_t) s2, s2, strcasecmp(s1, s2));
 #endif
 
     return strcasecmp(s1, s2);
@@ -88,7 +89,7 @@ int32_t _stricmp_c(const char *s1, const char *s2)
 char *strncpy_c(char *dest, const char *src, uint32_t n)
 {
 #ifdef DEBUG_CLIB
-    eprintf("strncpy: 0x%x, 0x%x (%s), %i\n", (uintptr_t) dest, (uintptr_t) src, src, n);
+    eprintf("strncpy: 0x%" PRIxPTR ", 0x%" PRIxPTR " (%s), %i\n", (uintptr_t) dest, (uintptr_t) src, src, n);
 #endif
 
     return strncpy(dest, src, n);
@@ -97,7 +98,7 @@ char *strncpy_c(char *dest, const char *src, uint32_t n)
 int32_t strncmp_c(const char *s1, const char *s2, uint32_t n)
 {
 #ifdef DEBUG_CLIB
-    eprintf("strncmp: 0x%x (%s), 0x%x (%s), %i - %i\n", (uintptr_t) s1, s1, (uintptr_t) s2, s2, n, strncmp(s1, s2, n));
+    eprintf("strncmp: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s), %i - %i\n", (uintptr_t) s1, s1, (uintptr_t) s2, s2, n, strncmp(s1, s2, n));
 #endif
 
     return strncmp(s1, s2, n);
@@ -106,7 +107,7 @@ int32_t strncmp_c(const char *s1, const char *s2, uint32_t n)
 char *strncat_c(char *dest, const char *src, uint32_t n)
 {
 #ifdef DEBUG_CLIB
-    eprintf("strncat: 0x%x (%s), 0x%x (%s), %i\n", (uintptr_t) dest, dest, (uintptr_t) src, src, n);
+    eprintf("strncat: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s), %i\n", (uintptr_t) dest, dest, (uintptr_t) src, src, n);
 #endif
 
     return strncat(dest, src, n);
@@ -115,7 +116,7 @@ char *strncat_c(char *dest, const char *src, uint32_t n)
 int32_t _strnicmp_c(const char *s1, const char *s2, uint32_t n)
 {
 #ifdef DEBUG_CLIB
-    eprintf("_strnicmp: 0x%x (%s), 0x%x (%s), %i - %i\n", (uintptr_t) s1, s1, (uintptr_t) s2, s2, n, strncasecmp(s1, s2, n));
+    eprintf("_strnicmp: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s), %i - %i\n", (uintptr_t) s1, s1, (uintptr_t) s2, s2, n, strncasecmp(s1, s2, n));
 #endif
 
     return strncasecmp(s1, s2, n);
@@ -134,7 +135,7 @@ void *malloc_c(uint32_t size)
 void free_c(void *ptr)
 {
 #ifdef DEBUG_CLIB
-    eprintf("free: 0x%x\n", (uintptr_t) ptr);
+    eprintf("free: 0x%" PRIxPTR "\n", (uintptr_t) ptr);
 #endif
 
     free(ptr);
@@ -153,7 +154,7 @@ void *calloc_c(uint32_t nmemb, uint32_t size)
 int32_t atol_c(const char *nptr)
 {
 #ifdef DEBUG_CLIB
-    eprintf("atol: 0x%x (%s) - %i\n", (uintptr_t) nptr, nptr, (int)atol(nptr));
+    eprintf("atol: 0x%" PRIxPTR " (%s) - %i\n", (uintptr_t) nptr, nptr, (int)atol(nptr));
 #endif
 
     return atol(nptr);
@@ -174,7 +175,7 @@ int32_t sscanf2_c(const char *str, const char *format, va_list ap)
     int res;
 
 #ifdef DEBUG_CLIB
-    eprintf("sscanf: 0x%x (%s), 0x%x (%s) - ", (uintptr_t) str, str, (uintptr_t) format, format);
+    eprintf("sscanf: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s) - ", (uintptr_t) str, str, (uintptr_t) format, format);
 #endif
 
     res = vsscanf(str, format, ap);
@@ -190,7 +191,7 @@ int32_t sscanf2_c(const char *str, const char *format, va_list ap)
 uint32_t fread_c(void *ptr, uint32_t size, uint32_t nmemb, void *stream)
 {
 #ifdef DEBUG_CLIB
-    eprintf("fread: 0x%x, %i, %i, 0x%x\n", (uintptr_t) ptr, size, nmemb, (uintptr_t) stream);
+    eprintf("fread: 0x%" PRIxPTR ", %i, %i, 0x%" PRIxPTR "\n", (uintptr_t) ptr, size, nmemb, (uintptr_t) stream);
 #endif
 
     return fread(ptr, size, nmemb, (FILE *) stream);
@@ -199,7 +200,7 @@ uint32_t fread_c(void *ptr, uint32_t size, uint32_t nmemb, void *stream)
 int32_t ftell_c(void *stream)
 {
 #ifdef DEBUG_CLIB
-    eprintf("ftell: 0x%x - %i\n", (uintptr_t) stream, (int)ftell((FILE *) stream));
+    eprintf("ftell: 0x%" PRIxPTR " - %i\n", (uintptr_t) stream, (int)ftell((FILE *) stream));
 #endif
 
     return ftell((FILE *) stream);
@@ -208,7 +209,7 @@ int32_t ftell_c(void *stream)
 int32_t fseek_c(void *stream, int32_t offset, int32_t whence)
 {
 #ifdef DEBUG_CLIB
-    eprintf("fseek: 0x%x, %i, %i\n", (uintptr_t) stream, offset, whence);
+    eprintf("fseek: 0x%" PRIxPTR ", %i, %i\n", (uintptr_t) stream, offset, whence);
 #endif
 
     return fseek((FILE *) stream, offset, whence);
@@ -217,7 +218,7 @@ int32_t fseek_c(void *stream, int32_t offset, int32_t whence)
 void *fopen_c(const char *path, const char *mode)
 {
 #ifdef DEBUG_CLIB
-    eprintf("fopen: 0x%x (%s), 0x%x (%s)\n", (uintptr_t) path, path, (uintptr_t) mode, mode);
+    eprintf("fopen: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s)\n", (uintptr_t) path, path, (uintptr_t) mode, mode);
 #endif
 
 #ifdef _WIN32
@@ -233,7 +234,7 @@ void *fopen_c(const char *path, const char *mode)
 int32_t fclose_c(void *fp)
 {
 #ifdef DEBUG_CLIB
-    eprintf("fclose: 0x%x\n", (uintptr_t) fp);
+    eprintf("fclose: 0x%" PRIxPTR "\n", (uintptr_t) fp);
 #endif
 
     return fclose((FILE *) fp);
@@ -243,7 +244,7 @@ int32_t fclose_c(void *fp)
 int32_t system_c(const char *command)
 {
 #ifdef DEBUG_CLIB
-    eprintf("system: 0x%x (%s)\n", (uintptr_t) command, command);
+    eprintf("system: 0x%" PRIxPTR " (%s)\n", (uintptr_t) command, command);
 #endif
 
     return 0;
@@ -316,7 +317,7 @@ static void *run_thread(void *arg)
 uint32_t _beginthread_c(void(*start_address)(void *), uint32_t stack_size, void *arglist)
 {
 #ifdef DEBUG_CLIB
-    eprintf("_beginthread: 0x%x, %i, 0x%x\n", (uintptr_t) start_address, stack_size, (uintptr_t) arglist);
+    eprintf("_beginthread: 0x%" PRIxPTR ", %i, 0x%" PRIxPTR "\n", (uintptr_t) start_address, stack_size, (uintptr_t) arglist);
 #endif
 
 #ifdef _WIN32

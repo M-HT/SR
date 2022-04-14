@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -163,7 +163,7 @@ static void *A_create_wave_synthetizer(void *wave_lib)
         strcpy(patch_header->Magic1, "GF1PATCH110");
         strcpy(patch_header->Magic2, "ID#000002");
 
-        sprintf(&(patch_header->Description[2]), "%i |%i|%i|patch-%i.pat\n", wave[index].patch, (int)patch_header, sizeof(_patch_header) + sizeof(_sample_header) + sample_size, wave[index].patch);
+        sprintf(&(patch_header->Description[2]), "%i |%li|%li|patch-%i.pat\n", wave[index].patch, (long int)patch_header, (long int)(sizeof(_patch_header) + sizeof(_sample_header) + sample_size), wave[index].patch);
         patch_header->Description[1] = strlen(&(patch_header->Description[2]));
         config_size += patch_header->Description[1];
 
@@ -272,7 +272,7 @@ static void *A_create_wave_synthetizer(void *wave_lib)
     config_file = (char *)malloc(config_size);
     if (config_file == NULL) goto create_wave_synthetizer_error1;
 
-    sprintf(config_name, "|%i|%i|timidity.cfg", (int)config_file, config_size);
+    sprintf(config_name, "|%li|%li|timidity.cfg", (long int)config_file, (long int)config_size);
 
     config_size = 0;
     for (index = 0; index < num_patches; index++)

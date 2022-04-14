@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,6 +22,7 @@
  *
  */
 
+#include <inttypes.h>
 #include "CLIB-asm-x86.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -58,7 +59,7 @@ int32_t sprintf2_c(char *str, const char *format, va_list ap)
     int res;
 
 #ifdef DEBUG_CLIB
-    eprintf("sprintf: 0x%x, 0x%x (%s) - ", (uintptr_t) str, (uintptr_t) format, format);
+    eprintf("sprintf: 0x%" PRIxPTR ", 0x%" PRIxPTR " (%s) - ", (uintptr_t) str, (uintptr_t) format, format);
 #endif
 
     res = vsprintf(str, format, ap);
@@ -94,7 +95,7 @@ uint64_t _time64_c(uint64_t *t64)
     time_t t;
 
 #ifdef DEBUG_CLIB
-    eprintf("_time64: 0x%x\n", (uintptr_t) t64);
+    eprintf("_time64: 0x%" PRIxPTR "\n", (uintptr_t) t64);
 #endif
 
     t = time(NULL);

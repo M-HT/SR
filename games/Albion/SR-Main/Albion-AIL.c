@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018 Roman Pauer
+ *  Copyright (C) 2018-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,6 +22,7 @@
  *
  */
 
+#include <inttypes.h>
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Albion-AIL.h"
@@ -34,7 +35,7 @@ extern uint8_t AIL_error[256];
 void *Game_AIL_mem_use_malloc(void * (*fn)(uint32_t))
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_mem_use_malloc: 0x%x\n", (uint32_t) fn);
+    fprintf(stderr, "AIL_mem_use_malloc: 0x%" PRIxPTR "\n", (uintptr_t) fn);
 #endif
     return NULL;
 }
@@ -42,7 +43,7 @@ void *Game_AIL_mem_use_malloc(void * (*fn)(uint32_t))
 void *Game_AIL_mem_use_free(void (*fn)(void *))
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_mem_use_free: 0x%x\n", (uint32_t) fn);
+    fprintf(stderr, "AIL_mem_use_free: 0x%" PRIxPTR "\n", (uintptr_t) fn);
 #endif
     return NULL;
 }
@@ -58,7 +59,7 @@ void Game_AIL_startup(void)
 int32_t Game_AIL_register_timer(void (*callback_fn)(uint32_t user))
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_register_timer: 0x%x\n", (uint32_t) callback_fn);
+    fprintf(stderr, "AIL_register_timer: 0x%" PRIxPTR "\n", (uintptr_t) callback_fn);
 #endif
     return 1;
 }
@@ -110,7 +111,7 @@ void Game_AIL_set_GTL_filename_prefix(char *prefix)
 int32_t Game_AIL_install_MDI_INI(void *mdi)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_install_MDI_INI: 0x%x\n", (uint32_t) mdi);
+    fprintf(stderr, "AIL_install_MDI_INI: 0x%" PRIxPTR "\n", (uintptr_t) mdi);
 #endif
     return (Game_Music)?0:1;
 }
@@ -152,7 +153,7 @@ number:
 int32_t Game_AIL_install_DIG_INI(void *dig)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_install_DIG_INI: 0x%x\n", (uint32_t) dig);
+    fprintf(stderr, "AIL_install_DIG_INI: 0x%" PRIxPTR "\n", (uintptr_t) dig);
 #endif
     return (Game_Sound)?0:1;
 }
@@ -160,14 +161,14 @@ int32_t Game_AIL_install_DIG_INI(void *dig)
 void Game_AIL_uninstall_DIG_driver(void *dig)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_uninstall_DIG_driver: 0x%x\n", (uint32_t) dig);
+    fprintf(stderr, "AIL_uninstall_DIG_driver: 0x%" PRIxPTR "\n", (uintptr_t) dig);
 #endif
 }
 
 void Game_AIL_uninstall_MDI_driver(void *mdi)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_uninstall_MDI_driver: 0x%x\n", (uint32_t) mdi);
+    fprintf(stderr, "AIL_uninstall_MDI_driver: 0x%" PRIxPTR "\n", (uintptr_t) mdi);
 #endif
 }
 

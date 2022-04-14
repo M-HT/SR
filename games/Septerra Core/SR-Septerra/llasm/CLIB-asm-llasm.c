@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,6 +22,7 @@
  *
  */
 
+#include <inttypes.h>
 #include "CLIB-asm-llasm.h"
 #include <stdio.h>
 #include <time.h>
@@ -36,7 +37,7 @@ int32_t sprintf2_c(char *str, const char *format, uint32_t *ap)
     int res;
 
 #ifdef DEBUG_CLIB
-    eprintf("sprintf: 0x%x, 0x%x (%s) - ", (uintptr_t) str, (uintptr_t) format, format);
+    eprintf("sprintf: 0x%" PRIxPTR ", 0x%" PRIxPTR " (%s) - ", (uintptr_t) str, (uintptr_t) format, format);
 #endif
 
     res = vsprintf_x86(str, format, ap);

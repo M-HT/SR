@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,6 +22,7 @@
  *
  */
 
+#include <inttypes.h>
 #include <malloc.h>
 #include <string.h>
 #ifdef USE_SDL2
@@ -81,7 +82,7 @@ AIL_sample *Game_AIL_allocate_sample_handle(void *dig)
     }
 
 #if defined(__DEBUG__)
-    fprintf(stderr, "return: 0x%x\n", (uint32_t) ret);
+    fprintf(stderr, "return: 0x%" PRIxPTR "\n", (uintptr_t) ret);
 #endif
 
     memset(ret, 0, sizeof(AIL_sample));
@@ -96,7 +97,7 @@ void Game_AIL_release_sample_handle(AIL_sample *S)
     Game_sample *sample;
 
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_release_sample_handle: 0x%x\n", (uint32_t) S);
+    fprintf(stderr, "AIL_release_sample_handle: 0x%" PRIxPTR "\n", (uintptr_t) S);
 #endif
 
     S->EOS = NULL;
@@ -139,7 +140,7 @@ void Game_AIL_release_sample_handle(AIL_sample *S)
 void Game_AIL_init_sample(AIL_sample *S)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_init_sample: 0x%x\n", (uint32_t) S);
+    fprintf(stderr, "AIL_init_sample: 0x%" PRIxPTR "\n", (uintptr_t) S);
 #endif
 
     S->channel_num = -1;
@@ -160,7 +161,7 @@ void Game_AIL_init_sample(AIL_sample *S)
 void Game_AIL_set_sample_address(AIL_sample *S, void *start, uint32_t len)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_set_sample_address: 0x%x, 0x%x, %i\n", (uint32_t) S, (uint32_t) start, len);
+    fprintf(stderr, "AIL_set_sample_address: 0x%" PRIxPTR ", 0x%" PRIxPTR ", %i\n", (uintptr_t) S, (uintptr_t) start, len);
 #endif
 
     S->start = start;
@@ -170,7 +171,7 @@ void Game_AIL_set_sample_address(AIL_sample *S, void *start, uint32_t len)
 void Game_AIL_set_sample_type(AIL_sample *S, int32_t format, uint32_t flags)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_set_sample_type: 0x%x, 0x%x, %i\n", (uint32_t) S, format, flags);
+    fprintf(stderr, "AIL_set_sample_type: 0x%" PRIxPTR ", 0x%x, %i\n", (uintptr_t) S, format, flags);
 #endif
 
     S->_stereo = (format & 2)?1:0;
@@ -263,7 +264,7 @@ static uint32_t Get_Resampled_Size(int _stereo, int _16bit, uint32_t src_rate, u
     }
 }
 
-void Resample(int _stereo, int _16bit, uint32_t src_rate, uint32_t dst_rate, uint8_t *srcbuf, uint8_t *dstbuf, uint32_t dst_size)
+static void Resample(int _stereo, int _16bit, uint32_t src_rate, uint32_t dst_rate, uint8_t *srcbuf, uint8_t *dstbuf, uint32_t dst_size)
 {
     if (src_rate <= dst_rate)
     {
@@ -549,7 +550,7 @@ static void Interpolated_Resample(int _stereo, int _16bit, int _signed, uint32_t
 void Game_AIL_start_sample(AIL_sample *S)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_start_sample: 0x%x\n", (uint32_t) S);
+    fprintf(stderr, "AIL_start_sample: 0x%" PRIxPTR "\n", (uintptr_t) S);
 #endif
 
     /* allocate channel */
@@ -934,7 +935,7 @@ void Game_AIL_end_sample(AIL_sample *S)
     AIL_sample_CB EOS;
 
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_end_sample: 0x%x\n", (uint32_t) S);
+    fprintf(stderr, "AIL_end_sample: 0x%" PRIxPTR "\n", (uintptr_t) S);
 #endif
 
     EOS = S->EOS;
@@ -964,7 +965,7 @@ void Game_AIL_end_sample(AIL_sample *S)
 void Game_AIL_set_sample_playback_rate(AIL_sample *S, int32_t playback_rate)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_set_sample_playback_rate: 0x%x, %i\n", (uint32_t) S, playback_rate);
+    fprintf(stderr, "AIL_set_sample_playback_rate: 0x%" PRIxPTR ", %i\n", (uintptr_t) S, playback_rate);
 #endif
 
     S->playback_rate = playback_rate;
@@ -973,7 +974,7 @@ void Game_AIL_set_sample_playback_rate(AIL_sample *S, int32_t playback_rate)
 void Game_AIL_set_sample_volume(AIL_sample *S, int32_t volume)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_set_sample_volume: 0x%x, %i\n", (uint32_t) S, volume);
+    fprintf(stderr, "AIL_set_sample_volume: 0x%" PRIxPTR ", %i\n", (uintptr_t) S, volume);
 #endif
 
     S->volume = volume; /* 0-127 */
@@ -982,7 +983,7 @@ void Game_AIL_set_sample_volume(AIL_sample *S, int32_t volume)
 void Game_AIL_set_sample_pan(AIL_sample *S, int32_t pan)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_set_sample_pan: 0x%x, %i\n", (uint32_t) S, pan);
+    fprintf(stderr, "AIL_set_sample_pan: 0x%" PRIxPTR ", %i\n", (uintptr_t) S, pan);
 #endif
 
     S->pan = pan; /* 0-127 */
@@ -991,7 +992,7 @@ void Game_AIL_set_sample_pan(AIL_sample *S, int32_t pan)
 void Game_AIL_set_sample_loop_count(AIL_sample *S, int32_t loop_count)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_set_sample_loop_count: 0x%x, %i\n", (uint32_t) S, loop_count);
+    fprintf(stderr, "AIL_set_sample_loop_count: 0x%" PRIxPTR ", %i\n", (uintptr_t) S, loop_count);
 #endif
 
     S->loop_count = loop_count;
@@ -1019,7 +1020,7 @@ uint32_t Game_AIL_sample_status(AIL_sample *S)
 */
 
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_sample_status: 0x%x  return: %i\n", (uint32_t) S, ret);
+    fprintf(stderr, "AIL_sample_status: 0x%" PRIxPTR "  return: %i\n", (uintptr_t) S, ret);
 #endif
 
     return ret;

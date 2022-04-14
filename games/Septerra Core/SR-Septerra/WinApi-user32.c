@@ -22,6 +22,7 @@
  *
  */
 
+#include <inttypes.h>
 #include "WinApi-user32.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -1421,7 +1422,7 @@ void *CreateWindowExA_c(uint32_t dwExStyle, const char *lpClassName, const char 
 uint32_t DefWindowProcA_c(void *hWnd, uint32_t Msg, uint32_t wParam, uint32_t lParam)
 {
 #ifdef DEBUG_USER32
-    eprintf("DefWindowProcA: 0x%x, 0x%x, 0x%x, 0x%x\n", (uintptr_t)hWnd, Msg, wParam, lParam);
+    eprintf("DefWindowProcA: 0x%" PRIxPTR ", 0x%x, 0x%x, 0x%x\n", (uintptr_t)hWnd, Msg, wParam, lParam);
 #endif
 
     return 0;
@@ -1492,7 +1493,7 @@ uint32_t GetCursorPos_c(void *lpPoint)
     int x, y;
 
 #ifdef DEBUG_USER32
-    eprintf("GetCursorPos: 0x%x - ", (uintptr_t)lpPoint);
+    eprintf("GetCursorPos: 0x%" PRIxPTR " - ", (uintptr_t)lpPoint);
 #endif
 
     SDL_GetMouseState(&x, &y);
@@ -1525,7 +1526,7 @@ int16_t GetKeyState_c(int32_t nVirtKey)
 uint32_t GetMessageA_c(void *lpMsg, void *hWnd, uint32_t wMsgFilterMin, uint32_t wMsgFilterMax)
 {
 #ifdef DEBUG_USER32
-    eprintf("GetMessageA: %i, %i, %i\n", (intptr_t)hWnd, wMsgFilterMin, wMsgFilterMax);
+    eprintf("GetMessageA: 0x%" PRIxPTR ", %i, %i\n", (intptr_t)hWnd, wMsgFilterMin, wMsgFilterMax);
 #endif
 
     if (lpMsg == NULL)
@@ -1598,22 +1599,22 @@ int32_t GetSystemMetrics_c(int32_t nIndex)
 void *LoadCursorA_c(void *hInstance, const char *lpCursorName)
 {
 #ifdef DEBUG_USER32
-    if ( (((uint32_t)lpCursorName) & 0xffff0000) == 0 )
+    if ( (((uintptr_t)lpCursorName) & ~(uintptr_t)0xffff) == 0 )
     {
-        eprintf("LoadCursorA: %i, %i\n", (int) hInstance, (int32_t) lpCursorName);
+        eprintf("LoadCursorA: 0x%" PRIxPTR ", %i\n", (uintptr_t) hInstance, (int32_t)(intptr_t) lpCursorName);
     }
     else
     {
-        eprintf("LoadCursorA: %i, %s\n", (int) hInstance, lpCursorName);
+        eprintf("LoadCursorA: 0x%" PRIxPTR ", %s\n", (uintptr_t) hInstance, lpCursorName);
     }
 #endif
 
-    if ((hInstance == NULL) && ((((uint32_t)lpCursorName) & 0xffff0000) == 0))
+    if ((hInstance == NULL) && ((((uintptr_t)lpCursorName) & ~(uintptr_t)0xffff) == 0))
     {
         uint32_t predefined_cursor;
         SDL_Cursor* cursor;
 
-        predefined_cursor = (uint32_t)lpCursorName;
+        predefined_cursor = (uintptr_t)lpCursorName;
 
         if (predefined_cursor == 32514) // IDC_WAIT
         {
@@ -1685,13 +1686,13 @@ void *LoadCursorA_c(void *hInstance, const char *lpCursorName)
 void *LoadIconA_c(void *hInstance, const char *lpIconName)
 {
 #ifdef DEBUG_USER32
-    if ( (((uint32_t)lpIconName) & 0xffff0000) == 0 )
+    if ( (((uintptr_t)lpIconName) & ~(uintptr_t)0xffff) == 0 )
     {
-        eprintf("LoadIconA: %i, %i\n", (int) hInstance, (int32_t) lpIconName);
+        eprintf("LoadIconA: 0x%" PRIxPTR ", %i\n", (uintptr_t) hInstance, (int32_t)(intptr_t) lpIconName);
     }
     else
     {
-        eprintf("LoadIconA: %i, %s\n", (int) hInstance, lpIconName);
+        eprintf("LoadIconA: 0x%" PRIxPTR ", %s\n", (uintptr_t) hInstance, lpIconName);
     }
 #endif
 
@@ -1707,7 +1708,7 @@ void *LoadImageA_c(void *hinst, const char *lpszName, uint32_t uType, int32_t cx
 #endif
 
 #ifdef DEBUG_USER32
-    eprintf("LoadImageA: %i, %s, %i, %i, %i, %i\n", (int) hinst, lpszName, uType, cxDesired, cyDesired, fuLoad);
+    eprintf("LoadImageA: 0x%" PRIxPTR ", %s, %i, %i, %i, %i\n", (uintptr_t) hinst, lpszName, uType, cxDesired, cyDesired, fuLoad);
 #endif
 
     if ((uType == IMAGE_BITMAP) && (fuLoad == LR_LOADFROMFILE))
@@ -1885,7 +1886,7 @@ uint32_t MessageBoxA_c(void *hWnd, const char *lpText, const char *lpCaption, ui
 uint32_t OffsetRect_c(void *lprc, int32_t dx, int32_t dy)
 {
 #ifdef DEBUG_USER32
-    eprintf("OffsetRect: 0x%x, %i, %i\n", (intptr_t)lprc, dx, dy);
+    eprintf("OffsetRect: 0x%" PRIxPTR ", %i, %i\n", (intptr_t)lprc, dx, dy);
 #endif
 
     if (lprc == NULL) return 0;
@@ -1901,7 +1902,7 @@ uint32_t OffsetRect_c(void *lprc, int32_t dx, int32_t dy)
 uint32_t PeekMessageA_c(void *lpMsg, void *hWnd, uint32_t wMsgFilterMin, uint32_t wMsgFilterMax, uint32_t wRemoveMsg)
 {
 #ifdef DEBUG_USER32
-    eprintf("PeekMessageA: %i, %i, %i, %i\n", (intptr_t)hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
+    eprintf("PeekMessageA: 0x%" PRIxPTR ", %i, %i, %i\n", (uintptr_t)hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
 #endif
 
     if ((hWnd == NULL) && (wMsgFilterMin == 0) && (wMsgFilterMax == 0) && ((wRemoveMsg == 0) || (wRemoveMsg == 1)))
@@ -1925,7 +1926,7 @@ uint32_t PeekMessageA_c(void *lpMsg, void *hWnd, uint32_t wMsgFilterMin, uint32_
 uint32_t PostMessageA_c(void *hWnd, uint32_t Msg, uint32_t wParam, uint32_t lParam)
 {
 #ifdef DEBUG_USER32
-    eprintf("PostMessageA: 0x%x, %i, %i, %i\n", (uintptr_t)hWnd, Msg, wParam, lParam);
+    eprintf("PostMessageA: 0x%" PRIxPTR ", %i, %i, %i\n", (uintptr_t)hWnd, Msg, wParam, lParam);
 #endif
 
     if (((uintptr_t)hWnd == 1) && (Msg >= WM_USER) && (Msg < WM_APP))
@@ -1949,7 +1950,7 @@ void PostQuitMessage_c(int32_t nExitCode)
 
     event.type = SDL_USEREVENT;
     event.user.code = 0;
-    event.user.data1 = (void *)nExitCode;
+    event.user.data1 = (void *)(intptr_t)nExitCode;
     event.user.data2 = NULL;
     SDL_PushEvent(&event);
 }
@@ -1983,7 +1984,7 @@ void *SetCursor_c(void *hCursor)
 {
     SDL_Cursor *old_cursor;
 #ifdef DEBUG_USER32
-    eprintf("SetCursor: 0x%x\n", (uintptr_t) hCursor);
+    eprintf("SetCursor: 0x%" PRIxPTR "\n", (uintptr_t) hCursor);
 #endif
 
     old_cursor = SDL_GetCursor();
@@ -2013,7 +2014,7 @@ uint32_t SetCursorPos_c(int32_t X, int32_t Y)
 void *SetFocus_c(void *hWnd)
 {
 #ifdef DEBUG_USER32
-    eprintf("SetFocus: %i\n", (int) hWnd);
+    eprintf("SetFocus: 0x%" PRIxPTR "\n", (uintptr_t) hWnd);
 #endif
 
     return hWnd;
@@ -2048,7 +2049,7 @@ int32_t ShowCursor_c(uint32_t bShow)
 uint32_t ShowWindow_c(void *hWnd, int32_t nCmdShow)
 {
 #ifdef DEBUG_USER32
-    eprintf("ShowWindow: %i, %i\n", (int)hWnd, nCmdShow);
+    eprintf("ShowWindow: 0x%" PRIxPTR ", %i\n", (uintptr_t)hWnd, nCmdShow);
 #endif
 
     return 0;
@@ -2067,7 +2068,7 @@ uint32_t TranslateMessage_c(void *pMsg)
 uint32_t UpdateWindow_c(void *hWnd)
 {
 #ifdef DEBUG_USER32
-    eprintf("UpdateWindow: %i\n", (int)hWnd);
+    eprintf("UpdateWindow: 0x%" PRIxPTR "\n", (uintptr_t)hWnd);
 #endif
 
     return 1;

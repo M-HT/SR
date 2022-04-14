@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -2075,18 +2075,18 @@ static void Game_Event_Loop(void)
 
                             SDL_GetMouseState(&mousex, &mousey);
                         #ifdef USE_SDL2
-                            SDL_WarpMouseInWindow(Game_Window, mousex + (int) event.user.data1, mousey + (int) event.user.data2);
+                            SDL_WarpMouseInWindow(Game_Window, mousex + (intptr_t) event.user.data1, mousey + (intptr_t) event.user.data2);
                         #else
-                            SDL_WarpMouse(mousex + (int) event.user.data1, mousey + (int) event.user.data2);
+                            SDL_WarpMouse(mousex + (intptr_t) event.user.data1, mousey + (intptr_t) event.user.data2);
                         #endif
                         }
                         break;
                     case EC_MOUSE_SET:
                         {
                         #ifdef USE_SDL2
-                            SDL_WarpMouseInWindow(Game_Window, (int) event.user.data1, (int) event.user.data2);
+                            SDL_WarpMouseInWindow(Game_Window, (intptr_t) event.user.data1, (intptr_t) event.user.data2);
                         #else
-                            SDL_WarpMouse((int) event.user.data1, (int) event.user.data2);
+                            SDL_WarpMouse((intptr_t) event.user.data1, (intptr_t) event.user.data2);
                         #endif
                         }
                         break;

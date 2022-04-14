@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,6 +22,7 @@
  *
  */
 
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -112,7 +113,7 @@ uint32_t ASI_shutdown_c (void)
 void *ASI_stream_open_mpg123 (void *user, ssize_t (*read_CB)(void *, void *, size_t), off_t (*lseek_CB)(void *, off_t,  int))
 {
 #ifdef DEBUG_MSS
-    eprintf("ASI_stream_open_mpg123: 0x%x, 0x%x, 0x%x - ", (uintptr_t) user, (uintptr_t) read_CB, (uintptr_t) lseek_CB);
+    eprintf("ASI_stream_open_mpg123: 0x%" PRIxPTR ", 0x%" PRIxPTR ", 0x%" PRIxPTR " - ", (uintptr_t) user, (uintptr_t) read_CB, (uintptr_t) lseek_CB);
 #endif
 
     if (!MSS_initialized)
@@ -135,7 +136,7 @@ void *ASI_stream_open_mpg123 (void *user, ssize_t (*read_CB)(void *, void *, siz
     }
 
 #ifdef DEBUG_MSS
-    eprintf("0x%x - ", (uintptr_t) stream);
+    eprintf("0x%" PRIxPTR " - ", (uintptr_t) stream);
 #endif
 
     if (mpg123_param(stream, MPG123_ADD_FLAGS, MPG123_SKIP_ID3V2 /*| MPG123_NO_PEEK_END*/, 0.0) != MPG123_OK)
@@ -181,7 +182,7 @@ void *ASI_stream_open_mpg123 (void *user, ssize_t (*read_CB)(void *, void *, siz
 uint32_t ASI_stream_close_c (void *stream)
 {
 #ifdef DEBUG_MSS
-    eprintf("ASI_stream_close: 0x%x - ", (uintptr_t) stream);
+    eprintf("ASI_stream_close: 0x%" PRIxPTR " - ", (uintptr_t) stream);
 #endif
 
     if (!MSS_initialized)
@@ -208,7 +209,7 @@ uint32_t ASI_stream_close_c (void *stream)
 int32_t ASI_stream_process_c (void *stream, void *buffer, int32_t request_size)
 {
 #ifdef DEBUG_MSS
-    eprintf("ASI_stream_process: 0x%x, 0x%x, %i - ", (uintptr_t) stream, (uintptr_t) buffer, request_size);
+    eprintf("ASI_stream_process: 0x%" PRIxPTR ", 0x%" PRIxPTR ", %i - ", (uintptr_t) stream, (uintptr_t) buffer, request_size);
 #endif
 
     if (!MSS_initialized)

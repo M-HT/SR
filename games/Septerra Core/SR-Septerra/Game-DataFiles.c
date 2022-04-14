@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2021 Roman Pauer
+ *  Copyright (C) 2019-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -23,6 +23,7 @@
  */
 
 #define _XOPEN_SOURCE 700
+#include <inttypes.h>
 #include "Game-DataFiles.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -476,7 +477,7 @@ int32_t RecordTryOpen(uint32_t RecordKey)
 const char *RecordGetDataFilePathAndOffset(uint32_t RecordKey, uint32_t *Offset)
 {
 #ifdef DEBUG_DATABASE
-    eprintf("RecordGetDataFilePathAndOffset - 0x%x - 0x%x - ", RecordKey, (int)Offset);
+    eprintf("RecordGetDataFilePathAndOffset - 0x%x - 0x%" PRIxPTR " - ", RecordKey, (uintptr_t)Offset);
 #endif
 
     *Offset = 0;
@@ -555,7 +556,7 @@ void RecordSeek(int32_t RecordHandle, int32_t Offset, int32_t Whence)
 uint32_t RecordRead(int32_t RecordHandle, uint8_t *ReadBuffer, uint32_t NumberOfBytes)
 {
 #ifdef DEBUG_DATABASE
-    eprintf("RecordRead - %i - 0x%x - %i - ", RecordHandle, (int)ReadBuffer, NumberOfBytes);
+    eprintf("RecordRead - %i - 0x%" PRIxPTR " - %i - ", RecordHandle, (uintptr_t)ReadBuffer, NumberOfBytes);
 #endif
 
     // try

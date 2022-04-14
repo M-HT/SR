@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,6 +22,7 @@
  *
  */
 
+#include <inttypes.h>
 #include <malloc.h>
 #include <string.h>
 #ifdef USE_SDL2
@@ -122,7 +123,7 @@ AIL_sequence *Game_AIL_allocate_sequence_handle(void *mdi)
     ret = (AIL_sequence *) malloc(SEQUENCE_SIZE);
 
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_allocate_sequence_handle: return: 0x%x\n", (uint32_t) ret);
+    fprintf(stderr, "AIL_allocate_sequence_handle: return: 0x%" PRIxPTR "\n", (uintptr_t) ret);
 #endif
 
     if (ret != NULL)
@@ -158,7 +159,7 @@ AIL_sequence *Game_AIL_allocate_sequence_handle(void *mdi)
 void Game_AIL_release_sequence_handle(AIL_sequence *S)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_release_sequence_handle: 0x%x\n", (uint32_t) S);
+    fprintf(stderr, "AIL_release_sequence_handle: 0x%" PRIxPTR "\n", (uintptr_t) S);
 #endif
 
     if (Game_MidiSubsystem)
@@ -192,7 +193,7 @@ void Game_AIL_release_sequence_handle(AIL_sequence *S)
 int32_t Game_AIL_init_sequence(AIL_sequence *S, void *start, int32_t sequence_num)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_init_sequence: 0x%x, 0x%x, %i\n", (uint32_t) S, (uint32_t) start, sequence_num);
+    fprintf(stderr, "AIL_init_sequence: 0x%" PRIxPTR ", 0x%" PRIxPTR ", %i\n", (uintptr_t) S, (uintptr_t) start, sequence_num);
 #endif
 
     if (Game_MidiSubsystem)
@@ -222,7 +223,7 @@ int32_t Game_AIL_init_sequence(AIL_sequence *S, void *start, int32_t sequence_nu
 void Game_AIL_start_sequence(AIL_sequence *S)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_start_sequence: 0x%x\n", (uint32_t) S);
+    fprintf(stderr, "AIL_start_sequence: 0x%" PRIxPTR "\n", (uintptr_t) S);
 #endif
 
     if (Game_MidiSubsystem)
@@ -300,7 +301,7 @@ void Game_AIL_start_sequence(AIL_sequence *S)
 void Game_AIL_stop_sequence(AIL_sequence *S)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_stop_sequence: 0x%x\n", (uint32_t) S);
+    fprintf(stderr, "AIL_stop_sequence: 0x%" PRIxPTR "\n", (uintptr_t) S);
 #endif
 
     if (Game_MidiSubsystem)
@@ -330,7 +331,7 @@ void Game_AIL_stop_sequence(AIL_sequence *S)
 void Game_AIL_resume_sequence(AIL_sequence *S)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_resume_sequence: 0x%x\n", (uint32_t) S);
+    fprintf(stderr, "AIL_resume_sequence: 0x%" PRIxPTR "\n", (uintptr_t) S);
 #endif
 
     if (Game_MidiSubsystem)
@@ -398,7 +399,7 @@ void Game_AIL_resume_sequence(AIL_sequence *S)
 void Game_AIL_end_sequence(AIL_sequence *S)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_end_sequence: 0x%x\n", (uint32_t) S);
+    fprintf(stderr, "AIL_end_sequence: 0x%" PRIxPTR "\n", (uintptr_t) S);
 #endif
 
     if (S == NULL) return;
@@ -427,7 +428,7 @@ void Game_AIL_end_sequence(AIL_sequence *S)
 void Game_AIL_set_sequence_volume(AIL_sequence *S, int32_t volume, int32_t ms)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_set_sequence_volume: 0x%x, %i, %i\n", (uint32_t) S, volume, ms);
+    fprintf(stderr, "AIL_set_sequence_volume: 0x%" PRIxPTR ", %i, %i\n", (uintptr_t) S, volume, ms);
 #endif
 
     S->volume = volume; /* 0-127 */
@@ -455,7 +456,7 @@ void Game_AIL_set_sequence_volume(AIL_sequence *S, int32_t volume, int32_t ms)
 void Game_AIL_set_sequence_loop_count(AIL_sequence *S, int32_t loop_count)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_set_sequence_loop_count: 0x%x, %i\n", (uint32_t) S, loop_count);
+    fprintf(stderr, "AIL_set_sequence_loop_count: 0x%" PRIxPTR ", %i\n", (uintptr_t) S, loop_count);
 #endif
 
     S->loop_count = loop_count;
@@ -535,7 +536,7 @@ void *Game_AIL_create_wave_synthesizer(void *dig, void *mdi, void *wave_lib, int
     ret = &(wave_synth[0]);
 
 #if defined(__DEBUG__)
-    fprintf(stderr, "AIL_create_wave_synthesizer: return: 0x%x\n", (uint32_t) ret);
+    fprintf(stderr, "AIL_create_wave_synthesizer: return: 0x%" PRIxPTR "\n", (uintptr_t) ret);
 #endif
 
     if (ret != NULL)

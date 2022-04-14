@@ -705,8 +705,8 @@ YZ123456
     // Restore original cursor position
     event.type = SDL_USEREVENT;
     event.user.code = EC_MOUSE_SET;
-    event.user.data1 = (void *) orig_x;
-    event.user.data2 = (void *) orig_y;
+    event.user.data1 = (void *)(intptr_t) orig_x;
+    event.user.data2 = (void *)(intptr_t) orig_y;
 
     SDL_PushEvent(&event);
 
@@ -811,8 +811,8 @@ static void Game_Pause(void)
     // Restore original cursor position
     event.type = SDL_USEREVENT;
     event.user.code = EC_MOUSE_SET;
-    event.user.data1 = (void *) orig_x;
-    event.user.data2 = (void *) orig_y;
+    event.user.data1 = (void *)(intptr_t) orig_x;
+    event.user.data2 = (void *)(intptr_t) orig_y;
 
     SDL_PushEvent(&event);
 
@@ -1641,8 +1641,8 @@ void Game_RepositionMouse(void)
 
     event.type = SDL_USEREVENT;
     event.user.code = EC_MOUSE_SET;
-    event.user.data1 = (void *) Game_Picture2DeviceX((mouse_pos[1] * Game_VideoAspectXR + 32767) >> 16);
-    event.user.data2 = (void *) Game_Picture2DeviceY((mouse_pos[0] * Game_VideoAspectYR + 32767) >> 16);
+    event.user.data1 = (void *)(intptr_t) Game_Picture2DeviceX((mouse_pos[1] * Game_VideoAspectXR + 32767) >> 16);
+    event.user.data2 = (void *)(intptr_t) Game_Picture2DeviceY((mouse_pos[0] * Game_VideoAspectYR + 32767) >> 16);
 
     SDL_PushEvent(&event);
 }

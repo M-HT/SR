@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -85,7 +85,7 @@ static void *open_file(char const *midifile)
 {
     if (midifile == NULL) return NULL;
 
-    return (void *) BASS_MIDI_StreamCreateFile(0, midifile, 0, 0, BASS_STREAM_DECODE, 0);
+    return (void *)(uintptr_t) BASS_MIDI_StreamCreateFile(0, midifile, 0, 0, BASS_STREAM_DECODE, 0);
 }
 
 static void *open_buffer(void const *midibuffer, long int size)
@@ -93,7 +93,7 @@ static void *open_buffer(void const *midibuffer, long int size)
     if (midibuffer == NULL) return NULL;
     if (size <= 0) return NULL;
 
-    return (void *) BASS_MIDI_StreamCreateFile(1, midibuffer, 0, size, BASS_STREAM_DECODE, 0);
+    return (void *)(uintptr_t) BASS_MIDI_StreamCreateFile(1, midibuffer, 0, size, BASS_STREAM_DECODE, 0);
 }
 
 static long int get_data(void *handle, void *buffer, long int size)
@@ -103,7 +103,7 @@ static long int get_data(void *handle, void *buffer, long int size)
     if (size < 0) return -4;
     if (size == 0) return 0;
 
-    return BASS_ChannelGetData((HSTREAM)handle, buffer, size);
+    return BASS_ChannelGetData((HSTREAM)(uintptr_t)handle, buffer, size);
 }
 
 static int rewind_midi(void *handle)
@@ -112,10 +112,10 @@ static int rewind_midi(void *handle)
 
     if (handle == NULL) return -2;
 
-    curpos = BASS_ChannelGetPosition((HSTREAM)handle, BASS_POS_BYTE);
+    curpos = BASS_ChannelGetPosition((HSTREAM)(uintptr_t)handle, BASS_POS_BYTE);
     if (curpos == 0) return 0; // this helps to work around some bug
 
-    if (!BASS_ChannelSetPosition((HSTREAM)handle, 0, BASS_POS_BYTE | BASS_MUSIC_POSRESETEX))
+    if (!BASS_ChannelSetPosition((HSTREAM)(uintptr_t)handle, 0, BASS_POS_BYTE | BASS_MUSIC_POSRESETEX))
     {
         return -1;
     }
@@ -127,7 +127,7 @@ static int close_midi(void *handle)
 {
     if (handle == NULL) return -2;
 
-    if (!BASS_StreamFree((HSTREAM)handle))
+    if (!BASS_StreamFree((HSTREAM)(uintptr_t)handle))
     {
         return -1;
     }

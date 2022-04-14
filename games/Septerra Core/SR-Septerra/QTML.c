@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2021 Roman Pauer
+ *  Copyright (C) 2019-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,6 +26,7 @@
 // https://wiki.multimedia.cx/index.php?title=Cinepak
 
 #define _FILE_OFFSET_BITS 64
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -714,7 +715,7 @@ void TerminateQTML_c (void)
 void *CreatePortAssociation_c (void *theWnd, void *storage, int32_t flags)
 {
 #ifdef DEBUG_QTML
-    eprintf("CreatePortAssociation: 0x%x, 0x%x, 0x%x - ", (uintptr_t)theWnd, (uintptr_t)storage, flags);
+    eprintf("CreatePortAssociation: 0x%" PRIxPTR ", 0x%" PRIxPTR ", 0x%x - ", (uintptr_t)theWnd, (uintptr_t)storage, flags);
 #endif
 
 #ifdef DEBUG_QTML
@@ -728,7 +729,7 @@ void *CreatePortAssociation_c (void *theWnd, void *storage, int32_t flags)
 void DestroyPortAssociation_c (void *cgp)
 {
 #ifdef DEBUG_QTML
-    eprintf("DestroyPortAssociation: 0x%x\n", (uintptr_t)cgp);
+    eprintf("DestroyPortAssociation: 0x%" PRIxPTR "\n", (uintptr_t)cgp);
 #endif
 
 }
@@ -740,7 +741,7 @@ void DestroyPortAssociation_c (void *cgp)
 void SetGWorld_c (void *port, void *gdh)
 {
 #ifdef DEBUG_QTML
-    eprintf("SetGWorld: 0x%x, 0x%x\n", (uintptr_t)port, (uintptr_t)gdh);
+    eprintf("SetGWorld: 0x%" PRIxPTR ", 0x%" PRIxPTR "\n", (uintptr_t)port, (uintptr_t)gdh);
 #endif
 
 }
@@ -750,7 +751,7 @@ void SetGWorld_c (void *port, void *gdh)
 unsigned char *c2pstr_c (char *aStr)
 {
 #ifdef DEBUG_QTML
-    eprintf("c2pstr: 0x%x (%s)- ", (uintptr_t)aStr, aStr);
+    eprintf("c2pstr: 0x%" PRIxPTR " (%s)- ", (uintptr_t)aStr, aStr);
 #endif
 
 #ifdef DEBUG_QTML
@@ -772,7 +773,7 @@ int16_t PtrToHand_c (const void *srcPtr, void ***dstHndl, int32_t size)
     memcpy(str, srcPtr, size);
     str[size] = 0;
 
-    eprintf("PtrToHand: 0x%x (%s), 0x%x, %i - ", (uintptr_t)srcPtr, str, (uintptr_t)dstHndl, size);
+    eprintf("PtrToHand: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR ", %i - ", (uintptr_t)srcPtr, str, (uintptr_t)dstHndl, size);
 
     free(str);
 #endif
@@ -793,7 +794,7 @@ int16_t PtrToHand_c (const void *srcPtr, void ***dstHndl, int32_t size)
 int16_t FSMakeFSSpec_c (int16_t vRefNum, int32_t dirID, char *fileName, void *spec)
 {
 #ifdef DEBUG_QTML
-    eprintf("FSMakeFSSpec: %i, %i, 0x%x (%s), 0x%x - ", vRefNum, dirID, (uintptr_t)fileName, fileName, (uintptr_t)spec);
+    eprintf("FSMakeFSSpec: %i, %i, 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " - ", vRefNum, dirID, (uintptr_t)fileName, fileName, (uintptr_t)spec);
 #endif
 
     ((FSSpec *)spec)->vRefNum = vRefNum;
@@ -813,7 +814,7 @@ int16_t FSMakeFSSpec_c (int16_t vRefNum, int32_t dirID, char *fileName, void *sp
 int16_t QTSetDDPrimarySurface_c (void *lpNewDDSurface, uint32_t flags)
 {
 #ifdef DEBUG_QTML
-    eprintf("QTSetDDPrimarySurface: 0x%x, 0x%x - ", (uintptr_t)lpNewDDSurface, flags);
+    eprintf("QTSetDDPrimarySurface: 0x%" PRIxPTR ", 0x%x - ", (uintptr_t)lpNewDDSurface, flags);
 #endif
 
     lpDDSurface = lpNewDDSurface;
@@ -830,7 +831,7 @@ int16_t QTSetDDPrimarySurface_c (void *lpNewDDSurface, uint32_t flags)
 int32_t NativeEventToMacEvent_c (void *nativeEvent, void *macEvent)
 {
 #ifdef DEBUG_QTML
-    eprintf("NativeEventToMacEvent: 0x%x, 0x%x - ", (uintptr_t)nativeEvent, (uintptr_t)macEvent);
+    eprintf("NativeEventToMacEvent: 0x%" PRIxPTR ", 0x%" PRIxPTR " - ", (uintptr_t)nativeEvent, (uintptr_t)macEvent);
 #endif
 
     ((EventRecord *)macEvent)->what = ((NativeEvent *)nativeEvent)->Msg;
@@ -880,7 +881,7 @@ void StartMovie_c (void *theMovie)
 #endif
 
 #ifdef DEBUG_QTML
-    eprintf("StartMovie: 0x%x\n", (uintptr_t)theMovie);
+    eprintf("StartMovie: 0x%" PRIxPTR "\n", (uintptr_t)theMovie);
 #endif
 
     if (theMovie == NULL) return;
@@ -923,7 +924,7 @@ void StopMovie_c (void *theMovie)
     Movie movie;
 
 #ifdef DEBUG_QTML
-    eprintf("StopMovie: 0x%x\n", (uintptr_t)theMovie);
+    eprintf("StopMovie: 0x%" PRIxPTR "\n", (uintptr_t)theMovie);
 #endif
 
     if (theMovie == NULL) return;
@@ -958,7 +959,7 @@ void StopMovie_c (void *theMovie)
 uint8_t IsMovieDone_c (void *theMovie)
 {
 #ifdef DEBUG_QTML
-    eprintf("IsMovieDone: 0x%x - ", (uintptr_t)theMovie);
+    eprintf("IsMovieDone: 0x%" PRIxPTR " - ", (uintptr_t)theMovie);
 #endif
 
     if (theMovie == NULL) return 1;
@@ -984,7 +985,7 @@ uint8_t IsMovieDone_c (void *theMovie)
 void DisposeMovie_c (void *theMovie)
 {
 #ifdef DEBUG_QTML
-    eprintf("DisposeMovie: 0x%x\n", (uintptr_t)theMovie);
+    eprintf("DisposeMovie: 0x%" PRIxPTR "\n", (uintptr_t)theMovie);
 #endif
 
     if (theMovie == NULL) return;
@@ -1008,7 +1009,7 @@ int16_t OpenMovieFile_c (const void *fileSpec, int16_t *resRefNum, int8_t permis
 #endif
 
 #ifdef DEBUG_QTML
-    eprintf("OpenMovieFile: 0x%x (%s), 0x%x, 0x%x - ", (uintptr_t)fileSpec, ((FSSpec *)fileSpec)->name, (uintptr_t)resRefNum, permission);
+    eprintf("OpenMovieFile: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR ", 0x%x - ", (uintptr_t)fileSpec, ((FSSpec *)fileSpec)->name, (uintptr_t)resRefNum, permission);
 #endif
 
     for (RefNum = 0; RefNum <= 3; RefNum++)
@@ -1193,7 +1194,7 @@ int16_t NewMovieFromFile_c (void **theMovie, int16_t resRefNum, int16_t *resId, 
     int color_models[5], model_index, use_yuv;
 
 #ifdef DEBUG_QTML
-    eprintf("NewMovieFromFile: 0x%x, %i, 0x%x, 0x%x, 0x%x, 0x%x - ", (uintptr_t)theMovie, resRefNum, (uintptr_t)resId, (uintptr_t)resName, newMovieFlags, (uintptr_t)dataRefWasChanged);
+    eprintf("NewMovieFromFile: 0x%" PRIxPTR ", %i, 0x%" PRIxPTR ", 0x%" PRIxPTR ", 0x%x, 0x%" PRIxPTR " - ", (uintptr_t)theMovie, resRefNum, (uintptr_t)resId, (uintptr_t)resName, newMovieFlags, (uintptr_t)dataRefWasChanged);
 #endif
 
     if ((resRefNum < 1) || (resRefNum > 4) || (qthandle[resRefNum - 1] == NULL))
@@ -1298,7 +1299,7 @@ int16_t NewMovieFromFile_c (void **theMovie, int16_t resRefNum, int16_t *resId, 
     *theMovie = movie;
 
 #ifdef DEBUG_QTML
-    eprintf("ok: 0x%x\n", (uintptr_t)movie);
+    eprintf("ok: 0x%" PRIxPTR "\n", (uintptr_t)movie);
 #endif
 
     return 0;
@@ -1310,7 +1311,7 @@ int16_t NewMovieFromFile_c (void **theMovie, int16_t resRefNum, int16_t *resId, 
 void GetMovieBox_c (void *theMovie, void *boxRect)
 {
 #ifdef DEBUG_QTML
-    eprintf("GetMovieBox: 0x%x, 0x%x\n", (uintptr_t)theMovie, (uintptr_t)boxRect);
+    eprintf("GetMovieBox: 0x%" PRIxPTR ", 0x%" PRIxPTR "\n", (uintptr_t)theMovie, (uintptr_t)boxRect);
 #endif
 
     if ((theMovie == NULL) || (boxRect == NULL)) return;
@@ -1412,7 +1413,7 @@ void *NewMovieController_c (void *theMovie, const void *movieRect, int32_t someF
     const Rect *rect;
 
 #ifdef DEBUG_QTML
-    eprintf("NewMovieController: 0x%x, 0x%x, 0x%x - ", (uintptr_t)theMovie, (uintptr_t)movieRect, someFlags);
+    eprintf("NewMovieController: 0x%" PRIxPTR ", 0x%" PRIxPTR ", 0x%x - ", (uintptr_t)theMovie, (uintptr_t)movieRect, someFlags);
 #endif
 
     if (theMovie == NULL) return NULL;
@@ -1651,7 +1652,7 @@ void *NewMovieController_c (void *theMovie, const void *movieRect, int32_t someF
     }
 
 #ifdef DEBUG_QTML
-    eprintf("ok: 0x%x\n", (uintptr_t)movie);
+    eprintf("ok: 0x%" PRIxPTR "\n", (uintptr_t)movie);
 #endif
     return movie;
 }
@@ -1663,7 +1664,7 @@ void DisposeMovieController_c (void *mc)
     Movie movie;
 
 #ifdef DEBUG_QTML
-    eprintf("DisposeMovieController: 0x%x\n", (uintptr_t)mc);
+    eprintf("DisposeMovieController: 0x%" PRIxPTR "\n", (uintptr_t)mc);
 #endif
 
     if (mc == NULL) return;
@@ -1709,7 +1710,7 @@ void DisposeMovieController_c (void *mc)
 int16_t QTRegisterAccessKey_c (unsigned char *accessKeyType, int32_t flags, void *accessKey)
 {
 #ifdef DEBUG_QTML
-    eprintf("QTRegisterAccessKey: 0x%x (%s), 0x%x, 0x%x - ", (uintptr_t)accessKeyType, accessKeyType, flags, (uintptr_t)accessKey);
+    eprintf("QTRegisterAccessKey: 0x%" PRIxPTR " (%s), 0x%x, 0x%" PRIxPTR " - ", (uintptr_t)accessKeyType, accessKeyType, flags, (uintptr_t)accessKey);
 #endif
 
 #ifdef DEBUG_QTML
@@ -1725,7 +1726,7 @@ int16_t QTRegisterAccessKey_c (unsigned char *accessKeyType, int32_t flags, void
 int16_t QTUnregisterAccessKey_c (unsigned char *accessKeyType, int32_t flags, void *accessKey)
 {
 #ifdef DEBUG_QTML
-    eprintf("QTUnregisterAccessKey: 0x%x (%s), 0x%x, 0x%x - ", (uintptr_t)accessKeyType, accessKeyType, flags, (uintptr_t)accessKey);
+    eprintf("QTUnregisterAccessKey: 0x%" PRIxPTR " (%s), 0x%x, 0x%" PRIxPTR " - ", (uintptr_t)accessKeyType, accessKeyType, flags, (uintptr_t)accessKey);
 #endif
 
 #ifdef DEBUG_QTML
@@ -1741,7 +1742,7 @@ int16_t QTUnregisterAccessKey_c (unsigned char *accessKeyType, int32_t flags, vo
 void *MCIsPlayerEvent_c (void *mc, const void *e)
 {
 #ifdef DEBUG_QTML
-    eprintf("MCIsPlayerEvent: 0x%x, 0x%x - ", (uintptr_t)mc, (uintptr_t)e);
+    eprintf("MCIsPlayerEvent: 0x%" PRIxPTR ", 0x%" PRIxPTR " - ", (uintptr_t)mc, (uintptr_t)e);
 #endif
 
     if ((mc != NULL) && (e != NULL))
@@ -1817,7 +1818,7 @@ void *MCIsPlayerEvent_c (void *mc, const void *e)
 void *MCDoAction_c (void *mc, int16_t action, void *params)
 {
 #ifdef DEBUG_QTML
-    eprintf("MCDoAction: 0x%x, %i, 0x%x - ", (uintptr_t)mc, action, (uintptr_t)params);
+    eprintf("MCDoAction: 0x%" PRIxPTR ", %i, 0x%" PRIxPTR " - ", (uintptr_t)mc, action, (uintptr_t)params);
 #endif
 
 #ifdef DEBUG_QTML

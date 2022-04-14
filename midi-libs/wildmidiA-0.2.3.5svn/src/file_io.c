@@ -75,8 +75,8 @@ WM_BufferFile (const char *filename, unsigned long int *size) {
 		*name_ptr = 0;
 		name_ptr++;
 
-		addr = (void *)atoi(addr_ptr);
-		*size = atoi(size_ptr);
+		addr = (void *)atol(addr_ptr);
+		*size = atol(size_ptr);
 
 		data = malloc(*size);
 		if (data == NULL) {

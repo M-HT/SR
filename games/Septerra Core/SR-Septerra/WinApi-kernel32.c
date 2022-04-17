@@ -120,6 +120,9 @@ static clockid_t monotonic_clock_id;
 
 #define eprintf(...) fprintf(stderr,__VA_ARGS__)
 
+#define PSEUDO_HANDLE_CURRENT_PROCESS TOPTR_0((ptr32_t)-1)
+#define PSEUDO_HANDLE_CURRENT_THREAD TOPTR_0((ptr32_t)-2)
+
 
 #if !defined(_WIN32)
 typedef struct {
@@ -360,7 +363,7 @@ uint32_t CloseHandle_c(void *hObject)
     }
 
     // pseudo handles
-    if ((((intptr_t)hObject) == -1) || (((intptr_t)hObject) == -2))
+    if ((hObject == PSEUDO_HANDLE_CURRENT_PROCESS) || (hObject == PSEUDO_HANDLE_CURRENT_THREAD))
     {
         return 1;
     }
@@ -648,7 +651,7 @@ void *CreateMutexA_c(void *lpMutexAttributes, uint32_t bInitialOwner, const char
     return NULL;
 }
 
-uint32_t CreatePipe_c(void **hReadPipe, void **hWritePipe, void *lpPipeAttributes, uint32_t nSize)
+uint32_t CreatePipe_c(PTR32(void *) *hReadPipe, PTR32(void *) *hWritePipe, void *lpPipeAttributes, uint32_t nSize)
 {
     handle hread, hwrite;
     int ret;
@@ -721,8 +724,8 @@ uint32_t CreatePipe_c(void **hReadPipe, void **hWritePipe, void *lpPipeAttribute
             return 0;
         }
 
-        *hReadPipe = hread;
-        *hWritePipe = hwrite;
+        *hReadPipe = FROMPTR(hread);
+        *hWritePipe = FROMPTR(hwrite);
 
 #ifdef DEBUG_KERNEL32
         eprintf("OK: 0x%" PRIxPTR ", 0x%" PRIxPTR "\n", (uintptr_t)hread, (uintptr_t)hwrite);
@@ -1250,7 +1253,7 @@ void *GetCurrentProcess_c(void)
 #endif
 
     // this is a pseudo handle to the current process
-    return (handle)(intptr_t)-1;
+    return PSEUDO_HANDLE_CURRENT_PROCESS;
 }
 
 void *GetCurrentThread_c(void)
@@ -1260,10 +1263,10 @@ void *GetCurrentThread_c(void)
 #endif
 
     // this is a pseudo handle to the current thread
-    return (handle)(intptr_t)-2;
+    return PSEUDO_HANDLE_CURRENT_THREAD;
 }
 
-uint32_t GetFullPathNameA_c(const char *lpFileName, uint32_t nBufferLength, char *lpBuffer, char **lpFilePart)
+uint32_t GetFullPathNameA_c(const char *lpFileName, uint32_t nBufferLength, char *lpBuffer, PTR32(char *) *lpFilePart)
 {
     size_t len;
     char *p1, *p2;
@@ -1316,7 +1319,7 @@ uint32_t GetFullPathNameA_c(const char *lpFileName, uint32_t nBufferLength, char
             p1 = lpBuffer;
         }
 
-        *lpFilePart = p1;
+        *lpFilePart = FROMPTR(p1);
     }
 
     return len;
@@ -1823,7 +1826,7 @@ uint32_t SetPriorityClass_c(void *hProcess, uint32_t fdwPriority)
     eprintf("SetPriorityClass: 0x%" PRIxPTR ", %i\n", (uintptr_t) hProcess, fdwPriority);
 #endif
 
-    if (((intptr_t)hProcess) == -1)
+    if (hProcess == PSEUDO_HANDLE_CURRENT_PROCESS)
     {
         // pseudo handle
         if (fdwPriority == HIGH_PRIORITY_CLASS)
@@ -1843,7 +1846,7 @@ uint32_t SetThreadPriority_c(void *hThread, int32_t nPriority)
     eprintf("SetThreadPriority: 0x%" PRIxPTR ", %i\n", (uintptr_t) hThread, nPriority);
 #endif
 
-    if (((intptr_t)hThread) == -2)
+    if (hThread == PSEUDO_HANDLE_CURRENT_THREAD)
     {
         // pseudo handle
 

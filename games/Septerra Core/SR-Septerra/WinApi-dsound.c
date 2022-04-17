@@ -93,13 +93,13 @@
 
 
 struct IDirectSound_c {
-    void *lpVtbl;
+    PTR32(void *) lpVtbl;
     uint32_t RefCount;
     struct IDirectSoundBuffer_c *PrimaryBuffer;
 };
 
 struct IDirectSoundBuffer_c {
-    void *lpVtbl;
+    PTR32(void *) lpVtbl;
     uint32_t RefCount;
     struct IDirectSound_c *DirectSound;
     uint8_t primary, status, looping, sample_size_shift;
@@ -148,7 +148,7 @@ typedef struct _dsbufferdesc {
     uint32_t dwFlags;
     uint32_t dwBufferBytes;
     uint32_t dwReserved;
-    lpwaveformatex lpwfxFormat;
+    PTR32(lpwaveformatex) lpwfxFormat;
 } dsbufferdesc;
 
 
@@ -793,7 +793,7 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 }
 
 
-uint32_t DirectSoundCreate_c(void *lpGuid, void **ppDS, void *pUnkOuter)
+uint32_t DirectSoundCreate_c(void *lpGuid, PTR32(struct IDirectSound_c *) *ppDS, void *pUnkOuter)
 {
     struct IDirectSound_c *lpDS_c;
 
@@ -819,11 +819,11 @@ uint32_t DirectSoundCreate_c(void *lpGuid, void **ppDS, void *pUnkOuter)
         return DSERR_OUTOFMEMORY;
     }
 
-    lpDS_c->lpVtbl = &IDirectSoundVtbl_asm2c;
+    lpDS_c->lpVtbl = FROMPTR(&IDirectSoundVtbl_asm2c);
     lpDS_c->RefCount = 1;
     lpDS_c->PrimaryBuffer = NULL;
 
-    *ppDS = lpDS_c;
+    *ppDS = FROMPTR(lpDS_c);
 
 #ifdef DEBUG_DSOUND
     eprintf("OK: 0x%" PRIxPTR "\n", (uintptr_t)lpDS_c);
@@ -833,7 +833,7 @@ uint32_t DirectSoundCreate_c(void *lpGuid, void **ppDS, void *pUnkOuter)
 }
 
 
-uint32_t IDirectSound_QueryInterface_c(struct IDirectSound_c *lpThis, void * riid, void ** ppvObj)
+uint32_t IDirectSound_QueryInterface_c(struct IDirectSound_c *lpThis, void * riid, PTR32(void *)* ppvObj)
 {
 #ifdef DEBUG_DSOUND
     eprintf("IDirectSound_QueryInterface: 0x%" PRIxPTR ", 0x%" PRIxPTR ", 0x%" PRIxPTR "\n", (uintptr_t)lpThis, (uintptr_t)riid, (uintptr_t)ppvObj);
@@ -897,7 +897,7 @@ uint32_t IDirectSound_Release_c(struct IDirectSound_c *lpThis)
     return lpThis->RefCount;
 }
 
-uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const struct _dsbufferdesc * pcDSBufferDesc, struct IDirectSoundBuffer_c ** ppDSBuffer, void * pUnkOuter)
+uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const struct _dsbufferdesc * pcDSBufferDesc, PTR32(struct IDirectSoundBuffer_c *)* ppDSBuffer, void * pUnkOuter)
 {
     struct IDirectSoundBuffer_c *lpDSB_c;
     SDL_AudioSpec desired, obtained;
@@ -912,13 +912,13 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
     }
 
 #ifdef DEBUG_DSOUND
-    eprintf("%i, 0x%x, %i, 0x%" PRIxPTR " - ", pcDSBufferDesc->dwSize, pcDSBufferDesc->dwFlags, pcDSBufferDesc->dwBufferBytes, (uintptr_t)pcDSBufferDesc->lpwfxFormat);
+    eprintf("%i, 0x%x, %i, 0x%x - ", pcDSBufferDesc->dwSize, pcDSBufferDesc->dwFlags, pcDSBufferDesc->dwBufferBytes, pcDSBufferDesc->lpwfxFormat);
 #endif
 
     if ((pcDSBufferDesc->dwSize == 20) &&
         (pcDSBufferDesc->dwFlags == DSBCAPS_PRIMARYBUFFER) &&
         (pcDSBufferDesc->dwBufferBytes == 0) &&
-        (pcDSBufferDesc->lpwfxFormat == NULL)
+        (pcDSBufferDesc->lpwfxFormat == 0)
        )
     {
         if (lpThis->PrimaryBuffer != NULL)
@@ -939,7 +939,7 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
             return DSERR_OUTOFMEMORY;
         }
 
-        lpDSB_c->lpVtbl = &IDirectSoundBufferVtbl_asm2c;
+        lpDSB_c->lpVtbl = FROMPTR(&IDirectSoundBufferVtbl_asm2c);
         lpDSB_c->RefCount = 1;
         lpDSB_c->DirectSound = lpThis;
 
@@ -1043,7 +1043,7 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
 
         lpThis->PrimaryBuffer = lpDSB_c;
 
-        *ppDSBuffer = lpDSB_c;
+        *ppDSBuffer = FROMPTR(lpDSB_c);
 
 #ifdef DEBUG_DSOUND
         eprintf("OK: 0x%" PRIxPTR "\n", (uintptr_t)lpDSB_c);
@@ -1055,17 +1055,21 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
     if ((pcDSBufferDesc->dwSize == 20) &&
         (pcDSBufferDesc->dwFlags == (DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLPAN | DSBCAPS_CTRLVOLUME | DSBCAPS_GETCURRENTPOSITION2)) &&
         (pcDSBufferDesc->dwBufferBytes != 0) &&
-        (pcDSBufferDesc->lpwfxFormat != NULL)
+        (pcDSBufferDesc->lpwfxFormat != 0)
        )
     {
+        lpwaveformatex lpwfxFormat;
+
+        lpwfxFormat = TOPTR_T(waveformatex, pcDSBufferDesc->lpwfxFormat);
+
 #ifdef DEBUG_DSOUND
-        eprintf("%i, %i, %i, %i, %i - ", pcDSBufferDesc->dwBufferBytes, pcDSBufferDesc->lpwfxFormat->wFormatTag, pcDSBufferDesc->lpwfxFormat->wBitsPerSample, pcDSBufferDesc->lpwfxFormat->nChannels, pcDSBufferDesc->lpwfxFormat->nSamplesPerSec);
+        eprintf("%i, %i, %i, %i, %i - ", pcDSBufferDesc->dwBufferBytes, lpwfxFormat->wFormatTag, lpwfxFormat->wBitsPerSample, lpwfxFormat->nChannels, lpwfxFormat->nSamplesPerSec);
 #endif
 
-        if ((pcDSBufferDesc->lpwfxFormat->wFormatTag != WAVE_FORMAT_PCM) ||
-            ((pcDSBufferDesc->lpwfxFormat->wBitsPerSample != 8) && (pcDSBufferDesc->lpwfxFormat->wBitsPerSample != 16)) ||
-            ((pcDSBufferDesc->lpwfxFormat->nChannels != 1) && (pcDSBufferDesc->lpwfxFormat->nChannels != 2)) ||
-            ((pcDSBufferDesc->lpwfxFormat->nSamplesPerSec != 11025) && (pcDSBufferDesc->lpwfxFormat->nSamplesPerSec != 22050) && (pcDSBufferDesc->lpwfxFormat->nSamplesPerSec != 44100))
+        if ((lpwfxFormat->wFormatTag != WAVE_FORMAT_PCM) ||
+            ((lpwfxFormat->wBitsPerSample != 8) && (lpwfxFormat->wBitsPerSample != 16)) ||
+            ((lpwfxFormat->nChannels != 1) && (lpwfxFormat->nChannels != 2)) ||
+            ((lpwfxFormat->nSamplesPerSec != 11025) && (lpwfxFormat->nSamplesPerSec != 22050) && (lpwfxFormat->nSamplesPerSec != 44100))
            )
         {
 #ifdef DEBUG_DSOUND
@@ -1085,7 +1089,7 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
             return DSERR_OUTOFMEMORY;
         }
 
-        lpDSB_c->lpVtbl = &IDirectSoundBufferVtbl_asm2c;
+        lpDSB_c->lpVtbl = FROMPTR(&IDirectSoundBufferVtbl_asm2c);
         lpDSB_c->RefCount = 1;
         lpDSB_c->DirectSound = lpThis;
 
@@ -1093,19 +1097,19 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
         lpDSB_c->status = SDL_AUDIO_STOPPED;
         lpDSB_c->looping = 0;
         lpDSB_c->sample_size_shift = 0;
-        if (pcDSBufferDesc->lpwfxFormat->wBitsPerSample == 16)
+        if (lpwfxFormat->wBitsPerSample == 16)
         {
             lpDSB_c->sample_size_shift++;
         }
-        if (pcDSBufferDesc->lpwfxFormat->nChannels == 2)
+        if (lpwfxFormat->nChannels == 2)
         {
             lpDSB_c->sample_size_shift++;
         }
 
-        lpDSB_c->freq = pcDSBufferDesc->lpwfxFormat->nSamplesPerSec;
-        lpDSB_c->format = (pcDSBufferDesc->lpwfxFormat->wBitsPerSample == 16)?AUDIO_S16LSB:AUDIO_U8;
-        lpDSB_c->channels = pcDSBufferDesc->lpwfxFormat->nChannels;
-        lpDSB_c->silence = (pcDSBufferDesc->lpwfxFormat->wBitsPerSample == 16)?0:0x80;
+        lpDSB_c->freq = lpwfxFormat->nSamplesPerSec;
+        lpDSB_c->format = (lpwfxFormat->wBitsPerSample == 16)?AUDIO_S16LSB:AUDIO_U8;
+        lpDSB_c->channels = lpwfxFormat->nChannels;
+        lpDSB_c->silence = (lpwfxFormat->wBitsPerSample == 16)?0:0x80;
         lpDSB_c->attenuation = 0;
         lpDSB_c->pan = 0;
         lpDSB_c->left_volume = 0x10000;
@@ -1130,7 +1134,7 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
         lpDSB_c->last_conv_sample[0] = 0;
         lpDSB_c->last_conv_sample[1] = 0;
 
-        *ppDSBuffer = lpDSB_c;
+        *ppDSBuffer = FROMPTR(lpDSB_c);
 
 #ifdef DEBUG_DSOUND
         eprintf("OK: 0x%" PRIxPTR "\n", (uintptr_t)lpDSB_c);
@@ -1149,7 +1153,7 @@ uint32_t IDirectSound_GetCaps_c(struct IDirectSound_c *lpThis, void * pDSCaps)
     exit(1);
 }
 
-uint32_t IDirectSound_DuplicateSoundBuffer_c(struct IDirectSound_c *lpThis, struct IDirectSoundBuffer_c * pDSBufferOriginal, struct IDirectSoundBuffer_c ** ppDSBufferDuplicate)
+uint32_t IDirectSound_DuplicateSoundBuffer_c(struct IDirectSound_c *lpThis, struct IDirectSoundBuffer_c * pDSBufferOriginal, PTR32(struct IDirectSoundBuffer_c *)* ppDSBufferDuplicate)
 {
     eprintf("Unsupported method: %s\n", "IDirectSound_DuplicateSoundBuffer");
     exit(1);
@@ -1206,7 +1210,7 @@ uint32_t IDirectSound_Initialize_c(struct IDirectSound_c *lpThis, const void * p
 }
 
 
-uint32_t IDirectSoundBuffer_QueryInterface_c(struct IDirectSoundBuffer_c *lpThis, void * riid, void ** ppvObj)
+uint32_t IDirectSoundBuffer_QueryInterface_c(struct IDirectSoundBuffer_c *lpThis, void * riid, PTR32(void *)* ppvObj)
 {
 #ifdef DEBUG_DSOUND
     eprintf("IDirectSoundBuffer_QueryInterface: 0x%" PRIxPTR ", 0x%" PRIxPTR ", 0x%" PRIxPTR "\n", (uintptr_t)lpThis, (uintptr_t)riid, (uintptr_t)ppvObj);
@@ -1429,7 +1433,7 @@ uint32_t IDirectSoundBuffer_Initialize_c(struct IDirectSoundBuffer_c *lpThis, st
     exit(1);
 }
 
-uint32_t IDirectSoundBuffer_Lock_c(struct IDirectSoundBuffer_c *lpThis, uint32_t dwOffset, uint32_t dwBytes, void ** ppvAudioPtr1, uint32_t * pdwAudioBytes1, void ** ppvAudioPtr2, uint32_t * pdwAudioBytes2, uint32_t dwFlags)
+uint32_t IDirectSoundBuffer_Lock_c(struct IDirectSoundBuffer_c *lpThis, uint32_t dwOffset, uint32_t dwBytes, PTR32(void *)* ppvAudioPtr1, uint32_t * pdwAudioBytes1, PTR32(void *)* ppvAudioPtr2, uint32_t * pdwAudioBytes2, uint32_t dwFlags)
 {
     uint32_t locked_size;
 #ifdef DEBUG_DSOUND
@@ -1461,7 +1465,7 @@ uint32_t IDirectSoundBuffer_Lock_c(struct IDirectSoundBuffer_c *lpThis, uint32_t
         return DSERR_INVALIDPARAM;
     }
 
-    *ppvAudioPtr1 = &(lpThis->data[dwOffset]);
+    *ppvAudioPtr1 = FROMPTR(&(lpThis->data[dwOffset]));
 
     locked_size = lpThis->size - dwOffset;
 
@@ -1471,7 +1475,7 @@ uint32_t IDirectSoundBuffer_Lock_c(struct IDirectSoundBuffer_c *lpThis, uint32_t
 
         if (ppvAudioPtr2 != NULL)
         {
-            *ppvAudioPtr2 = NULL;
+            *ppvAudioPtr2 = 0;
         }
         if (pdwAudioBytes2 != NULL)
         {
@@ -1483,7 +1487,7 @@ uint32_t IDirectSoundBuffer_Lock_c(struct IDirectSoundBuffer_c *lpThis, uint32_t
         *pdwAudioBytes1 = locked_size;
         if (ppvAudioPtr2 != NULL)
         {
-            *ppvAudioPtr2 = &(lpThis->data[0]);
+            *ppvAudioPtr2 = FROMPTR(&(lpThis->data[0]));
             if (pdwAudioBytes2 != NULL)
             {
                 *pdwAudioBytes2 = dwBytes - locked_size;

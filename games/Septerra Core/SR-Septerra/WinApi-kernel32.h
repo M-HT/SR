@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,7 @@
 #if !defined(_WINAPI_KERNEL32_H_INCLUDED_)
 #define _WINAPI_KERNEL32_H_INCLUDED_
 
-#include <stdint.h>
+#include "ptr32.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,7 +36,7 @@ uint32_t CloseHandle_c(void *hObject);
 uint32_t CreateDirectoryA_c(const char *lpPathName, void *lpSecurityAttributes);
 void *CreateFileA_c(const char *lpFileName, uint32_t dwDesiredAccess, uint32_t dwShareMode, void *lpSecurityAttributes, uint32_t dwCreationDistribution, uint32_t dwFlagsAndAttributes, void *hTemplateFile);
 void *CreateMutexA_c(void *lpMutexAttributes, uint32_t bInitialOwner, const char *lpName);
-uint32_t CreatePipe_c(void **hReadPipe, void **hWritePipe, void *lpPipeAttributes, uint32_t nSize);
+uint32_t CreatePipe_c(PTR32(void *) *hReadPipe, PTR32(void *) *hWritePipe, void *lpPipeAttributes, uint32_t nSize);
 void DeleteCriticalSection_c(void *lpCriticalSection);
 uint32_t DeleteFileA_c(const char *lpFileName);
 void EnterCriticalSection_c(void *lpCriticalSection);
@@ -48,7 +48,7 @@ void *FindFirstFileA_c(const char *lpFileName, void *lpFindFileData);
 uint32_t FindNextFileA_c(void *hFindFile, void *lpFindFileData);
 void *GetCurrentProcess_c(void);
 void *GetCurrentThread_c(void);
-uint32_t GetFullPathNameA_c(const char *lpFileName, uint32_t nBufferLength, char *lpBuffer, char **lpFilePart);
+uint32_t GetFullPathNameA_c(const char *lpFileName, uint32_t nBufferLength, char *lpBuffer, PTR32(char *) *lpFilePart);
 uint32_t GetLastError_c(void);
 uint32_t GetPrivateProfileStringA_c(const char *lpAppName, const char *lpKeyName, const char *lpDefault, char *lpReturnedString, uint32_t nSize, const char *lpFileName);
 void InitializeCriticalSection_c(void *lpCriticalSection);

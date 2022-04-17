@@ -598,7 +598,7 @@ uint32_t RecordRead(int32_t RecordHandle, uint8_t *ReadBuffer, uint32_t NumberOf
 
     if (FileOffset != DatabaseFiles[DatabaseNumber].Offset)
     {
-        while ( fseek(DataFILE, FileOffset - DatabaseFiles[DatabaseNumber].Offset, SEEK_CUR) )
+        while ( fseek(DataFILE, (int32_t)(FileOffset - DatabaseFiles[DatabaseNumber].Offset), SEEK_CUR) )
         {
             RequestFileOnCDPresence(DataFILE);
         }

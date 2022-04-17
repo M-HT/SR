@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -64,7 +64,7 @@ const static struct {
 extern "C" {
 #endif
 
-extern int Game_ReadSong(const char *catalog_name, int index, uint8_t *buf);
+extern int32_t Game_ReadSong(const char *catalog_name, int32_t index, uint8_t *buf);
 
 #ifdef __cplusplus
 }
@@ -108,7 +108,7 @@ static int Game_FindMidiFile(int index, uint8_t *buf)
     return 1;
 }
 
-int Game_ReadSong(const char *catalog_name, int index, uint8_t *buf)
+int32_t Game_ReadSong(const char *catalog_name, int32_t index, uint8_t *buf)
 {
     FILE *f;
     uint32_t num_files, file_offset, file_size, next_offset;

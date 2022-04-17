@@ -170,24 +170,6 @@ int32_t toupper_c(int32_t c)
 }
 
 
-int32_t sscanf2_c(const char *str, const char *format, va_list ap)
-{
-    int res;
-
-#ifdef DEBUG_CLIB
-    eprintf("sscanf: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s) - ", (uintptr_t) str, str, (uintptr_t) format, format);
-#endif
-
-    res = vsscanf(str, format, ap);
-
-#ifdef DEBUG_CLIB
-    eprintf("%i\n", res);
-#endif
-
-    return res;
-}
-
-
 uint32_t fread_c(void *ptr, uint32_t size, uint32_t nmemb, void *stream)
 {
 #ifdef DEBUG_CLIB

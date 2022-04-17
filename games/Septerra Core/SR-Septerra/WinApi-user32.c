@@ -205,7 +205,7 @@ typedef struct {
 } rect, *lprect;
 
 typedef struct {
-    void *hwnd;
+    PTR32(void *) hwnd;
     uint32_t message;
     uint32_t wParam;
     int32_t  lParam;
@@ -215,15 +215,15 @@ typedef struct {
 
 typedef struct {
     uint32_t style;
-    void *lpfnWndProc;
+    PTR32(void *) lpfnWndProc;
     int32_t cbClsExtra;
     int32_t cbWndExtra;
-    void *hInstance;
-    void *hIcon;
-    void *hCursor;
-    void *hbrBackground;
-    const char *lpszMenuName;
-    const char *lpszClassName;
+    PTR32(void *) hInstance;
+    PTR32(void *) hIcon;
+    PTR32(void *) hCursor;
+    PTR32(void *) hbrBackground;
+    PTR32(const char *) lpszMenuName;
+    PTR32(const char *) lpszClassName;
 } wndclassa;
 
 
@@ -1469,7 +1469,7 @@ uint32_t DispatchMessageA_c(void *lpMsg)
     }
     else
     {
-        return RunWndProc_asm(((lpmsg)lpMsg)->hwnd, ((lpmsg)lpMsg)->message, ((lpmsg)lpMsg)->wParam, ((lpmsg)lpMsg)->lParam, (uint32_t (*)(void *, uint32_t, uint32_t, uint32_t))lpfnWndProc);
+        return RunWndProc_asm(TOPTR_0(((lpmsg)lpMsg)->hwnd), ((lpmsg)lpMsg)->message, ((lpmsg)lpMsg)->wParam, ((lpmsg)lpMsg)->lParam, (uint32_t (*)(void *, uint32_t, uint32_t, uint32_t))lpfnWndProc);
     }
 }
 
@@ -1974,7 +1974,7 @@ uint32_t RegisterClassA_c(void *lpWndClass)
 
     if (lpWndClass != NULL)
     {
-        lpfnWndProc = ((wndclassa *)lpWndClass)->lpfnWndProc;
+        lpfnWndProc = TOPTR_0(((wndclassa *)lpWndClass)->lpfnWndProc);
     }
 
     return 1;

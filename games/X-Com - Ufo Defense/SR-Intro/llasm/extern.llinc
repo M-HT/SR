@@ -6,8 +6,6 @@ funcv SR_RunTimerDelay
 ; null procedures
 proc SR___CHK external
 ; stack params
-proc SR_printf external
-
 proc SR_dlseek external
 proc SR_dopen external
 proc SR_dread external

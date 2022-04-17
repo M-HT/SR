@@ -71,6 +71,23 @@ int32_t sprintf2_c(char *str, const char *format, va_list ap)
     return res;
 }
 
+int32_t sscanf2_c(const char *str, const char *format, va_list ap)
+{
+    int res;
+
+#ifdef DEBUG_CLIB
+    eprintf("sscanf: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s) - ", (uintptr_t) str, str, (uintptr_t) format, format);
+#endif
+
+    res = vsscanf(str, format, ap);
+
+#ifdef DEBUG_CLIB
+    eprintf("%i\n", res);
+#endif
+
+    return res;
+}
+
 
 uint64_t _aulldiv_c(uint64_t x, uint64_t y)
 {

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,7 @@
 #if !defined(_GAME_DEFS_H_INCLUDED_)
 #define _GAME_DEFS_H_INCLUDED_
 
-#include <stdint.h>
+#include "ptr32.h"
 #include <stdlib.h>
 #include <limits.h>
 #ifdef USE_SDL2
@@ -278,13 +278,6 @@ typedef struct __attribute__ ((__packed__)) _Game_SoundConfig_
     uint16_t SoundSwapStereo;
     uint16_t Reserved;
 } Game_SoundConfig;
-
-typedef struct __attribute__ ((__packed__)) {
-    char *sound;		 // address of audio data. (originally real mode ptr)
-    uint16_t sndlen; // Length of audio sample.
-    int16_t *IsPlaying; // Address of play status flag.
-    int16_t frequency;	// Playback frequency. recommended 11khz.
-} DIGPAK_SNDSTRUC;
 
 #pragma pack()
 

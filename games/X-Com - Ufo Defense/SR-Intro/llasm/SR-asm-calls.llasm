@@ -21,7 +21,6 @@ func Game_FillSoundCfg *buf, count
 func Game_RealPtr ptr
 
 ; stack params
-func vprintf *format, *ap
 ; 0 params
 func Game_checkch
 func Game_getch
@@ -65,16 +64,6 @@ proc null_procedure public
 endp ; end procedure null_procedure
 
 ; stack params
-proc SR_printf public
-
-; [esp + 2*4] = ...
-; [esp +   4] = const char *format
-; [esp      ] = return address
-
-        Game_Call_Asm_VariableStack1 vprintf,-1000
-
-endp ; end procedure SR_printf
-
 proc SR_dlseek public
 
 ; [esp + 3*4] = int whence

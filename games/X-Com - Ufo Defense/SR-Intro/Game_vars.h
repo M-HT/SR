@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -48,7 +48,7 @@ EXTERNAL_VARIABLE char **main_argv;
 EXTERNAL_VARIABLE char *main_arg1;
 EXTERNAL_VARIABLE uint8_t *Game_FrameMemory;		/* allocated video memory */
 EXTERNAL_VARIABLE uint8_t *Game_FrameBuffer;		/* pointer to video memory (all) */
-EXTERNAL_VARIABLE uint8_t *Game_ScreenWindow;		/* video bank (64KiB) */
+EXTERNAL_VARIABLE PTR32(uint8_t*)Game_ScreenWindow;	/* video bank (64KiB) */
 EXTERNAL_VARIABLE void *Game_InterruptTable[256];	/* interrupt table */
 EXTERNAL_VARIABLE void *Game_AllocatedMemory[256];	/* dos allocated memory table */
 EXTERNAL_VARIABLE pixel_format_orig Game_Palette_Or[256];	/* original palette (rgba) */
@@ -233,7 +233,7 @@ extern void Game_RunTimer_Asm(void);
 extern "C" {
 #endif
 
-extern int errno_val;
+extern int32_t errno_val;
 
 #ifdef __cplusplus
 }

@@ -146,7 +146,7 @@
 
 
 struct IDirectDraw_c {
-    void *lpVtbl;
+    PTR32(void *) lpVtbl;
     uint32_t RefCount;
 #if SDL_VERSION_ATLEAST(2,0,0)
     SDL_Window *Window;
@@ -158,7 +158,7 @@ struct IDirectDraw_c {
 };
 
 struct IDirectDrawSurface_c {
-    void *lpVtbl;
+    PTR32(void *) lpVtbl;
     uint32_t RefCount;
 #if SDL_VERSION_ATLEAST(2,0,0)
     int current_texture;
@@ -235,7 +235,7 @@ typedef struct _ddsurfacedesc {
     uint32_t dwRefreshRate;
     uint32_t dwAlphaBitDepth;
     uint32_t dwReserved;
-    void *lpSurface;
+    PTR32(void *) lpSurface;
     ddcolorkey ddckCKDestOverlay;
     ddcolorkey ddckCKDestBlt;
     ddcolorkey ddckCKSrcOverlay;
@@ -259,13 +259,13 @@ typedef struct _ddbltfx
     union
     {
         uint32_t dwZDestConst;
-        struct IDirectDrawSurface_c *lpDDSZBufferDest;
+        PTR32(struct IDirectDrawSurface_c *) lpDDSZBufferDest;
     };
     uint32_t dwZSrcConstBitDepth;
     union
     {
         uint32_t dwZSrcConst;
-        struct IDirectDrawSurface_c *lpDDSZBufferSrc;
+        PTR32(struct IDirectDrawSurface_c *) lpDDSZBufferSrc;
     };
     uint32_t dwAlphaEdgeBlendBitDepth;
     uint32_t dwAlphaEdgeBlend;
@@ -274,20 +274,20 @@ typedef struct _ddbltfx
     union
     {
         uint32_t dwAlphaDestConst;
-        struct IDirectDrawSurface_c *lpDDSAlphaDest;
+        PTR32(struct IDirectDrawSurface_c *) lpDDSAlphaDest;
     };
     uint32_t dwAlphaSrcConstBitDepth;
     union
     {
         uint32_t dwAlphaSrcConst;
-        struct IDirectDrawSurface_c *lpDDSAlphaSrc;
+        PTR32(struct IDirectDrawSurface_c *) lpDDSAlphaSrc;
     };
     union
     {
         uint32_t dwFillColor;
         uint32_t dwFillDepth;
         uint32_t dwFillPixel;
-        struct IDirectDrawSurface_c *lpDDSPattern;
+        PTR32(struct IDirectDrawSurface_c *) lpDDSPattern;
     };
     ddcolorkey ddckDestColorkey;
     ddcolorkey ddckSrcColorkey;
@@ -311,7 +311,7 @@ SDL_Renderer *GetSurfaceRenderer(struct IDirectDrawSurface_c *lpThis)
 #endif
 
 
-uint32_t DirectDrawCreate_c(void *lpGUID, void **lplpDD, void *pUnkOuter)
+uint32_t DirectDrawCreate_c(void *lpGUID, PTR32(struct IDirectDraw_c *) *lplpDD, void *pUnkOuter)
 {
     struct IDirectDraw_c *lpDD_c;
 
@@ -337,10 +337,10 @@ uint32_t DirectDrawCreate_c(void *lpGUID, void **lplpDD, void *pUnkOuter)
         return DDERR_OUTOFMEMORY;
     }
 
-    lpDD_c->lpVtbl = &IDirectDrawVtbl_asm2c;
+    lpDD_c->lpVtbl = FROMPTR(&IDirectDrawVtbl_asm2c);
     lpDD_c->RefCount = 1;
 
-    *lplpDD = lpDD_c;
+    *lplpDD = FROMPTR(lpDD_c);
 
 #ifdef DEBUG_DDRAW
     eprintf("OK: 0x%" PRIxPTR "\n", (uintptr_t)lpDD_c);
@@ -350,7 +350,7 @@ uint32_t DirectDrawCreate_c(void *lpGUID, void **lplpDD, void *pUnkOuter)
 }
 
 
-uint32_t IDirectDraw_QueryInterface_c(struct IDirectDraw_c *lpThis, void * riid, void ** ppvObj)
+uint32_t IDirectDraw_QueryInterface_c(struct IDirectDraw_c *lpThis, void * riid, PTR32(void *)* ppvObj)
 {
 #ifdef DEBUG_DDRAW
     eprintf("IDirectDraw_QueryInterface: 0x%" PRIxPTR ", 0x%" PRIxPTR ", 0x%" PRIxPTR "\n", (uintptr_t)lpThis, (uintptr_t)riid, (uintptr_t)ppvObj);
@@ -436,19 +436,19 @@ uint32_t IDirectDraw_Compact_c(struct IDirectDraw_c *lpThis)
 //    return IDirectDraw_Compact(lpThis->lpObject);
 }
 
-uint32_t IDirectDraw_CreateClipper_c(struct IDirectDraw_c *lpThis, uint32_t param1, void ** param2, void * param3)
+uint32_t IDirectDraw_CreateClipper_c(struct IDirectDraw_c *lpThis, uint32_t param1, PTR32(void *)* param2, void * param3)
 {
     eprintf("Unsupported method: %s\n", "IDirectDraw_CreateClipper");
     exit(1);
 }
 
-uint32_t IDirectDraw_CreatePalette_c(struct IDirectDraw_c *lpThis, uint32_t param1, void * param2, void ** param3, void * param4)
+uint32_t IDirectDraw_CreatePalette_c(struct IDirectDraw_c *lpThis, uint32_t param1, void * param2, PTR32(void *)* param3, void * param4)
 {
     eprintf("Unsupported method: %s\n", "IDirectDraw_CreatePalette");
     exit(1);
 }
 
-uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsurfacedesc *lpDDSurfaceDesc, struct IDirectDrawSurface_c ** lplpDDSurface, void * pUnkOuter)
+uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsurfacedesc *lpDDSurfaceDesc, PTR32(struct IDirectDrawSurface_c *)* lplpDDSurface, void * pUnkOuter)
 {
     struct IDirectDrawSurface_c *lpDDS_c;
 
@@ -465,7 +465,7 @@ uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsur
     }
 
 #ifdef DEBUG_DDRAW
-    eprintf("%i, %i, %i, %i, 0x%" PRIxPTR ", 0x%x, 0x%x - ", lpDDSurfaceDesc->dwSize, lpDDSurfaceDesc->dwWidth, lpDDSurfaceDesc->dwHeight, lpDDSurfaceDesc->dwBackBufferCount, (uintptr_t)lpDDSurfaceDesc->lpSurface, lpDDSurfaceDesc->dwFlags, lpDDSurfaceDesc->ddsCaps.dwCaps);
+    eprintf("%i, %i, %i, %i, 0x%x, 0x%x, 0x%x - ", lpDDSurfaceDesc->dwSize, lpDDSurfaceDesc->dwWidth, lpDDSurfaceDesc->dwHeight, lpDDSurfaceDesc->dwBackBufferCount, lpDDSurfaceDesc->lpSurface, lpDDSurfaceDesc->dwFlags, lpDDSurfaceDesc->ddsCaps.dwCaps);
 #endif
 
     if ((lpDDSurfaceDesc->dwSize != 108) || ((lpDDSurfaceDesc->dwFlags & DDSD_CAPS) == 0))
@@ -498,7 +498,7 @@ uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsur
             return DDERR_OUTOFMEMORY;
         }
 
-        lpDDS_c->lpVtbl = &IDirectDrawSurfaceVtbl_asm2c;
+        lpDDS_c->lpVtbl = FROMPTR(&IDirectDrawSurfaceVtbl_asm2c);
         lpDDS_c->RefCount = 1;
         lpDDS_c->primary = 1;
         lpDDS_c->backbuffer = 0;
@@ -528,7 +528,7 @@ uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsur
             return DDERR_OUTOFMEMORY;
         }
 
-        lpDDS_c->lpBackbuffer->lpVtbl = &IDirectDrawSurfaceVtbl_asm2c;
+        lpDDS_c->lpBackbuffer->lpVtbl = FROMPTR(&IDirectDrawSurfaceVtbl_asm2c);
         lpDDS_c->lpBackbuffer->RefCount = 1;
         lpDDS_c->lpBackbuffer->primary = 0;
         lpDDS_c->lpBackbuffer->backbuffer = 1;
@@ -607,7 +607,7 @@ uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsur
         }
 #endif
 
-        *lplpDDSurface = lpDDS_c;
+        *lplpDDSurface = FROMPTR(lpDDS_c);
 
 #ifdef DEBUG_DDRAW
         eprintf("OK: 0x%" PRIxPTR " (0x%" PRIxPTR ")\n", (uintptr_t)lpDDS_c, (uintptr_t)lpDDS_c->lpBackbuffer);
@@ -649,7 +649,7 @@ uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsur
             return DDERR_OUTOFMEMORY;
         }
 
-        lpDDS_c->lpVtbl = &IDirectDrawSurfaceVtbl_asm2c;
+        lpDDS_c->lpVtbl = FROMPTR(&IDirectDrawSurfaceVtbl_asm2c);
         lpDDS_c->RefCount = 1;
         lpDDS_c->primary = 0;
         lpDDS_c->backbuffer = 0;
@@ -678,7 +678,7 @@ uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsur
 
         lpDDS_c->mustlock = SDL_MUSTLOCK(lpDDS_c->Surface);
 
-        *lplpDDSurface = lpDDS_c;
+        *lplpDDSurface = FROMPTR(lpDDS_c);
 
 #ifdef DEBUG_DDRAW
         eprintf("OK: 0x%" PRIxPTR "\n", (uintptr_t)lpDDS_c);
@@ -690,7 +690,7 @@ uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsur
     exit(1);
 }
 
-uint32_t IDirectDraw_DuplicateSurface_c(struct IDirectDraw_c *lpThis, struct IDirectDrawSurface_c * param1, struct IDirectDrawSurface_c ** param2)
+uint32_t IDirectDraw_DuplicateSurface_c(struct IDirectDraw_c *lpThis, struct IDirectDrawSurface_c * param1, PTR32(struct IDirectDrawSurface_c *)* param2)
 {
     eprintf("Unsupported method: %s\n", "IDirectDraw_DuplicateSurface");
     exit(1);
@@ -740,7 +740,7 @@ uint32_t IDirectDraw_GetFourCCCodes_c(struct IDirectDraw_c *lpThis, uint32_t * p
 //    return IDirectDraw_GetFourCCCodes(lpThis->lpObject, (LPDWORD)param1, (LPDWORD)param2);
 }
 
-uint32_t IDirectDraw_GetGDISurface_c(struct IDirectDraw_c *lpThis, struct IDirectDrawSurface_c ** param1)
+uint32_t IDirectDraw_GetGDISurface_c(struct IDirectDraw_c *lpThis, PTR32(struct IDirectDrawSurface_c *)* param1)
 {
     eprintf("Unsupported method: %s\n", "IDirectDraw_GetGDISurface");
     exit(1);
@@ -965,7 +965,7 @@ uint32_t IDirectDraw_WaitForVerticalBlank_c(struct IDirectDraw_c *lpThis, uint32
 }
 
 
-uint32_t IDirectDrawSurface_QueryInterface_c(struct IDirectDrawSurface_c *lpThis, void * riid, void ** ppvObj)
+uint32_t IDirectDrawSurface_QueryInterface_c(struct IDirectDrawSurface_c *lpThis, void * riid, PTR32(void *)* ppvObj)
 {
 #ifdef DEBUG_DDRAW
     eprintf("IDirectDrawSurface_QueryInterface: 0x%" PRIxPTR ", 0x%" PRIxPTR ", 0x%" PRIxPTR "\n", (uintptr_t)lpThis, (uintptr_t)riid, (uintptr_t)ppvObj);
@@ -1504,7 +1504,7 @@ uint32_t IDirectDrawSurface_Flip_c(struct IDirectDrawSurface_c *lpThis, struct I
     exit(1);
 }
 
-uint32_t IDirectDrawSurface_GetAttachedSurface_c(struct IDirectDrawSurface_c *lpThis, struct _ddscaps2 *lpDDSCaps, struct IDirectDrawSurface_c ** lplpDDAttachedSurface)
+uint32_t IDirectDrawSurface_GetAttachedSurface_c(struct IDirectDrawSurface_c *lpThis, struct _ddscaps2 *lpDDSCaps, PTR32(struct IDirectDrawSurface_c *)* lplpDDAttachedSurface)
 {
 #ifdef DEBUG_DDRAW
     eprintf("IDirectDrawSurface_GetAttachedSurface: 0x%" PRIxPTR ", 0x%" PRIxPTR ", 0x%" PRIxPTR " - ", (uintptr_t)lpThis, (uintptr_t)lpDDSCaps, (uintptr_t)lplpDDAttachedSurface);
@@ -1528,7 +1528,7 @@ uint32_t IDirectDrawSurface_GetAttachedSurface_c(struct IDirectDrawSurface_c *lp
             return DDERR_INVALIDPARAMS;
         }
 
-        *lplpDDAttachedSurface = lpThis->lpBackbuffer;
+        *lplpDDAttachedSurface = FROMPTR(lpThis->lpBackbuffer);
 
 #ifdef DEBUG_DDRAW
         eprintf("OK: 0x%" PRIxPTR "\n", (uintptr_t)lpThis->lpBackbuffer);
@@ -1555,7 +1555,7 @@ uint32_t IDirectDrawSurface_GetCaps_c(struct IDirectDrawSurface_c *lpThis, void 
 //    return IDirectDrawSurface_GetCaps(lpThis->lpObject, (LPDDSCAPS)param1);
 }
 
-uint32_t IDirectDrawSurface_GetClipper_c(struct IDirectDrawSurface_c *lpThis, void ** param1)
+uint32_t IDirectDrawSurface_GetClipper_c(struct IDirectDrawSurface_c *lpThis, PTR32(void *)* param1)
 {
     eprintf("Unimplemented: %s\n", "IDirectDrawSurface_GetClipper");
     exit(1);
@@ -1569,7 +1569,7 @@ uint32_t IDirectDrawSurface_GetColorKey_c(struct IDirectDrawSurface_c *lpThis, u
 //    return IDirectDrawSurface_GetColorKey(lpThis->lpObject, param1, (LPDDCOLORKEY)param2);
 }
 
-uint32_t IDirectDrawSurface_GetDC_c(struct IDirectDrawSurface_c *lpThis, void ** lphDC)
+uint32_t IDirectDrawSurface_GetDC_c(struct IDirectDrawSurface_c *lpThis, PTR32(void *)* lphDC)
 {
 #ifdef DEBUG_DDRAW
     eprintf("IDirectDrawSurface_GetDC: 0x%" PRIxPTR ", 0x%" PRIxPTR " - ", (uintptr_t)lpThis, (uintptr_t)lphDC);
@@ -1603,7 +1603,7 @@ uint32_t IDirectDrawSurface_GetOverlayPosition_c(struct IDirectDrawSurface_c *lp
 //    return IDirectDrawSurface_GetOverlayPosition(lpThis->lpObject, (LPLONG)param1, (LPLONG)param2);
 }
 
-uint32_t IDirectDrawSurface_GetPalette_c(struct IDirectDrawSurface_c *lpThis, void ** param1)
+uint32_t IDirectDrawSurface_GetPalette_c(struct IDirectDrawSurface_c *lpThis, PTR32(void *)* param1)
 {
     eprintf("Unimplemented: %s\n", "IDirectDrawSurface_GetPalette");
     exit(1);
@@ -1652,7 +1652,7 @@ static uint32_t GetSurfaceDesc(struct IDirectDrawSurface_c *lpThis, struct _ddsu
     if (!lpThis->mustlock)
     {
         lpDDSurfaceDesc->dwFlags |= DDSD_LPSURFACE;
-        lpDDSurfaceDesc->lpSurface = Surface->pixels;
+        lpDDSurfaceDesc->lpSurface = FROMPTR(Surface->pixels);
     }
 
     return DD_OK;
@@ -1789,7 +1789,7 @@ uint32_t IDirectDrawSurface_Lock_c(struct IDirectDrawSurface_c *lpThis, void * l
             if (lpDDSurfaceDesc != NULL)
             {
                 lpDDSurfaceDesc->dwFlags |= DDSD_LPSURFACE;
-                lpDDSurfaceDesc->lpSurface = Surface->pixels;
+                lpDDSurfaceDesc->lpSurface = FROMPTR(Surface->pixels);
             }
         }
 

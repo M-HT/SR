@@ -822,7 +822,7 @@ void Game_CleanState(int imm)
         }
     }
 
-    Game_ScreenWindow = Game_FrameBuffer;
+    Game_ScreenWindow = FROMPTR(Game_FrameBuffer);
     Game_NextMemory = 0;
 
     Game_KQueueWrite = 0;
@@ -944,12 +944,6 @@ static void Game_Cleanup(void)
         Game_DisplaySem = NULL;
     }
 
-    /*if (Game_ScreenWindow != NULL)
-    {
-        free(Game_ScreenWindow);
-        Game_ScreenWindow = NULL;
-    }*/
-
     if (Game_FrameMemory != NULL)
     {
         free(Game_FrameMemory);
@@ -1016,7 +1010,7 @@ static int Game_Initialize(void)
 
     Game_FrameMemory = NULL;
     Game_FrameBuffer = NULL;
-    Game_ScreenWindow = NULL;
+    Game_ScreenWindow = 0;
     memset(&Game_AllocatedMemory, 0, sizeof(Game_AllocatedMemory));
 
     Game_TimerRunning = 0;
@@ -1160,13 +1154,6 @@ static int Game_Initialize(void)
     }
 
     Game_FrameBuffer = (uint8_t *) ((((uintptr_t) Game_FrameMemory) + 65535) & ~0xffff);
-
-/*	Game_ScreenWindow = (uint8_t *) malloc(65536);
-    if (Game_ScreenWindow == NULL)
-    {
-        fprintf(stderr, "Error: Not enough memory\n");
-        return -4;
-    }*/
 
     Game_DisplaySem = SDL_CreateSemaphore(0);
     if (Game_DisplaySem == NULL)

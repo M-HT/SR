@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -70,7 +70,7 @@ void Game_intDPMI(
                     // edx=address in 1st MB (read from file - max 33000 bytes)
                     // play sequence
 
-                    Game_start_sequence((uint8_t *) EDX);
+                    Game_start_sequence(TOPTR_8(EDX));
 
                     return;
                     // case 0x0104:

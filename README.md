@@ -47,11 +47,16 @@ The projects consists of following subprojects (read the readmes in subproject d
   * Plugins used by the DOS games to enlarge/enhance the displayed image.
 * **pycfg**
   * A configuration utility that can be used on Linux (sorry Windows users) to change settings in the configuration files (without editing the files).
+* **SR64-loader**
+  * Loader for 64-bit versions.
 
 <hr/>
 
 Some notes:
 
-* The project supports creating 32-bit, not 64-bit, Windows or Linux versions of the games.
+* The project supports creating 32-bit, Windows or Linux versions of the games.
 * The generated arm version is little-endian, not big-endian.
 * The generated arm version supports softfp and hardfp calling conventions.
+* Creating 64-bit versions is experimental.
+  * Only Linux (x64, arm64) version of Septerra Core is working at the moment.
+  * 64-bit versions require a loader.

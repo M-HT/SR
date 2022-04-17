@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -36,6 +36,19 @@
 #define NOTPLAYING 0        // No sound is playing.
 #define PLAYINGNOTPENDING 1 // Playing a sound, but no sound is pending.
 #define PENDINGSOUND 2      // Playing, and a sound is pending.
+
+
+#pragma pack(2)
+
+typedef struct __attribute__ ((__packed__)) _DIGPAK_SNDSTRUC_ {
+    PTR32(char *) sound;        // address of audio data. (originally real mode ptr)
+    uint16_t sndlen;            // Length of audio sample.
+    PTR32(int16_t *) IsPlaying; // Address of play status flag.
+    int16_t frequency;          // Playback frequency. recommended 11khz.
+} DIGPAK_SNDSTRUC;
+
+#pragma pack()
+
 
 void Game_ChannelFinished(int channel)
 {
@@ -468,8 +481,8 @@ static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
     sample->_signed = Game_SoundSigned;
     sample->len = sndplay->sndlen;
     sample->playback_rate = sndplay->frequency;
-    sample->sound = sndplay->sound;
-    sample->IsPlaying = sndplay->IsPlaying;
+    sample->sound = TOPTR_T(char, sndplay->sound);
+    sample->IsPlaying = TOPTR_T(int16_t, sndplay->IsPlaying);
 
     //if (sample->IsPlaying != NULL) *(sample->IsPlaying) = 0;
 
@@ -688,8 +701,10 @@ int16_t Game_PostAudioPending(DIGPAK_SNDSTRUC *sndplay)
     }
 }
 
-int16_t Game_SetPlayMode(int16_t playmode)
+int16_t Game_SetPlayMode(int32_t playmode)
 {
+    playmode = (int16_t)playmode;
+
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: Set Play mode: %i - ", playmode);
     if (playmode == 0) fprintf(stderr, "8-bit PCM\n");
@@ -744,30 +759,33 @@ int16_t *Game_ReportSemaphoreAddress(void)
     return &Game_AudioSemaphore;
 }
 
-int16_t Game_SetBackFillMode(int16_t mode)
+int16_t Game_SetBackFillMode(int32_t mode)
 {
 #if defined(__DEBUG__)
+    mode = (int16_t)mode;
     fprintf(stderr, "DIGPAK: DMA BackFill mode: %i - %s\n", mode, (mode)?"off":"on");
 #endif
     return 0; // command ignored
 }
 
-int16_t Game_VerifyDMA(char *data, int16_t length)
+int16_t Game_VerifyDMA(char *data, int32_t length)
 {
 #if defined(__DEBUG__)
-    fprintf(stderr, "DIGPAK: verifying dma block\n");
+    length = (int16_t)length;
+    fprintf(stderr, "DIGPAK: verifying dma block: %i\n", length);
 #endif
     return 1;
 }
 
-void Game_SetDPMIMode(int16_t mode)
+void Game_SetDPMIMode(int32_t mode)
 {
 #if defined(__DEBUG__)
+    mode = (int16_t)mode;
     fprintf(stderr, "DIGPAK: Setting DPMI mode: %i - %s\n", mode, (mode)?"32 bit addressing":"16 bit addressing");
 #endif
 }
 
-int Game_FillSoundCfg(void *buf, int count)
+int32_t Game_FillSoundCfg(void *buf, int32_t count)
 {
     memcpy(buf, &Game_SoundCfg, count);
     return count;

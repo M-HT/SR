@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2021 Roman Pauer
+ *  Copyright (C) 2019-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -114,7 +114,7 @@ enum RegisterState { Empty, Read, Write }
 
 string input_filename, output_filename, input_directory, return_procedure, dispatcher_procedure;
 string[] include_directories;
-bool output_preprocessed_file, input_reading_proc, input_reading_dataseg, position_independent_code, old_bitcode, no_tail_calls;
+bool output_preprocessed_file, input_reading_proc, input_reading_dataseg, position_independent_code, old_bitcode, no_tail_calls, pointer_size_64;
 uint global_optimization_level, procedure_optimization_level;
 
 int file_input_level;
@@ -2453,6 +2453,7 @@ public int main(string[] args)
     position_independent_code = false;
     old_bitcode = false;
     no_tail_calls = false;
+    pointer_size_64 = false;
     for (int i = 1; i < args.length; i++)
     {
         switch(args[i])
@@ -2493,6 +2494,9 @@ public int main(string[] args)
                 break;
             case "-pic":
                 position_independent_code = true;
+                break;
+            case "-m64":
+                pointer_size_64 = true;
                 break;
             default:
                 if (input_filename == "")
@@ -3629,7 +3633,14 @@ public int main(string[] args)
     proc_list = proc_list.rehash;
 
 
-    add_output_line("target datalayout = \"e-p:32:32-f64:32:64-n32\"");
+    if (pointer_size_64)
+    {
+        add_output_line("target datalayout = \"e-p:64:64-f64:64:64-n32:64\"");
+    }
+    else
+    {
+        add_output_line("target datalayout = \"e-p:32:32-f64:32:64-n32\"");
+    }
     add_output_line("");
     add_output_line("%_cpu = type { i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }");
 

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,6 +22,7 @@
  *
  */
 
+#include <inttypes.h>
 #include "WinApi-gdi32.h"
 #include "WinApi.h"
 #include <stdio.h>
@@ -55,7 +56,7 @@ void *CreateFontIndirectA_c(void *lplf)
 void *CreatePolygonRgn_c(void *lppt, int32_t cPoints, int32_t fnPolyFillMode)
 {
 #if defined(DEBUG_GDI32)
-    eprintf("CreatePolygonRgn: 0x%x, %i, %i\n", (uintptr_t)lppt, cPoints, fnPolyFillMode);
+    eprintf("CreatePolygonRgn: 0x%" PRIxPTR ", %i, %i\n", (uintptr_t)lppt, cPoints, fnPolyFillMode);
 #endif
 
     // Septerra Core doesn't seem to use the result
@@ -79,7 +80,7 @@ uint32_t DeleteDC_c(void *hdc)
 uint32_t DeleteObject_c(void *hObject)
 {
 #if defined(DEBUG_GDI32)
-    eprintf("DeleteObject: 0x%x\n", (uintptr_t)hObject);
+    eprintf("DeleteObject: 0x%" PRIxPTR "\n", (uintptr_t)hObject);
 #endif
 
     if (hObject == NULL) return 0;

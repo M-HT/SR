@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -47,8 +47,6 @@ void *calloc_c(uint32_t nmemb, uint32_t size);
 
 int32_t atol_c(const char *nptr);
 int32_t toupper_c(int32_t c);
-
-int32_t sscanf2_c(const char *str, const char *format, va_list ap);
 
 uint32_t fread_c(void *ptr, uint32_t size, uint32_t nmemb, void *stream);
 int32_t ftell_c(void *stream);

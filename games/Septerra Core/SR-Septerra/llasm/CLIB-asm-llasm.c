@@ -25,6 +25,7 @@
 #include <inttypes.h>
 #include "CLIB-asm-llasm.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include "printf_x86.h"
 
@@ -44,6 +45,58 @@ int32_t sprintf2_c(char *str, const char *format, uint32_t *ap)
 
 #ifdef DEBUG_CLIB
     eprintf("%i (%s)\n", res, str);
+#endif
+
+    return res;
+}
+
+int32_t sscanf2_c(const char *str, const char *format, uint32_t *ap)
+{
+    int res, num, index;
+    uintptr_t values[2];
+
+#ifdef DEBUG_CLIB
+    eprintf("sscanf: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s) - ", (uintptr_t) str, str, (uintptr_t) format, format);
+#endif
+
+    num = 0;
+    if (format != NULL)
+    {
+        for (index = 0; format[index] != 0; index++)
+        {
+            if (format[index] == '%')
+            {
+                num++;
+
+                if (format[index + 1] != 's' && format[index + 1] != 'd')
+                {
+                    eprintf("sscanf: unsupported format: %s\n", format);
+                    exit(1);
+                }
+            }
+        }
+    }
+
+    switch (num)
+    {
+        case 1:
+            res = sscanf(str, format, &(values[0]));
+            break;
+        case 2:
+            res = sscanf(str, format, &(values[0]), &(values[1]));
+            break;
+        default:
+            eprintf("sscanf: unsupported format: %s\n", format);
+            exit(1);
+    }
+
+    for (index = 0; index < res; index++)
+    {
+        ap[index] = (uint32_t)values[index];
+    }
+
+#ifdef DEBUG_CLIB
+    eprintf("%i\n", res);
 #endif
 
     return res;

@@ -104,7 +104,7 @@ struct ddata_struct {
 
 struct dataseg_struct {
     string name;
-    bool isconstant, isuninitialized;
+    bool isconstant, isuninitialized, addr_in_ctor;
     dlabel_struct[] labels;
     ddata_struct[] data;
 }
@@ -139,7 +139,7 @@ func_struct[string] func_list;
 proc_struct[string] proc_list;
 string[] local_proc_names;
 
-bool used_ctlz_intrinsics, used_bswap_intrinsics;
+bool used_ctlz_intrinsics, used_bswap_intrinsics, create_ctor_function;
 
 int num_output_lines;
 string[] output_lines;
@@ -324,6 +324,7 @@ void initialize()
 
     used_ctlz_intrinsics = false;
     used_bswap_intrinsics = false;
+    create_ctor_function = false;
 }
 
 void read_next_line()
@@ -3020,6 +3021,7 @@ public int main(string[] args)
             newdataseg.name = dataseg_name.idup;
             newdataseg.isconstant = false;
             newdataseg.isuninitialized = false;
+            newdataseg.addr_in_ctor = false;
 
             current_dataseg = newdataseg.name;
             current_dataseg_offset = 0;
@@ -3663,7 +3665,15 @@ public int main(string[] args)
             {
                 dataseg_type ~= "i32";
                 dataseg_values ~= "i32 ";
-                if (dataseg.data[i].addr in proc_list)
+
+                if (position_independent_code && pointer_size_64)
+                {
+                    dataseg_values ~= "0";
+                    dataseg_list[dataseg_name].addr_in_ctor = true;
+                    dataseg.addr_in_ctor = true;
+                    create_ctor_function = true;
+                }
+                else if (dataseg.data[i].addr in proc_list)
                 {
                     dataseg_values ~= "ptrtoint (" ~ ((no_tail_calls)?"i8*":"void") ~ "(%_cpu*)* @" ~ dataseg.data[i].addr ~ " to i32)";
                 }
@@ -3705,7 +3715,7 @@ public int main(string[] args)
         }
 
         add_output_line("%_" ~ dataseg_name ~ " = type <{ " ~ dataseg_type ~ " }>");
-        add_output_line("@" ~ dataseg_name ~ " = private " ~ (dataseg.isconstant?"constant":"global") ~ " %_" ~ dataseg_name ~ " <{ " ~ dataseg_values ~ " }>, align 4");
+        add_output_line("@" ~ dataseg_name ~ " = private " ~ ((dataseg.isconstant && !dataseg.addr_in_ctor)?"constant":"global") ~ " %_" ~ dataseg_name ~ " <{ " ~ dataseg_values ~ " }>, align 4");
 
         foreach (label; dataseg.labels)
         {
@@ -3877,6 +3887,63 @@ public int main(string[] args)
             add_output_line("ret void");
             add_output_line("}");
         }
+    }
+
+    if (create_ctor_function)
+    {
+        add_output_line("");
+        add_output_line("; ctor");
+        add_output_line("%_ctors = type { i32, void ()*, i8* }");
+        add_output_line("@llvm.global_ctors = appending global [1 x %_ctors] [%_ctors { i32 65535, void ()* @__ctor, i8* null }]");
+        add_output_line("");
+        add_output_line("define private void @__ctor() nounwind {");
+
+        foreach (dataseg_name; dataseg_list.keys.sort())
+        {
+            auto dataseg = dataseg_list[dataseg_name];
+
+            if (!dataseg.addr_in_ctor) continue;
+
+            int dataseg_offset = 0;
+            for (int i = 0; i < dataseg.data.length; i++)
+            {
+                if (!dataseg.data[i].isaddr)
+                {
+                    dataseg_offset += dataseg.data[i].datalen;
+                    continue;
+                }
+
+                string store_value;
+                if (dataseg.data[i].addr in proc_list)
+                {
+                    store_value = "ptrtoint (" ~ ((no_tail_calls)?"i8*":"void") ~ "(%_cpu*)* @" ~ dataseg.data[i].addr ~ " to i32)";
+                }
+                else
+                {
+                    if (position_independent_code)
+                    {
+                        auto addrlabel = dlabel_list[dataseg.data[i].addr];
+
+                        store_value = "ptrtoint (i8* getelementptr (" ~ get_load_type("i8") ~ " bitcast (%_" ~ addrlabel.dataseg_name ~ "* @" ~ addrlabel.dataseg_name ~ " to i8*), i32 " ~ to!string(addrlabel.offset) ~ ") to i32)";
+                    }
+                    else
+                    {
+                        store_value = "ptrtoint (i8* @" ~ dataseg.data[i].addr ~ " to i32)";
+                    }
+                }
+
+                string ptr_value = "bitcast (i8* getelementptr (" ~ get_load_type("i8") ~ " bitcast (%_" ~ dataseg_name ~ "* @" ~ dataseg_name ~ " to i8*), i32 " ~ to!string(dataseg_offset) ~ ") to i32*)";
+
+                int align_value = (dataseg_offset % 4 == 0)?4:( (dataseg_offset % 2 == 0)?2:1 );
+
+                add_output_line("store i32 " ~ store_value ~ ", i32* " ~ ptr_value ~ ", align " ~ to!string(align_value));
+
+                dataseg_offset += 4;
+            }
+        }
+
+        add_output_line("ret void");
+        add_output_line("}");
     }
 
     write_output();

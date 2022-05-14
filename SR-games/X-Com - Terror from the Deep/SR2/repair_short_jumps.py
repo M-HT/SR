@@ -41,13 +41,20 @@ for cErrLine in fErr:
             cLine = fIn.readline()
             iLine = iLine + 1
 
-            if cLine.startswith("jmp short"):
+            if cLine.startswith("jmp short "):
                 # if line begins "jmp short" then remove "short" keyword
                 cLine = "jmp" + cLine[9:]
             else:
-                # else insert "next" keyword after first word
                 iTemp = cLine.find(" ")
-                cLine = cLine[ : iTemp + 1] + "near" + cLine[iTemp : ]
+                cFirst = cLine[ : iTemp + 1]
+                cSecond = cLine[iTemp + 1 : ].lstrip()
+
+                if cFirst.startswith("j") and cSecond.startswith("short "):
+                    # if line begins "j?? short" then replace "short" keyword with "near" keyword
+                    cLine = cFirst + "near " + cSecond[6:]
+                else:
+                    # else insert "near" keyword after first word
+                    cLine = cFirst + "near " + cSecond
 
             fOut.write(cLine)
 

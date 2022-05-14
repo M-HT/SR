@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -337,7 +337,7 @@ int SR_disassemble_offset_dos(unsigned int Entry, uint_fast32_t offset)
         }
 
 #ifdef DISPLAY_DISASSEMBLY
-        printf("loc_%X: %s\n", section[Entry].start + offset, ud_insn_asm(&ud_obj));
+        printf("loc_%X: %s\n", (unsigned int)(section[Entry].start + offset), ud_insn_asm(&ud_obj));
 #endif
 
 
@@ -488,19 +488,22 @@ int SR_disassemble_offset_dos(unsigned int Entry, uint_fast32_t offset)
                    )
                 {
                     uint_fast32_t address;
+                    int jumptype;
 
                     if (ud_obj.operand[0].size == 32)
                     {
                         address = ud_obj.operand[0].lval.sdword + (uint_fast32_t) ud_obj.pc;
+                        jumptype = 0;
                     }
                     else
                     {
                         address = ud_obj.operand[0].lval.sbyte + (uint_fast32_t) ud_obj.pc;
+                        jumptype = ((ud_obj.mnemonic == UD_Ijcxz) || (ud_obj.mnemonic == UD_Ijecxz) || (ud_obj.mnemonic == UD_Ijrcxz))?2:1;
                     }
 
                     SR_disassemble_add_address(Entry, address);
 
-                    ret = SR_disassemble_convert_cjump(cResult, ((ud_obj.operand[0].size == 32)?" near":""), address, NULL);
+                    ret = SR_disassemble_convert_cjump(cResult, ((jumptype == 0)?" near":((jumptype == 1)?" short":"")), address, NULL);
 
                     if (ret) return ret;
 

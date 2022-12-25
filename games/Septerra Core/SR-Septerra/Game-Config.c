@@ -105,11 +105,11 @@ void ReadConfiguration(void)
     while (!feof(f))
     {
         // skip empty lines
-        items = fscanf(f, "%8192[\n\r]", buf);
+        items = fscanf(f, "%8191[\n\r]", buf);
 
         // read line
         buf[0] = 0;
-        items = fscanf(f, "%8192[^\n^\r]", buf);
+        items = fscanf(f, "%8191[^\n^\r]", buf);
         if (items <= 0) continue;
 
         // trim line

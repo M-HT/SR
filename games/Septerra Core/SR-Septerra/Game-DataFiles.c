@@ -195,6 +195,7 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
     {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpragmas"
+#pragma GCC diagnostic ignored "-Wunknown-warning-option"
 #pragma GCC diagnostic ignored "-Wformat-truncation"
         snprintf(ErrorString, 256, "Unable to open %s", &(FilePath[0]));
 #pragma GCC diagnostic pop
@@ -249,6 +250,7 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
             {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpragmas"
+#pragma GCC diagnostic ignored "-Wunknown-warning-option"
 #pragma GCC diagnostic ignored "-Wformat-truncation"
                 snprintf(ErrorString, 256, "Unable to open %s\n(error %d: %s)", &(FilePath[0]), fopenerrno, strerror(fopenerrno));
 #pragma GCC diagnostic pop

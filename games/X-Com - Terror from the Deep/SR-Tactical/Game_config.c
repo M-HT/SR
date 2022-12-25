@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -79,11 +79,11 @@ void Game_ReadConfig(void)
     while (!feof(f))
     {
         // skip empty lines
-        items = fscanf(f, "%8192[\n\r]", buf);
+        items = fscanf(f, "%8191[\n\r]", buf);
 
         // read line
         buf[0] = 0;
-        items = fscanf(f, "%8192[^\n^\r]", buf);
+        items = fscanf(f, "%8191[^\n^\r]", buf);
         if (items <= 0) continue;
 
         // trim line

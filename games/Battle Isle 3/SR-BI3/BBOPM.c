@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -156,11 +156,11 @@ int OPM_New_c(unsigned int width, unsigned int height, unsigned int bytes_per_pi
         OPM_bitmapInfo.bmi.bmiHeader.biWidth = width;
         OPM_bitmapInfo.bmi.bmiHeader.biHeight = -(int)height;
 
-        pixel_map->hBitmap = WinGCreateBitmap_c((HDC)pixel_map->hDC, &(OPM_bitmapInfo.bmi), (void **)&(pixel_map->buffer));
+        pixel_map->hBitmap = WinGCreateBitmap_c((HDC)pixel_map->hDC, &(OPM_bitmapInfo.bmi), (void **)&buffer);
         if (pixel_map->hBitmap == NULL)
         {
             BBMEM_FreeMemory_c(1);
-            pixel_map->hBitmap = WinGCreateBitmap_c((HDC)pixel_map->hDC, &(OPM_bitmapInfo.bmi), (void **)&(pixel_map->buffer));
+            pixel_map->hBitmap = WinGCreateBitmap_c((HDC)pixel_map->hDC, &(OPM_bitmapInfo.bmi), (void **)&buffer);
         }
         if (pixel_map->hBitmap == NULL)
         {
@@ -173,6 +173,7 @@ int OPM_New_c(unsigned int width, unsigned int height, unsigned int bytes_per_pi
             pixel_map->hDC = NULL;
             return 0;
         }
+        pixel_map->buffer = buffer;
 
         pixel_map->hSelected = SelectObject((HDC)pixel_map->hDC, (HGDIOBJ)pixel_map->hBitmap);
         if (pixel_map->hSelected == NULL)

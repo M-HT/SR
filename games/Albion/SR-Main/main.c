@@ -694,7 +694,7 @@ static void Game_Display_Create(void)
                 Game_GLFramebuffer[0] = 0;
             }
 
-            if (Game_GLScaledTexture != 0)
+            if (Game_GLScaledTexture[0] != 0)
             {
                 glDeleteTextures(3, &(Game_GLScaledTexture[0]));
                 Game_GLScaledTexture[0] = 0;
@@ -1107,7 +1107,7 @@ static void Game_ReadCDPath(void)
         while (!feof(f))
         {
             str[0] = 0;
-            items = fscanf(f, "%8192[^\n]\n", str);
+            items = fscanf(f, "%8191[^\n]\n", str);
             if (items <= 0) continue;
             if (strncasecmp(str, "SOURCE_PATH=", 12) == 0)
             {
@@ -1250,9 +1250,9 @@ static int Game_Initialize(void)
 
         if (NULL != getcwd(cur_dir, MAX_PATH))
         {
-            if (0 != chdir(Game_Directory));
+            if (0 != chdir(Game_Directory)) {}
             vfs_init(0);
-            if (0 != chdir(cur_dir));
+            if (0 != chdir(cur_dir)) {}
         }
     }
 
@@ -1288,8 +1288,8 @@ static int Game_Initialize(void)
     Game_MinCursorData[9] = 0xD8;
     Game_MouseCursor = 0;
     Game_PlayIntro = 1;
-    Game_Sound = 1;
-    Game_Music = 1;
+    Game_Sound = 0; // sound and music must be disabled here, but must be set to the default value at the end of the function
+    Game_Music = 0;
 
     Game_VolumeDelta = 0;
 
@@ -1457,6 +1457,9 @@ static int Game_Initialize(void)
     Game_stdin = stdin;
     Game_stdout = stdout;
     Game_stderr = stderr;
+
+    Game_Sound = 1;
+    Game_Music = 1;
 
     return 0;
 }

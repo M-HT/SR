@@ -149,7 +149,7 @@ static int32_t Game_mul_dword_140004_ResizeWidthMult, Game_mul_dword_140008_Resi
 //static struct struc_1 Game_stru_1414AC[D3_MAXIMUM_VIEWPORT_WIDTH + 3];
 //static struct struc_7 Game_unk_144F50[2 * (D3_MAXIMUM_VIEWPORT_HEIGHT + 1)];
 static struct struc_1 *Game_stru_1414AC = NULL;
-static struct struc_7 *Game_unk_144F50 = NULL;
+static void *Game_unk_144F50 = NULL;
 
 #define g_viewport_offsetx loc_14A8E8
 #define g_viewport_offsety loc_14A8EA
@@ -717,7 +717,7 @@ static void d3_sub_C61A7(int32_t number_of_coordinates, int16_t *list_of_coordin
     l_x_max = -32767;
     l_viewport_y2 = l_viewport_y1 = list_of_coordinates[1];
     l_counter_144F28 = number_of_coordinates;
-    var02 = (struct struc_7 *) &(Game_unk_144F50[0]);
+    var02 = (struct struc_7 *) Game_unk_144F50;
     if ( !d3_param_byte_144E8D )
         var02 += Engine_MaximumViewportHeight;
 
@@ -752,7 +752,7 @@ static void d3_sub_C61A7(int32_t number_of_coordinates, int16_t *list_of_coordin
 
     l_counter_144F28 = number_of_coordinates;
     list_of_coordinates = &(l_list_of_coordinates[4 * number_of_coordinates]);
-    var02 = (struct struc_7 *) &(Game_unk_144F50[0]);
+    var02 = (struct struc_7 *) Game_unk_144F50;
     if ( d3_param_byte_144E8D )
         var02 += Engine_MaximumViewportHeight;
 
@@ -782,7 +782,7 @@ static void d3_sub_C61A7(int32_t number_of_coordinates, int16_t *list_of_coordin
     }
     while ( l_counter_144F28 );
 
-    var02 = (struct struc_7 *) &(Game_unk_144F50[0]);
+    var02 = (struct struc_7 *) Game_unk_144F50;
     if ( l_viewport_y1 == l_viewport_y2 )
     {
         int32_t column_min; // bx@22
@@ -1040,7 +1040,7 @@ static void d3_sub_C5B99(int32_t number_of_coordinates, int16_t *list_of_coordin
     l_viewport_y2 = l_viewport_y1 = list_of_coordinates[1];
     l_counter_144F28 = number_of_coordinates;
     d3_param_byte_144E92 = 0;
-    var02 = (uint8_t **) &(Game_unk_144F50[0]);
+    var02 = (uint8_t **) Game_unk_144F50;
     if ( !d3_param_byte_144E8D )
     {
         d3_param_byte_144E92 = ~d3_param_byte_144E92;
@@ -1075,7 +1075,7 @@ static void d3_sub_C5B99(int32_t number_of_coordinates, int16_t *list_of_coordin
     d3_param_byte_144E92 = ~d3_param_byte_144E92;
     l_counter_144F28 = number_of_coordinates;
     list_of_coordinates = &(l_list_of_coordinates[2 * number_of_coordinates]);
-    var02 = (uint8_t **) &(Game_unk_144F50[0]);
+    var02 = (uint8_t **) Game_unk_144F50;
     if ( d3_param_byte_144E8D )
         var02 += Engine_MaximumViewportHeight;
 
@@ -1101,7 +1101,7 @@ static void d3_sub_C5B99(int32_t number_of_coordinates, int16_t *list_of_coordin
     }
     while ( l_counter_144F28 );
 
-    var02 = (uint8_t **) &(Game_unk_144F50[0]);
+    var02 = (uint8_t **) Game_unk_144F50;
     if ( l_viewport_y1 == l_viewport_y2 )
     {
         uint8_t *var16; // eax@22
@@ -4598,7 +4598,7 @@ void draw_3dscene(void)
 
     if (Game_unk_144F50 == NULL)
     {
-        Game_unk_144F50 = (struct struc_7 *) malloc((2 * (Engine_MaximumViewportHeight + 1)) * sizeof(struct struc_7));
+        Game_unk_144F50 = malloc((2 * (Engine_MaximumViewportHeight + 1)) * sizeof(struct struc_7));
         if (Game_unk_144F50 == NULL) return;
     }
 

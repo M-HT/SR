@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -807,7 +807,7 @@ static void eventloop_initialize(void)
                 SMK_GLFramebuffer[0] = 0;
             }
 
-            if (SMK_GLScaledTexture != 0)
+            if (SMK_GLScaledTexture[0] != 0)
             {
                 glDeleteTextures(3, &(SMK_GLScaledTexture[0]));
                 SMK_GLScaledTexture[0] = 0;
@@ -1304,6 +1304,8 @@ static void play_smk(const char *filename)
     if (f == NULL)
     {
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
+#pragma GCC diagnostic ignored "-Wunknown-warning-option"
 #pragma GCC diagnostic ignored "-Wformat-truncation"
         snprintf(filepath, 260, "C:\\%sVIDEO\\%s", Albion_CDPath, filename);
 #pragma GCC diagnostic pop

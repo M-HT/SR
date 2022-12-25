@@ -39,8 +39,18 @@ void *_alloca_probe_c(uint32_t size)
     eprintf("_alloca_probe: %i\n", size);
 #endif
 
+    void * volatile addr;
+    int index;
+
+    addr = alloca(size);
+
+    for (index = 0; index < size; index += 4096)
+    {
+        *(uint8_t *)((size - 1) - index + (uintptr_t)addr) = 0;
+    }
+
     // return value will be ignored
-    return memset(alloca(size), 0, size);
+    return addr;
 }
 
 

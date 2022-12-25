@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -180,7 +180,8 @@ void *LBL_OpenLib_c(const char *path, int param2)
         }
     }
 
-    strncpy(library->path, path, MAX_PATH); // change: increase path length
+    strncpy(library->path, path, MAX_PATH - 1); // change: increase path length
+    library->path[MAX_PATH - 1] = 0;
     library->current_entry = -1;
 
     DOS_Close_c(library->file_handle);

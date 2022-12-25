@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2020 Roman Pauer
+ *  Copyright (C) 2019-2022 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -96,7 +96,7 @@ static int SetValue(const char *ValueName, char *Value)
         while (!feof(file))
         {
             buf[0] = 0;
-            buf_length = fscanf(file, "%8192[\r\n]", buf);
+            buf_length = fscanf(file, "%8191[\r\n]", buf);
             if (buf_length > 0)
             {
                 hasnewline = 1;
@@ -104,7 +104,7 @@ static int SetValue(const char *ValueName, char *Value)
             }
 
             buf[0] = 0;
-            buf_length = fscanf(file, "%8192[^\r\n]", buf);
+            buf_length = fscanf(file, "%8191[^\r\n]", buf);
 
             if (buf_length <= 0) continue;
 
@@ -199,9 +199,9 @@ static int GetValue(const char *ValueName, char *Value, unsigned int Length)
 
     while (!feof(file))
     {
-        buf_length = fscanf(file, "%8192[\r\n]", buf);
+        buf_length = fscanf(file, "%8191[\r\n]", buf);
         buf[0] = 0;
-        buf_length = fscanf(file, "%8192[^\r\n]", buf);
+        buf_length = fscanf(file, "%8191[^\r\n]", buf);
 
         if (buf_length <= 0) continue;
 

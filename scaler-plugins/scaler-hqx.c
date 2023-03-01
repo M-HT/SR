@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -61,6 +61,7 @@ static void shutdown_plugin(void)
 {
 }
 
+__attribute__ ((visibility ("default")))
 int initialize_scaler_plugin(scaler_plugin_functions *functions)
 {
     if (functions == NULL) return -2;

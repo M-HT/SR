@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -146,6 +146,7 @@ static void shutdown_plugin(void)
 }
 
 
+__attribute__ ((visibility ("default")))
 int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const *parameters, midi_plugin_functions *functions)
 {
     char const *soundfont_sf2;

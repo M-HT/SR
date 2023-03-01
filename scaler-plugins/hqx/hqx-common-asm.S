@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2021  Roman Pauer
+// Copyright (C) 2021-2023  Roman Pauer
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,7 @@
 .global calculate_pattern
 
 .align 4
+.hidden calculate_pattern
 .type calculate_pattern, %function
 calculate_pattern:
 
@@ -372,6 +373,7 @@ calculate_pattern:
 .global calculate_pattern
 
 .align 4
+.hidden calculate_pattern
 .type calculate_pattern, %function
 calculate_pattern:
 

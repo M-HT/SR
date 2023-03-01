@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2003  MaxSt ( maxst@hiend3d.com )
  *
- * Copyright (C) 2021  Roman Pauer
+ * Copyright (C) 2021-2023  Roman Pauer
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,9 +26,71 @@
 #endif
 #include "hqx.h"
 #include "hqx-common.h"
-#include "hqx-interp.h"
 #include "hqx-platform.h"
+#if defined(ARMV7) || defined(ARMV8)
+#include "hqx-interp-alt.h"
+#else
+#include "hqx-interp.h"
+#endif
 
+
+#if defined(ARMV7) || defined(ARMV8)
+
+#define PIXEL00_1M  Interp1(dst, w[5], w[1]);
+#define PIXEL00_1U  Interp1(dst, w[5], w[2]);
+#define PIXEL00_1L  Interp1(dst, w[5], w[4]);
+#define PIXEL00_2   Interp2(dst, w[5], w[4], w[2]);
+#define PIXEL00_4   Interp4(dst, w[5], w[4], w[2]);
+#define PIXEL00_5   Interp5(dst, w[4], w[2]);
+#define PIXEL00_C   Interp0(dst, w[5]);
+
+#define PIXEL01_1   Interp1(dst+1, w[5], w[2]);
+#define PIXEL01_3   Interp3(dst+1, w[5], w[2]);
+#define PIXEL01_6   Interp1(dst+1, w[2], w[5]);
+#define PIXEL01_C   Interp0(dst+1, w[5]);
+
+#define PIXEL02_1M  Interp1(dst+2, w[5], w[3]);
+#define PIXEL02_1U  Interp1(dst+2, w[5], w[2]);
+#define PIXEL02_1R  Interp1(dst+2, w[5], w[6]);
+#define PIXEL02_2   Interp2(dst+2, w[5], w[2], w[6]);
+#define PIXEL02_4   Interp4(dst+2, w[5], w[2], w[6]);
+#define PIXEL02_5   Interp5(dst+2, w[2], w[6]);
+#define PIXEL02_C   Interp0(dst+2, w[5]);
+
+#define PIXEL10_1   Interp1(DST2, w[5], w[4]);
+#define PIXEL10_3   Interp3(DST2, w[5], w[4]);
+#define PIXEL10_6   Interp1(DST2, w[4], w[5]);
+#define PIXEL10_C   Interp0(DST2, w[5]);
+
+#define PIXEL11     Interp0(DST2+1, w[5]);
+
+#define PIXEL12_1   Interp1(DST2+2, w[5], w[6]);
+#define PIXEL12_3   Interp3(DST2+2, w[5], w[6]);
+#define PIXEL12_6   Interp1(DST2+2, w[6], w[5]);
+#define PIXEL12_C   Interp0(DST2+2, w[5]);
+
+#define PIXEL20_1M  Interp1(DST3, w[5], w[7]);
+#define PIXEL20_1D  Interp1(DST3, w[5], w[8]);
+#define PIXEL20_1L  Interp1(DST3, w[5], w[4]);
+#define PIXEL20_2   Interp2(DST3, w[5], w[8], w[4]);
+#define PIXEL20_4   Interp4(DST3, w[5], w[8], w[4]);
+#define PIXEL20_5   Interp5(DST3, w[8], w[4]);
+#define PIXEL20_C   Interp0(DST3, w[5]);
+
+#define PIXEL21_1   Interp1(DST3+1, w[5], w[8]);
+#define PIXEL21_3   Interp3(DST3+1, w[5], w[8]);
+#define PIXEL21_6   Interp1(DST3+1, w[8], w[5]);
+#define PIXEL21_C   Interp0(DST3+1, w[5]);
+
+#define PIXEL22_1M  Interp1(DST3+2, w[5], w[9]);
+#define PIXEL22_1D  Interp1(DST3+2, w[5], w[8]);
+#define PIXEL22_1R  Interp1(DST3+2, w[5], w[6]);
+#define PIXEL22_2   Interp2(DST3+2, w[5], w[6], w[8]);
+#define PIXEL22_4   Interp4(DST3+2, w[5], w[6], w[8]);
+#define PIXEL22_5   Interp5(DST3+2, w[6], w[8]);
+#define PIXEL22_C   Interp0(DST3+2, w[5]);
+
+#else
 
 #define PIXEL00_1M  *dst = Interp1(w[5], w[1]);
 #define PIXEL00_1U  *dst = Interp1(w[5], w[2]);
@@ -83,6 +145,8 @@
 #define PIXEL22_4   *(DST3+2) = Interp4(w[5], w[6], w[8]);
 #define PIXEL22_5   *(DST3+2) = Interp5(w[6], w[8]);
 #define PIXEL22_C   *(DST3+2) = w[5];
+
+#endif
 
 static void fill_dst(const uint32_t *rgbsrc1, const uint32_t *rgbsrc2, const uint32_t *rgbsrc3, uint32_t *dst, unsigned int width, unsigned int dststride, const uint8_t *patternTable)
 {

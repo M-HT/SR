@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2003  MaxSt ( maxst@hiend3d.com )
  *
- * Copyright (C) 2021  Roman Pauer
+ * Copyright (C) 2021-2023  Roman Pauer
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,9 +26,158 @@
 #endif
 #include "hqx.h"
 #include "hqx-common.h"
-#include "hqx-interp.h"
 #include "hqx-platform.h"
+#if defined(ARMV7) || defined(ARMV8)
+#include "hqx-interp-alt.h"
+#else
+#include "hqx-interp.h"
+#endif
 
+
+#if defined(ARMV7) || defined(ARMV8)
+
+#define PIXEL00_0     Interp0(dst, w[5]);
+#define PIXEL00_11    Interp1(dst, w[5], w[4]);
+#define PIXEL00_12    Interp1(dst, w[5], w[2]);
+#define PIXEL00_20    Interp2(dst, w[5], w[2], w[4]);
+#define PIXEL00_50    Interp5(dst, w[2], w[4]);
+#define PIXEL00_80    Interp8(dst, w[5], w[1]);
+#define PIXEL00_81    Interp8(dst, w[5], w[4]);
+#define PIXEL00_82    Interp8(dst, w[5], w[2]);
+#define PIXEL01_0     Interp0(dst+1, w[5]);
+#define PIXEL01_10    Interp1(dst+1, w[5], w[1]);
+#define PIXEL01_12    Interp1(dst+1, w[5], w[2]);
+#define PIXEL01_14    Interp1(dst+1, w[2], w[5]);
+#define PIXEL01_21    Interp2(dst+1, w[2], w[5], w[4]);
+#define PIXEL01_31    Interp3(dst+1, w[5], w[4]);
+#define PIXEL01_50    Interp5(dst+1, w[2], w[5]);
+#define PIXEL01_60    Interp6(dst+1, w[5], w[2], w[4]);
+#define PIXEL01_61    Interp6(dst+1, w[5], w[2], w[1]);
+#define PIXEL01_82    Interp8(dst+1, w[5], w[2]);
+#define PIXEL01_83    Interp8(dst+1, w[2], w[4]);
+#define PIXEL02_0     Interp0(dst+2, w[5]);
+#define PIXEL02_10    Interp1(dst+2, w[5], w[3]);
+#define PIXEL02_11    Interp1(dst+2, w[5], w[2]);
+#define PIXEL02_13    Interp1(dst+2, w[2], w[5]);
+#define PIXEL02_21    Interp2(dst+2, w[2], w[5], w[6]);
+#define PIXEL02_32    Interp3(dst+2, w[5], w[6]);
+#define PIXEL02_50    Interp5(dst+2, w[2], w[5]);
+#define PIXEL02_60    Interp6(dst+2, w[5], w[2], w[6]);
+#define PIXEL02_61    Interp6(dst+2, w[5], w[2], w[3]);
+#define PIXEL02_81    Interp8(dst+2, w[5], w[2]);
+#define PIXEL02_83    Interp8(dst+2, w[2], w[6]);
+#define PIXEL03_0     Interp0(dst+3, w[5]);
+#define PIXEL03_11    Interp1(dst+3, w[5], w[2]);
+#define PIXEL03_12    Interp1(dst+3, w[5], w[6]);
+#define PIXEL03_20    Interp2(dst+3, w[5], w[2], w[6]);
+#define PIXEL03_50    Interp5(dst+3, w[2], w[6]);
+#define PIXEL03_80    Interp8(dst+3, w[5], w[3]);
+#define PIXEL03_81    Interp8(dst+3, w[5], w[2]);
+#define PIXEL03_82    Interp8(dst+3, w[5], w[6]);
+#define PIXEL10_0     Interp0(DST2, w[5]);
+#define PIXEL10_10    Interp1(DST2, w[5], w[1]);
+#define PIXEL10_11    Interp1(DST2, w[5], w[4]);
+#define PIXEL10_13    Interp1(DST2, w[4], w[5]);
+#define PIXEL10_21    Interp2(DST2, w[4], w[5], w[2]);
+#define PIXEL10_32    Interp3(DST2, w[5], w[2]);
+#define PIXEL10_50    Interp5(DST2, w[4], w[5]);
+#define PIXEL10_60    Interp6(DST2, w[5], w[4], w[2]);
+#define PIXEL10_61    Interp6(DST2, w[5], w[4], w[1]);
+#define PIXEL10_81    Interp8(DST2, w[5], w[4]);
+#define PIXEL10_83    Interp8(DST2, w[4], w[2]);
+#define PIXEL11_0     Interp0(DST2+1, w[5]);
+#define PIXEL11_30    Interp3(DST2+1, w[5], w[1]);
+#define PIXEL11_31    Interp3(DST2+1, w[5], w[4]);
+#define PIXEL11_32    Interp3(DST2+1, w[5], w[2]);
+#define PIXEL11_70    Interp7(DST2+1, w[5], w[4], w[2]);
+#define PIXEL12_0     Interp0(DST2+2, w[5]);
+#define PIXEL12_30    Interp3(DST2+2, w[5], w[3]);
+#define PIXEL12_31    Interp3(DST2+2, w[5], w[2]);
+#define PIXEL12_32    Interp3(DST2+2, w[5], w[6]);
+#define PIXEL12_70    Interp7(DST2+2, w[5], w[6], w[2]);
+#define PIXEL13_0     Interp0(DST2+3, w[5]);
+#define PIXEL13_10    Interp1(DST2+3, w[5], w[3]);
+#define PIXEL13_12    Interp1(DST2+3, w[5], w[6]);
+#define PIXEL13_14    Interp1(DST2+3, w[6], w[5]);
+#define PIXEL13_21    Interp2(DST2+3, w[6], w[5], w[2]);
+#define PIXEL13_31    Interp3(DST2+3, w[5], w[2]);
+#define PIXEL13_50    Interp5(DST2+3, w[6], w[5]);
+#define PIXEL13_60    Interp6(DST2+3, w[5], w[6], w[2]);
+#define PIXEL13_61    Interp6(DST2+3, w[5], w[6], w[3]);
+#define PIXEL13_82    Interp8(DST2+3, w[5], w[6]);
+#define PIXEL13_83    Interp8(DST2+3, w[6], w[2]);
+#define PIXEL20_0     Interp0(DST3, w[5]);
+#define PIXEL20_10    Interp1(DST3, w[5], w[7]);
+#define PIXEL20_12    Interp1(DST3, w[5], w[4]);
+#define PIXEL20_14    Interp1(DST3, w[4], w[5]);
+#define PIXEL20_21    Interp2(DST3, w[4], w[5], w[8]);
+#define PIXEL20_31    Interp3(DST3, w[5], w[8]);
+#define PIXEL20_50    Interp5(DST3, w[4], w[5]);
+#define PIXEL20_60    Interp6(DST3, w[5], w[4], w[8]);
+#define PIXEL20_61    Interp6(DST3, w[5], w[4], w[7]);
+#define PIXEL20_82    Interp8(DST3, w[5], w[4]);
+#define PIXEL20_83    Interp8(DST3, w[4], w[8]);
+#define PIXEL21_0     Interp0(DST3+1, w[5]);
+#define PIXEL21_30    Interp3(DST3+1, w[5], w[7]);
+#define PIXEL21_31    Interp3(DST3+1, w[5], w[8]);
+#define PIXEL21_32    Interp3(DST3+1, w[5], w[4]);
+#define PIXEL21_70    Interp7(DST3+1, w[5], w[4], w[8]);
+#define PIXEL22_0     Interp0(DST3+2, w[5]);
+#define PIXEL22_30    Interp3(DST3+2, w[5], w[9]);
+#define PIXEL22_31    Interp3(DST3+2, w[5], w[6]);
+#define PIXEL22_32    Interp3(DST3+2, w[5], w[8]);
+#define PIXEL22_70    Interp7(DST3+2, w[5], w[6], w[8]);
+#define PIXEL23_0     Interp0(DST3+3, w[5]);
+#define PIXEL23_10    Interp1(DST3+3, w[5], w[9]);
+#define PIXEL23_11    Interp1(DST3+3, w[5], w[6]);
+#define PIXEL23_13    Interp1(DST3+3, w[6], w[5]);
+#define PIXEL23_21    Interp2(DST3+3, w[6], w[5], w[8]);
+#define PIXEL23_32    Interp3(DST3+3, w[5], w[8]);
+#define PIXEL23_50    Interp5(DST3+3, w[6], w[5]);
+#define PIXEL23_60    Interp6(DST3+3, w[5], w[6], w[8]);
+#define PIXEL23_61    Interp6(DST3+3, w[5], w[6], w[9]);
+#define PIXEL23_81    Interp8(DST3+3, w[5], w[6]);
+#define PIXEL23_83    Interp8(DST3+3, w[6], w[8]);
+#define PIXEL30_0     Interp0(DST4, w[5]);
+#define PIXEL30_11    Interp1(DST4, w[5], w[8]);
+#define PIXEL30_12    Interp1(DST4, w[5], w[4]);
+#define PIXEL30_20    Interp2(DST4, w[5], w[8], w[4]);
+#define PIXEL30_50    Interp5(DST4, w[8], w[4]);
+#define PIXEL30_80    Interp8(DST4, w[5], w[7]);
+#define PIXEL30_81    Interp8(DST4, w[5], w[8]);
+#define PIXEL30_82    Interp8(DST4, w[5], w[4]);
+#define PIXEL31_0     Interp0(DST4+1, w[5]);
+#define PIXEL31_10    Interp1(DST4+1, w[5], w[7]);
+#define PIXEL31_11    Interp1(DST4+1, w[5], w[8]);
+#define PIXEL31_13    Interp1(DST4+1, w[8], w[5]);
+#define PIXEL31_21    Interp2(DST4+1, w[8], w[5], w[4]);
+#define PIXEL31_32    Interp3(DST4+1, w[5], w[4]);
+#define PIXEL31_50    Interp5(DST4+1, w[8], w[5]);
+#define PIXEL31_60    Interp6(DST4+1, w[5], w[8], w[4]);
+#define PIXEL31_61    Interp6(DST4+1, w[5], w[8], w[7]);
+#define PIXEL31_81    Interp8(DST4+1, w[5], w[8]);
+#define PIXEL31_83    Interp8(DST4+1, w[8], w[4]);
+#define PIXEL32_0     Interp0(DST4+2, w[5]);
+#define PIXEL32_10    Interp1(DST4+2, w[5], w[9]);
+#define PIXEL32_12    Interp1(DST4+2, w[5], w[8]);
+#define PIXEL32_14    Interp1(DST4+2, w[8], w[5]);
+#define PIXEL32_21    Interp2(DST4+2, w[8], w[5], w[6]);
+#define PIXEL32_31    Interp3(DST4+2, w[5], w[6]);
+#define PIXEL32_50    Interp5(DST4+2, w[8], w[5]);
+#define PIXEL32_60    Interp6(DST4+2, w[5], w[8], w[6]);
+#define PIXEL32_61    Interp6(DST4+2, w[5], w[8], w[9]);
+#define PIXEL32_82    Interp8(DST4+2, w[5], w[8]);
+#define PIXEL32_83    Interp8(DST4+2, w[8], w[6]);
+#define PIXEL33_0     Interp0(DST4+3, w[5]);
+#define PIXEL33_11    Interp1(DST4+3, w[5], w[6]);
+#define PIXEL33_12    Interp1(DST4+3, w[5], w[8]);
+#define PIXEL33_20    Interp2(DST4+3, w[5], w[8], w[6]);
+#define PIXEL33_50    Interp5(DST4+3, w[8], w[6]);
+#define PIXEL33_80    Interp8(DST4+3, w[5], w[9]);
+#define PIXEL33_81    Interp8(DST4+3, w[5], w[6]);
+#define PIXEL33_82    Interp8(DST4+3, w[5], w[8]);
+
+#else
 
 #define PIXEL00_0     *dst = w[5];
 #define PIXEL00_11    *dst = Interp1(w[5], w[4]);
@@ -170,6 +319,8 @@
 #define PIXEL33_80    *(DST4+3) = Interp8(w[5], w[9]);
 #define PIXEL33_81    *(DST4+3) = Interp8(w[5], w[6]);
 #define PIXEL33_82    *(DST4+3) = Interp8(w[5], w[8]);
+
+#endif
 
 static void fill_dst(const uint32_t *rgbsrc1, const uint32_t *rgbsrc2, const uint32_t *rgbsrc3, uint32_t *dst, unsigned int width, unsigned int dststride, const uint8_t *patternTable)
 {

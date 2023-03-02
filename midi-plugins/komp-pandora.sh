@@ -6,7 +6,7 @@ $PNDSDK/bin/pandora-gcc -shared -Wl,-soname,midi2-alsa.so -o midi2-alsa.so -fpic
 
 cd albion
 
-$PNDSDK/bin/pandora-gcc -shared -Wl,-soname,midiA-wildmidi.so -o midiA-wildmidi.so -fpic -fvisibility=hidden -O2 -Wall midiA-wildmidi.c -I`pwd`/.. -I`pwd`/include -lWildMidiA -L`pwd`/lib/arm
+$PNDSDK/bin/pandora-gcc -shared -Wl,-soname,midiA-wildmidi.so -o midiA-wildmidi.so -fpic -fvisibility=hidden -O2 -Wall midiA-wildmidi.c -I`pwd`/.. -I`pwd`/include -lWildMidiA -L`pwd`/lib/arm -lm
 
 cd ..
 
@@ -20,24 +20,24 @@ $PNDSDK/bin/pandora-g++ -c -fpic -fvisibility=hidden -O2 -Wall -fno-exceptions e
 cd dosbox_opl
 $PNDSDK/bin/pandora-g++ -c -fpic -fvisibility=hidden -O3 -Wall -fno-exceptions opl.cpp
 cd ../..
-$PNDSDK/bin/pandora-gcc -shared -Wl,-soname,adlib-dosbox_opl.so -o adlib-dosbox_opl.so *.o src/*.o src/dosbox_opl/*.o
+$PNDSDK/bin/pandora-gcc -shared -Wl,-soname,adlib-dosbox_opl.so -o adlib-dosbox_opl.so *.o src/*.o src/dosbox_opl/*.o -lm
 
 rm src/*.o
 rm src/dosbox_opl/*.o
 
 #cd src
 #$PNDSDK/bin/pandora-gcc -c -fpic -fvisibility=hidden -O3 -Wall -Wno-maybe-uninitialized -DDRIVER=ROLAND emu_x86.c -I$CURDIR/include
-#$PNDSDK/bin/pandora-g++ -c -fpic -fvisibility=hidden -O2 -Wall -fno-exceptions emu_mt32.cpp -I$CURDIR/src/munt-1.4.0
-#cd munt-1.4.0/mt32emu
+#$PNDSDK/bin/pandora-g++ -c -fpic -fvisibility=hidden -O2 -Wall -fno-exceptions emu_mt32.cpp -I$CURDIR/src/munt-2.7.0
+#cd munt-2.7.0/mt32emu
 #$PNDSDK/bin/pandora-g++ -c -fpic -fvisibility=hidden -O3 -Wall -fno-exceptions *.cpp
 #cd sha1
 #$PNDSDK/bin/pandora-g++ -c -fpic -fvisibility=hidden -O3 -Wall -fno-exceptions sha1.cpp
 #cd ../../../..
-#$PNDSDK/bin/pandora-gcc -shared -Wl,-soname,mt32-munt.so -o mt32-munt.so *.o src/*.o src/munt-1.4.0/mt32emu/*.o src/munt-1.4.0/mt32emu/sha1/*.o -lstdc++
+#$PNDSDK/bin/pandora-gcc -shared -Wl,-soname,mt32-munt.so -o mt32-munt.so *.o src/*.o src/munt-2.7.0/mt32emu/*.o src/munt-2.7.0/mt32emu/sha1/*.o -lm -lstdc++
 
 rm *.o
 #rm src/*.o
-#rm src/munt-1.4.0/mt32emu/*.o
-#rm src/munt-1.4.0/mt32emu/sha1/*.o
+#rm src/munt-2.7.0/mt32emu/*.o
+#rm src/munt-2.7.0/mt32emu/sha1/*.o
 
 cd ..

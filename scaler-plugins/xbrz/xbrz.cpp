@@ -24,6 +24,72 @@
 #include <cmath> //std::sqrt
 #include "xbrz_tools.h"
 
+#if ( \
+    defined(__ARM_ARCH_6__) || \
+    defined(__ARM_ARCH_6J__) || \
+    defined(__ARM_ARCH_6K__) || \
+    defined(__ARM_ARCH_6Z__) || \
+    defined(__ARM_ARCH_6ZK__) || \
+    defined(__ARM_ARCH_6T2__) || \
+    defined(__ARM_ARCH_7__) || \
+    defined(__ARM_ARCH_7A__) || \
+    defined(__ARM_ARCH_7R__) || \
+    defined(__ARM_ARCH_7M__) || \
+    defined(__ARM_ARCH_7S__) || \
+    (defined(_M_ARM) && (_M_ARM >= 6)) || \
+    (defined(__TARGET_ARCH_ARM) && (__TARGET_ARCH_ARM >= 6)) || \
+    (defined(__TARGET_ARCH_THUMB) && (__TARGET_ARCH_THUMB >= 3)) \
+)
+    #define ARMV6 1
+#else
+    #undef ARMV6
+#endif
+
+#if ( \
+    defined(__aarch64__) \
+)
+    #define ARMV8 1
+#else
+    #undef ARMV8
+#endif
+
+#if ( \
+    defined(__i386) || \
+    defined(_M_IX86) || \
+    defined(_X86_) || \
+    defined(__THW_INTEL__) || \
+    defined(__I86__) || \
+    defined(__INTEL__) || \
+    defined(__386) \
+)
+    #define X86SSE2 1
+#else
+    #undef X86SSE2
+#endif
+
+#if ( \
+    defined(__amd64__) || \
+    defined(__amd64) || \
+    defined(__x86_64__) || \
+    defined(__x86_64) || \
+    defined(_M_X64) || \
+    defined(_M_AMD64) \
+)
+    #define X64SSE2 1
+#else
+    #undef X64SSE2
+#endif
+
+#if defined(X86SSE2) || defined(X64SSE2)
+#include <emmintrin.h>
+#endif
+#if defined(ARMV8)
+#include <arm_neon.h>
+#endif
+#if defined(ARMV6) && defined(__clang__)
+#include <arm_acle.h>
+#endif
+
 using namespace xbrz;
 
 
@@ -162,7 +228,7 @@ double distRGB(uint32_t pix1, uint32_t pix2)
 
 
 inline
-double distYCbCr(uint32_t pix1, uint32_t pix2, double lumaWeight)
+real_t distYCbCr(uint32_t pix1, uint32_t pix2, real_t lumaWeight)
 {
     //https://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.601_conversion
     //YCbCr conversion is a matrix multiplication => take advantage of linearity by subtracting first!
@@ -189,7 +255,7 @@ double distYCbCr(uint32_t pix1, uint32_t pix2, double lumaWeight)
 
 
 inline
-double distYCbCrBuffered(uint32_t pix1, uint32_t pix2)
+real_t distYCbCrBuffered(uint32_t pix1, uint32_t pix2)
 {
     //30% perf boost compared to plain distYCbCr()!
     //consumes 64 MB memory; using double is only 2% faster, but takes 128 MB
@@ -207,9 +273,15 @@ double distYCbCrBuffered(uint32_t pix1, uint32_t pix2)
 
         for (uint32_t i = 0; i < 256 * 256 * 256; ++i) //startup time: 114 ms on Intel Core i5 (four cores)
         {
+#if defined(X86SSE2) || defined(X64SSE2) || defined(ARMV8) || defined(ARMV6)
+            const int r_diff = static_cast<signed char>(getByte<2>(i));
+            const int g_diff = static_cast<signed char>(getByte<1>(i));
+            const int b_diff = static_cast<signed char>(getByte<0>(i));
+#else
             const int r_diff = static_cast<signed char>(getByte<2>(i)) * 2;
             const int g_diff = static_cast<signed char>(getByte<1>(i)) * 2;
             const int b_diff = static_cast<signed char>(getByte<0>(i)) * 2;
+#endif
 
             const double k_b = 0.0593; //ITU-R BT.2020 conversion
             const double k_r = 0.2627; //
@@ -231,6 +303,43 @@ double distYCbCrBuffered(uint32_t pix1, uint32_t pix2)
         return tmp;
     }();
 
+#if defined(X86SSE2) || defined(X64SSE2)
+    __m128i mm1 = _mm_cvtsi32_si128(pix1);  // mm1 = ?,r1,g1,b1
+    __m128i mm2 = _mm_cvtsi32_si128(pix2);  // mm2 = ?,r2,g2,b2
+    __m128i mm3 = mm1;                      // mm3 = ?,r1,g1,b1
+    mm3 = _mm_max_epu8(mm3, mm2);           // mm3 = ?,max(r1,r2),max(g1,g2),max(b1,b2)
+    mm1 = _mm_min_epu8(mm1, mm2);           // mm1 = ?,min(r1,r2),min(g1,g2),min(b1,b2)
+    mm3 = _mm_sub_epi8(mm3, mm1);           // mm3 = ?,abs(r1-r2),abs(g1-g2),abs(b1-b2)
+    const uint32_t index = _mm_cvtsi128_si32(mm3) & 0x00ffffff;
+#elif defined(ARMV8)
+    uint8x8_t nn1, nn2;
+    uint32x2_t nn3;
+    nn1 = vreinterpret_u8_u32(vmov_n_u32(pix1));    // nn1 = ?,r1,g1,b1
+    nn2 = vreinterpret_u8_u32(vmov_n_u32(pix2));    // nn2 = ?,r2,g2,b2
+    nn3 = vreinterpret_u32_u8(vabd_u8(nn1, nn2));   // nn3 = ?,abs(r1-r2),abs(g1-g2),abs(b1-b2)
+    const uint32_t index = vget_lane_u32(nn3, 0) & 0x00ffffff;
+#elif defined(ARMV6)
+#ifdef __clang__
+    uint8x4_t tmp1 = __usub8(pix1, pix2);   // tmp1 = ?,r1-r2,g1-g2,b1-b2
+    uint8x4_t tmp2 = __usub8(pix2, pix1);   // tmp2 = ?,r2-r1,g2-g1,b2-b1
+    uint8x4_t tmp3 = __sel(tmp2, tmp1);     // tmp3 = ?,abs(r1-r2),abs(g1-g2),abs(b1-b2)
+    const uint32_t index = tmp3 & 0x00ffffff;
+#else
+    uint32_t tmp1;
+
+    asm volatile (
+        "usub8 %[tmp1], %[value1], %[value2]    \n\t"   // tmp1 = ?,r1-r2,g1-g2,b1-b2
+        "usub8 %[value2], %[value2], %[value1]  \n\t"   // value2 = ?,r2-r1,g2-g1,b2-b1
+        "sel %[value1], %[value2], %[tmp1]      \n\t"   // value1 = ?,abs(r1-r2),abs(g1-g2),abs(b1-b2)
+
+        : [value1] "+r" (pix1), [value2] "+r" (pix2), [tmp1] "=&r" (tmp1)
+        :
+        : "cc"
+    );
+
+    const uint32_t index = pix1 & 0x00ffffff;
+#endif
+#else
     //if (pix1 == pix2) -> 8% perf degradation!
     //    return 0;
     //if (pix1 < pix2)
@@ -243,6 +352,7 @@ double distYCbCrBuffered(uint32_t pix1, uint32_t pix2)
     const size_t index = (static_cast<unsigned char>(r_diff / 2) << 16) | //slightly reduce precision (division by 2) to squeeze value into single byte
                          (static_cast<unsigned char>(g_diff / 2) <<  8) |
                          (static_cast<unsigned char>(b_diff / 2));
+#endif
 
 #if 0 //attention: the following calculation creates an asymmetric color distance!!! (e.g. r_diff=46 will be unpacked as 45, but r_diff=-46 unpacks to -47
     const size_t index = (((r_diff + 0xFF) / 2) << 16) | //slightly reduce precision (division by 2) to squeeze value into single byte
@@ -325,8 +435,8 @@ BlendResult preProcessCorners(const Kernel_4x4& ker, const xbrz::ScalerCfg& cfg)
 
     auto dist = [&](uint32_t pix1, uint32_t pix2) { return ColorDistance::dist(pix1, pix2, cfg.luminanceWeight); };
 
-    double jg = dist(ker.i, ker.f) + dist(ker.f, ker.c) + dist(ker.n, ker.k) + dist(ker.k, ker.h) + cfg.centerDirectionBias * dist(ker.j, ker.g);
-    double fk = dist(ker.e, ker.j) + dist(ker.j, ker.o) + dist(ker.b, ker.g) + dist(ker.g, ker.l) + cfg.centerDirectionBias * dist(ker.f, ker.k);
+    real_t jg = dist(ker.i, ker.f) + dist(ker.f, ker.c) + dist(ker.n, ker.k) + dist(ker.k, ker.h) + cfg.centerDirectionBias * dist(ker.j, ker.g);
+    real_t fk = dist(ker.e, ker.j) + dist(ker.j, ker.o) + dist(ker.b, ker.g) + dist(ker.g, ker.l) + cfg.centerDirectionBias * dist(ker.f, ker.k);
 
     if (jg < fk) //test sample: 70% of values max(jg, fk) / min(jg, fk) are between 1.1 and 3.7 with median being 1.8
     {
@@ -357,19 +467,19 @@ DEF_GETTER(g) DEF_GETTER(h) DEF_GETTER(i)
 #undef DEF_GETTER
 
 #define DEF_GETTER(x, y) template <> inline uint32_t get_##x<ROT_90>(const Kernel_3x3& ker) { return ker.y; }
-DEF_GETTER(a, g) DEF_GETTER(b, d) DEF_GETTER(c, a)
+/*DEF_GETTER(a, g)*/ DEF_GETTER(b, d) DEF_GETTER(c, a)
 DEF_GETTER(d, h) DEF_GETTER(e, e) DEF_GETTER(f, b)
 DEF_GETTER(g, i) DEF_GETTER(h, f) DEF_GETTER(i, c)
 #undef DEF_GETTER
 
 #define DEF_GETTER(x, y) template <> inline uint32_t get_##x<ROT_180>(const Kernel_3x3& ker) { return ker.y; }
-DEF_GETTER(a, i) DEF_GETTER(b, h) DEF_GETTER(c, g)
+/*DEF_GETTER(a, i)*/ DEF_GETTER(b, h) DEF_GETTER(c, g)
 DEF_GETTER(d, f) DEF_GETTER(e, e) DEF_GETTER(f, d)
 DEF_GETTER(g, c) DEF_GETTER(h, b) DEF_GETTER(i, a)
 #undef DEF_GETTER
 
 #define DEF_GETTER(x, y) template <> inline uint32_t get_##x<ROT_270>(const Kernel_3x3& ker) { return ker.y; }
-DEF_GETTER(a, c) DEF_GETTER(b, f) DEF_GETTER(c, i)
+/*DEF_GETTER(a, c)*/ DEF_GETTER(b, f) DEF_GETTER(c, i)
 DEF_GETTER(d, b) DEF_GETTER(e, e) DEF_GETTER(f, h)
 DEF_GETTER(g, a) DEF_GETTER(h, d) DEF_GETTER(i, g)
 #undef DEF_GETTER
@@ -465,8 +575,8 @@ void blendPixel(const Kernel_3x3& ker,
 
         if (doLineBlend)
         {
-            const double fg = dist(f, g); //test sample: 70% of values max(fg, hc) / min(fg, hc) are between 1.1 and 3.7 with median being 1.9
-            const double hc = dist(h, c); //
+            const real_t fg = dist(f, g); //test sample: 70% of values max(fg, hc) / min(fg, hc) are between 1.1 and 3.7 with median being 1.9
+            const real_t hc = dist(h, c); //
 
             const bool haveShallowLine = cfg.steepDirectionThreshold * fg <= hc && e != g && d != g;
             const bool haveSteepLine   = cfg.steepDirectionThreshold * hc <= fg && e != c && b != c;
@@ -1136,7 +1246,7 @@ struct Scaler6x : public ColorGradient
 
 struct ColorDistanceRGB
 {
-    static double dist(uint32_t pix1, uint32_t pix2, double luminanceWeight)
+    static real_t dist(uint32_t pix1, uint32_t pix2, real_t luminanceWeight)
     {
         return distYCbCrBuffered(pix1, pix2);
 
@@ -1148,10 +1258,10 @@ struct ColorDistanceRGB
 
 struct ColorDistanceARGB
 {
-    static double dist(uint32_t pix1, uint32_t pix2, double luminanceWeight)
+    static real_t dist(uint32_t pix1, uint32_t pix2, real_t luminanceWeight)
     {
-        const double a1 = getAlpha(pix1) / 255.0 ;
-        const double a2 = getAlpha(pix2) / 255.0 ;
+        const real_t a1 = getAlpha(pix1) / 255.0 ;
+        const real_t a2 = getAlpha(pix2) / 255.0 ;
         /*
         Requirements for a color distance handling alpha channel: with a1, a2 in [0, 1]
 
@@ -1162,7 +1272,7 @@ struct ColorDistanceARGB
 
         //return std::min(a1, a2) * distYCbCrBuffered(pix1, pix2) + 255 * abs(a1 - a2);
         //=> following code is 15% faster:
-        const double d = distYCbCrBuffered(pix1, pix2);
+        const real_t d = distYCbCrBuffered(pix1, pix2);
         if (a1 < a2)
             return a1 * d + 255 * (a2 - a1);
         else
@@ -1175,12 +1285,12 @@ struct ColorDistanceARGB
 
 struct ColorDistanceUnbufferedARGB
 {
-    static double dist(uint32_t pix1, uint32_t pix2, double luminanceWeight)
+    static real_t dist(uint32_t pix1, uint32_t pix2, real_t luminanceWeight)
     {
-        const double a1 = getAlpha(pix1) / 255.0 ;
-        const double a2 = getAlpha(pix2) / 255.0 ;
+        const real_t a1 = getAlpha(pix1) / 255.0 ;
+        const real_t a2 = getAlpha(pix2) / 255.0 ;
 
-        const double d = distYCbCr(pix1, pix2, luminanceWeight);
+        const real_t d = distYCbCr(pix1, pix2, luminanceWeight);
         if (a1 < a2)
             return a1 * d + 255 * (a2 - a1);
         else
@@ -1241,6 +1351,7 @@ void xbrz::scale(size_t factor, const uint32_t* src, uint32_t* trg, int srcWidth
             break;
 
         case ColorFormat::ARGB:
+#if !defined(NO_ALPHA_SUPPORT)
             switch (factor)
             {
                 case 2:
@@ -1255,8 +1366,10 @@ void xbrz::scale(size_t factor, const uint32_t* src, uint32_t* trg, int srcWidth
                     return scaleImage<Scaler6x<ColorGradientARGB>, ColorDistanceARGB, OobReaderTransparent>(src, trg, srcWidth, srcHeight, cfg, yFirst, yLast);
             }
             break;
+#endif
 
         case ColorFormat::ARGB_UNBUFFERED:
+#if !defined(NO_ALPHA_SUPPORT)
             switch (factor)
             {
                 case 2:
@@ -1270,22 +1383,29 @@ void xbrz::scale(size_t factor, const uint32_t* src, uint32_t* trg, int srcWidth
                 case 6:
                     return scaleImage<Scaler6x<ColorGradientARGB>, ColorDistanceUnbufferedARGB, OobReaderTransparent>(src, trg, srcWidth, srcHeight, cfg, yFirst, yLast);
             }
+#endif
             break;
     }
     assert(false);
 }
 
 
-bool xbrz::equalColorTest(uint32_t col1, uint32_t col2, ColorFormat colFmt, double luminanceWeight, double equalColorTolerance)
+bool xbrz::equalColorTest(uint32_t col1, uint32_t col2, ColorFormat colFmt, real_t luminanceWeight, real_t equalColorTolerance)
 {
     switch (colFmt)
     {
         case ColorFormat::RGB:
             return ColorDistanceRGB::dist(col1, col2, luminanceWeight) < equalColorTolerance;
         case ColorFormat::ARGB:
+#if !defined(NO_ALPHA_SUPPORT)
             return ColorDistanceARGB::dist(col1, col2, luminanceWeight) < equalColorTolerance;
+#endif
         case ColorFormat::ARGB_UNBUFFERED:
+#if !defined(NO_ALPHA_SUPPORT)
             return ColorDistanceUnbufferedARGB::dist(col1, col2, luminanceWeight) < equalColorTolerance;
+#else
+            return false;
+#endif
     }
     assert(false);
     return false;

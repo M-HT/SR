@@ -26,7 +26,7 @@ fi
 
 g++ -c -fpic -fvisibility=hidden -O2 -Wall -std=${CPPSTD} scaler-xbrz.cpp
 cd xbrz
-g++ -c -fpic -fvisibility=hidden -O3 -Wall -Wno-strict-aliasing -Wno-attributes -Wno-uninitialized -std=${CPPSTD} -fno-threadsafe-statics -DNO_BUFFER_HEAP_ALLOCATION -DNO_EXTRA_SCALERS xbrz.cpp
+g++ -c -fpic -fvisibility=hidden -ffast-math -O3 -Wall -Wno-strict-aliasing -Wno-attributes -Wno-uninitialized -std=${CPPSTD} -fno-threadsafe-statics -DNO_BUFFER_HEAP_ALLOCATION -DNO_EXTRA_SCALERS -DNO_ALPHA_SUPPORT xbrz.cpp
 cd ..
 gcc -shared -Wl,-soname,scaler-xbrz.so -o scaler-xbrz.so -fpic scaler-xbrz.o xbrz/*.o
 

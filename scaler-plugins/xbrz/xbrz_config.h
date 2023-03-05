@@ -21,14 +21,16 @@
 
 namespace xbrz
 {
+//typedef double real_t;
+typedef float real_t;
 struct ScalerCfg
 {
-    double luminanceWeight            = 1;
-    double equalColorTolerance        = 30;
-    double centerDirectionBias        = 4;
-    double dominantDirectionThreshold = 3.6;
-    double steepDirectionThreshold    = 2.2;
-    double newTestAttribute           = 0; //unused; test new parameters
+    real_t luminanceWeight            = 1;
+    real_t equalColorTolerance        = 30;
+    real_t centerDirectionBias        = 4;
+    real_t dominantDirectionThreshold = 3.6;
+    real_t steepDirectionThreshold    = 2.2;
+    real_t newTestAttribute           = 0; //unused; test new parameters
 };
 }
 

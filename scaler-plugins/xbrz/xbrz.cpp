@@ -274,9 +274,9 @@ real_t distYCbCrBuffered(uint32_t pix1, uint32_t pix2)
         for (uint32_t i = 0; i < 256 * 256 * 256; ++i) //startup time: 114 ms on Intel Core i5 (four cores)
         {
 #if defined(X86SSE2) || defined(X64SSE2) || defined(ARMV8) || defined(ARMV6)
-            const int r_diff = static_cast<signed char>(getByte<2>(i));
-            const int g_diff = static_cast<signed char>(getByte<1>(i));
-            const int b_diff = static_cast<signed char>(getByte<0>(i));
+            const int r_diff = static_cast<unsigned char>(getByte<2>(i));
+            const int g_diff = static_cast<unsigned char>(getByte<1>(i));
+            const int b_diff = static_cast<unsigned char>(getByte<0>(i));
 #else
             const int r_diff = static_cast<signed char>(getByte<2>(i)) * 2;
             const int g_diff = static_cast<signed char>(getByte<1>(i)) * 2;

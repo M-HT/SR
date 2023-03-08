@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -362,6 +362,22 @@ void Game_ReadConfig(void)
                     if ((num_int >= 2) && (num_int <= GAME_MAX_3D_ENGINE_FACTOR))
                     {
                         Game_ScaleFactor = num_int;
+                    }
+                }
+            }
+            else if ( strcasecmp(str, "ExtraScalerThreads") == 0 ) // str equals "ExtraScalerThreads"
+            {
+                if ( strcasecmp(param, "auto") == 0 ) // param equals "auto"
+                {
+                    Game_ExtraScalerThreads = -1;
+                }
+                else
+                {
+                    num_int = 0;
+                    sscanf(param, "%i", &num_int);
+                    if (num_int >= 0)
+                    {
+                        Game_ExtraScalerThreads = num_int;
                     }
                 }
             }

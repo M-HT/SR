@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -41,6 +41,18 @@
 #include "scaler-plugins.h"
 
 
+#define MAX_EXTRA_THREADS 7
+
+
+typedef struct {
+    SDL_sem *startcmd, *finishcmd;
+    SDL_Thread *thread;
+    volatile int cmd, factor, src_width, src_height, y_first, y_last;
+    volatile const void *src;
+    volatile void *dst;
+} thread_data_t;
+
+
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     static HMODULE SP_handle;
 #else
@@ -49,32 +61,29 @@
 
 static scaler_plugin_functions SP_functions;
 
-static SDL_sem *sem_startcmd, *sem_finishcmd;
-static SDL_Thread *scaler_thread;
-static volatile int scaler_cmd, scaler_factor, scaler_src_width, scaler_src_height, scaler_y_first, scaler_y_last;
-static volatile const void *scaler_src;
-static volatile void *scaler_dst;
+static thread_data_t extra_threads[MAX_EXTRA_THREADS];
+static int num_extra_threads;
 
 static int plugin_initialized = 0;
 
 
-static int ScalerPlugin_Thread(void *data)
+static int ScalerPlugin_Thread(thread_data_t *data)
 {
     while (1)
     {
-        SDL_SemWait(sem_startcmd);
-        if (scaler_cmd == 0) return 0;
+        SDL_SemWait(data->startcmd);
+        if (data->cmd == 0) return 0;
 
-        SP_functions.scale(scaler_factor, (const void *)scaler_src, (void *)scaler_dst, scaler_src_width, scaler_src_height, scaler_y_first, scaler_y_last);
+        SP_functions.scale(data->factor, (const void *)data->src, (void *)data->dst, data->src_width, data->src_height, data->y_first, data->y_last);
 
-        SDL_SemPost(sem_finishcmd);
+        SDL_SemPost(data->finishcmd);
     };
 }
 
 int ScalerPlugin_Startup(void)
 {
     scaler_plugin_initialize SP_initialize;
-    int cpu_count;
+    int cpu_count, index, extra_num;
 
     if (plugin_initialized) return 0;
 
@@ -103,57 +112,85 @@ int ScalerPlugin_Startup(void)
         return 3;
     }
 
-#ifdef USE_SDL2
-    cpu_count = SDL_GetCPUCount();
-#elif (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
-    SYSTEM_INFO info;
-    GetSystemInfo(&info);
-    cpu_count = info.dwNumberOfProcessors;
-#elif defined(_SC_NPROCESSORS_ONLN)
-    cpu_count = (int)sysconf(_SC_NPROCESSORS_ONLN);
-#else
-    cpu_count = 1;
-#endif
-
     if (SP_initialize(&SP_functions))
     {
         free_library(SP_handle);
         return 4;
     }
 
-    sem_startcmd = NULL;
-    sem_finishcmd = NULL;
-    scaler_thread = NULL;
-    if (cpu_count >= 4)
+    for (index = 0; index < MAX_EXTRA_THREADS; index++)
     {
-        sem_startcmd = SDL_CreateSemaphore(0);
-        if (sem_startcmd != NULL)
-        {
-            sem_finishcmd = SDL_CreateSemaphore(0);
-            if (sem_finishcmd != NULL)
-            {
-                scaler_thread = SDL_CreateThread(
-                    ScalerPlugin_Thread,
+        extra_threads[index].startcmd = NULL;
+        extra_threads[index].finishcmd = NULL;
+        extra_threads[index].thread = NULL;
+    }
+
+    if (Game_ExtraScalerThreads >= 0)
+    {
+        extra_num = Game_ExtraScalerThreads;
+        if (extra_num > MAX_EXTRA_THREADS) extra_num = MAX_EXTRA_THREADS;
+    }
+    else
+    {
 #ifdef USE_SDL2
-                    "scaler",
+        cpu_count = SDL_GetCPUCount();
+#elif (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+        SYSTEM_INFO info;
+        GetSystemInfo(&info);
+        cpu_count = info.dwNumberOfProcessors;
+#elif defined(_SC_NPROCESSORS_ONLN)
+        cpu_count = (int)sysconf(_SC_NPROCESSORS_ONLN);
+#else
+        cpu_count = 1;
 #endif
-                    NULL
-                );
-                if (scaler_thread == NULL)
-                {
-                    SDL_DestroySemaphore(sem_finishcmd);
-                    sem_finishcmd = NULL;
-                    SDL_DestroySemaphore(sem_finishcmd);
-                    sem_startcmd = NULL;
-                }
-            }
-            else
-            {
-                SDL_DestroySemaphore(sem_startcmd);
-                sem_startcmd = NULL;
-            }
+
+        if (cpu_count < 3) extra_num = 0;
+        else if (cpu_count < 6) extra_num = 1;
+        else if (cpu_count < 10) extra_num = 2;
+        else if (cpu_count < 14) extra_num = 3;
+        else if (cpu_count < 20) extra_num = 4;
+        else if (cpu_count < 24) extra_num = 5;
+        else if (cpu_count < 28) extra_num = 6;
+        else extra_num = 7;
+    }
+
+    for (index = 0; index < extra_num; index++)
+    {
+        extra_threads[index].startcmd = SDL_CreateSemaphore(0);
+        if (extra_threads[index].startcmd == NULL)
+        {
+            extra_num = index;
+            break;
+        }
+
+        extra_threads[index].finishcmd = SDL_CreateSemaphore(0);
+        if (extra_threads[index].finishcmd == NULL)
+        {
+            SDL_DestroySemaphore(extra_threads[index].startcmd);
+            extra_threads[index].startcmd = NULL;
+            extra_num = index;
+            break;
+        }
+
+        extra_threads[index].thread = SDL_CreateThread(
+            (int (*)(void *))ScalerPlugin_Thread,
+#ifdef USE_SDL2
+            "scaler",
+#endif
+            &extra_threads[index]
+        );
+        if (extra_threads[index].thread == NULL)
+        {
+            SDL_DestroySemaphore(extra_threads[index].finishcmd);
+            extra_threads[index].finishcmd = NULL;
+            SDL_DestroySemaphore(extra_threads[index].finishcmd);
+            extra_threads[index].startcmd = NULL;
+            extra_num = index;
+            break;
         }
     }
+
+    num_extra_threads = extra_num;
 
     plugin_initialized = 1;
 
@@ -165,21 +202,26 @@ int ScalerPlugin_Startup(void)
 
 void ScalerPlugin_Shutdown(void)
 {
+    int index;
+
     if (!plugin_initialized) return;
 
-    if (scaler_thread != NULL)
+    for (index = 0; index < MAX_EXTRA_THREADS; index++)
     {
-        scaler_cmd = 0;
-        SDL_SemPost(sem_startcmd);
+        if (extra_threads[index].thread != NULL)
+        {
+            extra_threads[index].cmd = 0;
+            SDL_SemPost(extra_threads[index].startcmd);
 
-        SDL_WaitThread(scaler_thread, NULL);
-        scaler_thread = NULL;
+            SDL_WaitThread(extra_threads[index].thread, NULL);
+            extra_threads[index].thread = NULL;
 
-        SDL_DestroySemaphore(sem_finishcmd);
-        sem_finishcmd = NULL;
+            SDL_DestroySemaphore(extra_threads[index].finishcmd);
+            extra_threads[index].finishcmd = NULL;
 
-        SDL_DestroySemaphore(sem_finishcmd);
-        sem_startcmd = NULL;
+            SDL_DestroySemaphore(extra_threads[index].startcmd);
+            extra_threads[index].startcmd = NULL;
+        }
     }
 
     SP_functions.shutdown_plugin();
@@ -197,25 +239,34 @@ void ScalerPlugin_scale(int factor, const void *src, void *dst, int src_width, i
 {
     if (!plugin_initialized) return;
 
-    if (game && (scaler_thread != NULL))
+    if (game && num_extra_threads)
     {
-        int y_middle;
+        int y_diff, y_next, index;
 
-        scaler_cmd = 1;
-        scaler_factor = factor;
-        scaler_src = src;
-        scaler_dst = dst;
-        scaler_src_width = src_width;
-        scaler_src_height = src_height;
-        y_middle = src_height / 2;
-        scaler_y_first = y_middle;
-        scaler_y_last = src_height;
+        y_diff = (src_height + num_extra_threads) / (num_extra_threads + 1);
+        y_next = 0;
 
-        SDL_SemPost(sem_startcmd);
+        for (index = 0; index < num_extra_threads; index++)
+        {
+            extra_threads[index].cmd = 1;
+            extra_threads[index].factor = factor;
+            extra_threads[index].src = src;
+            extra_threads[index].dst = dst;
+            extra_threads[index].src_width = src_width;
+            extra_threads[index].src_height = src_height;
+            extra_threads[index].y_first = y_next;
+            y_next += y_diff;
+            extra_threads[index].y_last = y_next;
 
-        SP_functions.scale(factor, src, dst, src_width, src_height, 0, y_middle);
+            SDL_SemPost(extra_threads[index].startcmd);
+        }
 
-        SDL_SemWait(sem_finishcmd);
+        SP_functions.scale(factor, src, dst, src_width, src_height, y_next, src_height);
+
+        for (index = 0; index < num_extra_threads; index++)
+        {
+            SDL_SemWait(extra_threads[index].finishcmd);
+        }
     }
     else
     {

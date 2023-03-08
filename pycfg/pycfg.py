@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
-#  Copyright (C) 2014-2021 Roman Pauer
+#  Copyright (C) 2014-2023 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -194,6 +194,7 @@ class ConfigFile:
             self.AddEntry("Display_Scaling", "basic/basicnb/advanced/advancednb", "basic")
             self.AddEntry("Display_AdvancedScaler", "normal/hqx/xbrz", "normal")
             self.AddEntry("Display_ScalerFactor", "max/2/3/4/5/6", "max")
+            self.AddEntry("Display_ExtraScalerThreads", "auto/0/1/2/3/4/5/6/7", "auto")
 
         # audio entries
         self.AddEntry("Audio_Channels", "stereo/mono", ("mono" if platform == "gp2x" else "stereo"))
@@ -652,11 +653,13 @@ class ConfigGUI:
                 if not IsFirst:
                     self.CreateSeparator(vbox)
                 IsFirst = False
-                self.CreateRadioSet2(vbox, "Display Scaling:", "Display_Scaling", None, "Use basic or advanced scaling.\nBy default, bilinear filtering is used.\n Versions ending with -nb mean without bilinear filtering (= nearest neighbour filtering).")
+                self.CreateRadioSet2(vbox, "Display Scaling:", "Display_Scaling", None, "Use basic or advanced scaling.\nBy default, bilinear filtering is used.\nVersions ending with -nb mean without bilinear filtering (= nearest neighbour filtering).")
                 self.CreateSeparator(vbox)
-                self.CreateRadioSet2(vbox, "Display Advanced Scaler:", "Display_AdvancedScaler", None, "Advanced scaling algorithm.\nNormal means nearest neighbour.\nHqx supports scaling factors 2-4. Xbrz supports scaling factors 2-6.\nXbrz looks better than hqx but it's about two times slower.")
+                self.CreateRadioSet2(vbox, "Display Advanced Scaler:", "Display_AdvancedScaler", None, "Advanced scaling algorithm.\nNormal means nearest neighbour.\nHqx supports scaling factors 2-4. Xbrz supports scaling factors 2-6.")
                 self.CreateSeparator(vbox)
                 self.CreateRadioSet2(vbox, "Display Scaler Factor:", "Display_ScalerFactor", None, "Scaling factor for advanced scaling.\nMax means maximum scaling factor based on selected resolution.")
+                self.CreateSeparator(vbox)
+                self.CreateRadioSet2(vbox, "Display Extra Scaler Threads:", "Display_ExtraScalerThreads", None, "Number of extra threads used for advanced scaling.\nAuto means number of threads based on number of cpu cores.")
 
         if self.CfgFile.HasEntry("Use_Alternative_SDL"):
             vbox = self.AddPageFrameVBox(notebook, "SDL", "SDL")

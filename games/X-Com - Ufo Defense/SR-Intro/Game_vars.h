@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -90,6 +90,7 @@ EXTERNAL_VARIABLE uint32_t Game_AdvancedScaling;	/* advanced scaling enabled ? *
 EXTERNAL_VARIABLE uint32_t Game_ScalingQuality;		/* scaling quality: 0 = nearest neighbour, 1 = bilinear */
 EXTERNAL_VARIABLE uint32_t Game_AdvancedScaler;		/* advanced scaler: 0 = none, 1 = nearest neighbour, 2 = hqx, 3 = xbrz */
 EXTERNAL_VARIABLE int Game_ScaleFactor;				/* factor for advanced scaler: 0 = max */
+EXTERNAL_VARIABLE int Game_ExtraScalerThreads;		/* number of extra threads for advanced scaler: -1 = auto */
 
 #ifdef USE_SDL2
 EXTERNAL_VARIABLE SDL_Window *Game_Window;

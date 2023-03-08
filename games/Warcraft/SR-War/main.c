@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -1120,6 +1120,7 @@ static int Game_Initialize(void)
     Game_ScalingQuality = 1;
     Game_AdvancedScaler = 1;
     Game_ScaleFactor = 0;
+    Game_ExtraScalerThreads = -1;
 
 #ifdef USE_SDL2
     Game_Window = NULL;

@@ -26,6 +26,10 @@
 #include "midi-plugins.h"
 #include "adlmidi.h"
 
+
+#define ADLMIDI_VERSION_ATLEAST(major,minor,patchlevel) defined(ADLMIDI_VERSION_MAJOR) && (ADLMIDI_VERSION_MAJOR > (major) || (ADLMIDI_VERSION_MAJOR == (major) && (ADLMIDI_VERSION_MINOR > (minor) || (ADLMIDI_VERSION_MINOR == (minor) && ADLMIDI_VERSION_PATCHLEVEL >= (patchlevel)))))
+
+
 static struct ADL_MIDIPlayer *adl_handle = NULL;
 static unsigned char adl_volume = 127;
 
@@ -147,6 +151,12 @@ int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const
         adl_handle = NULL;
         return -1;
     }
+
+    adl_setVolumeRangeModel(adl_handle, ADLMIDI_VolumeModel_Generic);
+
+#if ADLMIDI_VERSION_ATLEAST(1,3,2)
+    adl_switchEmulator(adl_handle, ADLMIDI_EMU_DOSBOX);
+#endif
 
     bank_number = 0;
     if (parameters != NULL)

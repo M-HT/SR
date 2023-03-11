@@ -1485,7 +1485,7 @@ void adlib_getsample(Bit16s* sndptr, Bits numsamples) {
 			#if defined(ARMV6)
 				register Bit32u val = 2*outbufl[i];
 				asm("ssat %[value], #16, %[value]" : [value] "+r" (val));
-				*((Bit32u*)sndptr) = val | (val << 16);
+				*((Bit32u*)sndptr) = (val & 0xffff) | (val << 16);
 				sndptr += 2;
 			#else
 				clipit16(2*outbufl[i],sndptr++);

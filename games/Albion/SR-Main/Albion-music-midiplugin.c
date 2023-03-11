@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -277,7 +277,7 @@ static void MidiPlugin_MusicPlayer(void *udata, Uint8 *stream, int len)
                             val2 = ((Sint32)(Sint16)(srcval1 >> 16)) + ((Sint32)(Sint16)(srcval2 >> 16)) + ((Sint32)(Sint16)(srcval3 >> 16));
                             asm("ssat %[value], #16, %[value]" : [value] "+r" (val2));
 
-                            *((Uint32 *) &(mp_buf[pos])) = val1 | (val2 << 16);
+                            *((Uint32 *) &(mp_buf[pos])) = (val1 & 0xffff) | (val2 << 16);
                         #else
                             register Sint32 val;
 

@@ -38,7 +38,7 @@ void Init_Audio(void)
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     Game_MidiSubsystem = 21;
 #else
-    Game_MidiSubsystem = 10;
+    Game_MidiSubsystem = 3;
 #endif
     Game_OPL3Emulator = 1;
 }

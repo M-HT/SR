@@ -155,6 +155,7 @@ EXTERNAL_VARIABLE int Game_MidiSubsystem;			/* MIDI subsystem
                                                        0: SDL_mixer
                                                        1: WildMidi
                                                        2: BASSMIDI
+                                                       3: ADLMIDI
                                                        10: adlib - dosbox opl emulator
                                                        11: MT32 - munt emulator
                                                        21: native Windows
@@ -164,6 +165,7 @@ EXTERNAL_VARIABLE int Game_MidiSubsystem;			/* MIDI subsystem
 EXTERNAL_VARIABLE char *Game_SoundFontPath;			/* Path to SoundFont file */
 EXTERNAL_VARIABLE char *Game_MT32RomsPath;			/* Path to MT32 roms */
 EXTERNAL_VARIABLE char *Game_MidiDevice;			/* MIDI device name */
+EXTERNAL_VARIABLE int Game_OPL3BankNumber;			/* OPL3 bank number (0-77) */
 EXTERNAL_VARIABLE int Game_OPL3Emulator;			/* OPL3 emulator
                                                        0: fast - DOSBox
                                                        1: precise - Nuked OPL3 */

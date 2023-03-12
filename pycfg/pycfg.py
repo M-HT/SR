@@ -207,20 +207,15 @@ class ConfigFile:
             self.AddEntry("Audio_MIDI_Subsystem", "wildmidi/adlmidi/sdl_mixer", "sdl_mixer")
         else:
             midi_values = "alsa/wildmidi"
-            midi_default_value = "wildmidi"
             if game != "warcraft":
                 midi_values += "/bassmidi"
-            if game == "albion" or game == "warcraft":
-                midi_values += "/adlmidi"
-                midi_default_value = "adlmidi"
-            midi_values += "/sdl_mixer"
+            midi_values += "/adlmidi/sdl_mixer"
             if game == "xcom1" or game == "xcom2":
                 midi_values += "/adlib-dosbox_opl"
                 if platform == "pc":
                     midi_values += "/mt32-munt"
-                    midi_default_value = "adlib-dosbox_opl"
                 midi_values += "/mt32-alsa"
-            self.AddEntry("Audio_MIDI_Subsystem", midi_values, midi_default_value)
+            self.AddEntry("Audio_MIDI_Subsystem", midi_values, "adlmidi")
 
             if "alsa" in midi_values or "mt32-alsa" in midi_values:
                 self.AddEntry("Audio_MIDI_Device", "*", "")
@@ -231,8 +226,10 @@ class ConfigFile:
             if "mt32-munt" in midi_values:
                 self.AddEntry("Audio_MT32_Roms_Path", "*", "")
 
-            if "adlmidi" in midi_values or "adlib-dosbox_opl" in midi_values:
-                self.AddEntry("Audio_OPL3_Emulator", "fast/precise", "precise" if platform == "pc" else "fast")
+            if game == "xcom1" or game == "xcom2":
+                self.AddEntry("Audio_OPL3_BankNumber", "0-77", "77")
+
+            self.AddEntry("Audio_OPL3_Emulator", "fast/precise", "precise" if platform == "pc" else "fast")
 
         if game == "albion":
             self.AddEntry("Audio_Swap_Channels", "yes/no", "yes")
@@ -539,7 +536,7 @@ class ConfigGUI:
             description = "Select library for music playback."
 
             if "adlib-dosbox_opl" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
-                description += "\nGeneral MIDI music (ALSA sequencer or WildMIDI, BASSMIDI, SDL_mixer library),\n  Adlib music or MT-32 music"
+                description += "\nGeneral MIDI music (ALSA sequencer or WildMIDI, BASSMIDI, ADLMIDI, SDL_mixer library),\n  Adlib music or MT-32 music"
                 if self.CfgFile.HasEntry("Audio_MT32_Roms_Path"):
                     description += " (MUNT emulator or ALSA sequencer)."
                 else:
@@ -561,12 +558,12 @@ class ConfigGUI:
                 description += "\nADLMIDI uses OPL3 emulator for playback."
 
             if "adlib-dosbox_opl" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
-                description += "\nAdlib music is played using 'compat' OPL emulator from DOSBox or Nuked OPL3 emulator.\n  (Works only for the DOS game version.)"
+                description += "\nAdlib music is played using 'compat' OPL emulator from DOSBox or Nuked OPL3 emulator.\n  (DOS game version)"
 
             if self.CfgFile.HasEntry("Audio_MT32_Roms_Path"):
-                description += "\nMT-32 music is played using MUNT emulator or ALSA sequencer.\n  (Works only for the DOS game version.)"
+                description += "\nMT-32 music is played using MUNT emulator or ALSA sequencer. (DOS game version)"
             elif "mt32-alsa" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
-                description += "\nMT-32 music is played using ALSA sequencer.\n  (Works only for the DOS game version.)"
+                description += "\nMT-32 music is played using ALSA sequencer. (DOS game version)"
 
             self.CreateRadioSet(vbox, "MIDI Subsystem:", "Audio_MIDI_Subsystem", description)
 
@@ -579,6 +576,9 @@ class ConfigGUI:
                 num_extra_options += 1
 
             if self.CfgFile.HasEntry("Audio_MT32_Roms_Path"):
+                num_extra_options += 1
+
+            if self.CfgFile.HasEntry("Audio_OPL3_BankNumber"):
                 num_extra_options += 1
 
             if self.CfgFile.HasEntry("Audio_OPL3_Emulator"):
@@ -606,6 +606,12 @@ class ConfigGUI:
 
             if self.CfgFile.HasEntry("Audio_MT32_Roms_Path"):
                 self.CreateROMsDirectorySelector(vbox, "MT-32 Roms Path:", "Audio_MT32_Roms_Path", "Set path to directory containing Control and PCM roms from MT-32 or CM-32L (LAPC-I).\nThis is necessary when MIDI playback using MUNT emulator is selected.\nCM-32L (LAPC-I) roms are preferred.\nThe CM-32L (LAPC-I) roms filenames must be CM32L_CONTROL.ROM and CM32L_PCM.ROM.\nThe MT-32 roms filenames must be MT32_CONTROL.ROM and MT32_PCM.ROM.")
+                num_extra_options -= 1
+                if num_extra_options != 0:
+                    self.CreateSeparator(vbox)
+
+            if self.CfgFile.HasEntry("Audio_OPL3_BankNumber"):
+                self.CreateScale(vbox, "OPL3 Bank Number:", "Audio_OPL3_BankNumber", "Select bank to play MIDI using OPL3 emulator.\nThis is used when MIDI playback using ADLMIDI is selected.")
                 num_extra_options -= 1
                 if num_extra_options != 0:
                     self.CreateSeparator(vbox)

@@ -429,6 +429,8 @@ int MidiPlugin_Startup(void)
         MP_handle = LoadLibrary(".\\midi-wildmidi.dll");
     } else if (Game_MidiSubsystem == 2) {
         MP_handle = LoadLibrary(".\\midi-bassmidi.dll");
+    } else if (Game_MidiSubsystem == 3) {
+        MP_handle = LoadLibrary(".\\midi-adlmidi.dll");
     } else if (Game_MidiSubsystem == 10) {
         MP_handle = LoadLibrary(".\\adlib-dosbox_opl.dll");
     } else if (Game_MidiSubsystem == 11) {
@@ -442,6 +444,8 @@ int MidiPlugin_Startup(void)
         MP_handle = dlopen("./midi-wildmidi.so", RTLD_LAZY);
     } else if (Game_MidiSubsystem == 2) {
         MP_handle = dlopen("./midi-bassmidi.so", RTLD_LAZY);
+    } else if (Game_MidiSubsystem == 3) {
+        MP_handle = dlopen("./midi-adlmidi.so", RTLD_LAZY);
     } else if (Game_MidiSubsystem == 10) {
         MP_handle = dlopen("./adlib-dosbox_opl.so", RTLD_LAZY);
     } else if (Game_MidiSubsystem == 11) {
@@ -464,6 +468,7 @@ int MidiPlugin_Startup(void)
     memset(&MP_parameters, 0, sizeof(MP_parameters));
     MP_parameters.soundfont_path = Game_SoundFontPath;
     MP_parameters.mt32_roms_path = Game_MT32RomsPath;
+    MP_parameters.opl3_bank_number = Game_OPL3BankNumber;
     MP_parameters.opl3_emulator = Game_OPL3Emulator;
 
     vfs_get_real_name("C:\\SOUND\\DRIVERS.CAT", (char *) &temp_str, NULL);

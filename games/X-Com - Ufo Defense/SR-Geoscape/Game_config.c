@@ -218,6 +218,10 @@ void Game_ReadConfig(void)
                 {
                     Game_MidiSubsystem = 2;
                 }
+                else if ( strcasecmp(param, "adlmidi") == 0 ) // param equals "adlmidi"
+                {
+                    Game_MidiSubsystem = 3;
+                }
                 else if ( strcasecmp(param, "nativewindows") == 0 ) // param equals "nativewindows"
                 {
                     Game_MidiSubsystem = 21;
@@ -272,6 +276,17 @@ void Game_ReadConfig(void)
                 if (*param != 0)
                 {
                     Game_MidiDevice = strdup(param);
+                }
+            }
+            else if ( strcasecmp(str, "OPL3_BankNumber") == 0 ) // str equals "OPL3_BankNumber"
+            {
+                // OPL3 Bank Number
+
+                num_int = 0;
+                sscanf(param, "%i", &num_int);
+                if (num_int >= 0)
+                {
+                    Game_OPL3BankNumber = num_int;
                 }
             }
             else if ( strcasecmp(str, "OPL3_Emulator") == 0 ) // str equals "OPL3_Emulator"

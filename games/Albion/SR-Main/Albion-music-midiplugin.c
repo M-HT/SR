@@ -655,6 +655,7 @@ int MidiPlugin_Startup(void)
     memset(&MP_parameters, 0, sizeof(MP_parameters));
     MP_parameters.soundfont_path = Game_SoundFontPath;
     MP_parameters.opl3_bank_number = 0; // 0 = AIL (Star Control 3, Albion, Empire 2, Sensible Soccer, Settlers 2, many others)
+    MP_parameters.opl3_emulator = Game_OPL3Emulator;
 
     if (MP_initialize(Game_AudioRate, &MP_parameters, &(MP_functions[0])))
     {

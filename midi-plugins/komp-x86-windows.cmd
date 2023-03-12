@@ -18,11 +18,15 @@ gcc -c -m32 -O3 -Wall -Wno-maybe-uninitialized -DDRIVER=ADLIB emu_x86.c -I./incl
 g++ -c -m32 -O2 -Wall -fno-exceptions emu_opl2.cpp
 cd dosbox_opl
 g++ -c -m32 -O3 -Wall -fno-exceptions opl.cpp
+cd ..
+cd nuked_opl3
+gcc -c -m32 -O3 -Wall opl3.c
 cd ../..
-gcc -s -shared -o adlib-dosbox_opl.dll -m32 *.o src/*.o src/dosbox_opl/*.o ../midi.def -lm
+gcc -s -shared -o adlib-dosbox_opl.dll -m32 *.o src/*.o src/dosbox_opl/*.o src/nuked_opl3/*.o ../midi.def -lm
 
 rm src/*.o
 rm src/dosbox_opl/*.o
+rm src/nuked_opl3/*.o
 
 cd src
 gcc -c -m32 -O3 -Wall -Wno-maybe-uninitialized -DDRIVER=ROLAND emu_x86.c -I./include

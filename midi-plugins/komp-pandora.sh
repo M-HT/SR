@@ -19,11 +19,15 @@ $PNDSDK/bin/pandora-gcc -c -fpic -fvisibility=hidden -O3 -Wall -Wno-maybe-uninit
 $PNDSDK/bin/pandora-g++ -c -fpic -fvisibility=hidden -O2 -Wall -fno-exceptions emu_opl2.cpp
 cd dosbox_opl
 $PNDSDK/bin/pandora-g++ -c -fpic -fvisibility=hidden -O3 -Wall -fno-exceptions opl.cpp
+cd ..
+cd nuked_opl3
+$PNDSDK/bin/pandora-gcc -c -fpic -fvisibility=hidden -O3 -Wall opl3.c
 cd ../..
-$PNDSDK/bin/pandora-gcc -shared -Wl,-soname,adlib-dosbox_opl.so -o adlib-dosbox_opl.so *.o src/*.o src/dosbox_opl/*.o -lm
+$PNDSDK/bin/pandora-gcc -shared -Wl,-soname,adlib-dosbox_opl.so -o adlib-dosbox_opl.so *.o src/*.o src/dosbox_opl/*.o src/nuked_opl3/*.o -lm
 
 rm src/*.o
 rm src/dosbox_opl/*.o
+rm src/nuked_opl3/*.o
 
 #cd src
 #$PNDSDK/bin/pandora-gcc -c -fpic -fvisibility=hidden -O3 -Wall -Wno-maybe-uninitialized -DDRIVER=ROLAND emu_x86.c -I$CURDIR/include

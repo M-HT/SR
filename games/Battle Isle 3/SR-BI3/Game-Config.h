@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -45,6 +45,9 @@ GAME_CONFIG_STORAGE int Audio_MidiVolume;               /* MIDI volume (0-127) *
 GAME_CONFIG_STORAGE const char *Audio_SoundFontPath;    /* Path to SoundFont file */
 GAME_CONFIG_STORAGE const char *Audio_MidiDevice;       /* MIDI device */
 GAME_CONFIG_STORAGE int Audio_OPL3BankNumber;           /* OPL3 bank number (0-72) */
+GAME_CONFIG_STORAGE int Audio_OPL3Emulator;             /* OPL3 emulator
+                                                           0: fast - DOSBox
+                                                           1: precise - Nuked OPL3 */
 
 void ReadConfiguration(void);
 

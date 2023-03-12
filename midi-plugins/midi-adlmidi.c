@@ -127,7 +127,7 @@ static void shutdown_plugin(void)
 __attribute__ ((visibility ("default")))
 int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const *parameters, midi_plugin_functions *functions)
 {
-    int bank_number;
+    int bank_number, emulator;
 
     if ((rate < 11000) || (rate > 65000)) return -2;
     if (functions == NULL) return -3;
@@ -154,15 +154,24 @@ int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const
 
     adl_setVolumeRangeModel(adl_handle, ADLMIDI_VolumeModel_Generic);
 
-#if ADLMIDI_VERSION_ATLEAST(1,3,2)
-    adl_switchEmulator(adl_handle, ADLMIDI_EMU_DOSBOX);
-#endif
-
     bank_number = 0;
+    emulator = 0;
     if (parameters != NULL)
     {
         bank_number = parameters->opl3_bank_number;
+        emulator = parameters->opl3_emulator;
     }
+
+#if ADLMIDI_VERSION_ATLEAST(1,3,2)
+    if (emulator)
+    {
+        adl_switchEmulator(adl_handle, ADLMIDI_EMU_NUKED);
+    }
+    else
+    {
+        adl_switchEmulator(adl_handle, ADLMIDI_EMU_DOSBOX);
+    }
+#endif
 
     if (adl_setBank(adl_handle, bank_number))
     {

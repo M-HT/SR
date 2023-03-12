@@ -1098,6 +1098,7 @@ static int Game_Initialize(void)
 
     Game_SoundFontPath = NULL;
     Game_MidiDevice = NULL;
+    Game_OPL3Emulator = 0;
 
 
     //senquack - multiple config files now supported

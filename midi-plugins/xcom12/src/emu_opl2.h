@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-void emu_opl2_init(unsigned int samplerate);
+void emu_opl2_init(unsigned int samplerate, int emulator);
 
 void emu_opl2_write_388(uint8_t value);
 void emu_opl2_write_389(uint8_t value);

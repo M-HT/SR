@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -40,6 +40,7 @@ void Init_Audio(void)
 #else
     Game_MidiSubsystem = 10;
 #endif
+    Game_OPL3Emulator = 1;
 }
 
 void Init_Audio2(void)

@@ -1070,6 +1070,7 @@ static int Game_Initialize(void)
     Game_SoundFontPath = NULL;
     Game_MT32RomsPath = NULL;
     Game_MidiDevice = NULL;
+    Game_OPL3Emulator = 0;
 
     if (Game_ConfigFilename[0] == 0)
     {

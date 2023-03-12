@@ -639,6 +639,7 @@ int MidiPlugin_Startup(void)
     memset(&MP_parameters, 0, sizeof(MP_parameters));
     MP_parameters.soundfont_path = Game_SoundFontPath;
     MP_parameters.opl3_bank_number = 43; // 43 = AIL (Warcraft)
+    MP_parameters.opl3_emulator = Game_OPL3Emulator;
 
     if (MP_initialize(Game_AudioRate, &MP_parameters, &MP_functions))
     {

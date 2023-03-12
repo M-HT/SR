@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -244,6 +244,7 @@ static int MP_Startup(void)
     memset(&MP_parameters, 0, sizeof(MP_parameters));
     MP_parameters.soundfont_path = Audio_SoundFontPath;
     MP_parameters.opl3_bank_number = Audio_OPL3BankNumber;
+    MP_parameters.opl3_emulator = Audio_OPL3Emulator;
 
     if (MP_initialize(44100, &MP_parameters, &MP_functions))
     {

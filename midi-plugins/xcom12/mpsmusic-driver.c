@@ -168,16 +168,19 @@ int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const
 {
     char const *drivers_cat;
     char const *mt32_roms;
+    int opl3_emulator;
 
     if ((rate < 11000) || (rate > 48000)) return -2;
     if (functions == NULL) return -3;
 
     drivers_cat = NULL;
     mt32_roms = NULL;
+    opl3_emulator = 0;
     if (parameters != NULL)
     {
         drivers_cat = check_file(parameters->drivers_cat_path);
         mt32_roms = parameters->mt32_roms_path;
+        opl3_emulator = parameters->opl3_emulator;
     }
 
     if (drivers_cat == NULL) return -4;
@@ -190,7 +193,7 @@ int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const
     functions->close_midi = &close_midi;
     functions->shutdown_plugin = &shutdown_plugin;
 
-    if (!emu_x86_initialize(rate, drivers_cat, mt32_roms))
+    if (!emu_x86_initialize(rate, drivers_cat, mt32_roms, opl3_emulator))
     {
         return -1;
     }

@@ -20,11 +20,15 @@ gcc -c -fpic -fvisibility=hidden -m32 -O3 -Wall -Wno-maybe-uninitialized -DDRIVE
 g++ -c -fpic -fvisibility=hidden -m32 -O2 -Wall -fno-exceptions emu_opl2.cpp
 cd dosbox_opl
 g++ -c -fpic -fvisibility=hidden -m32 -O3 -Wall -fno-exceptions opl.cpp
+cd ..
+cd nuked_opl3
+gcc -c -fpic -fvisibility=hidden -m32 -O3 -Wall opl3.c
 cd ../..
-gcc -shared -Wl,-soname,adlib-dosbox_opl.so -o adlib-dosbox_opl.so -m32 *.o src/*.o src/dosbox_opl/*.o -lm
+gcc -shared -Wl,-soname,adlib-dosbox_opl.so -o adlib-dosbox_opl.so -m32 *.o src/*.o src/dosbox_opl/*.o src/nuked_opl3/*.o -lm
 
 rm src/*.o
 rm src/dosbox_opl/*.o
+rm src/nuked_opl3/*.o
 
 cd src
 gcc -c -fpic -fvisibility=hidden -m32 -O3 -Wall -Wno-maybe-uninitialized -DDRIVER=ROLAND emu_x86.c -I$CURDIR/include

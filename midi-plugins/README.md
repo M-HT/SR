@@ -26,6 +26,6 @@ To compile the plugins run the *komp-x86.sh* script (or the *komp-arm.sh* script
 
 These plugins use small x86 emulator to run the music driver from the game. The x86 emulator is not a complete x86 emulator. It supports only 64kB of RAM and implements only enough x86 instructions to run the music drivers.
 
-**adlib-dosbox_opl** plays Adlib (OPL2) music using OPL2/OPL3 emulation library from [DOSBox](https://www.dosbox.com/ "DOS-emulator") (source is included). No additional files are required to play music.
+**adlib-dosbox_opl** plays Adlib (OPL2) music using OPL2/OPL3 emulation library from [DOSBox](https://www.dosbox.com/ "DOS-emulator") or [Nuked OPL3 emulator](https://github.com/nukeykt/Nuked-OPL3 " Highly accurate Yamaha OPL3 (YMF262, CT1747) emulator") (sources are included). No additional files are required to play music.
 
 **mt32-munt** plays MT-32 music using [Munt](https://munt.sourceforge.net/ "multi-platform software synthesiser") library (source is included). It requires Control and PCM roms from MT-32 or CM-32L (LAPC-I) to play music. CM-32L (LAPC-I) roms are preferred. The CM-32L (LAPC-I) roms filenames must be CM32L_CONTROL.ROM and CM32L_PCM.ROM. The MT-32 roms filenames must be MT32_CONTROL.ROM and MT32_PCM.ROM.

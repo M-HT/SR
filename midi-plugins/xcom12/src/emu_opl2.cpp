@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -23,6 +23,7 @@
  */
 
 #include "emu_opl2.h"
+#include "nuked_opl3/opl3.h"
 
 
 extern void adlib_init(uint32_t samplerate);
@@ -31,13 +32,23 @@ extern void adlib_getsample(int16_t* sndptr, intptr_t numsamples);
 
 
 static unsigned int adlib_address;
+static int adlib_emulator;
+static opl3_chip chip;
 
 extern "C" {
 
-void emu_opl2_init(unsigned int samplerate)
+void emu_opl2_init(unsigned int samplerate, int emulator)
 {
     adlib_address = 0;
-    adlib_init(samplerate);
+    adlib_emulator = emulator;
+    if (emulator)
+    {
+        OPL3_Reset(&chip, samplerate);
+    }
+    else
+    {
+        adlib_init(samplerate);
+    }
 }
 
 void emu_opl2_write_388(uint8_t value)
@@ -48,7 +59,14 @@ void emu_opl2_write_388(uint8_t value)
 
 void emu_opl2_write_389(uint8_t value)
 {
-    adlib_write(adlib_address, value);
+    if (adlib_emulator)
+    {
+        OPL3_WriteRegBuffered(&chip, adlib_address, value);
+    }
+    else
+    {
+        adlib_write(adlib_address, value);
+    }
 }
 
 uint8_t emu_opl2_read_388(void)
@@ -63,7 +81,14 @@ uint8_t emu_opl2_read_389(void)
 
 void emu_opl2_getsamples(int16_t *samples, int numsamples)
 {
-    adlib_getsample(samples, numsamples);
+    if (adlib_emulator)
+    {
+        OPL3_GenerateStream(&chip, samples, numsamples);
+    }
+    else
+    {
+        adlib_getsample(samples, numsamples);
+    }
 }
 
 }

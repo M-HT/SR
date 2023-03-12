@@ -69,4 +69,5 @@ midi-libs/wildmidi*/**/.libs
 midi-libs/wildmidi*/**/stamp-h1
 
 midi-plugins/**/include
+!midi-plugins/xcom12/include
 midi-plugins/**/lib

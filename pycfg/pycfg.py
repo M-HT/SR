@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# The script also works with python2
 
 #
 #  Copyright (C) 2014-2023 Roman Pauer
@@ -229,6 +230,9 @@ class ConfigFile:
 
             if "mt32-munt" in midi_values:
                 self.AddEntry("Audio_MT32_Roms_Path", "*", "")
+
+            if "adlmidi" in midi_values or "adlib-dosbox_opl" in midi_values:
+                self.AddEntry("Audio_OPL3_Emulator", "fast/precise", "precise" if platform == "pc" else "fast")
 
         if game == "albion":
             self.AddEntry("Audio_Swap_Channels", "yes/no", "yes")
@@ -557,7 +561,7 @@ class ConfigGUI:
                 description += "\nADLMIDI uses OPL3 emulator for playback."
 
             if "adlib-dosbox_opl" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
-                description += "\nAdlib music is played using 'compat' OPL emulator from DOSBox.\n  (Works only for the DOS game version.)"
+                description += "\nAdlib music is played using 'compat' OPL emulator from DOSBox or Nuked OPL3 emulator.\n  (Works only for the DOS game version.)"
 
             if self.CfgFile.HasEntry("Audio_MT32_Roms_Path"):
                 description += "\nMT-32 music is played using MUNT emulator or ALSA sequencer.\n  (Works only for the DOS game version.)"
@@ -577,25 +581,47 @@ class ConfigGUI:
             if self.CfgFile.HasEntry("Audio_MT32_Roms_Path"):
                 num_extra_options += 1
 
+            if self.CfgFile.HasEntry("Audio_OPL3_Emulator"):
+                num_extra_options += 1
+
             if num_extra_options == 1:
                 self.CreateSeparator(vbox)
             elif num_extra_options > 1:
                 vbox = self.AddPageFrameVBox(notebook, "MIDI 2", "MIDI")
 
             if self.CfgFile.HasEntry("Audio_MIDI_Device"):
-                self.CreateEntry(vbox, "MIDI Device:", "Audio_MIDI_Device", "Client name or port (e.g. 128:0). No value = autodetection.\nThis is necessary when MIDI playback using ALSA sequencer is selected.")
+                self.CreateEntry(vbox, "MIDI Device:", "Audio_MIDI_Device", "Client name or port (e.g. 128:0). No value = autodetection.\nThis is used when MIDI playback using ALSA sequencer is selected.")
                 num_extra_options -= 1
                 if num_extra_options != 0:
                     self.CreateSeparator(vbox)
 
             if self.CfgFile.HasEntry("Audio_SoundFont_Path"):
-                self.CreateSoundfontSelector(vbox, "SoundFont Path:", "Audio_SoundFont_Path", "Set path to soundfont file. No value = autodetection in game's directory.\nThis is necessary when MIDI playback using BASSMIDI is selected.")
+                self.CreateSoundfontSelector(vbox, "SoundFont Path:", "Audio_SoundFont_Path", "Set path to soundfont file. No value = autodetection in game's directory.\nThis is used when MIDI playback using BASSMIDI is selected.")
+                num_extra_options -= 1
+                if num_extra_options == 1:
+                    self.CreateSeparator(vbox)
+
+            if num_extra_options >= 2:
+                vbox = self.AddPageFrameVBox(notebook, "MIDI 3", "MIDI")
+
+            if self.CfgFile.HasEntry("Audio_MT32_Roms_Path"):
+                self.CreateROMsDirectorySelector(vbox, "MT-32 Roms Path:", "Audio_MT32_Roms_Path", "Set path to directory containing Control and PCM roms from MT-32 or CM-32L (LAPC-I).\nThis is necessary when MIDI playback using MUNT emulator is selected.\nCM-32L (LAPC-I) roms are preferred.\nThe CM-32L (LAPC-I) roms filenames must be CM32L_CONTROL.ROM and CM32L_PCM.ROM.\nThe MT-32 roms filenames must be MT32_CONTROL.ROM and MT32_PCM.ROM.")
                 num_extra_options -= 1
                 if num_extra_options != 0:
                     self.CreateSeparator(vbox)
 
-            if self.CfgFile.HasEntry("Audio_MT32_Roms_Path"):
-                self.CreateROMsDirectorySelector(vbox, "MT-32 Roms Path:", "Audio_MT32_Roms_Path", "Set path to directory containing Control and PCM roms from MT-32 or CM-32L (LAPC-I).\nThis is necessary when MIDI playback using MUNT emulator is selected.\nCM-32L (LAPC-I) roms are preferred.\nThe CM-32L (LAPC-I) roms filenames must be CM32L_CONTROL.ROM and CM32L_PCM.ROM.\nThe MT-32 roms filenames must be MT32_CONTROL.ROM and MT32_PCM.ROM.")
+            if self.CfgFile.HasEntry("Audio_OPL3_Emulator"):
+                description = ""
+                if "adlmidi" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
+                    description += "MIDI playback using ADLMIDI"
+
+                if "adlib-dosbox_opl" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
+                    if description != "":
+                        description += " or "
+                    description += "Adlib music"
+
+                description = "Use fast (DOSBox) or precise (Nuked) OPL3 emulator.\nThis is used when " + description + " is selected."
+                self.CreateRadioSet(vbox, "OPL3 Emulator:", "Audio_OPL3_Emulator", description)
                 num_extra_options -= 1
                 if num_extra_options != 0:
                     self.CreateSeparator(vbox)

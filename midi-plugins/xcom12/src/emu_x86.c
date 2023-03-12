@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -1815,7 +1815,7 @@ static void SetTimerFrequency(uint16_t frequency)
 }
 
 
-int emu_x86_initialize(unsigned short int rate, char const *drivers_cat, char const *mt32_roms)
+int emu_x86_initialize(unsigned short int rate, char const *drivers_cat, char const *mt32_roms, int opl3_emulator)
 {
     FILE *f;
     uint32_t num_files, file_offset, file_len;
@@ -1909,7 +1909,7 @@ int emu_x86_initialize(unsigned short int rate, char const *drivers_cat, char co
     if (x86.int66_offset == 0) goto emu_x86_initialize_error_2;
 
 #if (DRIVER==ADLIB)
-    emu_opl2_init(rate);
+    emu_opl2_init(rate, opl3_emulator);
 #elif (DRIVER==ROLAND)
     if (emu_mt32_init(32000, mt32_roms)) goto emu_x86_initialize_error_2;
 #endif

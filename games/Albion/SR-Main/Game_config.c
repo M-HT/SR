@@ -225,6 +225,19 @@ void Game_ReadConfig(void)
                     Game_MidiDevice = strdup(param);
                 }
             }
+            else if ( strcasecmp(str, "OPL3_Emulator") == 0 ) // str equals "OPL3_Emulator"
+            {
+                // OPL3 Emulator
+
+                if ( strcasecmp(param, "fast") == 0 ) // param equals "fast"
+                {
+                    Game_OPL3Emulator = 0;
+                }
+                else if ( strcasecmp(param, "precise") == 0 ) // param equals "precise"
+                {
+                    Game_OPL3Emulator = 1;
+                }
+            }
 
         }
         else if ( strncasecmp(str, "Sound", 5) == 0 ) // str begins with "Sound"

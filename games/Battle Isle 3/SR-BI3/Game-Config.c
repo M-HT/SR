@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -70,6 +70,7 @@ void ReadConfiguration(void)
     Audio_SoundFontPath = NULL;
     Audio_MidiDevice = NULL;
     Audio_OPL3BankNumber = 59;
+    Audio_OPL3Emulator = 1;
 
     f = fopen(CONFIG_FILE, "rt");
     if (f == NULL) return;
@@ -211,6 +212,19 @@ void ReadConfiguration(void)
                 if (num_int >= 0)
                 {
                     Audio_OPL3BankNumber = num_int;
+                }
+            }
+            else if ( strcasecmp(str, "OPL3Emulator") == 0 ) // str equals "OPL3Emulator"
+            {
+                // OPL3 Emulator
+
+                if ( strcasecmp(param, "fast") == 0 ) // param equals "fast"
+                {
+                    Audio_OPL3Emulator = 0;
+                }
+                else if ( strcasecmp(param, "precise") == 0 ) // param equals "precise"
+                {
+                    Audio_OPL3Emulator = 1;
                 }
             }
 

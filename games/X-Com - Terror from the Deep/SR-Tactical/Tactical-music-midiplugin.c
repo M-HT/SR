@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -464,6 +464,7 @@ int MidiPlugin_Startup(void)
     memset(&MP_parameters, 0, sizeof(MP_parameters));
     MP_parameters.soundfont_path = Game_SoundFontPath;
     MP_parameters.mt32_roms_path = Game_MT32RomsPath;
+    MP_parameters.opl3_emulator = Game_OPL3Emulator;
 
     vfs_get_real_name("C:\\SOUND\\DRIVERS.CAT", (char *) &temp_str, NULL);
     MP_parameters.drivers_cat_path = (char *) &temp_str;

@@ -46,6 +46,7 @@
 #include "main.h"
 #include "Albion-proc.h"
 #include "Albion-proc-vfs.h"
+#include "Albion-proc-events.h"
 #include "Albion-sound.h"
 #include "Albion-timer.h"
 #include "Albion-music-midiplugin.h"
@@ -96,13 +97,13 @@ static void Display_RecalculateResolution(int w, int h)
     Picture_Position_UL_X = (Display_Width - Picture_Width) / 2;
     Picture_Position_UL_Y = (Display_Height - Picture_Height) / 2;
     Picture_Position_BR_X = Picture_Position_UL_X + Picture_Width - 1;
-    Picture_Position_BR_Y = Picture_Position_BR_Y + Picture_Height - 1;
+    Picture_Position_BR_Y = Picture_Position_UL_Y + Picture_Height - 1;
 
-    Game_VideoAspectX = (360 << 16) / Picture_Width;
-    Game_VideoAspectY = (240 << 16) / Picture_Height;
+    Game_VideoAspectX = ((360-1) << 16) / (Picture_Width-1);
+    Game_VideoAspectY = ((240-1) << 16) / (Picture_Height-1);
 
-    Game_VideoAspectXR = (Picture_Width << 16) / 360;
-    Game_VideoAspectYR = (Picture_Height << 16) / 240;
+    Game_VideoAspectXR = ((Picture_Width-1) << 16) / (360-1);
+    Game_VideoAspectYR = ((Picture_Height-1) << 16) / (240-1);
 }
 #endif
 
@@ -389,7 +390,7 @@ static void Game_Display_Create(void)
 
             SDL_SetRelativeMouseMode(SDL_TRUE);
 
-            SDL_WarpMouseInWindow(Game_Window, mouse_pos[1], mouse_pos[0]);
+            Game_RepositionMouse();
         }
         else
         {
@@ -398,7 +399,7 @@ static void Game_Display_Create(void)
                 Game_OldCursor = SDL_GetCursor();
                 SDL_SetCursor(Game_NoCursor);
 
-                SDL_WarpMouseInWindow(Game_Window, mouse_pos[1], mouse_pos[0]);
+                Game_RepositionMouse();
             }
             else
             {
@@ -723,7 +724,7 @@ static void Game_Display_Create(void)
 
             SDL_WM_GrabInput(SDL_GRAB_ON);
 
-            SDL_WarpMouse(mouse_pos[1], mouse_pos[0]);
+            Game_RepositionMouse();
         }
         else
         {
@@ -732,7 +733,7 @@ static void Game_Display_Create(void)
                 Game_OldCursor = SDL_GetCursor();
                 SDL_SetCursor(Game_NoCursor);
 
-                SDL_WarpMouse(mouse_pos[1], mouse_pos[0]);
+                Game_RepositionMouse();
             }
             else
             {
@@ -1630,11 +1631,11 @@ static void Game_Initialize2(void)
     Game_AdvancedScaling = 0;
 #endif
 
-    Game_VideoAspectX = (360 << 16) / Picture_Width;
-    Game_VideoAspectY = (240 << 16) / Picture_Height;
+    Game_VideoAspectX = ((360-1) << 16) / (Picture_Width-1);
+    Game_VideoAspectY = ((240-1) << 16) / (Picture_Height-1);
 
-    Game_VideoAspectXR = (Picture_Width << 16) / 360;
-    Game_VideoAspectYR = (Picture_Height << 16) / 240;
+    Game_VideoAspectXR = ((Picture_Width-1) << 16) / (360-1);
+    Game_VideoAspectYR = ((Picture_Height-1) << 16) / (240-1);
 
 #if defined(ALLOW_OPENGL) || defined(USE_SDL2)
 #if !defined(USE_SDL2)

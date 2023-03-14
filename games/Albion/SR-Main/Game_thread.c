@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -264,11 +264,11 @@ fprintf(stderr, "fps: %.3f    tps: %.3f\n", (float) NumDisplay * 1000 / (Current
 
                 Display_ChangeMode = 0;
 
-                Game_VideoAspectX = (360 << 16) / Picture_Width;
-                Game_VideoAspectY = (240 << 16) / Picture_Height;
+                Game_VideoAspectX = ((360-1) << 16) / (Picture_Width-1);
+                Game_VideoAspectY = ((240-1) << 16) / (Picture_Height-1);
 
-                Game_VideoAspectXR = (Picture_Width << 16) / 360;
-                Game_VideoAspectYR = (Picture_Height << 16) / 240;
+                Game_VideoAspectXR = ((Picture_Width-1) << 16) / (360-1);
+                Game_VideoAspectYR = ((Picture_Height-1) << 16) / (240-1);
 
                 Game_RepositionMouse();
             }

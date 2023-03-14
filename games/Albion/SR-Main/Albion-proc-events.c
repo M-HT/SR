@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -1601,50 +1601,55 @@ static int32_t Game_Picture2DeviceY(int32_t picturey)
 }
 
 //senquack - new togglable screen scaling requires some changes
-static void Game_CompareMPosition(SDL_Event *cevent, int *XPosDiff, int *YPosDiff)
+static void Game_CompareMPosition(int x, int y, int *XPosDiff, int *YPosDiff)
 {
     int32_t virtx, virty;
 
-    virtx = Game_Device2PictureX(cevent->motion.x);
-    virty = Game_Device2PictureY(cevent->motion.y);
+    virtx = Game_Device2PictureX(x);
+    virty = Game_Device2PictureY(y);
 
     if (Game_VideoAspectX <= 65536)
     {
         /* screen resolution is bigger than game resolution */
 
-        *XPosDiff = (mouse_pos[1] != ((virtx * Game_VideoAspectX + 32767) >> 16))?1:0;
+        *XPosDiff = ((virtx * Game_VideoAspectX + 32767) >> 16) - mouse_pos[1];
     }
     else
     {
         /* screen resolution is smaller than game resolution */
 
-        *XPosDiff = (virtx != (int32_t) ((mouse_pos[1] * Game_VideoAspectXR + 32767) >> 16))?1:0;
+        *XPosDiff = virtx - ((mouse_pos[1] * Game_VideoAspectXR + 32767) >> 16);
     }
 
     if (Game_VideoAspectY <= 65536)
     {
         /* screen resolution is bigger than game resolution */
 
-        *YPosDiff = (mouse_pos[0] != ((virty * Game_VideoAspectY + 32767) >> 16))?1:0;
+        *YPosDiff = ((virty * Game_VideoAspectY + 32767) >> 16) - mouse_pos[0];
     }
     else
     {
         /* screen resolution is smaller than game resolution */
 
-        *YPosDiff = (virty != (int32_t) ((mouse_pos[0] * Game_VideoAspectYR + 32767) >> 16))?1:0;
+        *YPosDiff = virty - ((mouse_pos[0] * Game_VideoAspectYR + 32767) >> 16);
     }
 }
 
-void Game_RepositionMouse(void)
+static void Game_WarpMouse(int x, int y)
 {
     SDL_Event event;
 
     event.type = SDL_USEREVENT;
     event.user.code = EC_MOUSE_SET;
-    event.user.data1 = (void *)(intptr_t) Game_Picture2DeviceX((mouse_pos[1] * Game_VideoAspectXR + 32767) >> 16);
-    event.user.data2 = (void *)(intptr_t) Game_Picture2DeviceY((mouse_pos[0] * Game_VideoAspectYR + 32767) >> 16);
+    event.user.data1 = (void *)(intptr_t) x;
+    event.user.data2 = (void *)(intptr_t) y;
 
     SDL_PushEvent(&event);
+}
+
+void Game_RepositionMouse(void)
+{
+    Game_WarpMouse(Game_Picture2DeviceX((mouse_pos[1] * Game_VideoAspectXR + 32767) >> 16), Game_Picture2DeviceY((mouse_pos[0] * Game_VideoAspectYR + 32767) >> 16));
 }
 
 int Game_ProcessMEvents(void)
@@ -1668,24 +1673,78 @@ int Game_ProcessMEvents(void)
                 //	coordinates, only shifted a bit
                 {
                     // Original code:
-                    int XPosDiff, YPosDiff;
+                    int XPosDiff, YPosDiff, newx, newy;
                     uint32_t ret;
 
-                    Game_CompareMPosition(cevent, &XPosDiff, &YPosDiff);
+                    newx = cevent->motion.x;
+                    newy = cevent->motion.y;
+
+                    if (Display_MouseLocked || Display_Fullscreen)
+                    {
+                        if (cevent->motion.xrel > 0)
+                        {
+                            if (newx < Picture_Position_UL_X) newx = Picture_Position_UL_X + cevent->motion.xrel;
+                        }
+                        else if (cevent->motion.xrel < 0)
+                        {
+                            if (newx >= Picture_Position_BR_X) newx = Picture_Position_BR_X + cevent->motion.xrel - 1;
+                        }
+
+                        if (cevent->motion.yrel > 0)
+                        {
+                            if (newy < Picture_Position_UL_Y) newy = Picture_Position_UL_Y + cevent->motion.yrel;
+                        }
+                        else if (cevent->motion.yrel < 0)
+                        {
+                            if (newy >= Picture_Position_BR_Y) newy = Picture_Position_BR_Y + cevent->motion.yrel - 1;
+                        }
+                    }
+
+                    Game_CompareMPosition(newx, newy, &XPosDiff, &YPosDiff);
 
                     if (XPosDiff || YPosDiff)
                     {
-                        ret = Game_MouseMove(cevent->motion.state, (Game_Device2PictureX(cevent->motion.x) * Game_VideoAspectX + 32767) >> 16, (Game_Device2PictureY(cevent->motion.y) * Game_VideoAspectY + 32767) >> 16);
+                        ret = Game_MouseMove(cevent->motion.state, (Game_Device2PictureX(newx) * Game_VideoAspectX + 32767) >> 16, (Game_Device2PictureY(newy) * Game_VideoAspectY + 32767) >> 16);
 
                         if ((Display_MouseLocked || Display_Fullscreen) && !ret)
                         {
-                            Game_CompareMPosition(cevent, &XPosDiff, &YPosDiff);
+                            Game_CompareMPosition(newx, newy, &XPosDiff, &YPosDiff);
 
-                            if (XPosDiff || YPosDiff)
+                            if (XPosDiff > 0)
                             {
-                                Game_RepositionMouse();
+                                if (cevent->motion.xrel < 0)
+                                {
+                                    newx = Game_Picture2DeviceX((mouse_pos[1] * Game_VideoAspectXR) >> 16);
+                                }
+                            }
+                            else if (XPosDiff < 0)
+                            {
+                                if (cevent->motion.xrel > 0)
+                                {
+                                    newx = Game_Picture2DeviceX(((mouse_pos[1] + 1) * Game_VideoAspectXR) >> 16) - 1;
+                                }
+                            }
+
+                            if (YPosDiff > 0)
+                            {
+                                if (cevent->motion.yrel < 0)
+                                {
+                                    newy = Game_Picture2DeviceY((mouse_pos[0] * Game_VideoAspectYR) >> 16);
+                                }
+                            }
+                            else if (YPosDiff < 0)
+                            {
+                                if (cevent->motion.yrel > 0)
+                                {
+                                    newy = Game_Picture2DeviceY(((mouse_pos[0] + 1) * Game_VideoAspectYR) >> 16) - 1;
+                                }
                             }
                         }
+                    }
+
+                    if ((newx != cevent->motion.x) || (newy != cevent->motion.y))
+                    {
+                        Game_WarpMouse(newx, newy);
                     }
                 }
                 break;
@@ -1740,7 +1799,7 @@ int Game_ProcessMEvents(void)
 
                     if ((Display_MouseLocked || Display_Fullscreen) && !ret)
                     {
-                        Game_CompareMPosition(cevent, &XPosDiff, &YPosDiff);
+                        Game_CompareMPosition(cevent->button.x, cevent->button.y, &XPosDiff, &YPosDiff);
 
                         if (XPosDiff || YPosDiff)
                         {

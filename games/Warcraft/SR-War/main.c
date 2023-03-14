@@ -94,13 +94,13 @@ static void Display_RecalculateResolution(int w, int h)
     Picture_Position_UL_X = (Display_Width - Picture_Width) / 2;
     Picture_Position_UL_Y = (Display_Height - Picture_Height) / 2;
     Picture_Position_BR_X = Picture_Position_UL_X + Picture_Width - 1;
-    Picture_Position_BR_Y = Picture_Position_BR_Y + Picture_Height - 1;
+    Picture_Position_BR_Y = Picture_Position_UL_Y + Picture_Height - 1;
 
-    Game_VideoAspectX = (320 << 16) / Picture_Width;
-    Game_VideoAspectY = (200 << 16) / Picture_Height;
+    Game_VideoAspectX = ((320-1) << 16) / (Picture_Width-1);
+    Game_VideoAspectY = ((200-1) << 16) / (Picture_Height-1);
 
-    Game_VideoAspectXR = (Picture_Width << 16) / 320;
-    Game_VideoAspectYR = (Picture_Height << 16) / 200;
+    Game_VideoAspectXR = ((Picture_Width-1) << 16) / (320-1);
+    Game_VideoAspectYR = ((Picture_Height-1) << 16) / (200-1);
 }
 #endif
 
@@ -1389,11 +1389,11 @@ static void Game_Initialize2(void)
     Game_AdvancedScaling = 0;
 #endif
 
-    Game_VideoAspectX = (320 << 16) / Picture_Width;
-    Game_VideoAspectY = (200 << 16) / Picture_Height;
+    Game_VideoAspectX = ((320-1) << 16) / (Picture_Width-1);
+    Game_VideoAspectY = ((200-1) << 16) / (Picture_Height-1);
 
-    Game_VideoAspectXR = (Picture_Width << 16) / 320;
-    Game_VideoAspectYR = (Picture_Height << 16) / 200;
+    Game_VideoAspectXR = ((Picture_Width-1) << 16) / (320-1);
+    Game_VideoAspectYR = ((Picture_Height-1) << 16) / (200-1);
 
 #if defined(ALLOW_OPENGL) || defined(USE_SDL2)
 #if !defined(USE_SDL2)

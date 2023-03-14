@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -1338,16 +1338,21 @@ void Game_GetGameMouse(int *mousex, int *mousey)
     *mousey = (Game_Device2PictureY(my) * Game_VideoAspectY + 32767) >> 16;
 }
 
-void Game_RepositionMouse(int mousex, int mousey)
+static void Game_WarpMouse(int x, int y)
 {
     SDL_Event event;
 
     event.type = SDL_USEREVENT;
     event.user.code = EC_MOUSE_SET;
-    event.user.data1 = (void *)(intptr_t) Game_Picture2DeviceX((mousex * Game_VideoAspectXR + 32767) >> 16);
-    event.user.data2 = (void *)(intptr_t) Game_Picture2DeviceY((mousey * Game_VideoAspectYR + 32767) >> 16);
+    event.user.data1 = (void *)(intptr_t) x;
+    event.user.data2 = (void *)(intptr_t) y;
 
     SDL_PushEvent(&event);
+}
+
+void Game_RepositionMouse(int mousex, int mousey)
+{
+    Game_WarpMouse(Game_Picture2DeviceX((mousex * Game_VideoAspectXR + 32767) >> 16), Game_Picture2DeviceY((mousey * Game_VideoAspectYR + 32767) >> 16));
 }
 
 int Game_ProcessMEvents(void)
@@ -1368,12 +1373,41 @@ int Game_ProcessMEvents(void)
         {
             case SDL_MOUSEMOTION:
                 {
-                    int mousex, mousey;
+                    int mousex, mousey, newx, newy;
 
                     mouse_move = 1;
 
-                    mousex = (Game_Device2PictureX(cevent->motion.x) * Game_VideoAspectX + 32767) >> 16;
-                    mousey = (Game_Device2PictureY(cevent->motion.y) * Game_VideoAspectY + 32767) >> 16;
+                    newx = cevent->motion.x;
+                    newy = cevent->motion.y;
+
+                    if (Display_MouseLocked || Display_Fullscreen)
+                    {
+                        if (cevent->motion.xrel > 0)
+                        {
+                            if (newx < Picture_Position_UL_X) newx = Picture_Position_UL_X + cevent->motion.xrel;
+                        }
+                        else if (cevent->motion.xrel < 0)
+                        {
+                            if (newx >= Picture_Position_BR_X) newx = Picture_Position_BR_X + cevent->motion.xrel - 1;
+                        }
+
+                        if (cevent->motion.yrel > 0)
+                        {
+                            if (newy < Picture_Position_UL_Y) newy = Picture_Position_UL_Y + cevent->motion.yrel;
+                        }
+                        else if (cevent->motion.yrel < 0)
+                        {
+                            if (newy >= Picture_Position_BR_Y) newy = Picture_Position_BR_Y + cevent->motion.yrel - 1;
+                        }
+
+                        if ((newx != cevent->motion.x) || (newy != cevent->motion.y))
+                        {
+                            Game_WarpMouse(newx, newy);
+                        }
+                    }
+
+                    mousex = (Game_Device2PictureX(newx) * Game_VideoAspectX + 32767) >> 16;
+                    mousey = (Game_Device2PictureY(newy) * Game_VideoAspectY + 32767) >> 16;
 
                     Game_MouseMove(cevent->motion.state, mousex, mousey);
                 }

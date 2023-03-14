@@ -95,13 +95,13 @@ static void Display_RecalculateResolution(int w, int h)
     Picture_Position_UL_X = (Display_Width - Picture_Width) / 2;
     Picture_Position_UL_Y = (Display_Height - Picture_Height) / 2;
     Picture_Position_BR_X = Picture_Position_UL_X + Picture_Width - 1;
-    Picture_Position_BR_Y = Picture_Position_BR_Y + Picture_Height - 1;
+    Picture_Position_BR_Y = Picture_Position_UL_Y + Picture_Height - 1;
 
-    Game_VideoAspectX = (320 << 16) / Picture_Width;
-    Game_VideoAspectY = (200 << 16) / Picture_Height;
+    Game_VideoAspectX = ((320-1) << 16) / (Picture_Width-1);
+    Game_VideoAspectY = ((200-1) << 16) / (Picture_Height-1);
 
-    Game_VideoAspectXR = (Picture_Width << 16) / 320;
-    Game_VideoAspectYR = (Picture_Height << 16) / 200;
+    Game_VideoAspectXR = ((Picture_Width-1) << 16) / (320-1);
+    Game_VideoAspectYR = ((Picture_Height-1) << 16) / (200-1);
 }
 #endif
 
@@ -1517,11 +1517,11 @@ static void Game_Initialize2(void)
     Game_AdvancedScaling = 0;
 #endif
 
-    Game_VideoAspectX = (320 << 16) / Picture_Width;
-    Game_VideoAspectY = (200 << 16) / Picture_Height;
+    Game_VideoAspectX = ((320-1) << 16) / (Picture_Width-1);
+    Game_VideoAspectY = ((200-1) << 16) / (Picture_Height-1);
 
-    Game_VideoAspectXR = (Picture_Width << 16) / 320;
-    Game_VideoAspectYR = (Picture_Height << 16) / 200;
+    Game_VideoAspectXR = ((Picture_Width-1) << 16) / (320-1);
+    Game_VideoAspectYR = ((Picture_Height-1) << 16) / (200-1);
 
 #if defined(ALLOW_OPENGL) || defined(USE_SDL2)
 #if !defined(USE_SDL2)
@@ -1712,8 +1712,43 @@ static void Game_Event_Loop(void)
                 #endif
                     && AppActive && AppInputFocus && AppMouseFocus)
                 {
-                    Game_MouseX = event.motion.x;
-                    Game_MouseY = event.motion.y;
+                    int newx, newy;
+
+                    newx = event.motion.x;
+                    newy = event.motion.y;
+
+                    if (Display_MouseLocked || Display_Fullscreen)
+                    {
+                        if (event.motion.xrel > 0)
+                        {
+                            if (newx < Picture_Position_UL_X) newx = Picture_Position_UL_X + event.motion.xrel;
+                        }
+                        else if (event.motion.xrel < 0)
+                        {
+                            if (newx >= Picture_Position_BR_X) newx = Picture_Position_BR_X + event.motion.xrel - 1;
+                        }
+
+                        if (event.motion.yrel > 0)
+                        {
+                            if (newy < Picture_Position_UL_Y) newy = Picture_Position_UL_Y + event.motion.yrel;
+                        }
+                        else if (event.motion.yrel < 0)
+                        {
+                            if (newy >= Picture_Position_BR_Y) newy = Picture_Position_BR_Y + event.motion.yrel - 1;
+                        }
+
+                        if ((newx != event.motion.x) || (newy != event.motion.y))
+                        {
+                        #ifdef USE_SDL2
+                            SDL_WarpMouseInWindow(Game_Window, newx, newy);
+                        #else
+                            SDL_WarpMouse(newx, newy);
+                        #endif
+                        }
+                    }
+
+                    Game_MouseX = newx;
+                    Game_MouseY = newy;
 
                     /*Game_MouseButtons = ( (event.motion.state & SDL_BUTTON(SDL_BUTTON_LEFT)  )?1:0 ) |
                                         ( (event.motion.state & SDL_BUTTON(SDL_BUTTON_RIGHT) )?2:0 ) |

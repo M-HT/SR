@@ -37,6 +37,13 @@
     #include <SDL/SDL_version.h>
     #include <SDL/SDL_mixer.h>
 #endif
+
+#if (SDL_MAJOR_VERSION == 1) && SDL_VERSION_ATLEAST(1, 2, 50)
+#warning Compilation using sdl12-compat detected.
+#warning The compiled program might not work properly.
+#warning Compilation using SDL2 is recommended.
+#endif
+
 #include "Game_defs.h"
 
 #define DEFINE_VARIABLES
@@ -1377,6 +1384,14 @@ static int Game_Initialize(void)
         fprintf (stderr, "Error: Couldn't initialize SDL: %s\n", SDL_GetError ());
         return -1;
     }
+
+#if (SDL_MAJOR_VERSION == 1)
+    const SDL_version *link_version = SDL_Linked_Version();
+    if (SDL_VERSIONNUM(link_version->major, link_version->minor, link_version->patch) >= SDL_VERSIONNUM(1,2,50))
+    {
+        fprintf(stderr, "Warning: sdl12-compat detected.\nWarning: The program might not work properly.\nWarning: Using SDL2 version is recommended.\n");
+    }
+#endif
 
     Game_NoCursor = SDL_CreateCursor(&Game_NoCursorData, &Game_NoCursorData, 8, 1, 0, 0);
 

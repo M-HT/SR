@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2021 Roman Pauer
+ *  Copyright (C) 2019-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -38,6 +38,12 @@
 #include <time.h>
 #include <stdlib.h>
 #include "Game-Config.h"
+
+#if (SDL_MAJOR_VERSION == 1) && SDL_VERSION_ATLEAST(1, 2, 50)
+#warning Compilation using sdl12-compat detected.
+#warning The compiled program might not work properly.
+#warning Compilation using SDL2 is recommended.
+#endif
 
 #ifdef _WIN32
 #define WINAPI_NODEF_DEFINITIONS
@@ -169,6 +175,14 @@ int main(int argc, char *argv[])
     }
 
     atexit(SDL_Quit);
+
+#if (SDL_MAJOR_VERSION == 1)
+    const SDL_version *link_version = SDL_Linked_Version();
+    if (SDL_VERSIONNUM(link_version->major, link_version->minor, link_version->patch) >= SDL_VERSIONNUM(1,2,50))
+    {
+        fprintf(stderr, "Warning: sdl12-compat detected.\nWarning: The program might not work properly.\nWarning: Using SDL2 version is recommended.\n");
+    }
+#endif
 
 #ifdef _WIN32
     init_libquicktime();

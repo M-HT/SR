@@ -22,7 +22,7 @@ cd dosbox_opl
 g++ -c -fpic -fvisibility=hidden -O3 -Wall -fno-exceptions opl.cpp
 cd ..
 cd nuked_opl3
-gcc -c -fpic -fvisibility=hidden -O3 -Wall opl3.c
+gcc -c -fpic -fvisibility=hidden -O3 -Wall -DDISABLE_UNUSED_FUNCTIONS -DDISABLE_DIVISIONS opl3.c
 cd ../..
 gcc -shared -Wl,-soname,adlib-dosbox_opl.so -o adlib-dosbox_opl.so *.o src/*.o src/dosbox_opl/*.o src/nuked_opl3/*.o -lm
 

@@ -49,7 +49,91 @@
 #define OPL_QUIRK_CHANNELSAMPLEDELAY (!OPL_ENABLE_STEREOEXT)
 #endif
 
+#ifdef DISABLE_DIVISIONS
+#define RSM_FRAC    15
+#else
 #define RSM_FRAC    10
+#endif
+
+#if ( \
+    defined(__ARM_ARCH_6__) || \
+    defined(__ARM_ARCH_6J__) || \
+    defined(__ARM_ARCH_6K__) || \
+    defined(__ARM_ARCH_6Z__) || \
+    defined(__ARM_ARCH_6ZK__) || \
+    defined(__ARM_ARCH_6T2__) || \
+    defined(__ARM_ARCH_7__) || \
+    defined(__ARM_ARCH_7A__) || \
+    defined(__ARM_ARCH_7R__) || \
+    defined(__ARM_ARCH_7M__) || \
+    defined(__ARM_ARCH_7S__) || \
+    (defined(_M_ARM) && (_M_ARM >= 6)) || \
+    (defined(__TARGET_ARCH_ARM) && (__TARGET_ARCH_ARM >= 6)) || \
+    (defined(__TARGET_ARCH_THUMB) && (__TARGET_ARCH_THUMB >= 3)) \
+)
+    #define ARMV6 1
+#else
+    #undef ARMV6
+#endif
+
+#if ( \
+    defined(__ARM_ARCH_7__) || \
+    defined(__ARM_ARCH_7A__) || \
+    defined(__ARM_ARCH_7R__) || \
+    defined(__ARM_ARCH_7M__) || \
+    defined(__ARM_ARCH_7S__) || \
+    (defined(_M_ARM) && (_M_ARM >= 7)) || \
+    (defined(__TARGET_ARCH_ARM) && (__TARGET_ARCH_ARM >= 7)) || \
+    (defined(__TARGET_ARCH_THUMB) && (__TARGET_ARCH_THUMB >= 4)) \
+)
+    #define ARMV7 1
+#else
+    #undef ARMV7
+#endif
+
+#if ( \
+    defined(__aarch64__) \
+)
+    #define ARMV8 1
+#else
+    #undef ARMV8
+#endif
+
+#if ( \
+    defined(__i386) || \
+    defined(_M_IX86) || \
+    defined(_X86_) || \
+    defined(__THW_INTEL__) || \
+    defined(__I86__) || \
+    defined(__INTEL__) || \
+    defined(__386) \
+)
+    #define X86SSE2 1
+#else
+    #undef X86SSE2
+#endif
+
+#if ( \
+    defined(__amd64__) || \
+    defined(__amd64) || \
+    defined(__x86_64__) || \
+    defined(__x86_64) || \
+    defined(_M_X64) || \
+    defined(_M_AMD64) \
+)
+    #define X64SSE2 1
+#else
+    #undef X64SSE2
+#endif
+
+#if defined(X86SSE2) || defined(X64SSE2)
+#include <emmintrin.h>
+#endif
+#if defined(ARMV7) || defined(ARMV8)
+#include <arm_neon.h>
+#elif defined(ARMV6) && defined(__clang__)
+#include <arm_acle.h>
+#endif
 
 /* Channel types */
 
@@ -1087,8 +1171,32 @@ static void OPL3_ChannelSet4Op(opl3_chip *chip, uint8_t data)
     }
 }
 
+#if defined(X86SSE2) || defined(X64SSE2) || defined(ARMV7) || defined(ARMV8)
+static void OPL3_ClipSamples4(int32_t *src4, int16_t *dst4)
+{
+#if defined(X86SSE2) || defined(X64SSE2)
+    __m128i mm1 = _mm_loadu_si128((__m128i *) src4);    // mm1 = src4[3], src4[2], src4[1], src4[0]
+    mm1 = _mm_packs_epi32(mm1, mm1);                    // mm1 = ?,SaturateSignedDoublewordToSignedWord(src4[3]), ...
+    _mm_storeu_si64(dst4, mm1);                         // dst4[0] = SaturateSignedDoublewordToSignedWord(src4[0]), ...
+#else
+    int32x4_t n01;
+    int16x4_t n02;
+    n01 = vld1q_s32(src4);  // n01 = src4[3], src4[2], src4[1], src4[0]
+    n02 = vqmovn_s32(n01);  // n02 = SaturateSignedDoublewordToSignedWord(src4[3]), ...
+    vst1_s16(dst4, n02);
+#endif
+}
+#else
 static int16_t OPL3_ClipSample(int32_t sample)
 {
+#ifdef ARMV6
+#ifdef __clang__
+    return (int16_t)__ssat(sample, 16);
+#else
+    asm volatile ( "ssat %[value], #16, %[value]" : [value] "+r" (sample) );
+    return (int16_t)sample;
+#endif
+#else
     if (sample > 32767)
     {
         sample = 32767;
@@ -1098,7 +1206,9 @@ static int16_t OPL3_ClipSample(int32_t sample)
         sample = -32768;
     }
     return (int16_t)sample;
+#endif
 }
+#endif
 
 static void OPL3_ProcessSlot(opl3_slot *slot)
 {
@@ -1108,6 +1218,9 @@ static void OPL3_ProcessSlot(opl3_slot *slot)
     OPL3_SlotGenerate(slot);
 }
 
+#ifdef DISABLE_UNUSED_FUNCTIONS
+static
+#endif
 inline void OPL3_Generate4Ch(opl3_chip *chip, int16_t *buf4)
 {
     opl3_channel *channel;
@@ -1118,8 +1231,10 @@ inline void OPL3_Generate4Ch(opl3_chip *chip, int16_t *buf4)
     int16_t accm;
     uint8_t shift = 0;
 
+#if !(defined(X86SSE2) || defined(X64SSE2) || defined(ARMV7) || defined(ARMV8))
     buf4[1] = OPL3_ClipSample(chip->mixbuff[1]);
     buf4[3] = OPL3_ClipSample(chip->mixbuff[3]);
+#endif
 
 #if OPL_QUIRK_CHANNELSAMPLEDELAY
     for (ii = 0; ii < 15; ii++)
@@ -1140,7 +1255,7 @@ inline void OPL3_Generate4Ch(opl3_chip *chip, int16_t *buf4)
         mix[0] += (int16_t)((accm * channel->leftpan) >> 16);
 #else
         mix[0] += (int16_t)(accm & channel->cha);
- #endif
+#endif
         mix[1] += (int16_t)(accm & channel->chc);
     }
     chip->mixbuff[0] = mix[0];
@@ -1153,8 +1268,12 @@ inline void OPL3_Generate4Ch(opl3_chip *chip, int16_t *buf4)
     }
 #endif
 
+#if defined(X86SSE2) || defined(X64SSE2) || defined(ARMV7) || defined(ARMV8)
+    OPL3_ClipSamples4(chip->mixbuff, buf4);
+#else
     buf4[0] = OPL3_ClipSample(chip->mixbuff[0]);
     buf4[2] = OPL3_ClipSample(chip->mixbuff[2]);
+#endif
 
 #if OPL_QUIRK_CHANNELSAMPLEDELAY
     for (ii = 18; ii < 33; ii++)
@@ -1252,6 +1371,7 @@ inline void OPL3_Generate4Ch(opl3_chip *chip, int16_t *buf4)
     chip->writebuf_samplecnt++;
 }
 
+#ifndef DISABLE_UNUSED_FUNCTIONS
 void OPL3_Generate(opl3_chip *chip, int16_t *buf)
 {
     int16_t samples[4];
@@ -1259,9 +1379,33 @@ void OPL3_Generate(opl3_chip *chip, int16_t *buf)
     buf[0] = samples[0];
     buf[1] = samples[1];
 }
+#endif
 
+#ifdef DISABLE_UNUSED_FUNCTIONS
+static
+#endif
 void OPL3_Generate4ChResampled(opl3_chip *chip, int16_t *buf4)
 {
+#ifdef DISABLE_DIVISIONS
+    while (chip->samplecnt >= (1 << RSM_FRAC))
+    {
+        chip->oldsamples[0] = chip->samples[0];
+        chip->oldsamples[1] = chip->samples[1];
+        chip->oldsamples[2] = chip->samples[2];
+        chip->oldsamples[3] = chip->samples[3];
+        OPL3_Generate4Ch(chip, chip->samples);
+        chip->samplecnt -= (1 << RSM_FRAC);
+    }
+    buf4[0] = (int16_t)((chip->oldsamples[0] * ((1 << RSM_FRAC) - chip->samplecnt)
+                        + chip->samples[0] * chip->samplecnt) >> RSM_FRAC);
+    buf4[1] = (int16_t)((chip->oldsamples[1] * ((1 << RSM_FRAC) - chip->samplecnt)
+                        + chip->samples[1] * chip->samplecnt) >> RSM_FRAC);
+    buf4[2] = (int16_t)((chip->oldsamples[2] * ((1 << RSM_FRAC) - chip->samplecnt)
+                        + chip->samples[2] * chip->samplecnt) >> RSM_FRAC);
+    buf4[3] = (int16_t)((chip->oldsamples[3] * ((1 << RSM_FRAC) - chip->samplecnt)
+                        + chip->samples[3] * chip->samplecnt) >> RSM_FRAC);
+    chip->samplecnt += chip->rateratio;
+#else
     while (chip->samplecnt >= chip->rateratio)
     {
         chip->oldsamples[0] = chip->samples[0];
@@ -1280,8 +1424,12 @@ void OPL3_Generate4ChResampled(opl3_chip *chip, int16_t *buf4)
     buf4[3] = (int16_t)((chip->oldsamples[3] * (chip->rateratio - chip->samplecnt)
                         + chip->samples[3] * chip->samplecnt) / chip->rateratio);
     chip->samplecnt += 1 << RSM_FRAC;
+#endif
 }
 
+#ifdef DISABLE_UNUSED_FUNCTIONS
+static
+#endif
 void OPL3_GenerateResampled(opl3_chip *chip, int16_t *buf)
 {
     int16_t samples[4];
@@ -1342,7 +1490,11 @@ void OPL3_Reset(opl3_chip *chip, uint32_t samplerate)
         OPL3_ChannelSetupAlg(channel);
     }
     chip->noise = 1;
+#ifdef DISABLE_DIVISIONS
+    chip->rateratio = (49716 << RSM_FRAC) / samplerate;
+#else
     chip->rateratio = (samplerate << RSM_FRAC) / 49716;
+#endif
     chip->tremoloshift = 4;
     chip->vibshift = 1;
 
@@ -1501,6 +1653,7 @@ void OPL3_WriteRegBuffered(opl3_chip *chip, uint16_t reg, uint8_t v)
     chip->writebuf_last = (writebuf_last + 1) % OPL_WRITEBUF_SIZE;
 }
 
+#ifndef DISABLE_UNUSED_FUNCTIONS
 void OPL3_Generate4ChStream(opl3_chip *chip, int16_t *sndptr1, int16_t *sndptr2, uint32_t numsamples)
 {
     uint_fast32_t i;
@@ -1517,6 +1670,7 @@ void OPL3_Generate4ChStream(opl3_chip *chip, int16_t *sndptr1, int16_t *sndptr2,
         sndptr2 += 2;
     }
 }
+#endif
 
 void OPL3_GenerateStream(opl3_chip *chip, int16_t *sndptr, uint32_t numsamples)
 {

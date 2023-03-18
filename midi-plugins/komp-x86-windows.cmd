@@ -20,7 +20,7 @@ cd dosbox_opl
 g++ -c -m32 -O3 -Wall -fno-exceptions opl.cpp
 cd ..
 cd nuked_opl3
-gcc -c -m32 -O3 -Wall opl3.c
+gcc -c -m32 -march=x86-64 -O3 -Wall -DDISABLE_UNUSED_FUNCTIONS opl3.c
 cd ../..
 gcc -s -shared -o adlib-dosbox_opl.dll -m32 *.o src/*.o src/dosbox_opl/*.o src/nuked_opl3/*.o ../midi.def -lm
 

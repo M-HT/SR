@@ -1873,6 +1873,10 @@ static void Game_Event_Loop(void)
                         else
                         {
                             Game_Display_Create();
+                        #ifndef USE_SDL2
+                            // workaround for sdl12-compat
+                            AppActive = SDL_GetAppState() & SDL_APPACTIVE;
+                        #endif
                         }
 
                         break;

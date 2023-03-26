@@ -1,8 +1,16 @@
 Battle Isle 3 for Linux (x86)
-Version 1.0.0
+Version 1.0.1
 
 Original Battle Isle 3 is required for playing.
 (version from GOG.com can be used for playing)
+
+Libraries
+---------
+The game requires Wine (https://www.winehq.org/) to run.
+
+The game also requires following 32-bit libraries: quicktime2
+On debian based distributions these libraries are in following packages: libquicktime2:i386
+
 
 Installation
 ------------
@@ -19,14 +27,14 @@ Music
 -----
 
 The game's MIDI music can be played using one of following libraries:
-ALSA sequencer, WildMIDI, BASSMIDI, ADLMIDI
+ALSA sequencer, WildMIDI, BASSMIDI, libADLMIDI
 
-ADLMIDI is the default library, others can be selected in the configuration file.
+libADLMIDI is the default library, others can be selected in the configuration file.
 ALSA sequencer can use hardware or software synth (like Fluidsynth or TiMidity++).
-ADLMIDI requires no additional files for MIDI playback,
+libADLMIDI requires no additional files for MIDI playback,
 WildMIDI requirer GUS patches for MIDI playback,
 BASSMIDI requires a soundfont for MIDI playback,
-ADLMIDI uses OPL3 emulator for MIDI playback.
+libADLMIDI uses OPL3 emulator for MIDI playback.
 
 ALSA sequencer can detect usable synth automatically or it can be selected in the configuration file.
 
@@ -49,16 +57,17 @@ Paths to games files can be set in the file BattleIsle3.sh.
 Misc
 ----
 
-The game requires Wine (https://www.winehq.org/) to run.
-
-The game also requires following 32-bit libraries: quicktime2
-On debian based distributions these libraries are in following packages: libquicktime2:i386
-
 Source code is available on GitHub: https://github.com/M-HT/SR
 
 
 Changes
 -------
+
+v1.0.1 (2023-03-26)
+* use latest versions of libADLMIDI, WildMIDI, BASSMIDI libraries
+* add support for using Nuked OPL3 emulator in libADLMIDI
+* minor bug fixes
+
 
 v1.0.0 (2021-06-27)
 first Linux (x86) version

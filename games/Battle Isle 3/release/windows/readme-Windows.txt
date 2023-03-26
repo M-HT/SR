@@ -1,5 +1,5 @@
 Battle Isle 3 for Windows (x86)
-Version 1.0.0
+Version 1.0.1
 
 Original Battle Isle 3 is required for playing.
 (version from GOG.com can be used for playing)
@@ -20,13 +20,13 @@ Music
 -----
 
 The game's MIDI music can be played using one of following libraries:
-NativeWindows, WildMIDI, BASSMIDI, ADLMIDI, original
+NativeWindows, WildMIDI, BASSMIDI, libADLMIDI, original
 
 NativeWindows is the default library, others can be selected in the configuration file.
-ADLMIDI, NativeWindows and original don't require additional files for MIDI playback,
+libADLMIDI, NativeWindows and original don't require additional files for MIDI playback,
 WildMIDI requires GUS patches for MIDI playback,
 BASSMIDI requires a soundfont for MIDI playback,
-ADLMIDI uses OPL3 emulator for MIDI playback,
+libADLMIDI uses OPL3 emulator for MIDI playback,
 original uses Windows 3.1 compatible method for MIDI playback.
 
 NativeWindows can use the default synth or it can be selected in the configuration file.
@@ -61,6 +61,12 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 
 Changes
 -------
+
+v1.0.1 (2023-03-26)
+* use latest versions of libADLMIDI, WildMIDI, BASSMIDI libraries
+* add support for using Nuked OPL3 emulator in libADLMIDI
+* minor bug fixes
+
 
 v1.0.0 (2021-06-27)
 first Windows (x86) version

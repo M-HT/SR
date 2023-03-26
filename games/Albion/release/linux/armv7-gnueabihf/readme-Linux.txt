@@ -1,5 +1,5 @@
 Albion for Linux (armv7-gnueabihf)
-Version 1.7.2
+Version 1.7.3
 
 Original Albion version 1.38 is required for playing.
 (English version preferred, but other languages should also work)
@@ -62,14 +62,14 @@ Example (Detailed instructions):
 Music
 -----
 The game's MIDI music can be played using one of following libraries:
-ALSA sequencer, WildMIDI, BASSMIDI, ADLMIDI, SDL_mixer
+ALSA sequencer, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
 
-ADLMIDI is the default library, others can be selected in the configuration file.
+libADLMIDI is the default library, others can be selected in the configuration file.
 ALSA sequencer can use hardware or software synth (like Fluidsynth or TiMidity++).
-ADLMIDI requires no additional files for MIDI playback,
+libADLMIDI requires no additional files for MIDI playback,
 WildMIDI and SDL_mixer require GUS patches for MIDI playback,
 BASSMIDI requires a soundfont for MIDI playback,
-ADLMIDI uses OPL3 emulator for MIDI playback.
+libADLMIDI uses OPL3 emulator for MIDI playback.
 
 ALSA sequencer can detect usable synth automatically or it can be selected in the configuration file.
 
@@ -108,7 +108,7 @@ Misc
 ----
 
 WildMIDI library uses version 3 of the GNU Lesser General Public License (LGPLv3).
-ADLMIDI library uses version 3 of the GNU Lesser General Public License (LGPLv3).
+libADLMIDI library uses version 3 of the GNU Lesser General Public License (LGPLv3).
 HQX scaler uses version 2.1 of the GNU Lesser General Public License (LGPLv2.1).
 xBRZ scaler uses version 3 of the GNU General Public License (GPLv3).
 
@@ -125,6 +125,15 @@ HQX scaler uses neon instructions.
 
 Changes
 -------
+
+v1.7.3 (2023-03-26)
+* optimize HQX and xBRZ scalers for more speed
+* use more threads for advanced scaling (HQX and xBRZ)
+* use latest versions of libADLMIDI, WildMIDI, BASSMIDI libraries
+* add support for using Nuked OPL3 emulator in libADLMIDI
+* fix moving mouse cursor outside the game area in fullscreen
+* minor bug fixes
+
 
 v1.7.2 (2022-01-30)
 * ignore repeated keys when using SDL2

@@ -17,21 +17,21 @@ loc_102D3,7,@call SR_RunTimerDelay|ADR tmp1, loc_102D3_after_call|stmfd esp!, {t
 loc_1033C,7,@call SR_RunTimerDelay|ADR tmp1, loc_1033C_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_1033C_after_call:|@cmp dword [loc_70D08], 0|LDR tmpadr, =loc_70D08|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
 loc_3A374,2,@call SR_RunTimerDelay|ADR tmp1, loc_3A374_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_3A374_after_call:|@xor esi, esi|mov esi, #0 @ update timer
 
-loc_2A04A,7,@call SR_RunTimerDelay||@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer - wait for mouse click in timer interrupt
-loc_2DC4C,7,@call SR_RunTimerDelay||@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
-loc_2DD19,7,@call SR_RunTimerDelay||@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
-loc_31C62,7,@call SR_RunTimerDelay||@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
-loc_33AA5,7,@call SR_RunTimerDelay||@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
-loc_39CE2,7,@call SR_RunTimerDelay||@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
-loc_3A0F9,7,@call SR_RunTimerDelay||@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
-loc_3A41E,7,@call SR_RunTimerDelay||@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
-loc_3A909,7,@call SR_RunTimerDelay||@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
-loc_3ADD0,6,@call SR_RunTimerDelay||@cmp ebx, [loc_70CDC]|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp ebx, tmp1 @ update timer
-loc_3B3FF,7,@call SR_RunTimerDelay||@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
-loc_3B570,7,@call SR_RunTimerDelay||@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
-loc_3B89D,6,@call SR_RunTimerDelay||@cmp eax, [loc_70CDC]|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp eax, tmp1 @ update timer
-loc_3B995,7,@call SR_RunTimerDelay||@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
-loc_3BC84,7,@call SR_RunTimerDelay||@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
+loc_2A04A,7,@call SR_RunTimerDelay|ADR tmp1, loc_2A04A_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_2A04A_after_call:|@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer - wait for mouse click in timer interrupt
+loc_2DC4C,7,@call SR_RunTimerDelay|ADR tmp1, loc_2DC4C_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_2DC4C_after_call:|@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
+loc_2DD19,7,@call SR_RunTimerDelay|ADR tmp1, loc_2DD19_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_2DD19_after_call:|@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
+loc_31C62,7,@call SR_RunTimerDelay|ADR tmp1, loc_31C62_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_31C62_after_call:|@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
+loc_33AA5,7,@call SR_RunTimerDelay|ADR tmp1, loc_33AA5_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_33AA5_after_call:|@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
+loc_39CE2,7,@call SR_RunTimerDelay|ADR tmp1, loc_39CE2_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_39CE2_after_call:|@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
+loc_3A0F9,7,@call SR_RunTimerDelay|ADR tmp1, loc_3A0F9_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_3A0F9_after_call:|@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
+loc_3A41E,7,@call SR_RunTimerDelay|ADR tmp1, loc_3A41E_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_3A41E_after_call:|@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
+loc_3A909,7,@call SR_RunTimerDelay|ADR tmp1, loc_3A909_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_3A909_after_call:|@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
+loc_3ADD0,6,@call SR_RunTimerDelay|ADR tmp1, loc_3ADD0_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_3ADD0_after_call:|@cmp ebx, [loc_70CDC]|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp ebx, tmp1 @ update timer
+loc_3B3FF,7,@call SR_RunTimerDelay|ADR tmp1, loc_3B3FF_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_3B3FF_after_call:|@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
+loc_3B570,7,@call SR_RunTimerDelay|ADR tmp1, loc_3B570_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_3B570_after_call:|@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
+loc_3B89D,6,@call SR_RunTimerDelay|ADR tmp1, loc_3B89D_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_3B89D_after_call:|@cmp eax, [loc_70CDC]|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp eax, tmp1 @ update timer
+loc_3B995,7,@call SR_RunTimerDelay|ADR tmp1, loc_3B995_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_3B995_after_call:|@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
+loc_3BC84,7,@call SR_RunTimerDelay|ADR tmp1, loc_3BC84_after_call|stmfd esp!, {tmp1}|b SR_RunTimerDelay|LTORG_CALL|loc_3BC84_after_call:|@cmp dword [loc_70CDC], 0|LDR tmpadr, =loc_70CDC|ldr tmp1, [tmpadr]|cmp tmp1, #0 @ update timer
 
 loc_113CC,4,@mov eax, ecx|mov eax, ecx|@call SR_feof|ADR tmp1, loc_113CC_after_call|stmfd esp!, {tmp1}|b SR_feof|LTORG_CALL|loc_113CC_after_call:|@test eax, eax|cmp eax, #0 @ fix reading FILE internals (eof flag) (('test ...' must set flags for 'jnz'))
 

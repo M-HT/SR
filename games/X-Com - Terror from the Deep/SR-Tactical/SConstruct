@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016-2021 Roman Pauer
+#  Copyright (C) 2016-2023 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -34,12 +34,22 @@ vars.Add(EnumVariable('device', 'Set target device', 'none',
 vars.Add(EnumVariable('sdl2', 'Use SDL2 instead of SDL? (1 = yes)', '0',
                                  allowed_values=('0', '1'),
                                  ignorecase=2))
+vars.Add(EnumVariable('version', 'Set version to compile (dos/gog)', 'none',
+                                 allowed_values=('none', 'dos', 'gog'),
+                                 ignorecase=2))
 env = Environment(variables = vars)
 
 debug = int(env['debug'])
 device = env['device']
 sdl2 = int(env['sdl2'])
+version = env['version']
 clean = env.GetOption('clean')
+
+if version == 'none':
+    version = 'dos'
+    env['version'] = version
+    print("\nYou didn't set the version to compile (parameter 'version').")
+    print("'" + version + "' version will be compiled.\n")
 
 if device == 'none':
     device = 'pc-linux'
@@ -170,9 +180,9 @@ audio_objs = SConscript('audio/SConscript', exports='device env')
 input_objs = SConscript('input/SConscript', exports='device env')
 
 if device == 'pc-windows' or device == 'pc-linux':
-    arch_objs = SConscript('x86/SConscript', exports='device')
+    arch_objs = SConscript('x86/SConscript', exports='device version')
 else:
-    arch_objs = SConscript('arm/SConscript', exports='device env')
+    arch_objs = SConscript('arm/SConscript', exports='device version env')
 
 
 env.Program('SR-Tactical', Glob('*.c') + display_objs + audio_objs + input_objs + arch_objs)

@@ -32,6 +32,13 @@ The original executable is *GEOSCAPE.EXE* from the DOS English version 1.4.
 * sha1: 832d78f3c9a9c50960f10473592ae2c48dc7b6a7
 * sha256: 6dff79b532e1da687e30624ba7b2a1215433467fcd9061415d498c9998df61d3
 
+Or the executable *GEOSCAPE.EXE* from the DOS English version from GOG.com.
+
+* file size: 382957 bytes
+* md5: ec31edca56bc8af5a32ecee5f08471eb
+* sha1: e650dc3fc53190b3ff9188c9b480b747c677cb9b
+* sha256: c776a2ae2da108eb48eb98b113079501b367c44ba8b0eeb32a5b5a269736ef96
+
 The generated files should be moved to *X-Com - Ufo Defense/SR-Geoscape/x86* (or *arm*) subdirectory in *games* subproject.
 
 #### SR2
@@ -69,6 +76,19 @@ The original executable is *GEOSCAPE.EXE* from the DOS English version 2.1.
 
 The generated files should be moved to *X-Com - Terror from the Deep/SR-Geoscape/x86* (or *arm*) subdirectory in *games* subproject.
 
+#### SR1-gog
+
+The original executable is *GEOSCAPE.EXE* from the DOS English version from GOG.com.
+
+* file size: 490889 bytes
+* md5: 9bc22f5813a6a0baa9d0f3904cc842d1
+* sha1: 26cf5b2c96e53064a086be181a8c6edc6f791ccf
+* sha256: 490f8d271dda18c7ea1e9aff42b235ba62a9965ca9e26141c93a57c675ed6894
+
+The generated *.inc* files should be moved to *X-Com - Terror from the Deep/SR-Geoscape/x86/gogver* (or *arm/gogver*) subdirectory in *games* subproject.
+
+The generated *.asm* (or *.s*) files should be modified (change the path to *.inc* files) according to existing files and then moved to *X-Com - Terror from the Deep/SR-Geoscape/x86* (or *arm*) subdirectory in *games* subproject.
+
 #### SR2
 
 The original executable is *TACTICAL.EXE* from the DOS English version 2.1.
@@ -79,6 +99,19 @@ The original executable is *TACTICAL.EXE* from the DOS English version 2.1.
 * sha256: c3b340e94aee2f3690eaade4cd990e3c8ba0bc9c5b6b1d122f28ae4eef24ca8c
 
 The generated files should be moved to *X-Com - Terror from the Deep/SR-Tactical/x86* (or *arm*) subdirectory in *games* subproject.
+
+#### SR1-gog
+
+The original executable is *TACTICAL.EXE* from the DOS English version from GOG.com.
+
+* file size: 402201 bytes
+* md5: 30842479d8632a5c416895306adba61c
+* sha1: 3a3e2268a7355951f6594efe7ad98ab2b969431f
+* sha256: 983f1c0d748049c3914cc595ebbd54f86d1f9709348c8b1945fa1b5584de7bad
+
+The generated *.inc* files should be moved to *X-Com - Terror from the Deep/SR-Tactical/x86/gogver* (or *arm/gogver*) subdirectory in *games* subproject.
+
+The generated *.asm* (or *.s*) files should be modified (change the path to *.inc* files) according to existing files and then moved to *X-Com - Terror from the Deep/SR-Tactical/x86* (or *arm*) subdirectory in *games* subproject.
 
 ## Warcraft: Orcs & Humans
 

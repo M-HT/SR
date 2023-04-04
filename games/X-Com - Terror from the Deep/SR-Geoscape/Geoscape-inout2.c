@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -61,7 +61,7 @@ uint32_t Game_inp(const uint32_t port)
                     case 2:
                         color_index = 0;
 
-                        return (Game_Palette_Or[palette_index].s.b) >> 2;
+                        return (Game_Palette_Or[palette_index++].s.b) >> 2;
                 }
             }
 

@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016 Roman Pauer
+#  Copyright (C) 2016-2023 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -35,8 +35,18 @@ asmscan = Scanner(function = asmfile_scan,
 
 SourceFileScanner.add_scanner('.s', asmscan)
 
-Import('device', 'env')
+Import('device', 'version', 'env')
 
-obj = env.Object(Glob('*.s') + Glob('*.c'))
+if version == 'gog':
+    obj = env.Object('tactical-asm-gog.s')
+else:
+    obj = env.Object('tactical-asm.s')
+
+asm_sources = Glob('*.s', strings = True)
+if 'tactical-asm.s' in asm_sources:
+    asm_sources.remove('tactical-asm.s')
+asm_sources.remove('tactical-asm-gog.s')
+
+obj = obj + env.Object(asm_sources + Glob('*.c'))
 
 Return('obj')

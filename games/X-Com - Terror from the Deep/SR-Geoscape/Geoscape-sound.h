@@ -36,6 +36,7 @@ extern int16_t Game_DigPlay(DIGPAK_SNDSTRUC *sndplay);
 extern int16_t Game_AudioCapabilities(void);
 extern void Game_StopSound(void);
 extern int16_t Game_PostAudioPending(DIGPAK_SNDSTRUC *sndplay);
+extern int16_t Game_AudioPendingStatus(void);
 extern int16_t Game_SetPlayMode(int16_t playmode);
 extern int16_t *Game_PendingAddress(void);
 extern int16_t *Game_ReportSemaphoreAddress(void);
@@ -44,6 +45,8 @@ extern int16_t Game_VerifyDMA(char *data, int16_t length);
 extern void Game_SetDPMIMode(int16_t mode);
 extern int Game_FillSoundCfg(void *buf, int count);
 extern uint32_t Game_RealPtr(uint32_t ptr);
+extern void Game_StartAnimVideo(void);
+extern void Game_StopAnimVideo(void);
 
 #ifdef __cplusplus
 }

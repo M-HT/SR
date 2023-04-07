@@ -153,7 +153,7 @@ class ConfigFile:
         self.AddEntry("Sound", "on/off", "on")
         self.AddEntry("Music", "on/off", "on")
 
-        if game == "albion" or game == "xcom1":
+        if game == "albion" or game == "xcom1" or game == "xcom2":
             self.AddEntry("Intro", "on/off", "on")
 
         if game == "albion":

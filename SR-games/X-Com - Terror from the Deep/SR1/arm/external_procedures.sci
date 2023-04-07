@@ -13,6 +13,7 @@ loc_4FF53,SR_DigPlay
 loc_4FFE1,SR_AudioCapabilities
 loc_50022,SR_StopSound
 loc_5003F,SR_PostAudioPending
+loc_5006E,SR_AudioPendingStatus
 loc_5009C,SR_SetPlayMode
 loc_500B2,SR_PendingAddress
 loc_500C7,SR_ReportSemaphoreAddress

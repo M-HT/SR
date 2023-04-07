@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016-2018 Roman Pauer
+@@  Copyright (C) 2016-2023 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -24,6 +24,7 @@
 .extern Game_stdin
 .extern Game_stdout
 .extern Game_stderr
+.extern Game_PlayIntro
 
 .extern SR_SlowDownMainLoop
 .extern SR_Sync
@@ -47,6 +48,7 @@
 .extern SR_AudioCapabilities
 .extern SR_StopSound
 .extern SR_PostAudioPending
+.extern SR_AudioPendingStatus
 .extern SR_SetPlayMode
 .extern SR_PendingAddress
 .extern SR_ReportSemaphoreAddress
@@ -55,6 +57,8 @@
 .extern SR_SetDPMIMode
 .extern SR_FillSoundCfg
 .extern SR_RealPtr
+.extern SR_StartAnimVideo
+.extern SR_StopAnimVideo
 @ 0 params
 .extern SR_checkch
 .extern SR_getch

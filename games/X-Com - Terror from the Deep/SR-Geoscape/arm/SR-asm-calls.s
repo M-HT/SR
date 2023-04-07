@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016-2019 Roman Pauer
+@@  Copyright (C) 2016-2023 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -33,6 +33,7 @@
 .extern Game_AudioCapabilities
 .extern Game_StopSound
 .extern Game_PostAudioPending
+.extern Game_AudioPendingStatus
 .extern Game_SetPlayMode
 .extern Game_PendingAddress
 .extern Game_ReportSemaphoreAddress
@@ -41,6 +42,8 @@
 .extern Game_SetDPMIMode
 .extern Game_FillSoundCfg
 .extern Game_RealPtr
+.extern Game_StartAnimVideo
+.extern Game_StopAnimVideo
 
 
 @ stack params
@@ -100,6 +103,7 @@
 .global SR_AudioCapabilities
 .global SR_StopSound
 .global SR_PostAudioPending
+.global SR_AudioPendingStatus
 .global SR_SetPlayMode
 .global SR_PendingAddress
 .global SR_ReportSemaphoreAddress
@@ -108,6 +112,8 @@
 .global SR_SetDPMIMode
 .global SR_FillSoundCfg
 .global SR_RealPtr
+.global SR_StartAnimVideo
+.global SR_StopAnimVideo
 @ 0 params
 .global SR_checkch
 .global SR_getch
@@ -262,6 +268,12 @@ SR_PostAudioPending:
 
 @ end procedure SR_PostAudioPending
 
+SR_AudioPendingStatus:
+
+        Game_Call_Asm_Reg0 Game_AudioPendingStatus,-1
+
+@ end procedure SR_AudioPendingStatus
+
 SR_SetPlayMode:
 
 @ [esp +   4] = short mode
@@ -329,6 +341,18 @@ SR_RealPtr:
         Game_Call_Asm_Stack1 Game_RealPtr,-1
 
 @ end procedure SR_RealPtr
+
+SR_StartAnimVideo:
+
+        Game_Call_Asm_Reg0 Game_StartAnimVideo,-1
+
+@ end procedure SR_StartAnimVideo
+
+SR_StopAnimVideo:
+
+        Game_Call_Asm_Reg0 Game_StopAnimVideo,-1
+
+@ end procedure SR_StopAnimVideo
 
 
 @ 0 params

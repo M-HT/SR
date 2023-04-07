@@ -66,6 +66,7 @@ EXTERNAL_VARIABLE int Game_MouseCursor;				/* mouse cursor type in window
                                                        0: normal
                                                        1: minimal
                                                        2: none */
+EXTERNAL_VARIABLE int Game_PlayIntro;				/* play intro on start ? */
 
 // global display variables
 EXTERNAL_VARIABLE uint32_t Game_VideoAspectX;		/* X aspect ratio */

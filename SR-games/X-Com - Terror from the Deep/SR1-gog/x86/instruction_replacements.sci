@@ -46,6 +46,12 @@ loc_2C708,2,add edx, eax|mov esi, 0xffffffff ; fix reading not reinitialized var
 
 loc_4F9EB,245,mov eax, loc_7D510|mov edx, [ebp-12]|mov ebx, [loc_7D4FC]|call SR_ReadSong|or eax, eax|jz loc_4FB14 ; music - load midi or song from catalog
 
+loc_4E285,107, ; disable checks to allow animated videos
+loc_501C6,3,add esp, 4|call SR_StartAnimVideo ; set sound on start of animated video
+loc_50239,3,add esp, 3*4|call SR_StopAnimVideo ; restore sound on stop of animated video
+
+loc_13B36,1,cmp dword [Game_PlayIntro], 0|je loc_13C24|push edi ; skip intro
+
 loc_57034,2,adc eax, eax ; on ARM swap carry bit before instruction ('adc eax, eax' must set flags for 'adc')
 
 loc_5705C,2,jnb short loc_5706F ; on ARM swap carry bit after instruction

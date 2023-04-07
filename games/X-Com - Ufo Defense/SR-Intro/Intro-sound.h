@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -28,7 +28,7 @@
 struct _DIGPAK_SNDSTRUC_;
 
 extern void Game_ChannelFinished(int channel);
-extern void Game_ProcessAudio(void);
+extern int16_t Game_ProcessAudio(void);
 
 #ifdef __cplusplus
 extern "C" {

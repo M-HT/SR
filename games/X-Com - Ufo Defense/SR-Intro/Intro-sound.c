@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -82,16 +82,15 @@ static void Game_PlayAudio(void)
     //if (Game_samples[0].IsPlaying != NULL) *(Game_samples[0].IsPlaying) = 1;
 }
 
-void Game_ProcessAudio(void)
+int16_t Game_ProcessAudio(void)
 {
+    void *start;
+
     if (!(Game_samples[0].active))
     {
         if (Game_samples[1].active)
         {
-            if (Game_samples[0].start != NULL)
-            {
-                free(Game_samples[0].start);
-            }
+            start = Game_samples[0].start;
 
             //senquack - SOUND STUFF
             //optimizing
@@ -100,16 +99,22 @@ void Game_ProcessAudio(void)
             Game_samples[0] = Game_samples[1];	// For all I know, this actually calls memcpy,
                                                             // but we have an arm-optimized we'll use anyway
             Game_samples[1].active = 0;	// Pretty sure we only need to zero these.
-            Game_samples[1].start = NULL;
+            Game_samples[1].start = start;
 
             Game_PlayAudio();
 
-            Game_AudioPending = PLAYINGNOTPENDING;
+            Game_AudioPending = 0;
+
+            return PLAYINGNOTPENDING;
         }
         else
         {
-            Game_AudioPending = NOTPLAYING;
+            return NOTPLAYING;
         }
+    }
+    else
+    {
+        return (Game_samples[1].active) ? PENDINGSOUND : PLAYINGNOTPENDING;
     }
 }
 
@@ -603,13 +608,11 @@ static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
 
     if (pending)
     {
-        Game_AudioPending = PENDINGSOUND;
+        Game_AudioPending = 1;
     }
     else
     {
         Game_PlayAudio();
-
-        Game_AudioPending = PLAYINGNOTPENDING;
     }
 }
 
@@ -619,9 +622,7 @@ int16_t Game_DigPlay(DIGPAK_SNDSTRUC *sndplay)
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: Playing sound:\n\tsample length: %i\n\tfrequency: %i\n", sndplay->sndlen, sndplay->frequency);
 #endif
-    Game_ProcessAudio();
-
-    if ( !(Game_samples[0].active) )
+    if (NOTPLAYING == Game_ProcessAudio())
     {
         Game_InsertSample(0, sndplay);
 
@@ -672,6 +673,7 @@ void Game_StopSound(void)
 #endif
     if (Mix_Playing(GAME_SOUND_CHANNEL))
     {
+        Game_samples[1].active = 0;
         Mix_HaltChannel(GAME_SOUND_CHANNEL);
     }
 }
@@ -681,23 +683,19 @@ int16_t Game_PostAudioPending(DIGPAK_SNDSTRUC *sndplay)
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: posting audio pending:\n\tsample length: %i\n\tfrequency: %i\n", sndplay->sndlen, sndplay->frequency);
 #endif
-    Game_ProcessAudio();
-
-    if ( !(Game_samples[0].active) )
+    switch (Game_ProcessAudio())
     {
-        Game_InsertSample(0, sndplay);
+        case NOTPLAYING:
+            Game_InsertSample(0, sndplay);
 
-        return 0; // Sound was started playing
-    }
-    else if ( !(Game_samples[1].active) )
-    {
-        Game_InsertSample(1, sndplay);
+            return 0; // Sound was started playing
+        case PLAYINGNOTPENDING:
+            Game_InsertSample(1, sndplay);
 
-        return 1; // Sound was posted as pending to play
-    }
-    else
-    {
-        return 2; // Already a sound effect pending, this one not posted
+            return 1; // Sound was posted as pending to play
+        case PENDINGSOUND:
+        default:
+            return 2; // Already a sound effect pending, this one not posted
     }
 }
 

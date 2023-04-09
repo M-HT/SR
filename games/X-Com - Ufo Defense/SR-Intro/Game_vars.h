@@ -48,8 +48,8 @@ EXTERNAL_VARIABLE char **main_argv;
 EXTERNAL_VARIABLE char *main_arg1;
 EXTERNAL_VARIABLE uint8_t *Game_FrameMemory;		/* allocated video memory */
 EXTERNAL_VARIABLE uint8_t *Game_FrameBuffer;		/* pointer to video memory (all) */
-EXTERNAL_VARIABLE PTR32(uint8_t*)Game_ScreenWindow;	/* video bank (64KiB) */
-EXTERNAL_VARIABLE void *Game_InterruptTable[256];	/* interrupt table */
+EXTERNAL_VARIABLE PTR32(uint8_t)Game_ScreenWindow;	/* video bank (64KiB) */
+EXTERNAL_VARIABLE uint32_t Game_InterruptTable[256];	/* interrupt table */
 EXTERNAL_VARIABLE void *Game_AllocatedMemory[256];	/* dos allocated memory table */
 EXTERNAL_VARIABLE pixel_format_orig Game_Palette_Or[256];	/* original palette (rgba) */
 EXTERNAL_VARIABLE uint32_t Game_ESP_Original_Value;	/* original value of ESP */

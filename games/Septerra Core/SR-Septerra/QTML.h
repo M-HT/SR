@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -39,7 +39,7 @@ void DestroyPortAssociation_c (void *cgp);
 
 void SetGWorld_c (void *port, void *gdh);
 uint8_t *c2pstr_c (char *aStr);
-int16_t PtrToHand_c (const void *srcPtr, PTR32(void **)*dstHndl, int32_t size);
+int16_t PtrToHand_c (const void *srcPtr, PTR32(void *)*dstHndl, int32_t size);
 
 int16_t FSMakeFSSpec_c (int32_t vRefNum, int32_t dirID, char *fileName, void *spec);
 int16_t QTSetDDPrimarySurface_c (void *lpNewDDSurface, uint32_t flags);
@@ -53,7 +53,7 @@ uint8_t IsMovieDone_c (void *theMovie);
 void DisposeMovie_c (void *theMovie);
 int16_t OpenMovieFile_c (const void *fileSpec, int16_t *resRefNum, int32_t permission);
 int16_t CloseMovieFile_c (int32_t resRefNum);
-int16_t NewMovieFromFile_c (PTR32(void *)*theMovie, int32_t resRefNum, int16_t *resId, uint8_t *resName, int32_t newMovieFlags, uint8_t *dataRefWasChanged);
+int16_t NewMovieFromFile_c (PTR32(void)*theMovie, int32_t resRefNum, int16_t *resId, uint8_t *resName, int32_t newMovieFlags, uint8_t *dataRefWasChanged);
 void GetMovieBox_c (void *theMovie, void *boxRect);
 void *NewMovieController_c (void *theMovie, const void *movieRect, int32_t someFlags);
 void DisposeMovieController_c (void *mc);

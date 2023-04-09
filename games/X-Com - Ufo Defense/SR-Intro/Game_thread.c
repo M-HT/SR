@@ -39,7 +39,9 @@
 #include "display.h"
 
 #if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
-    #define __USE_GNU
+    #ifndef __USE_GNU
+        #define __USE_GNU
+    #endif
     #include <pthread.h>
 #endif
 

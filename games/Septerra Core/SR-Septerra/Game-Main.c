@@ -49,6 +49,7 @@
 #define WINAPI_NODEF_DEFINITIONS
 #endif
 #include "WinApi.h"
+#include "ptr32.h"
 
 
 #define eprintf(...) fprintf(stderr,__VA_ARGS__)
@@ -164,6 +165,20 @@ void Winapi_InitTicks(void);
 
 int main(int argc, char *argv[])
 {
+    if (sizeof(PTR32(void)) != 4)
+    {
+        fprintf(stderr, "Error: The program wasn't compiled correctly for %i-bits\n", (int) (8 * sizeof(void*)));
+        return 0;
+    }
+    else if (sizeof(void*) != 4)
+    {
+        if ((uintptr_t)argv > UINT32_MAX)
+        {
+            fprintf(stderr, "Error: The program must be run with the loader for %i-bits\n", (int) (8 * sizeof(void*)));
+            return 0;
+        }
+    }
+
     if (SDL_Init(SDL_INIT_NOPARACHUTE))
     {
 #ifdef _WIN32

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -765,7 +765,7 @@ uint8_t *c2pstr_c (char *aStr)
 //PtrToHand                       (const void *           srcPtr,
 //                                 Handle *               dstHndl,
 //                                 long                   size);
-int16_t PtrToHand_c (const void *srcPtr, PTR32(void **)*dstHndl, int32_t size)
+int16_t PtrToHand_c (const void *srcPtr, PTR32(void *)*dstHndl, int32_t size)
 {
 #ifdef DEBUG_QTML
     char *str;
@@ -781,7 +781,7 @@ int16_t PtrToHand_c (const void *srcPtr, PTR32(void **)*dstHndl, int32_t size)
 #ifdef DEBUG_QTML
     eprintf("ok: 0x%x\n", 5);
 #endif
-    *dstHndl = 5;
+    *dstHndl = (void **)5;
     return 0;
 }
 
@@ -1082,7 +1082,7 @@ int16_t OpenMovieFile_c (const void *fileSpec, int16_t *resRefNum, int32_t permi
     {
         // check for file with .avi extension
         pathlen = strlen(((FSSpec *)fileSpec)->name);
-        avipath = malloc(pathlen + 2);
+        avipath = (char *) malloc(pathlen + 2);
         if (avipath != NULL)
         {
             memcpy(avipath, ((FSSpec *)fileSpec)->name, pathlen - 2);
@@ -1194,7 +1194,7 @@ int16_t CloseMovieFile_c (int32_t resRefNum)
 //                                 StringPtr              resName,
 //                                 short                  newMovieFlags,
 //                                 Boolean *              dataRefWasChanged)                  THREEWORDINLINE(0x303C, 0x00F0, 0xAAAA);
-int16_t NewMovieFromFile_c (PTR32(void *)*theMovie, int32_t resRefNum, int16_t *resId, uint8_t *resName, int32_t newMovieFlags, uint8_t *dataRefWasChanged)
+int16_t NewMovieFromFile_c (PTR32(void)*theMovie, int32_t resRefNum, int16_t *resId, uint8_t *resName, int32_t newMovieFlags, uint8_t *dataRefWasChanged)
 {
     Movie movie;
     int color_models[5], model_index, use_yuv;
@@ -1305,7 +1305,7 @@ int16_t NewMovieFromFile_c (PTR32(void *)*theMovie, int32_t resRefNum, int16_t *
 
     qthandle[resRefNum - 1] = (quicktime_t *)(intptr_t)-1;
 
-    *theMovie = FROMPTR(movie);
+    *theMovie = movie;
 
 #ifdef DEBUG_QTML
     eprintf("ok: 0x%" PRIxPTR "\n", (uintptr_t)movie);

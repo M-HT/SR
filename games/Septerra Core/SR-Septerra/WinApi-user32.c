@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -205,7 +205,7 @@ typedef struct {
 } rect, *lprect;
 
 typedef struct {
-    PTR32(void *) hwnd;
+    PTR32(void) hwnd;
     uint32_t message;
     uint32_t wParam;
     int32_t  lParam;
@@ -215,15 +215,15 @@ typedef struct {
 
 typedef struct {
     uint32_t style;
-    PTR32(void *) lpfnWndProc;
+    PTR32(void) lpfnWndProc;
     int32_t cbClsExtra;
     int32_t cbWndExtra;
-    PTR32(void *) hInstance;
-    PTR32(void *) hIcon;
-    PTR32(void *) hCursor;
-    PTR32(void *) hbrBackground;
-    PTR32(const char *) lpszMenuName;
-    PTR32(const char *) lpszClassName;
+    PTR32(void) hInstance;
+    PTR32(void) hIcon;
+    PTR32(void) hCursor;
+    PTR32(void) hbrBackground;
+    PTR32(const char) lpszMenuName;
+    PTR32(const char) lpszClassName;
 } wndclassa;
 
 
@@ -745,7 +745,7 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event)
         0x19, 0x10, 0x13, 0x1f, 0x14, 0x16, 0x2f, 0x11, 0x2d, 0x15, 0x2c, 0x1a, 0x2b, 0x1b, 0x29, 0x53, /* 112-127 */
     };
 
-    memset(lpMsg, 0, sizeof(msg));
+    memset((void *)lpMsg, 0, sizeof(msg));
 
     switch (event->type)
     {
@@ -1469,7 +1469,7 @@ uint32_t DispatchMessageA_c(void *lpMsg)
     }
     else
     {
-        return RunWndProc_asm(TOPTR_0(((lpmsg)lpMsg)->hwnd), ((lpmsg)lpMsg)->message, ((lpmsg)lpMsg)->wParam, ((lpmsg)lpMsg)->lParam, (uint32_t (*)(void *, uint32_t, uint32_t, uint32_t))lpfnWndProc);
+        return RunWndProc_asm(((lpmsg)lpMsg)->hwnd, ((lpmsg)lpMsg)->message, ((lpmsg)lpMsg)->wParam, ((lpmsg)lpMsg)->lParam, (uint32_t (*)(void *, uint32_t, uint32_t, uint32_t))lpfnWndProc);
     }
 }
 
@@ -1974,7 +1974,7 @@ uint32_t RegisterClassA_c(void *lpWndClass)
 
     if (lpWndClass != NULL)
     {
-        lpfnWndProc = TOPTR_0(((wndclassa *)lpWndClass)->lpfnWndProc);
+        lpfnWndProc = ((wndclassa *)lpWndClass)->lpfnWndProc;
     }
 
     return 1;

@@ -40,10 +40,10 @@
 
 #pragma pack(2)
 
-typedef struct __attribute__ ((__packed__)) _DIGPAK_SNDSTRUC_ {
-    PTR32(char *) sound;        // address of audio data. (originally real mode ptr)
+typedef struct _DIGPAK_SNDSTRUC_ {
+    PTR32(char) sound;          // address of audio data. (originally real mode ptr)
     uint16_t sndlen;            // Length of audio sample.
-    PTR32(int16_t *) IsPlaying; // Address of play status flag.
+    PTR32(int16_t) IsPlaying;   // Address of play status flag.
     int16_t frequency;          // Playback frequency. recommended 11khz.
 } DIGPAK_SNDSTRUC;
 
@@ -486,8 +486,8 @@ static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
     sample->_signed = Game_SoundSigned;
     sample->len = sndplay->sndlen;
     sample->playback_rate = sndplay->frequency;
-    sample->sound = TOPTR_T(char, sndplay->sound);
-    sample->IsPlaying = TOPTR_T(int16_t, sndplay->IsPlaying);
+    sample->sound = sndplay->sound;
+    sample->IsPlaying = sndplay->IsPlaying;
 
     //if (sample->IsPlaying != NULL) *(sample->IsPlaying) = 0;
 

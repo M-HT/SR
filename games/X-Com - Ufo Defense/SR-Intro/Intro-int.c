@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -75,7 +75,7 @@ void X86_InterruptProcedure(
 #if defined(__DEBUG__)
                     fprintf(stderr, "Setting interrupt vector: %i\n", AL);
 #endif
-                    Game_InterruptTable[AL] = TOPTR_0(EDX);
+                    Game_InterruptTable[AL] = EDX;
 
                     return;
                     // case 0x25:
@@ -89,7 +89,7 @@ void X86_InterruptProcedure(
                 case 0x35:
                 // Get interrupt vector
 
-                    EBX = FROMPTR(Game_InterruptTable[AL]);
+                    EBX = Game_InterruptTable[AL];
 
                     return;
                     // case 0x35:
@@ -114,7 +114,7 @@ void X86_InterruptProcedure(
                     }
                     else
                     {
-                        ECX = FROMPTR(Game_AllocateMemory((uint32_t) BX << 4));
+                        ECX = (uintptr_t) Game_AllocateMemory((uint32_t) BX << 4);
                         if (ECX)
                         {
 #if defined(__DEBUG__)
@@ -147,12 +147,12 @@ void X86_InterruptProcedure(
 
                     {
 
-                        if (Game_InterruptTable[BL] == NULL)
+                        if (Game_InterruptTable[BL] == 0)
                         {
 #if defined(__DEBUG__)
                             fprintf(stderr, "Running Original Interrupt...\n");
 #endif
-                            Game_intDPMI(BL, TOPTR_T(Game_DPMIREGS, EDI));
+                            Game_intDPMI(BL, (PTR32(Game_DPMIREGS)) EDI);
                         }
                         else
                         {

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2022 Roman Pauer
+ *  Copyright (C) 2022-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -27,28 +27,385 @@
 
 #include <stdint.h>
 
-typedef uint32_t ptr32_t;
-#define PTR32(t) ptr32_t
+#ifdef __cplusplus
 
-#define FROMPTR(x) ((ptr32_t)(uintptr_t)(x))
-#define TOPTR_0(x) ((void *)(uintptr_t)(x))
-#define TOPTR_8(x) ((uint8_t *)(uintptr_t)(x))
-#define TOPTR_T(t,x) ((t *)(uintptr_t)(x))
+#include <cstddef>
+#include <type_traits>
+
+template<class T>
+class ptr32_t
+{
+private:
+    uint32_t value;
+
+public:
+    ptr32_t<T> ()
+    {
+    }
+
+    ptr32_t<T> (void *p)
+    {
+        value = (uint32_t)(uintptr_t)p;
+    }
+
+    template<class Q = T, typename = typename std::enable_if<!std::is_void<Q>::value>::type>
+    ptr32_t<T> (T* p) // constructor for T* if T isn't void
+    {
+        value = (uint32_t)(uintptr_t)p;
+    }
+
+    ptr32_t<T> (std::nullptr_t)
+    {
+        value = 0;
+    }
+
+    ptr32_t<T> (uintptr_t p)
+    {
+        value = p;
+    }
+
+// Unary operators
+
+    ptr32_t<T>& operator ++ () // Overload ++ when used as prefix
+    {
+        value += sizeof(T);
+        return *this;
+    }
+
+    ptr32_t<T> operator ++ (int) // Overload ++ when used as postfix
+    {
+        ptr32_t<T> temp;
+
+        temp.value = value;
+        value += sizeof(T);
+
+        return temp;
+    }
+
+    ptr32_t<T>& operator -- () // Overload -- when used as prefix
+    {
+        value -= sizeof(T);
+        return *this;
+    }
+
+    ptr32_t<T> operator -- (int) // Overload -- when used as postfix
+    {
+        ptr32_t<T> temp;
+
+        temp.value = value;
+        value -= sizeof(T);
+
+        return temp;
+    }
+
+    bool operator ! () const // Overload !
+    {
+        return value == 0;
+    }
+
+    operator uintptr_t () const // Overload uintptr_t (cast)
+    {
+        return (uintptr_t)value;
+    }
+
+    operator void* () const // Overload void* (cast)
+    {
+        return (void*)(uintptr_t)value;
+    }
+
+    template<class Q = T, typename = typename std::enable_if<!std::is_void<Q>::value>::type>
+    operator T* () const // Overload T* (cast) if T isn't void
+    {
+        return (T*)(uintptr_t)value;
+    }
+
+// Member access
+
+    typename std::add_lvalue_reference<T>::type operator * () // Overload * (indirection)
+    {
+        return *(T*)(uintptr_t)value;
+    }
+
+    typename std::add_lvalue_reference<T>::type operator [] (int32_t index) const // Overload []
+    {
+        return ((T*)(uintptr_t)value)[index];
+    }
+
+    typename std::add_lvalue_reference<T>::type operator [] (uint32_t index) const // Overload []
+    {
+        return ((T*)(uintptr_t)value)[index];
+    }
+
+    typename std::add_lvalue_reference<T>::type operator [] (int64_t index) const // Overload []
+    {
+        return ((T*)(uintptr_t)value)[index];
+    }
+
+    typename std::add_lvalue_reference<T>::type operator [] (uint64_t index) const // Overload []
+    {
+        return ((T*)(uintptr_t)value)[index];
+    }
+
+    T* operator -> () const // Overload ->
+    {
+        return (T*)(uintptr_t)value;
+    }
+
+// Binary operators
+
+    bool operator == (ptr32_t<T> const& p) const
+    {
+        return value == p.value;
+    }
+
+    bool operator == (void *p) const
+    {
+        return value == (uintptr_t)p;
+    }
+
+    template<class Q = T, typename = typename std::enable_if<!std::is_void<Q>::value>::type>
+    bool operator == (T *p) const // Overload == if T isn't void
+    {
+        return value == (uintptr_t)p;
+    }
+
+    bool operator == (std::nullptr_t) const
+    {
+        return value == 0;
+    }
+
+    bool operator != (ptr32_t<T> const& p) const
+    {
+        return value != p.value;
+    }
+
+    bool operator != (void *p) const
+    {
+        return value != (uintptr_t)p;
+    }
+
+    template<class Q = T, typename = typename std::enable_if<!std::is_void<Q>::value>::type>
+    bool operator != (T *p) const // Overload != if T isn't void
+    {
+        return value != (uintptr_t)p;
+    }
+
+    bool operator != (std::nullptr_t) const
+    {
+        return value != 0;
+    }
+
+    bool operator < (ptr32_t<T> const& p) const
+    {
+        return value < p.value;
+    }
+
+    bool operator < (T *p) const
+    {
+        return value < (uintptr_t)p;
+    }
+
+    bool operator > (ptr32_t<T> const& p) const
+    {
+        return value > p.value;
+    }
+
+    bool operator > (T *p) const
+    {
+        return value > (uintptr_t)p;
+    }
+
+    bool operator <= (ptr32_t<T> const& p) const
+    {
+        return value <= p.value;
+    }
+
+    bool operator <= (T *p) const
+    {
+        return value < (uintptr_t)p;
+    }
+
+    bool operator >= (ptr32_t<T> const& p) const
+    {
+        return value >= p.value;
+    }
+
+    bool operator >= (T *p) const
+    {
+        return value >= (uintptr_t)p;
+    }
+
+    ptr32_t<T> operator + (int32_t n) const
+    {
+        ptr32_t<T> temp;
+
+        temp.value = value + n * sizeof(T);
+
+        return temp;
+    }
+
+    ptr32_t<T> operator + (uint32_t n) const
+    {
+        ptr32_t<T> temp;
+
+        temp.value = value + n * sizeof(T);
+
+        return temp;
+    }
+
+    ptr32_t<T> operator + (int64_t n) const
+    {
+        ptr32_t<T> temp;
+
+        temp.value = value + n * sizeof(T);
+
+        return temp;
+    }
+
+    ptr32_t<T> operator + (uint64_t n) const
+    {
+        ptr32_t<T> temp;
+
+        temp.value = value + n * sizeof(T);
+
+        return temp;
+    }
+
+    ptr32_t<T> operator - (int32_t n) const
+    {
+        ptr32_t<T> temp;
+
+        temp.value = value - n * sizeof(T);
+
+        return temp;
+    }
+
+    ptr32_t<T> operator - (uint32_t n) const
+    {
+        ptr32_t<T> temp;
+
+        temp.value = value - n * sizeof(T);
+
+        return temp;
+    }
+
+    ptr32_t<T> operator - (int64_t n) const
+    {
+        ptr32_t<T> temp;
+
+        temp.value = value - n * sizeof(T);
+
+        return temp;
+    }
+
+    ptr32_t<T> operator - (uint64_t n) const
+    {
+        ptr32_t<T> temp;
+
+        temp.value = value - n * sizeof(T);
+
+        return temp;
+    }
+
+    ptr32_t<T>& operator += (int32_t n)
+    {
+        value += n * sizeof(T);
+        return *this;
+    }
+
+    ptr32_t<T>& operator += (uint32_t n)
+    {
+        value += n * sizeof(T);
+        return *this;
+    }
+
+    ptr32_t<T>& operator += (int64_t n)
+    {
+        value += n * sizeof(T);
+        return *this;
+    }
+
+    ptr32_t<T>& operator += (uint64_t n)
+    {
+        value += n * sizeof(T);
+        return *this;
+    }
+
+    ptr32_t<T>& operator -= (int32_t n)
+    {
+        value -= n * sizeof(T);
+        return *this;
+    }
+
+    ptr32_t<T>& operator -= (uint32_t n)
+    {
+        value -= n * sizeof(T);
+        return *this;
+    }
+
+    ptr32_t<T>& operator -= (int64_t n)
+    {
+        value -= n * sizeof(T);
+        return *this;
+    }
+
+    ptr32_t<T>& operator -= (uint64_t n)
+    {
+        value -= n * sizeof(T);
+        return *this;
+    }
+
+    bool operator && (ptr32_t const& p) const
+    {
+        return (value & p.value) != 0;
+    }
+
+    bool operator && (bool b) const
+    {
+        return (value != 0) && b;
+    }
+
+    bool operator || (ptr32_t const& p) const
+    {
+        return (value | p.value) != 0;
+    }
+
+    bool operator || (bool b) const
+    {
+        return (value != 0) || b;
+    }
+
+};
+
+#define PTR32(t) ptr32_t<t>
+
+#undef NULL
+#define NULL nullptr
+
+#else
+
+#define PTR32(t) t*
+
+#endif
 
 /**
+ * Compilation
+ * -----------
+ *
+ * - for 64-bits, the program must be compiled as c++ code
+ * - for 32-bits, the program should be compiled as c code (compiling as c++ should work)
+ *
  * Variables
  * ---------
  *
  * - variables defined in asm code which are used in c code:
- * -- don't define them as pointers, but as ptr32_t or PTR32(pointer type)
- * --- when writing a pointer value use macro FROMPTR
- * --- when read a pointer value use macros TOPTR_?
+ * -- don't define them as pointers, but as PTR32(base type)
  * -- don't define them as types with inexact size, but as types with exact size
  * -- instead of variable definitions like this:
  *    extern void *asm_var1;
  *    extern int asm_var2;
  * -- use variable definitions like this:
- *    extern ptr32_t asm_var1;
+ *    extern PTR32(void) asm_var1;
  *    extern int32_t asm_var2;
  *
  * - variables defined in c code which are used in asm code:
@@ -76,7 +433,7 @@ typedef uint32_t ptr32_t;
  *    int *param2
  *    int param3
  * -- use parameter definitions like this:
- *    ptr32_t *param1
+ *    PTR32(void) *param1
  *    int32_t *param2
  *    int32_t param3
  *

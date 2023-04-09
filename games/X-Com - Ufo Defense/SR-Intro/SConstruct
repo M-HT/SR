@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016-2022 Roman Pauer
+#  Copyright (C) 2016-2023 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -80,13 +80,13 @@ if device == 'pc-linux':
         env.Append(ENV = {'PATH' : os.environ['PATH']})
 elif device == 'pc64-linux':
     if sdl2 > 0:
-        env = Environment(CCFLAGS      = '-m64 -O2 -Wall -DUSE_SDL2',
+        env = Environment(CCFLAGS      = '-m64 -x c++ -O2 -Wall -DUSE_SDL2',
                           LINKFLAGS    = '-m64 -Wl,-z,noexecstack',
                           LIBS         = ['SDL2_mixer', 'SDL2', 'pthread', 'dl'],
                           ENV          = {'PATH' : os.environ['PATH']}
                          )
     else:
-        env = Environment(CCFLAGS      = '-m64 -O2 -Wall -DALLOW_OPENGL',
+        env = Environment(CCFLAGS      = '-m64 -x c++ -O2 -Wall -DALLOW_OPENGL',
                           LINKFLAGS    = '-m64 -Wl,-z,noexecstack',
                           LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'dl', 'GL'],
                           ENV          = {'PATH' : os.environ['PATH']}
@@ -110,13 +110,13 @@ elif device == 'arm-linux':
     env.Append(ASFLAGS = ' --defsym USE_R9=1 --defsym ALLOW_UNALIGNED_MEMORY_ACCESS=1')
 elif device == 'arm64-linux':
     if sdl2 > 0:
-        env = Environment(CCFLAGS      = '-O2 -Wall -DUSE_SDL2',
+        env = Environment(CCFLAGS      = '-x c++ -O2 -Wall -DUSE_SDL2',
                           LINKFLAGS    = '-Wl,-z,noexecstack',
                           LIBS         = ['SDL2_mixer', 'SDL2', 'pthread', 'dl'],
                           ENV          = {'PATH' : os.environ['PATH']}
                          )
     else:
-        env = Environment(CCFLAGS      = '-O2 -Wall -DALLOW_OPENGL',
+        env = Environment(CCFLAGS      = '-x c++ -O2 -Wall -DALLOW_OPENGL',
                           LINKFLAGS    = '-Wl,-z,noexecstack',
                           LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'dl', 'GL'],
                           ENV          = {'PATH' : os.environ['PATH']}

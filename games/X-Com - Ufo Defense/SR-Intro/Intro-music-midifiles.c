@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -32,7 +32,7 @@
 #include "gmcat2mid.h"
 
 const static struct {
-    char *filename;
+    const char *filename;
     int midiloop;
 } MidiFiles[22] = {
     {"GMGEO1.MID", 1},
@@ -129,7 +129,7 @@ int32_t Game_ReadSong(const char *catalog_name, int32_t index, uint8_t *buf)
     if (fread(&num_files, 4, 1, f) != 1) goto read_song_error;
 
     num_files >>= 3;
-    if (index >= num_files) goto read_song_error;
+    if (index >= (int32_t)num_files) goto read_song_error;
 
     if (fseek(f, 8*index, SEEK_SET)) goto read_song_error;
     if (fread(&file_offset, 4, 1, f) != 1) goto read_song_error;
@@ -138,7 +138,7 @@ int32_t Game_ReadSong(const char *catalog_name, int32_t index, uint8_t *buf)
     if (file_size == 0) goto read_song_error;
     if (file_size > 33000) goto read_song_error;
 
-    if (index < num_files - 1)
+    if (index < (int32_t)num_files - 1)
     {
         if (fread(&next_offset, 4, 1, f) != 1) goto read_song_error;
     }

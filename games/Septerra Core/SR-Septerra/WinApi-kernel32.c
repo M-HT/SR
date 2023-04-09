@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -120,8 +120,8 @@ static clockid_t monotonic_clock_id;
 
 #define eprintf(...) fprintf(stderr,__VA_ARGS__)
 
-#define PSEUDO_HANDLE_CURRENT_PROCESS TOPTR_0((ptr32_t)-1)
-#define PSEUDO_HANDLE_CURRENT_THREAD TOPTR_0((ptr32_t)-2)
+#define PSEUDO_HANDLE_CURRENT_PROCESS ((PTR32(void))(uint32_t)-1)
+#define PSEUDO_HANDLE_CURRENT_THREAD ((PTR32(void))(uint32_t)-2)
 
 
 #if !defined(_WIN32)
@@ -651,7 +651,7 @@ void *CreateMutexA_c(void *lpMutexAttributes, uint32_t bInitialOwner, const char
     return NULL;
 }
 
-uint32_t CreatePipe_c(PTR32(void *) *hReadPipe, PTR32(void *) *hWritePipe, void *lpPipeAttributes, uint32_t nSize)
+uint32_t CreatePipe_c(PTR32(void) *hReadPipe, PTR32(void) *hWritePipe, void *lpPipeAttributes, uint32_t nSize)
 {
     handle hread, hwrite;
     int ret;
@@ -724,8 +724,8 @@ uint32_t CreatePipe_c(PTR32(void *) *hReadPipe, PTR32(void *) *hWritePipe, void 
             return 0;
         }
 
-        *hReadPipe = FROMPTR(hread);
-        *hWritePipe = FROMPTR(hwrite);
+        *hReadPipe = hread;
+        *hWritePipe = hwrite;
 
 #ifdef DEBUG_KERNEL32
         eprintf("OK: 0x%" PRIxPTR ", 0x%" PRIxPTR "\n", (uintptr_t)hread, (uintptr_t)hwrite);
@@ -1266,7 +1266,7 @@ void *GetCurrentThread_c(void)
     return PSEUDO_HANDLE_CURRENT_THREAD;
 }
 
-uint32_t GetFullPathNameA_c(const char *lpFileName, uint32_t nBufferLength, char *lpBuffer, PTR32(char *) *lpFilePart)
+uint32_t GetFullPathNameA_c(const char *lpFileName, uint32_t nBufferLength, char *lpBuffer, PTR32(char) *lpFilePart)
 {
     size_t len;
     char *p1, *p2;
@@ -1319,7 +1319,7 @@ uint32_t GetFullPathNameA_c(const char *lpFileName, uint32_t nBufferLength, char
             p1 = lpBuffer;
         }
 
-        *lpFilePart = FROMPTR(p1);
+        *lpFilePart = p1;
     }
 
     return len;

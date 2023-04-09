@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2019-2022 Roman Pauer
+#  Copyright (C) 2019-2023 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -71,7 +71,7 @@ if device == 'pc-linux':
         llvm_params = '-mtriple=i686-unknown-linux-gnu'
         env.Append(ENV = {'PATH' : os.environ['PATH']})
 elif device == 'pc64-linux':
-    env = Environment(CCFLAGS      = '-m64 -O3 -Wall',
+    env = Environment(CCFLAGS      = '-m64 -x c++ -O3 -Wall',
                       CPPPATH      = ['/usr/include/SDL2', '/usr/local/include/SDL2'],
                       INCPREFIX    = '-I',
                       LINKFLAGS    = '-m64 -Wl,-z,noexecstack',
@@ -89,7 +89,7 @@ elif device == 'arm-linux':
                       ENV          = {'PATH' : os.environ['PATH']}
                      )
 elif device == 'arm64-linux':
-    env = Environment(CCFLAGS      = '-O3 -Wall',
+    env = Environment(CCFLAGS      = '-x c++ -O3 -Wall',
                       CPPPATH      = ['/usr/include/SDL2', '/usr/local/include/SDL2'],
                       INCPREFIX    = '-I',
                       LINKFLAGS    = '-Wl,-z,noexecstack',

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -96,7 +96,7 @@ static uint8_t *load_file(char const *midifile, unsigned int *res_midi_size)
 
     if (fseek(f, 0, SEEK_END)) goto load_file_error;
     filelen = ftell(f);
-    if ((filelen == -1) || (filelen == 0)) goto load_file_error;
+    if (((ssize_t)filelen == -1) || (filelen == 0)) goto load_file_error;
     if (fseek(f, 0, SEEK_SET)) goto load_file_error;
 
     midibuffer = (uint8_t *) malloc(filelen);
@@ -161,7 +161,7 @@ static int prepare_roland_mt32_sysex(void)
         if (strcasecmp((char *)name, "lapc1.pat") == 0)
         {
             lapc1_pat_len = file_len;
-            lapc1_pat = malloc(file_len);
+            lapc1_pat = (uint8_t *) malloc(file_len);
             if (lapc1_pat == NULL) break;
             if (file_len != fread(lapc1_pat, 1, file_len, f))
             {

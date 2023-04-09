@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,14 +22,6 @@
  *
  */
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include "Game-SoundEngine.h"
-#include "MSS.h"
-#include "Game-DataFiles.h"
-#include "WinApi-kernel32.h"
-
 #if (defined(__WIN32__) || defined(__WINDOWS__)) && !defined(_WIN32)
 #define _WIN32
 #endif
@@ -41,19 +33,27 @@
 #include <time.h>
 #endif
 
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include "Game-SoundEngine.h"
+#include "MSS.h"
+#include "Game-DataFiles.h"
+#include "WinApi-kernel32.h"
+
 typedef struct _SE_struc_4 // final size
 {
-    PTR32(struct _SE_struc_4 *) Next;
+    PTR32(struct _SE_struc_4) Next;
     int32_t RecordHandle;
     uint32_t RecordSize;
-    PTR32(uint8_t *) RecordData;
+    PTR32(uint8_t) RecordData;
     uint32_t se4_f10;
     int32_t RecordOffset;
     uint32_t RecordKey;
     uint32_t BufferOffset;
     uint32_t BufferAvailable;
     uint32_t se4_f24;
-    PTR32(uint8_t *) BufferPtr;
+    PTR32(uint8_t) BufferPtr;
     int32_t RecordSize_16;
     uint32_t se4_f30;
     uint16_t se4_f34;
@@ -78,14 +78,14 @@ typedef struct _SE_struc_4 // final size
 
 typedef struct _SE_struc_9 // final size
 {
-    PTR32(struct _SE_struc_9 *) Next;
-    PTR32(struct _SE_struc_3 *) data9_3;
+    PTR32(struct _SE_struc_9) Next;
+    PTR32(struct _SE_struc_3) data9_3;
     uint32_t se9_f08;
-    PTR32(struct _SE_struc_4 *) data9_4;
+    PTR32(struct _SE_struc_4) data9_4;
     uint32_t se9_f10;
-    PTR32(uint8_t *) BufferPtr;
+    PTR32(uint8_t) BufferPtr;
     int32_t RecordOffset;
-    PTR32(void *) Stream;
+    PTR32(void) Stream;
     uint32_t se9_f20;
     uint32_t BufferAvailable;
     uint32_t BufferOffset;
@@ -117,7 +117,7 @@ typedef struct _SE_struc_9 // final size
 } SE_struc_9;
 
 
-extern PTR32(void *) hWritePipe;
+extern PTR32(void) hWritePipe;
 
 
 #ifdef _WIN32
@@ -126,7 +126,7 @@ static void CALLBACK SE_fptc(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_P
 {
     int32_t PipeValue = 3;
     uint32_t NumberOfBytesWritten;
-    WriteFile_c(TOPTR_0(hWritePipe), &PipeValue, 4, &NumberOfBytesWritten, NULL);
+    WriteFile_c(hWritePipe, &PipeValue, 4, &NumberOfBytesWritten, NULL);
 }
 #else
 static pthread_t timer_thread_id;
@@ -163,7 +163,7 @@ static void *SE_timer_CB(void *arg)
             timer_time.tv_sec++;
         }
 
-        WriteFile_c(TOPTR_0(hWritePipe), &PipeValue, 4, &NumberOfBytesWritten, NULL);
+        WriteFile_c(hWritePipe, &PipeValue, 4, &NumberOfBytesWritten, NULL);
     };
 
     return NULL;
@@ -227,7 +227,7 @@ static ssize_t SE_read_CB_4(SE_struc_4 *struc4, uint8_t *buf, ssize_t count)
                     bytes_to_copy = count;
                 }
 
-                memcpy(&(buf[bytes_returned]), &(TOPTR_8(struc4->BufferPtr)[struc4->BufferOffset]), bytes_to_copy);
+                memcpy(&(buf[bytes_returned]), &(struc4->BufferPtr[struc4->BufferOffset]), bytes_to_copy);
 
                 count -= bytes_to_copy;
                 bytes_returned += bytes_to_copy;
@@ -244,7 +244,7 @@ static ssize_t SE_read_CB_4(SE_struc_4 *struc4, uint8_t *buf, ssize_t count)
                 bytes_to_read = (struc4->RecordSize_16 - struc4->RecordOffset < 0) ? 0 : struc4->RecordSize_16 - struc4->RecordOffset;
             }
 
-            bytes_read = RecordRead(struc4->RecordHandle, TOPTR_8(struc4->BufferPtr), bytes_to_read);
+            bytes_read = RecordRead(struc4->RecordHandle, struc4->BufferPtr, bytes_to_read);
 
             struc4->BufferOffset = 0;
             struc4->RecordOffset += bytes_read;
@@ -293,7 +293,7 @@ static off_t SE_lseek_CB_4(SE_struc_4 *struc4, off_t offset, int whence)
         }
 
         RecordSeek(struc4->RecordHandle, offset + 16, 0);
-        bytes_read = RecordRead(struc4->RecordHandle, TOPTR_8(struc4->BufferPtr), bytes_to_read);
+        bytes_read = RecordRead(struc4->RecordHandle, struc4->BufferPtr, bytes_to_read);
         struc4->BufferOffset = 0;
         struc4->RecordOffset += bytes_read;
         struc4->BufferAvailable = bytes_read;
@@ -314,17 +314,17 @@ void SoundEngine_DecodeMP3Stream(struct _SE_struc_4 *struc4)
 
     record_size = struc4->RecordSize;
 
-    struc4->BufferPtr = FROMPTR(malloc(1024));
+    struc4->BufferPtr = (uint8_t *) malloc(1024);
     struc4->RecordOffset = 0;
     struc4->BufferOffset = 0;
     struc4->BufferAvailable = 0;
 
     stream = ASI_stream_open_mpg123(struc4, (ssize_t (*)(void *, void *, size_t)) &SE_read_CB_4, (off_t (*)(void *, off_t,  int)) &SE_lseek_CB_4);
-    ASI_stream_process_c(stream, TOPTR_8(struc4->RecordData), record_size);
+    ASI_stream_process_c(stream, struc4->RecordData, record_size);
     ASI_stream_close_c(stream);
 
-    free(TOPTR_8(struc4->BufferPtr));
-    struc4->BufferPtr = 0;
+    free(struc4->BufferPtr);
+    struc4->BufferPtr = NULL;
 }
 
 
@@ -338,8 +338,8 @@ static ssize_t SE_read_CB_9(SE_struc_9 *struc9, uint8_t *buf, ssize_t count)
     int32_t bytes_returned;
 
     bytes_returned = 0;
-    RecordHandle = TOPTR_T(struct _SE_struc_4, struc9->data9_4)->RecordHandle;
-    RecordSize_16 = TOPTR_T(struct _SE_struc_4, struc9->data9_4)->RecordSize_16;
+    RecordHandle = struc9->data9_4->RecordHandle;
+    RecordSize_16 = struc9->data9_4->RecordSize_16;
 
     if ( count > 0 )
     {
@@ -354,7 +354,7 @@ static ssize_t SE_read_CB_9(SE_struc_9 *struc9, uint8_t *buf, ssize_t count)
                 }
                 count -= bytes_to_copy;
 
-                memcpy(&(buf[bytes_returned]), &(TOPTR_8(struc9->BufferPtr)[struc9->BufferOffset]), bytes_to_copy);
+                memcpy(&(buf[bytes_returned]), &(struc9->BufferPtr[struc9->BufferOffset]), bytes_to_copy);
 
                 bytes_returned += bytes_to_copy;
                 struc9->BufferOffset += bytes_to_copy;
@@ -370,7 +370,7 @@ static ssize_t SE_read_CB_9(SE_struc_9 *struc9, uint8_t *buf, ssize_t count)
             }
 
             RecordSeek(RecordHandle, struc9->RecordOffset + 16, 0);
-            bytes_read = RecordRead(RecordHandle, TOPTR_8(struc9->BufferPtr), bytes_to_read);
+            bytes_read = RecordRead(RecordHandle, struc9->BufferPtr, bytes_to_read);
 
             struc9->BufferOffset = 0;
             struc9->RecordOffset += bytes_read;
@@ -389,8 +389,8 @@ static off_t SE_lseek_CB_9(SE_struc_9 *struc9, off_t offset, int whence)
     uint32_t bytes_to_read;
     uint32_t bytes_read;
 
-    RecordHandle = TOPTR_T(struct _SE_struc_4, struc9->data9_4)->RecordHandle;
-    RecordSize_16 = TOPTR_T(struct _SE_struc_4, struc9->data9_4)->RecordSize_16;
+    RecordHandle = struc9->data9_4->RecordHandle;
+    RecordSize_16 = struc9->data9_4->RecordSize_16;
 
     switch (whence)
     {
@@ -424,7 +424,7 @@ static off_t SE_lseek_CB_9(SE_struc_9 *struc9, off_t offset, int whence)
         }
 
         RecordSeek(RecordHandle, offset + 16, 0);
-        bytes_read = RecordRead(RecordHandle, TOPTR_8(struc9->BufferPtr), bytes_to_read);
+        bytes_read = RecordRead(RecordHandle, struc9->BufferPtr, bytes_to_read);
         struc9->BufferOffset = 0;
         struc9->RecordOffset += bytes_read;
         struc9->BufferAvailable = bytes_read;
@@ -440,17 +440,17 @@ static off_t SE_lseek_CB_9(SE_struc_9 *struc9, off_t offset, int whence)
 // sub_468D10
 void SoundEngine_OpenMP3Stream(struct _SE_struc_9 *struc9)
 {
-    if (struc9->Stream != 0)
+    if (struc9->Stream != NULL)
     {
-        ASI_stream_close_c(TOPTR_0(struc9->Stream));
+        ASI_stream_close_c(struc9->Stream);
     }
 
-    if (struc9->BufferPtr == 0)
+    if (struc9->BufferPtr == NULL)
     {
-        struc9->BufferPtr = FROMPTR(malloc(1024));
+        struc9->BufferPtr = (uint8_t *) malloc(1024);
     }
 
     struc9->RecordOffset = 0;
-    struc9->Stream = FROMPTR(ASI_stream_open_mpg123(struc9, (ssize_t (*)(void *, void *, size_t)) &SE_read_CB_9, (off_t (*)(void *, off_t,  int)) &SE_lseek_CB_9));
+    struc9->Stream = ASI_stream_open_mpg123(struc9, (ssize_t (*)(void *, void *, size_t)) &SE_read_CB_9, (off_t (*)(void *, off_t,  int)) &SE_lseek_CB_9);
 }
 

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -211,7 +211,7 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
         ExitWithMessage("Unable to allocate memory for index file buffer", 103);
     }
     items = fread(IndexFileBuffer, 1, IndexSize, IndexFILE);
-    if (items != IndexSize) exit(-1);
+    if (items != (size_t)IndexSize) exit(-1);
 
     NumberOfIndices = IndexSize >> 5;
     NumberOfRecords = 256;

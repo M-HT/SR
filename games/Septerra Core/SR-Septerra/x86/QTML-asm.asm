@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2023 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -132,6 +132,8 @@ InitializeQTML_asm2c:
 ; [esp + 4] = int32_t flag
 ; [esp    ] = return address
 
+; note: return value is not expected by callers in the original asm code to have been extended to 32 bits
+
         Call_Asm_Stack1 InitializeQTML_c
 
         retn
@@ -214,6 +216,8 @@ PtrToHand_asm2c:
 ; [esp +   4] = const void *srcPtr
 ; [esp      ] = return address
 
+; note: return value is not expected by callers in the original asm code to have been extended to 32 bits
+
         Call_Asm_Stack3 PtrToHand_c
 
         retn
@@ -230,6 +234,9 @@ FSMakeFSSpec_asm2c:
 ; [esp +   4] = int16_t vRefNum
 ; [esp      ] = return address
 
+; note: parameter vRefNum is extended to 32 bits by callers in the original asm code
+; note: return value is not expected by callers in the original asm code to have been extended to 32 bits
+
         Call_Asm_Stack4 FSMakeFSSpec_c
 
         retn
@@ -243,6 +250,8 @@ QTSetDDPrimarySurface_asm2c:
 ; [esp + 2*4] = uint32_t flags
 ; [esp +   4] = void *lpNewDDSurface
 ; [esp      ] = return address
+
+; note: return value is not expected by callers in the original asm code to have been extended to 32 bits
 
         Call_Asm_Stack2 QTSetDDPrimarySurface_c
 
@@ -269,6 +278,8 @@ align 16
 EnterMovies_asm2c:
 
 ; [esp] = return address
+
+; note: return value is not expected by callers in the original asm code to have been extended to 32 bits
 
         Call_Asm_Stack0 EnterMovies_c
 
@@ -349,6 +360,9 @@ OpenMovieFile_asm2c:
 ; [esp +   4] = const void *fileSpec
 ; [esp      ] = return address
 
+; note: parameter permission is extended to 32 bits by callers in the original asm code
+; note: return value is not expected by callers in the original asm code to have been extended to 32 bits
+
         Call_Asm_Stack3 OpenMovieFile_c
 
         retn
@@ -361,6 +375,12 @@ CloseMovieFile_asm2c:
 
 ; [esp + 4] = int16_t resRefNum
 ; [esp    ] = return address
+
+; sign extend parameter resRefNum from 16 to 32 bits
+        movsx eax, word [esp + 4]
+        mov [esp + 4], eax
+
+; note: return value is not expected by callers in the original asm code to have been extended to 32 bits
 
         Call_Asm_Stack1 CloseMovieFile_c
 
@@ -379,6 +399,13 @@ NewMovieFromFile_asm2c:
 ; [esp + 2*4] = int16_t resRefNum
 ; [esp +   4] = void **theMovie
 ; [esp      ] = return address
+
+; sign extend parameter resRefNum from 16 to 32 bits
+        movsx eax, word [esp + 2*4]
+        mov [esp + 2*4], eax
+
+; note: parameter newMovieFlags is extended to 32 bits by callers in the original asm code
+; note: return value is not expected by callers in the original asm code to have been extended to 32 bits
 
         Call_Asm_Stack6 NewMovieFromFile_c
 
@@ -437,6 +464,8 @@ QTRegisterAccessKey_asm2c:
 ; [esp +   4] = unsigned char *accessKeyType
 ; [esp      ] = return address
 
+; note: return value is not expected by callers in the original asm code to have been extended to 32 bits
+
         Call_Asm_Stack3 QTRegisterAccessKey_c
 
         retn
@@ -451,6 +480,8 @@ QTUnregisterAccessKey_asm2c:
 ; [esp + 2*4] = int32_t flags
 ; [esp +   4] = unsigned char *accessKeyType
 ; [esp      ] = return address
+
+; note: return value is not expected by callers in the original asm code to have been extended to 32 bits
 
         Call_Asm_Stack3 QTUnregisterAccessKey_c
 
@@ -480,6 +511,8 @@ MCDoAction_asm2c:
 ; [esp + 2*4] = int16_t action
 ; [esp +   4] = void *mc
 ; [esp      ] = return address
+
+; note: parameter action is extended to 32 bits by callers in the original asm code
 
         Call_Asm_Stack3 MCDoAction_c
 

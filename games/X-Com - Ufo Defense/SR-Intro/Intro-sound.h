@@ -34,16 +34,19 @@ extern int16_t Game_ProcessAudio(void);
 extern "C" {
 #endif
 
+// note: parameters smaller than 32 bits are extended to 32 bits by callers in the original asm code
+// note: return values smaller than 32 bits are not expected by callers in the original asm code to have been extended to 32 bits
+
 extern int16_t Game_DigPlay(struct _DIGPAK_SNDSTRUC_ *sndplay);
 extern int16_t Game_AudioCapabilities(void);
 extern void Game_StopSound(void);
 extern int16_t Game_PostAudioPending(struct _DIGPAK_SNDSTRUC_ *sndplay);
-extern int16_t Game_SetPlayMode(int32_t playmode);
+extern int16_t Game_SetPlayMode(int16_t playmode);
 extern int16_t *Game_PendingAddress(void);
 extern int16_t *Game_ReportSemaphoreAddress(void);
-extern int16_t Game_SetBackFillMode(int32_t mode);
-extern int16_t Game_VerifyDMA(char *data, int32_t length);
-extern void Game_SetDPMIMode(int32_t mode);
+extern int16_t Game_SetBackFillMode(int16_t mode);
+extern int16_t Game_VerifyDMA(char *data, int16_t length);
+extern void Game_SetDPMIMode(int16_t mode);
 extern int32_t Game_FillSoundCfg(void *buf, int32_t count);
 extern uint32_t Game_RealPtr(uint32_t ptr);
 

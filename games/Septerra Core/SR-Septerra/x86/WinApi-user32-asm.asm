@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2023 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -257,6 +257,8 @@ GetAsyncKeyState_asm2c:
 ; [esp +   4] = int vKey
 ; [esp      ] = return address
 
+; note: return value is not expected by callers in the original asm code to have been extended to 32 bits
+
         Call_Asm_Stack1 GetAsyncKeyState_c
 
         retn 4
@@ -282,6 +284,8 @@ GetKeyState_asm2c:
 
 ; [esp +   4] = int nVirtKey
 ; [esp      ] = return address
+
+; note: return value is not expected by callers in the original asm code to have been extended to 32 bits
 
         Call_Asm_Stack1 GetKeyState_c
 

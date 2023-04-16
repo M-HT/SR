@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -30,6 +30,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// note: return values smaller than 32 bits are not expected by callers in the original asm code to have been extended to 32 bits
 
 uint32_t AdjustWindowRectEx_c(void *lpRect, uint32_t dwStyle, uint32_t bMenu, uint32_t dwExStyle);
 uint32_t ClipCursor_c(const void *lpRect);

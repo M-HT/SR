@@ -416,6 +416,7 @@ public:
  *
  * - structure/union members in structures/unions which are used in asm code:
  * -- the same rules apply as for variables
+ * -- the size of structures/unions and the alignment of structure/union members in c code must be the same as in asm code
  * -- the exceptions are opaque structures/unions (opaque parts of structures/unions)
  * --- which means the structure/union size is determined in c code and the structure/union (part of the structure/union) isn't used in asm code
  *
@@ -426,8 +427,11 @@ public:
  * -- can be defined as pointers, but only one level pointers (i.e. not pointer to pointer)
  * -- don't define them as pointers to types with inexact size, but as pointers to types with exact size
  * -- for two (or more) level pointers, the same rules apply as for variables
- * -- define non-pointer parameters as 32-bit (int32_t/uint32_t)
- * --- if smaller size is required, handle it inside function
+ * -- don't define non-pointer parameters as types with inexact size, but as types with exact size
+ * -- pass non-pointer parameters larger than 32 bits either as two 32-bit parameters or by reference
+ * -- define non-pointer parameters smaller than 32 bits as:
+ * --- 32-bit (int32_t/uint32_t) and the size conversion must be handled inside function
+ * --- 8/16-bit and the value must be sign or zero extended to 32 bits by callers in asm code
  * -- instead of parameter definitions like this:
  *    void **param1
  *    int *param2
@@ -439,6 +443,17 @@ public:
  *
  * - functions with ... or va_list parameter are handled specially in llasm
  * -- the .../va_list parameter is defined as uint32_t *
+ *
+ * Function return values
+ * ----------------------
+ *
+ * - function return values in functions defined in c code which are called from asm code:
+ * -- for pointer return values, the same rules apply as for function parameters
+ * -- for non-pointer return values, types with exact size are preferred, but not required
+ * -- return non-pointer return values larger than 32 bits by reference as function parameter
+ * -- return non-pointer return values smaller than 32 bits as:
+ * --- 32-bit (int32_t/uint32_t) and the value must be sign or zero extended to 32 bits inside function
+ * --- 8/16-bit and the value must not be expected by callers in asm code to have been sign or zero extended to 32 bits
  */
 
 #endif /* _PTR32_H_INCLUDED_ */

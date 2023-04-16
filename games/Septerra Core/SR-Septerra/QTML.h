@@ -31,6 +31,9 @@
 extern "C" {
 #endif
 
+// note: parameters smaller than 32 bits are extended to 32 bits by callers in the original/thunk asm code
+// note: return values smaller than 32 bits are not expected by callers in the original asm code to have been extended to 32 bits
+
 int16_t InitializeQTML_c (int32_t flag);
 void TerminateQTML_c (void);
 
@@ -41,7 +44,7 @@ void SetGWorld_c (void *port, void *gdh);
 uint8_t *c2pstr_c (char *aStr);
 int16_t PtrToHand_c (const void *srcPtr, PTR32(void *)*dstHndl, int32_t size);
 
-int16_t FSMakeFSSpec_c (int32_t vRefNum, int32_t dirID, char *fileName, void *spec);
+int16_t FSMakeFSSpec_c (int16_t vRefNum, int32_t dirID, char *fileName, void *spec);
 int16_t QTSetDDPrimarySurface_c (void *lpNewDDSurface, uint32_t flags);
 int32_t NativeEventToMacEvent_c (void *nativeEvent, void *macEvent);
 
@@ -51,16 +54,16 @@ void StartMovie_c (void *theMovie);
 void StopMovie_c (void *theMovie);
 uint8_t IsMovieDone_c (void *theMovie);
 void DisposeMovie_c (void *theMovie);
-int16_t OpenMovieFile_c (const void *fileSpec, int16_t *resRefNum, int32_t permission);
-int16_t CloseMovieFile_c (int32_t resRefNum);
-int16_t NewMovieFromFile_c (PTR32(void)*theMovie, int32_t resRefNum, int16_t *resId, uint8_t *resName, int32_t newMovieFlags, uint8_t *dataRefWasChanged);
+int16_t OpenMovieFile_c (const void *fileSpec, int16_t *resRefNum, int8_t permission);
+int16_t CloseMovieFile_c (int16_t resRefNum);
+int16_t NewMovieFromFile_c (PTR32(void)*theMovie, int16_t resRefNum, int16_t *resId, uint8_t *resName, int16_t newMovieFlags, uint8_t *dataRefWasChanged);
 void GetMovieBox_c (void *theMovie, void *boxRect);
 void *NewMovieController_c (void *theMovie, const void *movieRect, int32_t someFlags);
 void DisposeMovieController_c (void *mc);
 int16_t QTRegisterAccessKey_c (uint8_t *accessKeyType, int32_t flags, void *accessKey);
 int16_t QTUnregisterAccessKey_c (uint8_t *accessKeyType, int32_t flags, void *accessKey);
 void *MCIsPlayerEvent_c (void *mc, const void *e);
-void *MCDoAction_c (void *mc, int32_t action, void *params);
+void *MCDoAction_c (void *mc, int16_t action, void *params);
 
 #ifdef __cplusplus
 }

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2021 Roman Pauer
+ *  Copyright (C) 2019-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -2265,7 +2265,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                     else
                     {
                         OUTPUT_PARAMSTRING("%s\n", altaction);
-                        last_instruction = 1;
+                        last_instruction = 0;
                     }
                 }
                 else if (ud_obj.operand[0].type == UD_OP_MEM &&
@@ -2327,9 +2327,14 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                     else
                     {
                         OUTPUT_PARAMSTRING("%s\n", altaction);
-                        last_instruction = 1;
+                        last_instruction = 0;
                     }
 
+                }
+
+                if ((last_instruction == 0) && flags_to_write)
+                {
+                    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 }
 
                 if ((last_instruction == -1) && (cOutput[0] != 0))
@@ -2931,7 +2936,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                     {
                         SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_READ, SIGN_EXTEND, &memadr);
 
-                        SR_disassemble_read_mem_halfword(cOutput, &memadr, LR_TMP2, READ16TO32SIGN);
+                        SR_disassemble_read_mem_halfword(cOutput, &memadr, LR_TMP3, READ16TO32SIGN);
 
                         OUTPUT_STRING("IDIV_32 tmp3\n");
                     }

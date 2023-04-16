@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -2386,7 +2386,7 @@ bool process_proc_body(string proc_name)
                 break;
             case "ctlz": // ctlz reg, reg
                 {
-                    string src = get_parameter_read_value(paramvals[0]);
+                    string src = get_parameter_read_value(paramvals[1]);
                     string dst = get_new_temporary_register();
 
                     add_output_line(dst ~ " = call i32 @llvm.ctlz.i32(i32 " ~ src ~ ", i1 0)");
@@ -2396,7 +2396,7 @@ bool process_proc_body(string proc_name)
                 break;
             case "bswap": // bswap reg, reg
                 {
-                    string src = get_parameter_read_value(paramvals[0]);
+                    string src = get_parameter_read_value(paramvals[1]);
                     string dst = get_new_temporary_register();
 
                     add_output_line(dst ~ " = call i32 @llvm.bswap.i32(i32 " ~ src ~ ")");
@@ -2442,6 +2442,20 @@ void write_output()
     }
 }
 
+void write_usage()
+{
+    stderr.writeln("Usage: llasm [OPTIONS] INPUT_FILE");
+    stderr.writeln("  -o OUTPUT_FILE  write output to a file instead of to stdout");
+    stderr.writeln("  -I PATH         add directory to search path for includes");
+    stderr.writeln("  -O              set optimization level 2");
+    stderr.writeln("  -O2             set optimization level 2");
+    stderr.writeln("  -O1             set optimization level 1");
+    stderr.writeln("  -p              output preprocessed file");
+    stderr.writeln("  -pic            generate position independent code");
+    stderr.writeln("  -m64            set generated pointer size to 64 bits");
+    stderr.writeln("  -no-tail-calls  disable generating tail calls");
+}
+
 public int main(string[] args)
 {
     input_filename = "";
@@ -2463,6 +2477,7 @@ public int main(string[] args)
                 if (i + 1 == args.length)
                 {
                     stderr.writeln("Missing argument: " ~ args[i]);
+                    write_usage();
                     return 2;
                 }
 
@@ -2473,6 +2488,7 @@ public int main(string[] args)
                 if (i + 1 == args.length)
                 {
                     stderr.writeln("Missing argument: " ~ args[i]);
+                    write_usage();
                     return 2;
                 }
 
@@ -2507,6 +2523,7 @@ public int main(string[] args)
                 else
                 {
                     stderr.writeln("Bad argument: " ~ args[i]);
+                    write_usage();
                     return 1;
                 }
         }
@@ -2515,12 +2532,14 @@ public int main(string[] args)
     if (input_filename == "")
     {
         stderr.writeln("Missing input filename");
+        write_usage();
         return 3;
     }
 
     if (!exists(input_filename))
     {
         stderr.writeln("Input file not found: " ~ input_filename);
+        write_usage();
         return 4;
     }
 

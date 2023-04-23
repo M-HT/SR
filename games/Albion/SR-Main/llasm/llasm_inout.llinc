@@ -1,0 +1,88 @@
+;part of static recompiler -- do not edit
+
+;;
+;;  Copyright (C) 2019 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+funcv x86_in_al_imm $, portno
+funcv x86_in_ax_imm $, portno
+funcv x86_in_eax_imm $, portno
+funcv x86_in_al_dx $
+funcv x86_in_ax_dx $
+funcv x86_in_eax_dx $
+
+funcv x86_out_imm_al $, portno
+funcv x86_out_imm_ax $, portno
+funcv x86_out_imm_eax $, portno
+funcv x86_out_dx_al $
+funcv x86_out_dx_ax $
+funcv x86_out_dx_eax $
+
+
+macro IN_al_IMM portno
+    call x86_in_al_imm $, \portno
+endm
+
+macro IN_ax_IMM portno
+    call x86_in_ax_imm $, \portno
+endm
+
+macro IN_eax_IMM portno
+    call x86_in_eax_imm $, \portno
+endm
+
+macro IN_al_DX
+    call x86_in_al_dx $
+endm
+
+macro IN_ax_DX
+    call x86_in_ax_dx $
+endm
+
+macro IN_eax_DX
+    call x86_in_eax_dx $
+endm
+
+
+macro OUT_IMM_al portno
+    call x86_out_imm_al $, \portno
+endm
+
+macro OUT_IMM_ax portno
+    call x86_out_imm_ax $, \portno
+endm
+
+macro OUT_IMM_eax portno
+    call x86_out_imm_eax $, \portno
+endm
+
+macro OUT_DX_al
+    call x86_out_dx_al $
+endm
+
+macro OUT_DX_ax
+    call x86_out_dx_ax $
+endm
+
+macro OUT_DX_eax
+    call x86_out_dx_eax $
+endm
+

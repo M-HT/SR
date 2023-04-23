@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2020 Roman Pauer
+ *  Copyright (C) 2018-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,7 @@
 #if !defined(_ALBION_BBOPM_H_INCLUDED_)
 #define _ALBION_BBOPM_H_INCLUDED_
 
-#include <stdint.h>
+#include "ptr32.h"
 
 #define BBOPM_ALLOCATED_BUFFER 1
 #define BBOPM_MODIFIED 2
@@ -36,12 +36,12 @@
 // todo: align struct members
 #pragma pack(1)
 
-typedef struct __attribute__ ((__packed__)) _OPM_Struct {
+typedef struct _OPM_Struct {
     uint32_t flags;
     int16_t width;
     int16_t height;
     int16_t bytes_per_pixel;
-    uint8_t *buffer;
+    PTR32(uint8_t) buffer;
     uint32_t size;
     int16_t bytes_per_pixel2;
     int16_t stride;
@@ -54,7 +54,7 @@ typedef struct __attribute__ ((__packed__)) _OPM_Struct {
     uint16_t transparent_color;
     int16_t virtual_x;
     int16_t virtual_y;
-    struct _OPM_Struct *base_pixel_map;
+    PTR32(struct _OPM_Struct) base_pixel_map;
 } OPM_Struct;
 
 #pragma pack()
@@ -64,16 +64,18 @@ typedef struct __attribute__ ((__packed__)) _OPM_Struct {
 extern "C" {
 #endif
 
-extern int OPM_New(unsigned int width, unsigned int height, unsigned int bytes_per_pixel, OPM_Struct *pixel_map, uint8_t *buffer);
+// note: parameters smaller than 32 bits are extended to 32 bits by callers in the original asm code
+
+extern int32_t OPM_New(uint32_t width, uint32_t height, uint32_t bytes_per_pixel, OPM_Struct *pixel_map, uint8_t *buffer);
 extern void OPM_Del(OPM_Struct *pixel_map);
-extern void OPM_SetVirtualClipStart(OPM_Struct *virtual_pixel_map, int clip_x, int clip_y);
-extern void OPM_CreateVirtualOPM(OPM_Struct *base_pixel_map, OPM_Struct *virtual_pixel_map, int virtual_x, int virtual_y, int virtual_width, int virtual_height);
-extern void OPM_SetPixel(OPM_Struct *pixel_map, int x, int y, uint8_t color);
-extern void OPM_HorLine(OPM_Struct *pixel_map, int x, int y, int length, uint8_t color);
-extern void OPM_VerLine(OPM_Struct *pixel_map, int x, int y, int length, uint8_t color);
-extern void OPM_Box(OPM_Struct *pixel_map, int x, int y, int width, int height, uint8_t color);
-extern void OPM_FillBox(OPM_Struct *pixel_map, int x, int y, int width, int height, uint8_t color);
-extern void OPM_CopyOPMOPM(OPM_Struct *src_pixel_map, OPM_Struct *dst_pixel_map, int src_x, int src_y, int src_width, int src_height, int dst_x, int dst_y);
+extern void OPM_SetVirtualClipStart(OPM_Struct *virtual_pixel_map, int32_t clip_x, int32_t clip_y);
+extern void OPM_CreateVirtualOPM(OPM_Struct *base_pixel_map, OPM_Struct *virtual_pixel_map, int32_t virtual_x, int32_t virtual_y, int32_t virtual_width, int32_t virtual_height);
+extern void OPM_SetPixel(OPM_Struct *pixel_map, int32_t x, int32_t y, uint8_t color);
+extern void OPM_HorLine(OPM_Struct *pixel_map, int32_t x, int32_t y, int32_t length, uint8_t color);
+extern void OPM_VerLine(OPM_Struct *pixel_map, int32_t x, int32_t y, int32_t length, uint8_t color);
+extern void OPM_Box(OPM_Struct *pixel_map, int32_t x, int32_t y, int32_t width, int32_t height, uint8_t color);
+extern void OPM_FillBox(OPM_Struct *pixel_map, int32_t x, int32_t y, int32_t width, int32_t height, uint8_t color);
+extern void OPM_CopyOPMOPM(OPM_Struct *src_pixel_map, OPM_Struct *dst_pixel_map, int32_t src_x, int32_t src_y, int32_t src_width, int32_t src_height, int32_t dst_x, int32_t dst_y);
 
 
 #ifdef __cplusplus

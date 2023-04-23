@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -34,7 +34,7 @@
 #include "Albion-timer.h"
 #include "Game_thread.h"
 
-int Game_errno(void)
+int32_t Game_errno(void)
 {
     int err;
 
@@ -43,7 +43,7 @@ int Game_errno(void)
     return (err >= 0 && err < 256)?(errno_rtable[err]):(err);
 }
 
-off_t Game_filelength(int fd)
+off_t Game_filelength(int32_t fd)
 {
     off_t origpos, endpos;
 
@@ -58,7 +58,7 @@ off_t Game_filelength(int fd)
 
 uint64_t Game_dos_getvect(const int32_t intnum)
 {
-    return (uint64_t) ((uintptr_t) Game_InterruptTable[intnum & 0xff]);
+    return Game_InterruptTable[intnum & 0xff];
 }
 
 #define WATCOM_BUFSIZ 0x1000
@@ -74,10 +74,10 @@ void Game_dos_setvect(const int32_t intnum, const uint32_t handler_low, const ui
     fprintf(stderr, "Setting interrupt vector: %i\n", intnum & 0xff);
 #endif
 
-    Game_InterruptTable[intnum & 0xff] = (void *)(uintptr_t) handler_low;
+    Game_InterruptTable[intnum & 0xff] = handler_low;
 }
 
-off_t Game_tell(int handle)
+off_t Game_tell(int32_t handle)
 {
     return lseek(handle, 0, SEEK_CUR);
 }
@@ -174,7 +174,7 @@ void Game_WaitFor2ndVerticalRetrace(void)
 #define WATCOM_O_BINARY       0x0200  /* binary file */
 #define WATCOM_O_EXCL         0x0400  /* exclusive open */
 
-int Game_openFlags(int flags)
+int32_t Game_openFlags(int32_t flags)
 {
     int newflags;
 

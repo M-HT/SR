@@ -203,13 +203,13 @@ static void Game_Display_Create(void)
 
                 if (0 == SDL_GetRendererInfo(Game_Renderer, &info))
                 {
-                    if (info.max_texture_width > Picture_Width)
+                    if (info.max_texture_width > (int)Picture_Width)
                     {
-                        while (Scaler_ScaleFactor * Render_Width > info.max_texture_width) Scaler_ScaleFactor--;
+                        while (Scaler_ScaleFactor * (int)Render_Width > info.max_texture_width) Scaler_ScaleFactor--;
                     }
-                    if (info.max_texture_height > Picture_Height)
+                    if (info.max_texture_height > (int)Picture_Height)
                     {
-                        while (Scaler_ScaleFactor * Render_Height > info.max_texture_height) Scaler_ScaleFactor--;
+                        while (Scaler_ScaleFactor * (int)Render_Height > info.max_texture_height) Scaler_ScaleFactor--;
                     }
                 }
             }
@@ -303,13 +303,13 @@ static void Game_Display_Create(void)
 
                 if (0 == SDL_GetRendererInfo(Game_Renderer, &info))
                 {
-                    if (info.max_texture_width > Picture_Width)
+                    if (info.max_texture_width > (int)Picture_Width)
                     {
-                        while (Scaler_ScaleFactor * Render_Width > info.max_texture_width) Scaler_ScaleFactor--;
+                        while (Scaler_ScaleFactor * (int)Render_Width > info.max_texture_width) Scaler_ScaleFactor--;
                     }
-                    if (info.max_texture_height > Picture_Height)
+                    if (info.max_texture_height > (int)Picture_Height)
                     {
-                        while (Scaler_ScaleFactor * Render_Height > info.max_texture_height) Scaler_ScaleFactor--;
+                        while (Scaler_ScaleFactor * (int)Render_Height > info.max_texture_height) Scaler_ScaleFactor--;
                     }
                 }
             }
@@ -557,13 +557,13 @@ static void Game_Display_Create(void)
 
                 max_texture_size = 0;
                 glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
-                if (max_texture_size > Picture_Width)
+                if (max_texture_size > (int)Picture_Width)
                 {
-                    while (Scaler_ScaleFactor * Render_Width > max_texture_size) Scaler_ScaleFactor--;
+                    while (Scaler_ScaleFactor * (int)Render_Width > max_texture_size) Scaler_ScaleFactor--;
                 }
-                if (max_texture_size > Picture_Height)
+                if (max_texture_size > (int)Picture_Height)
                 {
-                    while (Scaler_ScaleFactor * Render_Height > max_texture_size) Scaler_ScaleFactor--;
+                    while (Scaler_ScaleFactor * (int)Render_Height > max_texture_size) Scaler_ScaleFactor--;
                 }
             }
 
@@ -630,13 +630,13 @@ static void Game_Display_Create(void)
 
                 max_texture_size = 0;
                 glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
-                if (max_texture_size > Picture_Width)
+                if (max_texture_size > (int)Picture_Width)
                 {
-                    while (Scaler_ScaleFactor * Render_Width > max_texture_size) Scaler_ScaleFactor--;
+                    while (Scaler_ScaleFactor * (int)Render_Width > max_texture_size) Scaler_ScaleFactor--;
                 }
-                if (max_texture_size > Picture_Height)
+                if (max_texture_size > (int)Picture_Height)
                 {
-                    while (Scaler_ScaleFactor * Render_Height > max_texture_size) Scaler_ScaleFactor--;
+                    while (Scaler_ScaleFactor * (int)Render_Height > max_texture_size) Scaler_ScaleFactor--;
                 }
             }
         }
@@ -2133,6 +2133,20 @@ static void Game_Event_Loop(void)
 
 int main (int argc, char *argv[])
 {
+    if (sizeof(PTR32(void)) != 4)
+    {
+        fprintf(stderr, "Error: The program wasn't compiled correctly for %i-bits\n", (int) (8 * sizeof(void*)));
+        return 0;
+    }
+    else if (sizeof(void*) != 4)
+    {
+        if ((uintptr_t)argv > UINT32_MAX)
+        {
+            fprintf(stderr, "Error: The program must be run with the loader for %i-bits\n", (int) (8 * sizeof(void*)));
+            return 0;
+        }
+    }
+
     Game_ConfigFilename[0] = 0;
     Game_Directory[0] = 0;
 

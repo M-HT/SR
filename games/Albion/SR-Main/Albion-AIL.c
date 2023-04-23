@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2022 Roman Pauer
+ *  Copyright (C) 2018-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -76,7 +76,7 @@ void Game_AIL_start_timer(int32_t timer)
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_start_timer: %i\n", timer);
 #endif
-    Game_InterruptTable[8] = (void *)-1;
+    Game_InterruptTable[8] = (intptr_t)-1;
 }
 
 void Game_AIL_stop_timer(int32_t timer)
@@ -84,7 +84,7 @@ void Game_AIL_stop_timer(int32_t timer)
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_stop_timer: %i\n", timer);
 #endif
-    Game_InterruptTable[8] = NULL;
+    Game_InterruptTable[8] = 0;
 }
 
 void Game_AIL_release_timer_handle(int32_t timer)
@@ -101,7 +101,7 @@ void Game_AIL_shutdown(void)
 #endif
 }
 
-void Game_AIL_set_GTL_filename_prefix(char *prefix)
+void Game_AIL_set_GTL_filename_prefix(const char *prefix)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_set_GTL_filename_prefix: %s\n", prefix);

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -147,14 +147,14 @@ void X86_InterruptProcedure(
 #if defined(__DEBUG__)
                     fprintf(stderr, "Setting interrupt vector: %i\n", AL);
 #endif
-                    Game_InterruptTable[AL] = (void *) EDX;
+                    Game_InterruptTable[AL] = EDX;
 
                     return;
                     // case 0x25:
                 case 0x35:
                 // Get interrupt vector
 
-                    EBX = (uint32_t) Game_InterruptTable[AL];
+                    EBX = Game_InterruptTable[AL];
 
                     return;
                     // case 0x35:

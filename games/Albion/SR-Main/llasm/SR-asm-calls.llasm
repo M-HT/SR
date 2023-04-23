@@ -1,0 +1,1703 @@
+;;
+;;  Copyright (C) 2016-2023 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+include llasm.llinc
+include SR-asm-calls.llinc
+
+func Game_errno
+
+funcv draw_3dscene
+funcv Game_Sync
+
+; stack params
+func CLIB_vfprintf *stream, *format, *ap
+func CLIB_vprintf *format, *ap
+func CLIB_vsnprintf *str, size, *format, *ap
+func CLIB_vsprintf *str, *format, *ap
+funcv Game_WaitVerticalRetraceTicks ticks
+func Game_open *pathname, flags, mode
+func Game_openFlags flags
+
+func Game_AIL_mem_use_malloc *fn;
+func Game_AIL_mem_use_free *fn;
+funcv Game_AIL_startup
+func Game_AIL_register_timer *callback_fn
+funcv Game_AIL_set_timer_frequency timer, hertz
+funcv Game_AIL_start_timer timer
+funcv Game_AIL_stop_timer timer
+funcv Game_AIL_release_timer_handle timer
+funcv Game_AIL_shutdown
+funcv Game_AIL_set_GTL_filename_prefix *prefix
+func Game_AIL_install_MDI_INI *mdi
+func Game_AIL_set_preference number, value
+func Game_AIL_install_DIG_INI *dig
+funcv Game_AIL_uninstall_DIG_driver *dig
+funcv Game_AIL_uninstall_MDI_driver *mdi
+
+func Game_AIL_allocate_sample_handle *dig
+funcv Game_AIL_end_sample *S
+funcv Game_AIL_init_sample *S
+funcv Game_AIL_release_sample_handle *S
+func Game_AIL_sample_status *S
+funcv Game_AIL_set_digital_master_volume *dig, master_volume
+funcv Game_AIL_set_sample_address *S, *start, len
+funcv Game_AIL_set_sample_loop_count *S, loop_count
+funcv Game_AIL_set_sample_pan *S, pan
+funcv Game_AIL_set_sample_playback_rate *S, playback_rate
+funcv Game_AIL_set_sample_type *S, format, flags
+funcv Game_AIL_set_sample_volume *S, volume
+funcv Game_AIL_start_sample *S
+
+func Game_AIL_allocate_sequence_handle *mdi
+func Game_AIL_create_wave_synthesizer *dig, *mdi, *wave_lib, polyphony
+funcv Game_AIL_destroy_wave_synthesizer *W
+funcv Game_AIL_end_sequence *S
+func Game_AIL_init_sequence *S, *start, sequence_num
+funcv Game_AIL_release_sequence_handle *S
+funcv Game_AIL_resume_sequence *S
+func Game_AIL_sequence_status *S
+funcv Game_AIL_set_sequence_loop_count *S, loop_count
+funcv Game_AIL_set_sequence_volume *S, volume, ms
+funcv Game_AIL_start_sequence *S
+funcv Game_AIL_stop_sequence *S
+
+funcv SMK_ShowMenu
+funcv SMK_PlayIntro
+funcv SMK_PlayCredits
+
+funcv ERROR_Init *output_func_ptr
+funcv ERROR_ClearStack
+func ERROR_PushErrorDOS *error_print_error_ptr, *error_prefix, error_data_len, *error_data
+funcv ERROR_PopError
+func ERROR_IsStackEmpty
+funcv ERROR_PrintAllErrors flags
+
+func BASEMEM_Init
+funcv BASEMEM_Exit
+func BASEMEM_GetFreeMemSize memory_flags
+func BASEMEM_Alloc size, memory_flags
+func BASEMEM_Free *mem_ptr
+func BASEMEM_LockRegion *mem_ptr, length
+func BASEMEM_UnlockRegion *mem_ptr, length
+funcv BASEMEM_FillMemByte *dst, length, c
+funcv BASEMEM_FillMemLong *dst, length, c);
+funcv BASEMEM_CopyMem *src, *dst, length
+func BASEMEM_AlignMemptr *mem_ptr
+funcv BASEMEM_PrintReport *fp
+
+func DOS_Init
+funcv DOS_Exit
+func DOS_Open *path, mode
+func DOS_Close file_handle
+func DOS_Read file_handle, *buffer, length
+func DOS_Write file_handle, *buffer, length
+func DOS_Seek file_handle, origin, offset
+func DOS_GetFileLength *path
+func DOS_exists *path
+func DOS_setcurrentdir *path
+func DOS_GetSeekPosition file_handle
+
+func OPM_New width, height, bytes_per_pixel, *pixel_map, *buffer
+funcv OPM_Del *pixel_map
+funcv OPM_SetVirtualClipStart *virtual_pixel_map, clip_x, clip_y
+funcv OPM_CreateVirtualOPM *base_pixel_map, *virtual_pixel_map, virtual_x, virtual_y, virtual_width, virtual_height
+funcv OPM_SetPixel *pixel_map, x, y, color
+funcv OPM_HorLine *pixel_map, x, y, length, color
+funcv OPM_VerLine *pixel_map, x, y, length, color
+funcv OPM_Box *pixel_map, x, y, width, height, color
+funcv OPM_FillBox *pixel_map, x, y, width, height, color
+funcv OPM_CopyOPMOPM *src_pixel_map, *dst_pixel_map, src_x, src_y, src_width, src_height, dst_x, dst_y
+; 0 params
+func fcloseall
+funcv Game_WaitAfterVerticalRetrace
+funcv Game_WaitForVerticalRetrace
+; 1 param
+func asctime *tm
+func Game_chdir *path
+func close fd
+func Game_closedir *dirp
+func ctime *timep
+func Game_dos_findclose *buffer
+func Game_dos_findnext *buffer
+func Game_dos_getvect intnum
+funcv Game_ExitMain_Asm status
+func fclose *stream
+func Game_filelength fd
+funcv free *ptr
+func ftime *tp
+func getenv *name
+func isatty fd
+func localtime *timep
+func malloc size
+func Game_opendir *dirname
+func strlen *s
+func Game_tell handle
+func time *tloc
+func Game_unlink *pathname
+funcv Game_WaitTimerTicks ticks
+funcv Game_save_screenshot *filename
+; 2 params
+func Game_fopen *filename, *mode
+func fputs *s, *stream
+func Game_getcwd *buf, size
+func Game_outp port, value
+func Game_rename *oldpath, *newpath
+func Game_setbuf *fp, *buf
+func strchr *s, c
+func strcmp *s1, *s2
+func strcpy *dest, *src
+func strcspn *s, *reject
+func strspn *s, *accept
+; 2/3 params
+func Game_dos_setvect intnum, handler_low, handler_high
+; 3 params
+func Game_dos_findfirst *path, attributes, *buffer
+func fgets *s, size, *stream
+func lseek fd, offset, whence
+func memcpy *dest, *src, n
+func memmove *dest, *src, n
+func memset *s, c, n
+func read fd, *buf, count
+func strncmp *s1, *s2, n
+func strncpy *dest, *src, n
+func strncasecmp *s1, *s2, n
+func write fd, *buf, count
+; 4 params
+func Game_int386x IntNum, *in_regs, *out_regs, *seg_regs
+; 5 params
+funcv Game_splitpath *path, *drive, *dir, *fname, *ext
+
+extern errno_val
+
+
+proc draw_3dscene_proc public
+
+        Game_Call_Asm_Reg0_void draw_3dscene,-1
+
+endp ; end procedure draw_3dscene_proc
+
+proc SR_Sync public
+
+        Game_Call_Asm_Reg0_void Game_Sync,-1
+
+endp ; end procedure SR_Sync
+
+; null procedures
+proc SR___CHK public
+
+; [esp] = return address
+
+        ;retn 4
+        Game_Call_Asm_Return -1, 1
+
+endp ; end procedure SR___CHK
+
+proc SR___GETDS public
+
+        tcall null_procedure
+
+endp ; end procedure SR___GETDS
+
+proc SR_nosound public
+
+        tcall null_procedure
+
+endp ; end procedure SR_nosound
+
+proc SR_sound public
+
+        tcall null_procedure
+
+endp ; end procedure SR_sound
+
+proc SR__harderr public
+
+        tcall null_procedure
+
+endp ; end procedure SR__harderr
+
+proc null_procedure public
+
+        ;retn
+        Game_Call_Asm_Return -1, 0
+
+endp ; end procedure null_procedure
+
+; stack params
+proc SR_fprintf public
+
+; [esp + 3*4] = ...
+; [esp + 2*4] = const char *format
+; [esp +   4] = FILE *fp
+; [esp      ] = return address
+
+        Game_Call_Asm_VariableStack2 CLIB_vfprintf,-1000
+
+endp ; end procedure SR_fprintf
+
+proc SR_printf public
+
+; [esp + 2*4] = ...
+; [esp +   4] = const char *format
+; [esp      ] = return address
+
+        Game_Call_Asm_VariableStack1 CLIB_vprintf,-1000
+
+endp ; end procedure SR_printf
+
+proc SR__bprintf public
+
+; [esp + 4*4] = ...
+; [esp + 3*4] = const char *format
+; [esp + 2*4] = size_t bufsize
+; [esp +   4] = char *buf
+; [esp      ] = return address
+
+        Game_Call_Asm_VariableStack3 CLIB_vsnprintf,-1000
+
+endp ; end procedure SR__bprintf
+
+proc SR_sprintf public
+
+; [esp + 3*4] = ...
+; [esp + 2*4] = const char *format
+; [esp +   4] = char *buf
+; [esp      ] = return address
+
+        Game_Call_Asm_VariableStack2 CLIB_vsprintf,-1000
+
+endp ; end procedure SR_sprintf
+
+proc SR_WaitVerticalRetraceTicks public
+
+; [esp +   4] = int ticks
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_WaitVerticalRetraceTicks,-1
+
+endp ; end procedure SR_WaitVerticalRetraceTicks
+
+proc SR_open public
+
+; [esp + 3*4] = ...
+; [esp + 2*4] = int access
+; [esp +   4] = const char *path
+; [esp      ] = return address
+
+
+; errno_val is set inside Game_open
+
+        add tmp0, esp, 2*4
+        load tmp0, tmp0, 4					; access (flags)
+        call Game_openFlags tmp0
+        mov tmp1, tmp0						; access (flags)
+
+        add tmp0, esp, 4
+        load tmp0, tmp0, 4					; path
+        add tmp2, esp, 3*4
+        load tmp2, tmp2, 4					; ...
+        call Game_open tmp0, tmp1, tmp2
+        mov eax, tmp0
+
+        Game_Call_Asm_Return -1, 0
+
+endp ; end procedure SR_open
+
+proc SR_AIL_mem_use_malloc public
+
+; [esp +   4] = void * (*fn)(uint32_t)
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1 Game_AIL_mem_use_malloc,-1
+
+endp ; end procedure SR_AIL_mem_use_malloc
+
+proc SR_AIL_mem_use_free public
+
+; [esp +   4] = void (*fn)(void *)
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1 Game_AIL_mem_use_free,-1
+
+endp ; end procedure SR_AIL_mem_use_free
+
+proc SR_AIL_startup public
+
+; [esp      ] = return address
+
+        Game_Call_Asm_Reg0_void Game_AIL_startup,-1
+
+endp ; end procedure SR_AIL_startup
+
+proc SR_AIL_register_timer public
+
+; [esp +   4] = void (*callback_fn)(uint32_t user)
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1 Game_AIL_register_timer,-1
+
+endp ; end procedure SR_AIL_register_timer
+
+proc SR_AIL_set_timer_frequency public
+
+; [esp + 2*4] = uint32_t hertz
+; [esp +   4] = int32_t timer
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack2_void Game_AIL_set_timer_frequency,-1
+
+endp ; end procedure SR_AIL_set_timer_frequency
+
+proc SR_AIL_start_timer public
+
+; [esp +   4] = int32_t timer
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_AIL_start_timer,-1
+
+endp ; end procedure SR_AIL_start_timer
+
+proc SR_AIL_stop_timer public
+
+; [esp +   4] = int32_t timer
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_AIL_stop_timer,-1
+
+endp ; end procedure SR_AIL_stop_timer
+
+proc SR_AIL_release_timer_handle public
+
+; [esp +   4] = int32_t timer
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_AIL_release_timer_handle,-1
+
+endp ; end procedure SR_AIL_release_timer_handle
+
+proc SR_AIL_shutdown public
+
+; [esp      ] = return address
+
+        Game_Call_Asm_Reg0_void Game_AIL_shutdown,-1
+
+endp ; end procedure SR_AIL_shutdown
+
+proc SR_AIL_set_GTL_filename_prefix public
+
+; [esp +   4] = char *prefix
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_AIL_set_GTL_filename_prefix,-1
+
+endp ; end procedure SR_AIL_set_GTL_filename_prefix
+
+proc SR_AIL_install_MDI_INI public
+
+; [esp +   4] = void *mdi
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1 Game_AIL_install_MDI_INI,-1
+
+endp ; end procedure SR_AIL_install_MDI_INI
+
+proc SR_AIL_set_preference public
+
+; [esp + 2*4] = int32_t value
+; [esp +   4] = uint32_t number
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack2 Game_AIL_set_preference,-1
+
+endp ; end procedure SR_AIL_set_preference
+
+proc SR_AIL_install_DIG_INI public
+
+; [esp +   4] = void *dig
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1 Game_AIL_install_DIG_INI,-1
+
+endp ; end procedure SR_AIL_install_DIG_INI
+
+proc SR_AIL_uninstall_DIG_driver public
+
+; [esp +   4] = void *dig
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_AIL_uninstall_DIG_driver,-1
+
+endp ; end procedure SR_AIL_uninstall_DIG_driver
+
+proc SR_AIL_uninstall_MDI_driver public
+
+; [esp +   4] = void *mdi
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_AIL_uninstall_MDI_driver,-1
+
+endp ; end procedure SR_AIL_uninstall_MDI_driver
+
+proc SR_AIL_allocate_sample_handle public
+
+; [esp +   4] = void *dig
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1 Game_AIL_allocate_sample_handle,-1
+
+endp ; end procedure SR_AIL_allocate_sample_handle
+
+proc SR_AIL_end_sample public
+
+; [esp +   4] = AIL_sample *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_AIL_end_sample,-1
+
+endp ; end procedure SR_AIL_end_sample
+
+proc SR_AIL_init_sample public
+
+; [esp +   4] = AIL_sample *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_AIL_init_sample,-1
+
+endp ; end procedure SR_AIL_init_sample
+
+proc SR_AIL_release_sample_handle public
+
+; [esp +   4] = AIL_sample *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_AIL_release_sample_handle,-1
+
+endp ; end procedure SR_AIL_release_sample_handle
+
+proc SR_AIL_sample_status public
+
+; [esp +   4] = AIL_sample *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1 Game_AIL_sample_status,-1
+
+endp ; end procedure SR_AIL_sample_status
+
+proc SR_AIL_set_digital_master_volume public
+
+; [esp + 2*4] = int32_t master_volume
+; [esp +   4] = void *dig
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack2_void Game_AIL_set_digital_master_volume,-1
+
+endp ; end procedure SR_AIL_set_digital_master_volume
+
+proc SR_AIL_set_sample_address public
+
+; [esp + 3*4] = uint32_t len
+; [esp + 2*4] = void *start
+; [esp +   4] = AIL_sample *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack3_void Game_AIL_set_sample_address,-1
+
+endp ; end procedure SR_AIL_set_sample_address
+
+proc SR_AIL_set_sample_loop_count public
+
+; [esp + 2*4] = int32_t loop_count
+; [esp +   4] = AIL_sample *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack2_void Game_AIL_set_sample_loop_count,-1
+
+endp ; end procedure SR_AIL_set_sample_loop_count
+
+proc SR_AIL_set_sample_pan public
+
+; [esp + 2*4] = int32_t pan
+; [esp +   4] = AIL_sample *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack2_void Game_AIL_set_sample_pan,-1
+
+endp ; end procedure SR_AIL_set_sample_pan
+
+proc SR_AIL_set_sample_playback_rate public
+
+; [esp + 2*4] = int32_t playback_rate
+; [esp +   4] = AIL_sample *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack2_void Game_AIL_set_sample_playback_rate,-1
+
+endp ; end procedure SR_AIL_set_sample_playback_rate
+
+proc SR_AIL_set_sample_type public
+
+; [esp + 3*4] = uint32_t flags
+; [esp + 2*4] = int32_t format
+; [esp +   4] = AIL_sample *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack3_void Game_AIL_set_sample_type,-1
+
+endp ; end procedure SR_AIL_set_sample_type
+
+proc SR_AIL_set_sample_volume public
+
+; [esp + 2*4] = int32_t volume
+; [esp +   4] = AIL_sample *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack2_void Game_AIL_set_sample_volume,-1
+
+endp ; end procedure SR_AIL_set_sample_volume
+
+proc SR_AIL_start_sample public
+
+; [esp +   4] = AIL_sample *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_AIL_start_sample,-1
+
+endp ; end procedure SR_AIL_start_sample
+
+
+proc SR_AIL_allocate_sequence_handle public
+
+; [esp +   4] = void *mdi
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1 Game_AIL_allocate_sequence_handle,-1
+
+endp ; end procedure SR_AIL_allocate_sequence_handle
+
+proc SR_AIL_create_wave_synthesizer public
+
+; [esp + 4*4] = int32_t polyphony
+; [esp + 3*4] = void *wave_lib
+; [esp + 2*4] = void *mdi
+; [esp +   4] = void *dig
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack4 Game_AIL_create_wave_synthesizer,-1
+
+endp ; end procedure SR_AIL_create_wave_synthesizer
+
+proc SR_AIL_destroy_wave_synthesizer public
+
+; [esp +   4] = void *W
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_AIL_destroy_wave_synthesizer,-1
+
+endp ; end procedure SR_AIL_destroy_wave_synthesizer
+
+proc SR_AIL_end_sequence public
+
+; [esp +   4] = AIL_sequence *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_AIL_end_sequence,-1
+
+endp ; end procedure SR_AIL_end_sequence
+
+proc SR_AIL_init_sequence public
+
+; [esp + 3*4] = int32_t sequence_num
+; [esp + 2*4] = void *start
+; [esp +   4] = AIL_sequence *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack3 Game_AIL_init_sequence,-1
+
+endp ; end procedure SR_AIL_init_sequence
+
+proc SR_AIL_release_sequence_handle public
+
+; [esp +   4] = AIL_sequence *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_AIL_release_sequence_handle,-1
+
+endp ; end procedure SR_AIL_release_sequence_handle
+
+proc SR_AIL_resume_sequence public
+
+; [esp +   4] = AIL_sequence *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_AIL_resume_sequence,-1
+
+endp ; end procedure SR_AIL_resume_sequence
+
+proc SR_AIL_sequence_status public
+
+; [esp +   4] = AIL_sequence *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1 Game_AIL_sequence_status,-1
+
+endp ; end procedure SR_AIL_sequence_status
+
+proc SR_AIL_set_sequence_loop_count public
+
+; [esp + 2*4] = int32_t loop_count
+; [esp +   4] = AIL_sequence *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack2_void Game_AIL_set_sequence_loop_count,-1
+
+endp ; end procedure SR_AIL_set_sequence_loop_count
+
+proc SR_AIL_set_sequence_volume public
+
+; [esp + 3*4] = int32_t ms
+; [esp + 2*4] = int32_t volume
+; [esp +   4] = AIL_sequence *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack3_void Game_AIL_set_sequence_volume,-1
+
+endp ; end procedure SR_AIL_set_sequence_volume
+
+proc SR_AIL_start_sequence public
+
+; [esp +   4] = AIL_sequence *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_AIL_start_sequence,-1
+
+endp ; end procedure SR_AIL_start_sequence
+
+proc SR_AIL_stop_sequence public
+
+; [esp +   4] = AIL_sequence *S
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_AIL_stop_sequence,-1
+
+endp ; end procedure SR_AIL_stop_sequence
+
+
+proc SR_SMK_ShowMenu public
+
+        Game_Call_Asm_Reg0_void SMK_ShowMenu,-1
+
+endp ; end procedure SR_SMK_ShowMenu
+
+proc SR_SMK_PlayIntro public
+
+        Game_Call_Asm_Reg0_void SMK_PlayIntro,-1
+
+endp ; end procedure SR_SMK_PlayIntro
+
+proc SR_SMK_PlayCredits public
+
+        Game_Call_Asm_Reg0_void SMK_PlayCredits,-1
+
+endp ; end procedure SR_SMK_PlayCredits
+
+
+proc SR_ERROR_Init public
+
+; eax = void *output_func_ptr
+
+        Game_Call_Asm_Reg1_void ERROR_Init,-1
+
+endp ; end procedure SR_ERROR_Init
+
+proc SR_ERROR_ClearStack public
+
+        Game_Call_Asm_Reg0_void ERROR_ClearStack,-1
+
+endp ; end procedure SR_ERROR_ClearStack
+
+proc SR_ERROR_PushError public
+
+; eax = void *error_print_error_ptr
+; edx = char *error_prefix
+; ebx = int error_data_len
+; ecx = char *error_data
+
+        Game_Call_Asm_Reg4 ERROR_PushErrorDOS,-1
+
+endp ; end procedure SR_ERROR_PushError
+
+proc SR_ERROR_PopError public
+
+        Game_Call_Asm_Reg0_void ERROR_PopError,-1
+
+endp ; end procedure SR_ERROR_PopError
+
+proc SR_ERROR_IsStackEmpty public
+
+        Game_Call_Asm_Reg0 ERROR_IsStackEmpty,-1
+
+endp ; end procedure SR_ERROR_IsStackEmpty
+
+proc SR_ERROR_PrintAllErrors public
+
+; eax = int flags
+
+        Game_Call_Asm_Reg1_void ERROR_PrintAllErrors,-1
+
+endp ; end procedure SR_ERROR_PrintAllErrors
+
+
+proc SR_BASEMEM_Init public
+
+        Game_Call_Asm_Reg0 BASEMEM_Init,-1
+
+endp ; end procedure SR_BASEMEM_Init
+
+proc SR_BASEMEM_Exit public
+
+        Game_Call_Asm_Reg0_void BASEMEM_Exit,-1
+
+endp ; end procedure SR_BASEMEM_Exit
+
+proc SR_BASEMEM_GetFreeMemSize public
+
+; eax = unsigned int memory_flags
+
+        Game_Call_Asm_Reg1 BASEMEM_GetFreeMemSize,-1
+
+endp ; end procedure SR_BASEMEM_GetFreeMemSize
+
+proc SR_BASEMEM_Alloc public
+
+; eax = unsigned int size
+; edx = unsigned int memory_flags
+
+        Game_Call_Asm_Reg2 BASEMEM_Alloc,-1
+
+endp ; end procedure SR_BASEMEM_Alloc
+
+proc SR_BASEMEM_Free public
+
+; eax = void *mem_ptr
+
+        Game_Call_Asm_Reg1 BASEMEM_Free,-1
+
+endp ; end procedure SR_BASEMEM_Free
+
+proc SR_BASEMEM_LockRegion public
+
+; eax = void *mem_ptr
+; edx = unsigned int length
+
+        Game_Call_Asm_Reg2 BASEMEM_LockRegion,-1
+
+endp ; end procedure SR_BASEMEM_LockRegion
+
+proc SR_BASEMEM_UnlockRegion public
+
+; eax = void *mem_ptr
+; edx = unsigned int length
+
+        Game_Call_Asm_Reg2 BASEMEM_UnlockRegion,-1
+
+endp ; end procedure SR_BASEMEM_UnlockRegion
+
+proc SR_BASEMEM_FillMemByte public
+
+; eax = void *dst
+; edx = unsigned int length
+; ebx = int c
+
+        Game_Call_Asm_Reg3_void BASEMEM_FillMemByte,-1
+
+endp ; end procedure SR_BASEMEM_FillMemByte
+
+proc SR_BASEMEM_FillMemLong public
+
+; eax = void *dst
+; edx = unsigned int length
+; ebx = unsigned int c
+
+        Game_Call_Asm_Reg3_void BASEMEM_FillMemLong,-1
+
+endp ; end procedure SR_BASEMEM_FillMemLong
+
+proc SR_BASEMEM_CopyMem public
+
+; eax = const void *src
+; edx = void *dst
+; ebx = unsigned int length
+
+        Game_Call_Asm_Reg3_void BASEMEM_CopyMem,-1
+
+endp ; end procedure SR_BASEMEM_CopyMem
+
+proc SR_BASEMEM_AlignMemptr public
+
+; eax = void *mem_ptr
+
+        Game_Call_Asm_Reg1 BASEMEM_AlignMemptr,-1
+
+endp ; end procedure SR_BASEMEM_AlignMemptr
+
+proc SR_BASEMEM_PrintReport public
+
+; eax = FILE *fp
+
+        Game_Call_Asm_Reg1_void BASEMEM_PrintReport,-1
+
+endp ; end procedure SR_BASEMEM_PrintReport
+
+
+proc SR_DOS_Init public
+
+        Game_Call_Asm_Reg0 DOS_Init,-1
+
+endp ; end procedure SR_DOS_Init
+
+proc SR_DOS_Exit public
+
+        Game_Call_Asm_Reg0_void DOS_Exit,-1
+
+endp ; end procedure SR_DOS_Exit
+
+proc SR_DOS_Open public
+
+; eax = const char *path
+; edx = unsigned int mode
+
+        Game_Call_Asm_Reg2 DOS_Open,-1
+
+endp ; end procedure SR_DOS_Open
+
+proc SR_DOS_Close public
+
+; eax = int file_handle
+
+        Game_Call_Asm_Reg1 DOS_Close,-1
+
+endp ; end procedure SR_DOS_Close
+
+proc SR_DOS_Read public
+
+; eax = int file_handle
+; edx = void *buffer
+; ebx = unsigned int length
+
+        Game_Call_Asm_Reg3 DOS_Read,-1
+
+endp ; end procedure SR_DOS_Read
+
+proc SR_DOS_Write public
+
+; eax = int file_handle
+; edx = const void *buffer
+; ebx = unsigned int length
+
+        Game_Call_Asm_Reg3 DOS_Write,-1
+
+endp ; end procedure SR_DOS_Write
+
+proc SR_DOS_Seek public
+
+; eax = int file_handle
+; edx = int origin
+; ebx = int offset
+
+        Game_Call_Asm_Reg3 DOS_Seek,-1
+
+endp ; end procedure SR_DOS_Seek
+
+proc SR_DOS_GetFileLength public
+
+; eax = const char *path
+
+        Game_Call_Asm_Reg1 DOS_GetFileLength,-1
+
+endp ; end procedure SR_DOS_GetFileLength
+
+proc SR_DOS_exists public
+
+; eax = const char *path
+
+        Game_Call_Asm_Reg1 DOS_exists,-1
+
+endp ; end procedure SR_DOS_exists
+
+proc SR_DOS_setcurrentdir public
+
+; eax = const char *path
+
+        Game_Call_Asm_Reg1 DOS_setcurrentdir,-1
+
+endp ; end procedure SR_DOS_setcurrentdir
+
+proc SR_DOS_GetSeekPosition public
+
+; eax = int file_handle
+
+        Game_Call_Asm_Reg1 DOS_GetSeekPosition,-1
+
+endp ; end procedure SR_DOS_GetSeekPosition
+
+
+proc SR_OPM_New public
+
+; eax = unsigned int width
+; edx = unsigned int height
+; ebx = unsigned int bytes_per_pixel
+; ecx = OPM_Struct *pixel_map
+; [esp + 4] = uint8_t *buffer
+;
+; [esp    ] = return address
+
+        Game_Call_Asm_Reg5 OPM_New,-1
+
+endp ; end procedure SR_OPM_New
+
+proc SR_OPM_Del public
+
+; eax = OPM_Struct *pixel_map
+
+        Game_Call_Asm_Reg1_void OPM_Del,-1
+
+endp ; end procedure SR_OPM_Del
+
+proc SR_OPM_SetVirtualClipStart public
+
+; eax = OPM_Struct *virtual_pixel_map
+; edx = int clip_x
+; ebx = int clip_y
+
+        Game_Call_Asm_Reg3_void OPM_SetVirtualClipStart,-1
+
+endp ; end procedure SR_OPM_SetVirtualClipStart
+
+proc SR_OPM_CreateVirtualOPM public
+
+; eax = OPM_Struct *base_pixel_map
+; edx = OPM_Struct *virtual_pixel_map
+; ebx = int virtual_x
+; ecx = int virtual_y
+; [esp +   4] = int virtual_width
+; [esp + 2*4] = int virtual_height
+;
+; [esp    ] = return address
+
+        Game_Call_Asm_Reg6_void OPM_CreateVirtualOPM,-1
+
+endp ; end procedure SR_OPM_CreateVirtualOPM
+
+proc SR_OPM_SetPixel public
+
+; eax = OPM_Struct *pixel_map
+; edx = int x
+; ebx = int y
+; ecx = uint8_t color
+
+        Game_Call_Asm_Reg4_void OPM_SetPixel,-1
+
+endp ; end procedure SR_OPM_SetPixel
+
+proc SR_OPM_HorLine public
+
+; eax = OPM_Struct *pixel_map
+; edx = int x
+; ebx = int y
+; ecx = int length
+; [esp + 4] = uint8_t color
+;
+; [esp    ] = return address
+
+        Game_Call_Asm_Reg5_void OPM_HorLine,-1
+
+endp ; end procedure SR_OPM_HorLine
+
+proc SR_OPM_VerLine public
+
+; eax = OPM_Struct *pixel_map
+; edx = int x
+; ebx = int y
+; ecx = int length
+; [esp + 4] = uint8_t color
+;
+; [esp    ] = return address
+
+        Game_Call_Asm_Reg5_void OPM_VerLine,-1
+
+endp ; end procedure SR_OPM_VerLine
+
+proc SR_OPM_Box public
+
+; eax = OPM_Struct *pixel_map
+; edx = int x
+; ebx = int y
+; ecx = int width
+; [esp +   4] = int height
+; [esp + 2*4] = uint8_t color
+;
+; [esp    ] = return address
+
+        Game_Call_Asm_Reg6_void OPM_Box,-1
+
+endp ; end procedure SR_OPM_Box
+
+proc SR_OPM_FillBox public
+
+; eax = OPM_Struct *pixel_map
+; edx = int x
+; ebx = int y
+; ecx = int width
+; [esp +   4] = int height
+; [esp + 2*4] = uint8_t color
+;
+;[esp    ] = return address
+
+        Game_Call_Asm_Reg6_void OPM_FillBox,-1
+
+endp ; end procedure SR_OPM_FillBox
+
+proc SR_OPM_CopyOPMOPM public
+
+; eax = OPM_Struct *src_pixel_map
+; edx = OPM_Struct *dst_pixel_map
+; ebx = int src_x
+; ecx = int src_y
+; [esp +   4] = int src_width
+; [esp + 2*4] = int src_height
+; [esp + 3*4] = int dst_x
+; [esp + 4*4] = int dst_y
+;
+; [esp    ] = return address
+
+        Game_Call_Asm_Reg8_void OPM_CopyOPMOPM,-1
+
+endp ; end procedure SR_OPM_CopyOPMOPM
+
+
+; 0 params
+proc SR_fcloseall public
+; closes also stdin, stdout, stderr (but shouldn't)
+
+        Game_Call_Asm_Reg0 fcloseall,-1
+
+endp ; end procedure SR_fcloseall
+
+proc SR_WaitAfterVerticalRetrace public
+
+        Game_Call_Asm_Reg0_void Game_WaitAfterVerticalRetrace,-1
+
+endp ; end procedure SR_WaitAfterVerticalRetrace
+
+proc SR_WaitForVerticalRetrace public
+
+        Game_Call_Asm_Reg0_void Game_WaitForVerticalRetrace,-1
+
+endp ; end procedure SR_WaitForVerticalRetrace
+
+; 1 param
+proc SR_asctime public
+
+; eax = const struct tm *timeptr
+
+        Game_Call_Asm_Reg1 asctime,-1
+
+endp ; end procedure SR_asctime
+
+proc SR_chdir public
+
+; eax = const char *path
+
+; errno_val is set inside Game_chdir
+
+        Game_Call_Asm_Reg1 Game_chdir,-1
+
+endp ; end procedure SR_chdir
+
+proc SR_j___close public
+
+; eax = int handle
+
+        tcall SR___close
+
+endp ; end procedure SR_j___close
+
+proc SR___close public
+
+; eax = int handle
+
+        Game_Call_Asm_Reg1 close,-1000
+
+endp ; end procedure SR___close
+
+proc SR_closedir public
+
+; eax = struct dirent *dirp
+
+; errno_val is set inside Game_closedir
+
+        Game_Call_Asm_Reg1 Game_closedir,-1
+
+endp ; end procedure SR_closedir
+
+proc SR_ctime public
+
+; eax = const time_t *timer
+
+        Game_Call_Asm_Reg1 ctime,-1
+
+endp ; end procedure SR_ctime
+
+proc SR__dos_findclose public
+
+; eax = struct find_t *buffer
+
+        Game_Call_Asm_Reg1 Game_dos_findclose,0
+
+endp ; end procedure SR__dos_findclose
+
+proc SR__dos_findnext public
+
+; eax = struct find_t *buffer
+
+; errno_val is set inside Game_dos_findnext
+
+        Game_Call_Asm_Reg1 Game_dos_findnext,-1
+
+endp ; end procedure SR__dos_findnext
+
+proc SR__dos_getvect public
+
+; eax = unsigned intnum
+; return: edx:eax = interrupt vector
+
+        ;Game_Call_Asm_Reg1 Game_dos_getvect,-1
+        call Game_dos_getvect eax
+        mov eax, tmp0
+        mov edx, 0
+        Game_Call_Asm_Return -1, 0
+
+endp ; end procedure SR__dos_getvect
+
+proc SR_exit public
+
+; eax = int status
+
+        ;jmp Game_ExitMain_Asm
+        Game_Call_Asm_Reg1_void Game_ExitMain_Asm,-1
+
+endp ; end procedure SR_exit
+
+proc SR_fclose public
+
+; eax = FILE *fp
+
+        Game_Call_Asm_Reg1 fclose,-1000
+
+endp ; end procedure SR_fclose
+
+proc SR_filelength public
+
+; eax = int handle
+
+        Game_Call_Asm_Reg1 Game_filelength,-1000
+
+endp ; end procedure SR_filelength
+
+proc SR__nfree public
+
+; eax = void __near *ptr
+
+        Game_Call_Asm_Reg1_void free,-1
+
+endp ; end procedure SR__nfree
+
+proc SR_ftime public
+
+; eax = struct timeb *timeptr
+
+        Game_Call_Asm_Reg1 ftime,-1
+
+endp ; end procedure SR_ftime
+
+proc SR_getenv public
+
+; eax = const char *name
+
+        Game_Call_Asm_Reg1 getenv,-1
+
+endp ; end procedure SR_getenv
+
+proc SR_isatty public
+
+; eax = int handle
+
+        Game_Call_Asm_Reg1 isatty,-1000
+
+endp ; end procedure SR_isatty
+
+proc SR_localtime public
+
+; eax = const time_t *timer
+
+        Game_Call_Asm_Reg1 localtime,-1
+
+endp ; end procedure SR_localtime
+
+proc SR__nmalloc public
+
+; eax = size_t size
+
+        Game_Call_Asm_Reg1 malloc,-1
+
+endp ; end procedure SR__nmalloc
+
+proc SR_opendir public
+
+; eax = const char *dirname
+
+; errno_val is set inside Game_opendir
+
+        Game_Call_Asm_Reg1 Game_opendir,-1
+
+endp ; end procedure SR_opendir
+
+proc SR__setjmp public
+
+; eax = jmp_buf env
+
+        ;mov [eax], ebx
+        ;mov [eax + 1*4], ecx
+        ;mov [eax + 2*4], edx
+        ;mov [eax + 3*4], esi
+        ;mov [eax + 4*4], edi
+        ;mov [eax + 5*4], ebp
+        store ebx, eax, 1
+        add tmpadr, eax, 1*4
+        store ecx, tmpadr, 1
+        add tmpadr, eax, 2*4
+        store edx, tmpadr, 1
+        add tmpadr, eax, 3*4
+        store esi, tmpadr, 1
+        add tmpadr, eax, 4*4
+        store edi, tmpadr, 1
+        add tmpadr, eax, 5*4
+        store ebp, tmpadr, 1
+
+        ;pop dword [eax + 6*4]
+        POP tmp1
+        add tmpadr, eax, 6*4
+        store tmp1, tmpadr, 1
+
+        ;mov [eax + 7*4], esp
+        add tmpadr, eax, 7*4
+        store esp, tmpadr, 1
+
+        ;push dword [eax + 6*4]
+        PUSH tmp1
+
+        ;xor eax, eax
+        ;retn
+        mov eax, 0
+        Game_Call_Asm_Return -1, 0
+
+endp ; end procedure SR__setjmp
+
+proc SR_strlen public
+
+; eax = const char *s
+
+        Game_Call_Asm_Reg1 strlen,-1
+
+endp ; end procedure SR_strlen
+
+proc SR_tell public
+
+; eax = int handle
+
+        Game_Call_Asm_Reg1 Game_tell,-1000
+
+endp ; end procedure SR_tell
+
+proc SR_time public
+
+; eax = time_t *tloc
+
+        Game_Call_Asm_Reg1 time,-1
+
+endp ; end procedure SR_time
+
+proc SR_j_unlink public
+
+        tcall SR_unlink
+
+endp ; end procedure SR_j_unlink
+
+proc SR_unlink public
+
+; eax = const char *path
+
+; errno_val is set inside Game_unlink
+
+        Game_Call_Asm_Reg1 Game_unlink,-1
+
+endp ; end procedure SR_unlink
+
+proc SR_WaitTimerTicks public
+
+; eax = int ticks
+
+        Game_Call_Asm_Reg1_void Game_WaitTimerTicks,-1
+
+endp ; end procedure SR_WaitTimerTicks
+
+proc SR_save_screenshot public
+
+; eax = const char *filename
+
+        Game_Call_Asm_Reg1_void Game_save_screenshot,-1
+
+endp ; end procedure SR_save_screenshot
+
+; 2 params
+proc SR_fopen public
+
+; eax = const char *filename
+; edx = const char *mode
+
+; errno_val is set inside Game_fopen
+
+        Game_Call_Asm_Reg2 Game_fopen,-1
+
+endp ; end procedure SR_fopen
+
+proc SR_fputs public
+
+;	return value:
+;		0 => 1
+;		albion expects positive value (on success)
+;		fputs returns non-negative value
+
+; eax = const char *buf
+; edx = FILE *fp
+
+;	Game_Call_Asm_Reg2 fputs,-1000
+        call fputs eax, edx
+        cmovz tmp0, eax, 1, eax
+        Game_Call_Asm_Return -1000, 0
+
+endp ; end procedure SR_fputs
+
+proc SR_getcwd public
+
+; eax = char *buffer
+; edx = size_t size
+
+; errno_val is set inside Game_getcwd
+
+        Game_Call_Asm_Reg2 Game_getcwd,-1
+
+endp ; end procedure SR_getcwd
+
+proc SR_longjmp public
+
+; eax = jmp_buf env
+; edx = int return_value
+
+        ;mov esp, [eax + 7*4]
+        add tmpadr, eax, 7*4
+        load esp, tmpadr, 1
+
+        ;push dword [eax + 6*4]
+        add tmpadr, eax, 6*4
+        load tmp1, tmpadr, 1
+        PUSH tmp1
+
+        ;or edx, edx
+        ;jnz SR_longjmp_1
+        ;inc edx
+    ;SR_longjmp_1:
+        ;push edx
+        cmovz edx, tmp2, 1, edx
+
+        ;mov ebx, [eax]
+        ;mov ecx, [eax + 1*4]
+        ;mov edx, [eax + 2*4]
+        ;mov esi, [eax + 3*4]
+        ;mov edi, [eax + 4*4]
+        ;mov ebp, [eax + 5*4]
+        load ebx, eax, 1
+        add tmpadr, eax, 1*4
+        load ecx, tmpadr, 1
+        add tmpadr, eax, 2*4
+        load edx, tmpadr, 1
+        add tmpadr, eax, 3*4
+        load esi, tmpadr, 1
+        add tmpadr, eax, 4*4
+        load edi, tmpadr, 1
+        add tmpadr, eax, 5*4
+        load ebp, tmpadr, 1
+
+        ;pop eax
+        ;retn
+        mov eax, tmp2
+        Game_Call_Asm_Return -1, 0
+
+endp ; end procedure SR_longjmp
+
+proc SR_outp public
+
+; eax = int port
+; edx = int value
+
+        Game_Call_Asm_Reg2 Game_outp,-1
+
+endp ; end procedure SR_outp
+
+proc SR_rename public
+
+; eax = const char *old
+; edx = const char *new
+
+; errno_val is set inside Game_rename
+
+        Game_Call_Asm_Reg2 Game_rename,-1
+
+endp ; end procedure SR_rename
+
+proc SR_setbuf public
+
+; eax = FILE *fp
+; edx = char *buf
+
+        Game_Call_Asm_Reg2 Game_setbuf,-1000
+
+endp ; end procedure SR_setbuf
+
+proc SR_strchr public
+
+; eax = const char *s
+; edx = int c
+
+        Game_Call_Asm_Reg2 strchr,-1
+
+endp ; end procedure SR_strchr
+
+proc SR_strcmp public
+
+; eax = const char *s1
+; edx = const char *s2
+
+        Game_Call_Asm_Reg2 strcmp,-1
+
+endp ; end procedure SR_strcmp
+
+proc SR_strcpy public
+
+; eax = char *dst
+; edx = const char *src
+
+        Game_Call_Asm_Reg2 strcpy,-1
+
+endp ; end procedure SR_strcpy
+
+proc SR_strcspn public
+
+; eax = const char *str
+; edx = const char *charset
+
+        Game_Call_Asm_Reg2 strcspn,-1
+
+endp ; end procedure SR_strcspn
+
+proc SR_strspn public
+
+; eax = const char *str
+; edx = const char *charset
+
+        Game_Call_Asm_Reg2 strspn,-1
+
+endp ; end procedure SR_strspn
+
+; 2/3 params
+proc SR__dos_setvect public
+
+; eax = unsigned intnum
+; ecx:ebx = void (__interrupt __far *handler)()
+
+        call Game_dos_setvect eax, ebx, ecx
+        Game_Call_Asm_Return -1, 0
+
+endp ; end procedure SR__dos_setvect
+
+; 3 params
+proc SR__dos_findfirst public
+
+; eax = const char *path
+; edx = unsigned attributes
+; ebx = struct find_t *buffer
+
+; errno_val is set inside Game_fopen
+
+        Game_Call_Asm_Reg3 Game_dos_findfirst,-1
+
+endp ; end procedure SR__dos_findfirst
+
+proc SR_fgets public
+
+; eax = char *buf
+; edx = int n
+; ebx = FILE *fp
+
+        Game_Call_Asm_Reg3 fgets,-1000
+
+endp ; end procedure SR_fgets
+
+proc SR_lseek public
+
+; eax = int handle
+; edx = long int offset
+; ebx = int origin
+
+        Game_Call_Asm_Reg3 lseek,-1000
+
+endp ; end procedure SR_lseek
+
+proc SR_memcpy public
+
+; eax = void *dst
+; edx = const void *src
+; ebx = size_t length
+
+        Game_Call_Asm_Reg3 memcpy,-1
+
+endp ; end procedure SR_memcpy
+
+proc SR_memmove public
+
+; eax = void *dst
+; edx = const void *src
+; ebx = size_t length
+
+        Game_Call_Asm_Reg3 memmove,-1
+
+endp ; end procedure SR_memmove
+
+proc SR_memset public
+
+; eax = void *dst
+; edx = int c
+; ebx = size_t length
+
+        Game_Call_Asm_Reg3 memset,-1
+
+endp ; end procedure SR_memset
+
+proc SR_read public
+
+; eax = int handle
+; edx = void *buffer
+; ebx = unsigned len
+
+        Game_Call_Asm_Reg3 read,-1000
+
+endp ; end procedure SR_read
+
+proc SR_strncmp public
+
+; eax = const char *s1
+; edx = const char *s2
+; ebx = size_t n
+
+        Game_Call_Asm_Reg3 strncmp,-1
+
+endp ; end procedure SR_strncmp
+
+proc SR_strncpy public
+
+; eax = char *dst
+; edx = const char *src
+; ebx = size_t n
+
+        Game_Call_Asm_Reg3 strncpy,-1
+
+endp ; end procedure SR_strncpy
+
+proc SR_strnicmp public
+
+; eax = const char *s1
+; edx = const char *s2
+; ebx = size_t len
+
+        Game_Call_Asm_Reg3 strncasecmp,-1
+
+endp ; end procedure SR_strnicmp
+
+proc SR_write public
+
+; eax = int handle
+; edx = void *buffer
+; ebx = unsigned len
+
+        Game_Call_Asm_Reg3 write,-1
+
+endp ; end procedure SR_write
+
+; 4 params
+proc SR__vbprintf public
+
+; eax = char *buf
+; edx = size_t bufsize
+; ebx = const char *format
+; ecx = va_list arg
+
+        ;mov ecx, [ecx]
+        load ecx, ecx, 1
+        Game_Call_Asm_Reg4 CLIB_vsnprintf,-1
+
+endp ; end procedure SR__vbprintf
+
+proc SR_int386x public
+
+; eax = int inter_no
+; edx = const union REGS *in_regs
+; ebx = union REGS *out_regs
+; ecx = struct SREGS *seg regs
+
+        Game_Call_Asm_Reg4 Game_int386x,-1
+
+endp ; end procedure SR_int386x
+
+; 5 params
+proc SR__splitpath public
+
+; eax = const char *path
+; edx = char *drive
+; ebx = char *dir
+; ecx = char *fname
+; [esp + 4] = char *ext
+;
+; [esp    ] = return address
+
+        Game_Call_Asm_Reg5_void Game_splitpath,-1
+
+endp ; end procedure SR__splitpath

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2017 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -103,7 +103,7 @@ http://xoomer.alice.it/acantato/dev/wildcard/wildmatch.html
 
 */
 
-int Game_access(const char *path, int mode)
+int32_t Game_access(const char *path, int32_t mode)
 {
     char temp_str[MAX_PATH];
     int ret;
@@ -141,7 +141,7 @@ int Game_access(const char *path, int mode)
     }
 }
 
-int Game_chdir(const char *path)
+int32_t Game_chdir(const char *path)
 {
     file_entry *new_dir;
 
@@ -162,7 +162,7 @@ int Game_chdir(const char *path)
     }
 }
 
-char *Game_getcwd(char *buf, size_t size)
+char *Game_getcwd(char *buf, int32_t size)
 {
     file_entry *cur_dir;
     int len, addbackslash;
@@ -188,7 +188,7 @@ char *Game_getcwd(char *buf, size_t size)
 
     if (buf != NULL)
     {
-        if (size < (size_t) len + addbackslash + 1)
+        if ((uint32_t)size < (size_t) len + addbackslash + 1)
         {
             Game_Set_errno_error(ERANGE);
             return NULL;
@@ -249,7 +249,7 @@ FILE *Game_fopen(const char *filename, const char *mode)
     return ret;
 }
 
-int Game_open(const char *pathname, int flags, mode_t mode)
+int32_t Game_open(const char *pathname, int32_t flags, uint32_t mode)
 {
     char temp_str[MAX_PATH];
     int ret;
@@ -277,7 +277,7 @@ int Game_open(const char *pathname, int flags, mode_t mode)
     return ret;
 }
 
-int Game_mkdir(const char *pathname)
+int32_t Game_mkdir(const char *pathname)
 {
     char temp_str[MAX_PATH];
     int ret;
@@ -309,7 +309,7 @@ int Game_mkdir(const char *pathname)
     return ret;
 }
 
-int Game_unlink(const char *pathname)
+int32_t Game_unlink(const char *pathname)
 {
     char temp_str[MAX_PATH];
     int ret;
@@ -337,7 +337,7 @@ int Game_unlink(const char *pathname)
     return ret;
 }
 
-int Game_rename(const char *oldpath, const char *newpath)
+int32_t Game_rename(const char *oldpath, const char *newpath)
 {
     char temp_str_old[MAX_PATH], temp_str_new[MAX_PATH];
     int ret;
@@ -443,7 +443,7 @@ struct watcom_dirent *Game_opendir(const char *dirname)
             return NULL;
         }
 
-        memset(ret, 0, sizeof(struct watcom_dirent));
+        memset((void *)ret, 0, sizeof(struct watcom_dirent));
 
         ret->u.v.realdir = realdir;
         ret->u.v.isfirst = 1;
@@ -568,7 +568,7 @@ struct watcom_dirent *Game_opendir(const char *dirname)
             return NULL;
         }
 
-        memset(ret, 0, sizeof(struct watcom_dirent));
+        memset((void *)ret, 0, sizeof(struct watcom_dirent));
 
         ret->u.v.realdir = realdir;
         ret->u.v.isfirst = 0;
@@ -612,7 +612,7 @@ struct watcom_dirent *Game_readdir(struct watcom_dirent *dirp)
     struct stat statbuf;
     struct tm *tmbuf;
 
-#define REALDIR ((file_entry *) (dirp->u.v.realdir))
+#define REALDIR ((file_entry *)(void *) (dirp->u.v.realdir))
 
     if (dirp == NULL) return NULL;
 
@@ -703,7 +703,7 @@ struct watcom_dirent *Game_readdir(struct watcom_dirent *dirp)
 #undef REALDIR
 }
 
-int Game_closedir(struct watcom_dirent *dirp)
+int32_t Game_closedir(struct watcom_dirent *dirp)
 {
     if (dirp == NULL) return 0;
 

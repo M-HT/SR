@@ -1515,7 +1515,7 @@ void Game_ProcessKEvents(void)
                     scancode |= 0x80;
                 }
 
-                if (Game_InterruptTable[9] != NULL)
+                if (Game_InterruptTable[9] != 0)
                 {
                     keyboard_keys[scancode & 0x7f] = (cevent->key.state == SDL_PRESSED)?1:0;
                 }

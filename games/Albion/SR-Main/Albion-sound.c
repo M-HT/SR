@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -31,9 +31,24 @@
 #include "Albion-AIL.h"
 
 
+typedef struct _AIL_sample
+{
+    int channel;
+    Game_sample *sample;
+    int _stereo, _16bit, _signed;
+    void *start;
+    uint32_t len;
+    int32_t playback_rate;  /* Hz */
+    int32_t volume;         /* 0-127 */
+    int32_t pan;            /* (0=L ... 127=R) */
+    int32_t loop_count;
+    Mix_Chunk chunk;
+} AIL_sample;
+
+
 extern int32_t AIL_preference[];
 
-AIL_sample *Game_AIL_allocate_sample_handle(void *dig)
+struct _AIL_sample *Game_AIL_allocate_sample_handle(void *dig)
 {
     AIL_sample *ret;
 
@@ -68,7 +83,7 @@ AIL_sample *Game_AIL_allocate_sample_handle(void *dig)
 #undef ORIG_SAMPLE_SIZE
 }
 
-void Game_AIL_release_sample_handle(AIL_sample *S)
+void Game_AIL_release_sample_handle(struct _AIL_sample *S)
 {
     Game_sample *sample;
 
@@ -97,7 +112,7 @@ void Game_AIL_release_sample_handle(AIL_sample *S)
     free(S);
 }
 
-void Game_AIL_init_sample(AIL_sample *S)
+void Game_AIL_init_sample(struct _AIL_sample *S)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_init_sample: 0x%" PRIxPTR "\n", (uintptr_t) S);
@@ -115,7 +130,7 @@ void Game_AIL_init_sample(AIL_sample *S)
 
 }
 
-void Game_AIL_set_sample_address(AIL_sample *S, void *start, uint32_t len)
+void Game_AIL_set_sample_address(struct _AIL_sample *S, void *start, uint32_t len)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_set_sample_address: 0x%" PRIxPTR ", 0x%" PRIxPTR ", %i\n", (uintptr_t) S, (uintptr_t) start, len);
@@ -125,7 +140,7 @@ void Game_AIL_set_sample_address(AIL_sample *S, void *start, uint32_t len)
     S->len = len;
 }
 
-void Game_AIL_set_sample_type(AIL_sample *S, int32_t format, uint32_t flags)
+void Game_AIL_set_sample_type(struct _AIL_sample *S, int32_t format, uint32_t flags)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_set_sample_type: 0x%" PRIxPTR ", 0x%x, %i\n", (uintptr_t) S, format, flags);
@@ -504,7 +519,7 @@ static void Interpolated_Resample(int _stereo, int _16bit, int _signed, uint32_t
 }
 #endif
 
-void Game_AIL_start_sample(AIL_sample *S)
+void Game_AIL_start_sample(struct _AIL_sample *S)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_start_sample: 0x%" PRIxPTR "\n", (uintptr_t) S);
@@ -818,7 +833,7 @@ void Game_AIL_start_sample(AIL_sample *S)
 
 }
 
-void Game_AIL_end_sample(AIL_sample *S)
+void Game_AIL_end_sample(struct _AIL_sample *S)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_end_sample: 0x%" PRIxPTR "\n", (uintptr_t) S);
@@ -827,7 +842,7 @@ void Game_AIL_end_sample(AIL_sample *S)
     Mix_HaltChannel(S->channel);
 }
 
-void Game_AIL_set_sample_playback_rate(AIL_sample *S, int32_t playback_rate)
+void Game_AIL_set_sample_playback_rate(struct _AIL_sample *S, int32_t playback_rate)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_set_sample_playback_rate: 0x%" PRIxPTR ", %i\n", (uintptr_t) S, playback_rate);
@@ -836,7 +851,7 @@ void Game_AIL_set_sample_playback_rate(AIL_sample *S, int32_t playback_rate)
     S->playback_rate = playback_rate;
 }
 
-void Game_AIL_set_sample_volume(AIL_sample *S, int32_t volume)
+void Game_AIL_set_sample_volume(struct _AIL_sample *S, int32_t volume)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_set_sample_volume: 0x%" PRIxPTR ", %i\n", (uintptr_t) S, volume);
@@ -845,7 +860,7 @@ void Game_AIL_set_sample_volume(AIL_sample *S, int32_t volume)
     S->volume = volume; /* 0-127 */
 }
 
-void Game_AIL_set_sample_pan(AIL_sample *S, int32_t pan)
+void Game_AIL_set_sample_pan(struct _AIL_sample *S, int32_t pan)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_set_sample_pan: 0x%" PRIxPTR ", %i\n", (uintptr_t) S, pan);
@@ -854,7 +869,7 @@ void Game_AIL_set_sample_pan(AIL_sample *S, int32_t pan)
     S->pan = pan; /* 0-127 */
 }
 
-void Game_AIL_set_sample_loop_count(AIL_sample *S, int32_t loop_count)
+void Game_AIL_set_sample_loop_count(struct _AIL_sample *S, int32_t loop_count)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_set_sample_loop_count: 0x%" PRIxPTR ", %i\n", (uintptr_t) S, loop_count);
@@ -863,7 +878,7 @@ void Game_AIL_set_sample_loop_count(AIL_sample *S, int32_t loop_count)
     S->loop_count = loop_count;
 }
 
-uint32_t Game_AIL_sample_status(AIL_sample *S)
+uint32_t Game_AIL_sample_status(struct _AIL_sample *S)
 {
     uint32_t ret;
 

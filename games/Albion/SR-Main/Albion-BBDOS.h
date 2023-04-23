@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2019 Roman Pauer
+ *  Copyright (C) 2018-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -40,17 +40,17 @@
 extern "C" {
 #endif
 
-extern int DOS_Init(void);
+extern int32_t DOS_Init(void);
 extern void DOS_Exit(void);
-extern int DOS_Open(const char *path, unsigned int mode);
-extern int DOS_Close(int file_handle);
-extern int DOS_Read(int file_handle, void *buffer, unsigned int length);
-extern int DOS_Write(int file_handle, const void *buffer, unsigned int length);
-extern int DOS_Seek(int file_handle, int origin, int offset);
-extern int DOS_GetFileLength(const char *path);
-extern int DOS_exists(const char *path);
-extern int DOS_setcurrentdir(const char *path);
-extern int DOS_GetSeekPosition(int file_handle);
+extern int32_t DOS_Open(const char *path, uint32_t mode);
+extern int32_t DOS_Close(int32_t file_handle);
+extern int32_t DOS_Read(int32_t file_handle, void *buffer, uint32_t length);
+extern int32_t DOS_Write(int32_t file_handle, const void *buffer, uint32_t length);
+extern int32_t DOS_Seek(int32_t file_handle, int32_t origin, int32_t offset);
+extern int32_t DOS_GetFileLength(const char *path);
+extern int32_t DOS_exists(const char *path);
+extern int32_t DOS_setcurrentdir(const char *path);
+extern int32_t DOS_GetSeekPosition(int32_t file_handle);
 
 
 #ifdef __cplusplus

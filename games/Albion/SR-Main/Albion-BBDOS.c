@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2019 Roman Pauer
+ *  Copyright (C) 2018-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -65,9 +65,9 @@
 
 
 typedef struct {
-    const char *text;
-    const char *filename;
-    int data;
+    PTR32(const char) text;
+    PTR32(const char) filename;
+    int32_t data;
     int16_t oserror;
 } DOS_ErrorStruct;
 
@@ -93,7 +93,7 @@ static char DOS_filenames_history[HISTORY_SIZE][128];
 static void DOS_LocalPrintError(char *buffer, const uint8_t *data);
 
 
-int DOS_Init(void)
+int32_t DOS_Init(void)
 {
     int file_handle;
 
@@ -144,7 +144,7 @@ void DOS_Exit(void)
     }
 }
 
-int DOS_Open(const char *path, unsigned int mode)
+int32_t DOS_Open(const char *path, uint32_t mode)
 {
     int file_handle, open_flags;
     char temp_str[MAX_PATH];
@@ -257,7 +257,7 @@ int DOS_Open(const char *path, unsigned int mode)
     return (int16_t) file_handle;
 }
 
-int DOS_Close(int file_handle)
+int32_t DOS_Close(int32_t file_handle)
 {
     file_handle = (int16_t) file_handle;
 
@@ -280,7 +280,7 @@ int DOS_Close(int file_handle)
     return 1;
 }
 
-int DOS_Read(int file_handle, void *buffer, unsigned int length)
+int32_t DOS_Read(int32_t file_handle, void *buffer, uint32_t length)
 {
     int retval;
 
@@ -302,7 +302,7 @@ int DOS_Read(int file_handle, void *buffer, unsigned int length)
 
     retval = read(DOS_file_entries[file_handle].fd, buffer, length);
 
-    if (retval != length)
+    if (retval != (int)length)
     {
         DOS_ErrorStruct data;
 
@@ -324,7 +324,7 @@ int DOS_Read(int file_handle, void *buffer, unsigned int length)
     return retval;
 }
 
-int DOS_Write(int file_handle, const void *buffer, unsigned int length)
+int32_t DOS_Write(int32_t file_handle, const void *buffer, uint32_t length)
 {
     int retval;
 
@@ -375,7 +375,7 @@ int DOS_Write(int file_handle, const void *buffer, unsigned int length)
     return retval;
 }
 
-int DOS_Seek(int file_handle, int origin, int offset)
+int32_t DOS_Seek(int32_t file_handle, int32_t origin, int32_t offset)
 {
 
     file_handle = (int16_t) file_handle;
@@ -565,7 +565,7 @@ static int DOS_WriteFile(const char *path, const void *buffer, unsigned int leng
 }
 #endif
 
-int DOS_GetFileLength(const char *path)
+int32_t DOS_GetFileLength(const char *path)
 {
     int file_handle;
     off_t origpos, endpos;
@@ -617,7 +617,7 @@ int DOS_GetFileLength(const char *path)
     return endpos;
 }
 
-int DOS_exists(const char *path)
+int32_t DOS_exists(const char *path)
 {
     char temp_str[MAX_PATH];
     int fd;
@@ -720,7 +720,7 @@ static const char *DOS_getcurrentdir(void)
 }
 #endif
 
-int DOS_setcurrentdir(const char *path)
+int32_t DOS_setcurrentdir(const char *path)
 {
     file_entry *new_dir;
 
@@ -802,7 +802,7 @@ static int DOS_eof(int file_handle)
 }
 #endif
 
-int DOS_GetSeekPosition(int file_handle)
+int32_t DOS_GetSeekPosition(int32_t file_handle)
 {
     file_handle = (int16_t) file_handle;
 
@@ -826,7 +826,7 @@ int DOS_GetSeekPosition(int file_handle)
 static void DOS_LocalPrintError(char *buffer, const uint8_t *data)
 {
 #define DATA (((DOS_ErrorStruct *)data))
-    sprintf(buffer, " %s - FILENAME: %s - DATA: %ld - OSERROR: %d", DATA->text, DATA->filename, (long int)DATA->data, (int)DATA->oserror);
+    sprintf(buffer, " %s - FILENAME: %s - DATA: %ld - OSERROR: %d", (const char *)DATA->text, (const char *)DATA->filename, (long int)DATA->data, (int)DATA->oserror);
 #undef DATA
 }
 

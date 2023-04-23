@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2019 Roman Pauer
+ *  Copyright (C) 2018-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -41,16 +41,16 @@
 extern "C" {
 #endif
 
-int BASEMEM_Init(void);
+int32_t BASEMEM_Init(void);
 void BASEMEM_Exit(void);
-unsigned int BASEMEM_GetFreeMemSize(unsigned int memory_flags);
-void *BASEMEM_Alloc(unsigned int size, unsigned int memory_flags);
-int BASEMEM_Free(void *mem_ptr);
-int BASEMEM_LockRegion(void *mem_ptr, unsigned int length);
-int BASEMEM_UnlockRegion(void *mem_ptr, unsigned int length);
-void BASEMEM_FillMemByte(void *dst, unsigned int length, int c);
-void BASEMEM_FillMemLong(void *dst, unsigned int length, unsigned int c);
-void BASEMEM_CopyMem(const void *src, void *dst, unsigned int length);
+uint32_t BASEMEM_GetFreeMemSize(uint32_t memory_flags);
+void *BASEMEM_Alloc(uint32_t size, uint32_t memory_flags);
+int32_t BASEMEM_Free(void *mem_ptr);
+int32_t BASEMEM_LockRegion(void *mem_ptr, uint32_t length);
+int32_t BASEMEM_UnlockRegion(void *mem_ptr, uint32_t length);
+void BASEMEM_FillMemByte(void *dst, uint32_t length, int32_t c);
+void BASEMEM_FillMemLong(void *dst, uint32_t length, uint32_t c);
+void BASEMEM_CopyMem(const void *src, void *dst, uint32_t length);
 void *BASEMEM_AlignMemptr(void *mem_ptr);
 void BASEMEM_PrintReport(FILE *fp);
 

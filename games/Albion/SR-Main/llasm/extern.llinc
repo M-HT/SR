@@ -1,0 +1,224 @@
+;;
+;;  Copyright (C) 2016-2023 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+extern Game_ScreenWindow
+extern Game_Sound
+extern Game_Music
+extern Game_VSyncTick
+extern Game_stdin
+extern Game_stdout
+extern Game_stderr
+extern self_mod_width
+
+funcv Game_FloatProcSin *ValuePtr
+funcv Game_FloatProcSin2 *ValuePtr
+funcv Game_FloatProcSin3 *ValuePtr
+funcv Game_FloatProcSin4 *ValuePtr
+funcv Game_FloatProcCos *ValuePtr
+funcv Game_FloatProcCos2 *ValuePtr
+funcv Game_FloatProcSqrt *ValuePtr
+funcv Game_FloatProcSqrt2 *ValuePtr
+funcv Game_FloatProcSqrt3 *ValuePtr
+funcv Game_FloatProcSqrt4 *ValuePtr
+funcv Game_FloatProcSqrt5 *ValuePtr
+funcv Game_FloatProcSqrt6 *ValuePtr
+funcv Game_FloatProcSqrt7 *ValuePtr
+funcv Game_FloatProcSqrt8 *ValuePtr
+funcv Game_FloatProcCosSin *ValuePtr
+funcv Game_FloatProcAtan *ValuePtr
+funcv Game_FloatProcSinCos *ValuePtr
+
+proc draw_3dscene_proc external
+extern Game_UseEnhanced3DEngine
+extern Game_ScreenshotEnabled
+extern Game_ScreenshotAutomaticFilename
+
+proc SR_Sync external
+funcv SR_CheckTimer
+
+; null procedures
+proc SR___CHK external
+proc SR___GETDS external
+proc SR_nosound external
+proc SR_sound external
+proc SR__harderr external
+; stack params
+proc SR_fprintf external
+proc SR_printf external
+proc SR__bprintf external
+proc SR_sprintf external
+proc SR_WaitVerticalRetraceTicks external
+proc SR_open external
+
+proc SR_AIL_mem_use_malloc external
+proc SR_AIL_mem_use_free external
+proc SR_AIL_startup external
+proc SR_AIL_register_timer external
+proc SR_AIL_set_timer_frequency external
+proc SR_AIL_start_timer external
+proc SR_AIL_stop_timer external
+proc SR_AIL_release_timer_handle external
+proc SR_AIL_shutdown external
+proc SR_AIL_set_GTL_filename_prefix external
+proc SR_AIL_install_MDI_INI external
+proc SR_AIL_set_preference external
+proc SR_AIL_install_DIG_INI external
+proc SR_AIL_uninstall_DIG_driver external
+proc SR_AIL_uninstall_MDI_driver external
+
+proc SR_AIL_allocate_sample_handle external
+proc SR_AIL_end_sample external
+proc SR_AIL_init_sample external
+proc SR_AIL_release_sample_handle external
+proc SR_AIL_sample_status external
+proc SR_AIL_set_digital_master_volume external
+proc SR_AIL_set_sample_address external
+proc SR_AIL_set_sample_loop_count external
+proc SR_AIL_set_sample_pan external
+proc SR_AIL_set_sample_playback_rate external
+proc SR_AIL_set_sample_type external
+proc SR_AIL_set_sample_volume external
+proc SR_AIL_start_sample external
+
+proc SR_AIL_allocate_sequence_handle external
+proc SR_AIL_create_wave_synthesizer external
+proc SR_AIL_destroy_wave_synthesizer external
+proc SR_AIL_end_sequence external
+proc SR_AIL_init_sequence external
+proc SR_AIL_release_sequence_handle external
+proc SR_AIL_resume_sequence external
+proc SR_AIL_sequence_status external
+proc SR_AIL_set_sequence_loop_count external
+proc SR_AIL_set_sequence_volume external
+proc SR_AIL_start_sequence external
+proc SR_AIL_stop_sequence external
+
+proc SR_SMK_ShowMenu external
+proc SR_SMK_PlayIntro external
+proc SR_SMK_PlayCredits external
+
+proc SR_ERROR_Init external
+proc SR_ERROR_ClearStack external
+proc SR_ERROR_PushError external
+proc SR_ERROR_PopError external
+proc SR_ERROR_IsStackEmpty external
+proc SR_ERROR_PrintAllErrors external
+
+proc SR_BASEMEM_Init external
+proc SR_BASEMEM_Exit external
+proc SR_BASEMEM_GetFreeMemSize external
+proc SR_BASEMEM_Alloc external
+proc SR_BASEMEM_Free external
+proc SR_BASEMEM_LockRegion external
+proc SR_BASEMEM_UnlockRegion external
+proc SR_BASEMEM_FillMemByte external
+proc SR_BASEMEM_FillMemLong external
+proc SR_BASEMEM_CopyMem external
+proc SR_BASEMEM_AlignMemptr external
+proc SR_BASEMEM_PrintReport external
+
+proc SR_DOS_Init external
+proc SR_DOS_Exit external
+proc SR_DOS_Open external
+proc SR_DOS_Close external
+proc SR_DOS_Read external
+proc SR_DOS_Write external
+proc SR_DOS_Seek external
+proc SR_DOS_GetFileLength external
+proc SR_DOS_exists external
+proc SR_DOS_setcurrentdir external
+proc SR_DOS_GetSeekPosition external
+
+proc SR_OPM_New external
+proc SR_OPM_Del external
+proc SR_OPM_SetVirtualClipStart external
+proc SR_OPM_CreateVirtualOPM external
+proc SR_OPM_SetPixel external
+proc SR_OPM_HorLine external
+proc SR_OPM_VerLine external
+proc SR_OPM_Box external
+proc SR_OPM_FillBox external
+proc SR_OPM_CopyOPMOPM external
+; 0 params
+proc SR_fcloseall external
+proc SR_WaitAfterVerticalRetrace external
+proc SR_WaitForVerticalRetrace external
+; 1 param
+proc SR_asctime external
+proc SR_chdir external
+proc SR___close external
+proc SR_j___close external
+proc SR_closedir external
+proc SR_ctime external
+proc SR__dos_findclose external
+proc SR__dos_findnext external
+proc SR__dos_getvect external
+proc SR_exit external
+proc SR_fclose external
+proc SR_filelength external
+proc SR__nfree external
+proc SR_ftime external
+proc SR_getenv external
+proc SR_isatty external
+proc SR_localtime external
+proc SR__nmalloc external
+proc SR_opendir external
+proc SR__setjmp external
+proc SR_strlen external
+proc SR_tell external
+proc SR_time external
+proc SR_unlink external
+proc SR_j_unlink external
+proc SR_WaitTimerTicks external
+proc SR_save_screenshot external
+; 2 params
+proc SR_fopen external
+proc SR_fputs external
+proc SR_getcwd external
+proc SR_longjmp external
+proc SR_outp external
+proc SR_rename external
+proc SR_setbuf external
+proc SR_strchr external
+proc SR_strcmp external
+proc SR_strcpy external
+proc SR_strcspn external
+proc SR_strspn external
+; 2/3 params
+proc SR__dos_setvect external
+; 3 params
+proc SR__dos_findfirst external
+proc SR_fgets external
+proc SR_lseek external
+proc SR_memcpy external
+proc SR_memmove external
+proc SR_memset external
+proc SR_read external
+proc SR_strncmp external
+proc SR_strncpy external
+proc SR_strnicmp external
+proc SR_write external
+; 4 params
+proc SR_int386x external
+proc SR__vbprintf external
+; 5 params
+proc SR__splitpath external

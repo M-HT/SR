@@ -46,8 +46,8 @@
 EXTERNAL_VARIABLE uint32_t X86_InterruptFlag;		/* interrupt flag indicator */
 
 EXTERNAL_VARIABLE uint8_t *Game_FrameBuffer;		/* video memory (all) */
-EXTERNAL_VARIABLE uint8_t *Game_ScreenWindow;		/* video bank (64KiB) */
-EXTERNAL_VARIABLE void *Game_InterruptTable[256];	/* interrupt table */
+EXTERNAL_VARIABLE PTR32(uint8_t) Game_ScreenWindow;	/* video bank (64KiB) */
+EXTERNAL_VARIABLE uint32_t Game_InterruptTable[256];	/* interrupt table */
 EXTERNAL_VARIABLE void *Game_MouseTable[8];			/* mouse functions table */
 EXTERNAL_VARIABLE void *Game_AllocatedMemory[256];	/* dos allocated memory table */
 EXTERNAL_VARIABLE pixel_format_orig Game_Palette_Or[256];	/* original palette (rgba) */
@@ -188,9 +188,9 @@ EXTERNAL_VARIABLE uint32_t Game_ScreenshotAutomaticFilename;
 EXTERNAL_VARIABLE Game_sample *Game_SampleCache[GAME_SAMPLE_CACHE_SIZE];
 
 
-EXTERNAL_VARIABLE FILE *Game_stdin;					/* stdin */
-EXTERNAL_VARIABLE FILE *Game_stdout;				/* stdout */
-EXTERNAL_VARIABLE FILE *Game_stderr;				/* stderr */
+EXTERNAL_VARIABLE PTR32(FILE) Game_stdin;					/* stdin */
+EXTERNAL_VARIABLE PTR32(FILE) Game_stdout;				/* stdout */
+EXTERNAL_VARIABLE PTR32(FILE) Game_stderr;				/* stderr */
 
 EXTERNAL_VARIABLE char Albion_CDPath[256];			/* path to albion cd */
 EXTERNAL_VARIABLE uint8_t *Albion_Font;				/* albion font data */
@@ -280,7 +280,7 @@ extern void Game_RunTimer_Asm(void);
 extern "C" {
 #endif
 
-extern int errno_val;
+extern int32_t errno_val;
 
 #ifdef __cplusplus
 }

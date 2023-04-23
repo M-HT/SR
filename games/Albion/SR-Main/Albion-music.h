@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2018 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -24,6 +24,20 @@
 
 #if !defined(_ALBION_MUSIC_H_INCLUDED_)
 #define _ALBION_MUSIC_H_INCLUDED_
+
+typedef struct _AIL_sequence
+{
+    int status;
+    void *start;
+    int32_t sequence_num;
+    int32_t volume;			/* 0-127 */
+    int32_t loop_count;
+    uint8_t *midi;
+    uint32_t midi_size;
+    SDL_RWops *midi_RW;
+    Mix_Music *midi_music;
+    void *mp_sequence;
+} AIL_sequence;
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2020 Roman Pauer
+ *  Copyright (C) 2018-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,17 +22,17 @@
  *
  */
 
+#include <stdio.h>
+#include <string.h>
 #include "Albion-BBOPM.h"
 #include "Albion-BBBASMEM.h"
 #include "Albion-BBERROR.h"
-#include <stdio.h>
-#include <string.h>
 
 
 typedef struct {
-    const char *text;
-    int data1;
-    int data2;
+    PTR32(const char) text;
+    int32_t data1;
+    int32_t data2;
 } OPM_ErrorStruct;
 
 
@@ -45,7 +45,7 @@ static void ASM_CopyRectangle(uint8_t *dst, uint8_t *src, unsigned int srcstride
 static void ASM_CopyRectangleWithTransparency(uint8_t *dst, uint8_t *src, uint8_t transparent_color, unsigned int srcstridediff, unsigned int dststridediff, int width, int height);
 
 
-int OPM_New(unsigned int width, unsigned int height, unsigned int bytes_per_pixel, OPM_Struct *pixel_map, uint8_t *buffer)
+int32_t OPM_New(uint32_t width, uint32_t height, uint32_t bytes_per_pixel, OPM_Struct *pixel_map, uint8_t *buffer)
 {
     unsigned int size;
 
@@ -108,7 +108,7 @@ void OPM_Del(OPM_Struct *pixel_map)
     pixel_map->flags = 0;
 }
 
-void OPM_SetVirtualClipStart(OPM_Struct *virtual_pixel_map, int clip_x, int clip_y)
+void OPM_SetVirtualClipStart(OPM_Struct *virtual_pixel_map, int32_t clip_x, int32_t clip_y)
 {
     OPM_Struct *base_pixel_map;
     int clip_width, clip_height;
@@ -149,7 +149,7 @@ void OPM_SetVirtualClipStart(OPM_Struct *virtual_pixel_map, int clip_x, int clip
     virtual_pixel_map->buffer = base_pixel_map->buffer + virtual_pixel_map->stride * clip_y + clip_x;
 }
 
-void OPM_CreateVirtualOPM(OPM_Struct *base_pixel_map, OPM_Struct *virtual_pixel_map, int virtual_x, int virtual_y, int virtual_width, int virtual_height)
+void OPM_CreateVirtualOPM(OPM_Struct *base_pixel_map, OPM_Struct *virtual_pixel_map, int32_t virtual_x, int32_t virtual_y, int32_t virtual_width, int32_t virtual_height)
 {
     virtual_pixel_map->flags = BBOPM_VIRTUAL | BBOPM_UNKNOWN4 | BBOPM_MODIFIED;
     virtual_pixel_map->virtual_x = virtual_x;
@@ -212,7 +212,7 @@ void OPM_CreateVirtualOPM(OPM_Struct *base_pixel_map, OPM_Struct *virtual_pixel_
     virtual_pixel_map->buffer = base_pixel_map->buffer + virtual_pixel_map->stride * virtual_y + virtual_x;
 }
 
-void OPM_SetPixel(OPM_Struct *pixel_map, int x, int y, uint8_t color)
+void OPM_SetPixel(OPM_Struct *pixel_map, int32_t x, int32_t y, uint8_t color)
 {
     x += pixel_map->origin_x;
     y += pixel_map->origin_y;
@@ -249,7 +249,7 @@ static uint8_t OPM_GetPixel(OPM_Struct *pixel_map, int x, int y)
 }
 #endif
 
-void OPM_HorLine(OPM_Struct *pixel_map, int x, int y, int length, uint8_t color)
+void OPM_HorLine(OPM_Struct *pixel_map, int32_t x, int32_t y, int32_t length, uint8_t color)
 {
     x += pixel_map->origin_x;
     y += pixel_map->origin_y;
@@ -274,7 +274,7 @@ void OPM_HorLine(OPM_Struct *pixel_map, int x, int y, int length, uint8_t color)
     pixel_map->flags |= BBOPM_MODIFIED;
 }
 
-void OPM_VerLine(OPM_Struct *pixel_map, int x, int y, int length, uint8_t color)
+void OPM_VerLine(OPM_Struct *pixel_map, int32_t x, int32_t y, int32_t length, uint8_t color)
 {
     x += pixel_map->origin_x;
     y += pixel_map->origin_y;
@@ -299,7 +299,7 @@ void OPM_VerLine(OPM_Struct *pixel_map, int x, int y, int length, uint8_t color)
     pixel_map->flags |= BBOPM_MODIFIED;
 }
 
-void OPM_Box(OPM_Struct *pixel_map, int x, int y, int width, int height, uint8_t color)
+void OPM_Box(OPM_Struct *pixel_map, int32_t x, int32_t y, int32_t width, int32_t height, uint8_t color)
 {
     int draw_left_line, draw_right_line, draw_top_line, draw_bottom_line;
 
@@ -357,7 +357,7 @@ void OPM_Box(OPM_Struct *pixel_map, int x, int y, int width, int height, uint8_t
     pixel_map->flags |= BBOPM_MODIFIED;
 }
 
-void OPM_FillBox(OPM_Struct *pixel_map, int x, int y, int width, int height, uint8_t color)
+void OPM_FillBox(OPM_Struct *pixel_map, int32_t x, int32_t y, int32_t width, int32_t height, uint8_t color)
 {
     x += pixel_map->origin_x;
     y += pixel_map->origin_y;
@@ -392,7 +392,7 @@ void OPM_FillBox(OPM_Struct *pixel_map, int x, int y, int width, int height, uin
     pixel_map->flags |= BBOPM_MODIFIED;
 }
 
-void OPM_CopyOPMOPM(OPM_Struct *src_pixel_map, OPM_Struct *dst_pixel_map, int src_x, int src_y, int src_width, int src_height, int dst_x, int dst_y)
+void OPM_CopyOPMOPM(OPM_Struct *src_pixel_map, OPM_Struct *dst_pixel_map, int32_t src_x, int32_t src_y, int32_t src_width, int32_t src_height, int32_t dst_x, int32_t dst_y)
 {
     int clip_x, clip_y, clip_endx, clip_endy, add_x, add_y;
     uint8_t *src, *dst;
@@ -505,7 +505,7 @@ void OPM_CopyOPMOPM(OPM_Struct *src_pixel_map, OPM_Struct *dst_pixel_map, int sr
 static void OPM_LocalPrintError(char *buffer, const uint8_t *data)
 {
 #define DATA (((OPM_ErrorStruct *)data))
-    sprintf(buffer, "ERROR!: %s  %ld, %ld", DATA->text, (long int)DATA->data1, (long int)DATA->data2);
+    sprintf(buffer, "ERROR!: %s  %ld, %ld", (const char *)DATA->text, (long int)DATA->data1, (long int)DATA->data2);
 #undef DATA
 }
 

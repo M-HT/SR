@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -29,12 +29,12 @@
 extern "C" {
 #endif
 
-extern int Game_errno(void);
-extern off_t Game_filelength(int fd);
+extern int32_t Game_errno(void);
+extern off_t Game_filelength(int32_t fd);
 extern uint64_t Game_dos_getvect(const int32_t intnum);
 extern void Game_setbuf(FILE *fp, char *buf);
 extern void Game_dos_setvect(const int32_t intnum, const uint32_t handler_low, const uint32_t handler_high);
-extern off_t Game_tell(int handle);
+extern off_t Game_tell(int32_t handle);
 extern void Game_Sync(void);
 extern void Game_WaitTimerTicks(const int32_t ticks);
 extern void Game_WaitVerticalRetraceTicks(const int32_t ticks);
@@ -42,7 +42,7 @@ extern void Game_WaitAfterVerticalRetrace(void);
 extern void Game_WaitForVerticalRetrace(void);
 extern void Game_WaitAfter2ndVerticalRetrace(void);
 extern void Game_WaitFor2ndVerticalRetrace(void);
-extern int Game_openFlags(int flags);
+extern int32_t Game_openFlags(int32_t flags);
 extern void Game_splitpath(const char *path, char *drive, char *dir, char *fname, char *ext);
 
 #ifdef __cplusplus

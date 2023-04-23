@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2020 Roman Pauer
+ *  Copyright (C) 2018-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,9 +22,6 @@
  *
  */
 
-#include "Game_defs.h"
-#include "Albion-BBBASMEM.h"
-#include "Albion-BBERROR.h"
 #include <stdio.h>
 #include <string.h>
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
@@ -33,6 +30,9 @@
 #else
 #include <unistd.h>
 #endif
+#include "Game_defs.h"
+#include "Albion-BBBASMEM.h"
+#include "Albion-BBERROR.h"
 
 
 typedef struct {
@@ -40,7 +40,7 @@ typedef struct {
     uint16_t error_parameter;
     uint16_t line_number;
     uint16_t reserved;
-    const char *filename;
+    PTR32(const char) filename;
 } BASEMEM_ErrorStruct;
 
 typedef struct {
@@ -80,7 +80,7 @@ static void BASEMEM_PushError(unsigned int error_number, int error_parameter, in
 static void BASEMEM_LocalPrintError(char *buffer, const uint8_t *data);
 
 
-int BASEMEM_Init(void)
+int32_t BASEMEM_Init(void)
 {
     int index;
 
@@ -127,7 +127,7 @@ void BASEMEM_Exit(void)
     }
 }
 
-unsigned int BASEMEM_GetFreeMemSize(unsigned int memory_flags)
+uint32_t BASEMEM_GetFreeMemSize(uint32_t memory_flags)
 {
     switch (memory_flags & 0xff)
     {
@@ -153,7 +153,7 @@ static unsigned int BASEMEM_GetFreePhysicalMemSize(unsigned int memory_flags)
 }
 #endif
 
-void *BASEMEM_Alloc(unsigned int size, unsigned int memory_flags)
+void *BASEMEM_Alloc(uint32_t size, uint32_t memory_flags)
 {
     int index, free_region_index;
     void *mem_ptr;
@@ -232,7 +232,7 @@ void *BASEMEM_Alloc(unsigned int size, unsigned int memory_flags)
     return mem_ptr;
 }
 
-int BASEMEM_Free(void *mem_ptr)
+int32_t BASEMEM_Free(void *mem_ptr)
 {
     int index, found_region_index;
 
@@ -372,17 +372,17 @@ static void *BASEMEM_Realloc(void *mem_ptr, unsigned int size)
 }
 #endif
 
-int BASEMEM_LockRegion(void *mem_ptr, unsigned int length)
+int32_t BASEMEM_LockRegion(void *mem_ptr, uint32_t length)
 {
     return 1;
 }
 
-int BASEMEM_UnlockRegion(void *mem_ptr, unsigned int length)
+int32_t BASEMEM_UnlockRegion(void *mem_ptr, uint32_t length)
 {
     return 1;
 }
 
-void BASEMEM_FillMemByte(void *dst, unsigned int length, int c)
+void BASEMEM_FillMemByte(void *dst, uint32_t length, int32_t c)
 {
     if (dst != NULL)
     {
@@ -394,7 +394,7 @@ void BASEMEM_FillMemByte(void *dst, unsigned int length, int c)
     }
 }
 
-void BASEMEM_FillMemLong(void *dst, unsigned int length, unsigned int c)
+void BASEMEM_FillMemLong(void *dst, uint32_t length, uint32_t c)
 {
     if (dst != NULL)
     {
@@ -416,7 +416,7 @@ void BASEMEM_FillMemLong(void *dst, unsigned int length, unsigned int c)
     }
 }
 
-void BASEMEM_CopyMem(const void *src, void *dst, unsigned int length)
+void BASEMEM_CopyMem(const void *src, void *dst, uint32_t length)
 {
     if ((src != NULL) && (dst != NULL))
     {
@@ -467,7 +467,7 @@ static void BASEMEM_LocalPrintError(char *buffer, const uint8_t *data)
 
     if ((DATA->line_number != 0) && (DATA->filename != NULL))
     {
-        snprintf(buffer, 200, "%s\n(line %u of file %s)", tempbuf, DATA->line_number, DATA->filename);
+        snprintf(buffer, 200, "%s\n(line %u of file %s)", tempbuf, DATA->line_number, (const char *)DATA->filename);
     }
     else
     {

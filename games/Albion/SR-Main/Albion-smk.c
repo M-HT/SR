@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2022 Roman Pauer
+ *  Copyright (C) 2020-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -532,19 +532,19 @@ static void eventloop_initialize(void)
         {
             horizontal_factor = vertical_factor = 2;
 
-            while ((horizontal_factor + 1) * 320 <= Picture_Width) horizontal_factor++;
-            while ((vertical_factor + 1) * 200 <= Picture_Height) vertical_factor++;
+            while ((horizontal_factor + 1) * 320 <= (int)Picture_Width) horizontal_factor++;
+            while ((vertical_factor + 1) * 200 <= (int)Picture_Height) vertical_factor++;
 
             if (horizontal_factor > GAME_MAX_3D_ENGINE_FACTOR) horizontal_factor = GAME_MAX_3D_ENGINE_FACTOR;
             if (vertical_factor > GAME_MAX_3D_ENGINE_FACTOR) vertical_factor = GAME_MAX_3D_ENGINE_FACTOR;
 
             if (0 == SDL_GetRendererInfo(Game_Renderer, &info))
             {
-                if (info.max_texture_width > Picture_Width)
+                if (info.max_texture_width > (int)Picture_Width)
                 {
                     while (horizontal_factor * 320 > info.max_texture_width) horizontal_factor--;
                 }
-                if (info.max_texture_height > Picture_Height)
+                if (info.max_texture_height > (int)Picture_Height)
                 {
                     while (vertical_factor * 200 > info.max_texture_height) vertical_factor--;
                 }
@@ -590,8 +590,8 @@ static void eventloop_initialize(void)
 
             SMK_ScaleFactor = 2;
 
-            while (((SMK_ScaleFactor + 1) * 320 <= Picture_Width) ||
-                   ((SMK_ScaleFactor + 1) * 200 <= Picture_Height)
+            while (((SMK_ScaleFactor + 1) * 320 <= (int)Picture_Width) ||
+                   ((SMK_ScaleFactor + 1) * 200 <= (int)Picture_Height)
                   ) SMK_ScaleFactor++;
 
             max_factor = ScalerPlugin_get_maximum_scale_factor();
@@ -599,11 +599,11 @@ static void eventloop_initialize(void)
 
             if (0 == SDL_GetRendererInfo(Game_Renderer, &info))
             {
-                if (info.max_texture_width > Picture_Width)
+                if (info.max_texture_width > (int)Picture_Width)
                 {
                     while (SMK_ScaleFactor * 320 > info.max_texture_width) SMK_ScaleFactor--;
                 }
-                if (info.max_texture_height > Picture_Height)
+                if (info.max_texture_height > (int)Picture_Height)
                 {
                     while (SMK_ScaleFactor * 200 > info.max_texture_height) SMK_ScaleFactor--;
                 }
@@ -679,19 +679,19 @@ static void eventloop_initialize(void)
             {
                 horizontal_factor = vertical_factor = 2;
 
-                while ((horizontal_factor + 1) * 320 <= Picture_Width) horizontal_factor++;
-                while ((vertical_factor + 1) * 200 <= Picture_Height) vertical_factor++;
+                while ((horizontal_factor + 1) * 320 <= (int)Picture_Width) horizontal_factor++;
+                while ((vertical_factor + 1) * 200 <= (int)Picture_Height) vertical_factor++;
 
                 if (horizontal_factor > GAME_MAX_3D_ENGINE_FACTOR) horizontal_factor = GAME_MAX_3D_ENGINE_FACTOR;
                 if (vertical_factor > GAME_MAX_3D_ENGINE_FACTOR) vertical_factor = GAME_MAX_3D_ENGINE_FACTOR;
 
                 max_texture_size = 0;
                 glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
-                if (max_texture_size > Picture_Width)
+                if (max_texture_size > (int)Picture_Width)
                 {
                     while (horizontal_factor * 320 > max_texture_size) horizontal_factor--;
                 }
-                if (max_texture_size > Picture_Height)
+                if (max_texture_size > (int)Picture_Height)
                 {
                     while (vertical_factor * 200 > max_texture_size) vertical_factor--;
                 }
@@ -742,8 +742,8 @@ static void eventloop_initialize(void)
 
                 SMK_ScaleFactor = 2;
 
-                while (((SMK_ScaleFactor + 1) * 320 <= Picture_Width) ||
-                       ((SMK_ScaleFactor + 1) * 200 <= Picture_Height)
+                while (((SMK_ScaleFactor + 1) * 320 <= (int)Picture_Width) ||
+                       ((SMK_ScaleFactor + 1) * 200 <= (int)Picture_Height)
                       ) SMK_ScaleFactor++;
 
                 max_factor = ScalerPlugin_get_maximum_scale_factor();
@@ -751,11 +751,11 @@ static void eventloop_initialize(void)
 
                 max_texture_size = 0;
                 glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
-                if (max_texture_size > Picture_Width)
+                if (max_texture_size > (int)Picture_Width)
                 {
                     while (SMK_ScaleFactor * 320 > max_texture_size) SMK_ScaleFactor--;
                 }
-                if (max_texture_size > Picture_Height)
+                if (max_texture_size > (int)Picture_Height)
                 {
                     while (SMK_ScaleFactor * 200 > max_texture_size) SMK_ScaleFactor--;
                 }
@@ -1080,7 +1080,7 @@ static int initialize_display(void)
 
     event.type = SDL_USEREVENT;
     event.user.code = EC_SMK_FUNCTION;
-    event.user.data1 = &eventloop_initialize;
+    event.user.data1 = (void *) &eventloop_initialize;
     event.user.data2 = NULL;
 
     SDL_PushEvent(&event);
@@ -1118,7 +1118,7 @@ static void deinitialize_display(void)
 
         event.type = SDL_USEREVENT;
         event.user.code = EC_SMK_FUNCTION;
-        event.user.data1 = &eventloop_deinitialize;
+        event.user.data1 = (void *) &eventloop_deinitialize;
         event.user.data2 = NULL;
 
         SDL_PushEvent(&event);
@@ -1233,7 +1233,7 @@ static void BufferToScreen(void)
 
     event.type = SDL_USEREVENT;
     event.user.code = EC_SMK_FUNCTION;
-    event.user.data1 = &eventloop_flip;
+    event.user.data1 = (void *) &eventloop_flip;
     event.user.data2 = NULL;
 
     SDL_PushEvent(&event);

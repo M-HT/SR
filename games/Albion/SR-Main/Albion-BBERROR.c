@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2019 Roman Pauer
+ *  Copyright (C) 2018-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -72,7 +72,7 @@ static void ERROR_SetOutputFuncPtr(ERROR_OutputFuncPtr output_func_ptr)
     ERROR_OutputFunc = output_func_ptr;
 }
 
-int ERROR_PushError(ERROR_PrintErrorPtr error_print_error_ptr, const char *error_prefix, int error_data_len, const uint8_t *error_data)
+int32_t ERROR_PushError(ERROR_PrintErrorPtr error_print_error_ptr, const char *error_prefix, int32_t error_data_len, const uint8_t *error_data)
 {
     int data_index;
 
@@ -104,7 +104,7 @@ int ERROR_PushError(ERROR_PrintErrorPtr error_print_error_ptr, const char *error
 }
 
 // todo: remove
-int ERROR_PushErrorDOS(ERROR_PrintErrorPtr error_print_error_ptr, const char *error_prefix, int error_data_len, const uint8_t *error_data)
+int32_t ERROR_PushErrorDOS(ERROR_PrintErrorPtr error_print_error_ptr, const char *error_prefix, int32_t error_data_len, const uint8_t *error_data)
 {
     int data_index;
 
@@ -143,12 +143,12 @@ void ERROR_PopError(void)
     }
 }
 
-int ERROR_IsStackEmpty(void)
+int32_t ERROR_IsStackEmpty(void)
 {
     return (ERROR_num_errors == 0)?1:0;
 }
 
-void ERROR_PrintAllErrors(unsigned int flags)
+void ERROR_PrintAllErrors(uint32_t flags)
 {
     int index;
     int buflen;
@@ -161,7 +161,7 @@ void ERROR_PrintAllErrors(unsigned int flags)
         {
             //ERROR_OutputFunc("BBERROR: ERRORSTACK START:--------------\n");
             // todo: remove
-            Game_RunProcReg1_Asm(ERROR_OutputFunc, "BBERROR: ERRORSTACK START:--------------\n");
+            Game_RunProcReg1_Asm((void *)ERROR_OutputFunc, "BBERROR: ERRORSTACK START:--------------\n");
         }
     }
 
@@ -189,7 +189,7 @@ void ERROR_PrintAllErrors(unsigned int flags)
             // todo: remove
             else if (ERROR_errors[index].PrintErrorDOS != NULL)
             {
-                Game_RunProcReg2_Asm(ERROR_errors[index].PrintErrorDOS, ERROR_string_buffer + buflen, ERROR_errors[index].data);
+                Game_RunProcReg2_Asm((void *)ERROR_errors[index].PrintErrorDOS, ERROR_string_buffer + buflen, ERROR_errors[index].data);
                 buflen = strlen(ERROR_string_buffer);
             }
         }
@@ -206,7 +206,7 @@ void ERROR_PrintAllErrors(unsigned int flags)
             {
                 //ERROR_OutputFunc(ERROR_string_buffer);
                 // todo: remove
-                Game_RunProcReg1_Asm(ERROR_OutputFunc, ERROR_string_buffer);
+                Game_RunProcReg1_Asm((void *)ERROR_OutputFunc, ERROR_string_buffer);
             }
         }
     }
@@ -217,7 +217,7 @@ void ERROR_PrintAllErrors(unsigned int flags)
         {
             //ERROR_OutputFunc("BBERROR: ERRORSTACK END-----------------\n");
             // todo: remove
-            Game_RunProcReg1_Asm(ERROR_OutputFunc, "BBERROR: ERRORSTACK END-----------------\n");
+            Game_RunProcReg1_Asm((void *)ERROR_OutputFunc, "BBERROR: ERRORSTACK END-----------------\n");
         }
     }
 

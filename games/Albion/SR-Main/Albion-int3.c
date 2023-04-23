@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -113,7 +113,7 @@ void Game_intDPMI(
                     {
                         VbeInfoBlock *VIB;
 
-                        VIB = (VbeInfoBlock *) ESI;
+                        VIB = (VbeInfoBlock *)(uintptr_t) ESI;
 
                         VIB->VbeSignature[0] = 'V';
                         VIB->VbeSignature[1] = 'E';
@@ -144,7 +144,7 @@ void Game_intDPMI(
                     {
                         ModeInfoBlock *MIB;
 
-                        MIB = (ModeInfoBlock *) ESI;
+                        MIB = (ModeInfoBlock *)(uintptr_t) ESI;
 
                         MIB->ModeAttributes = 0x19;
                         MIB->WinAAttributes = 0x07;

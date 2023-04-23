@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,8 +25,6 @@
 #if !defined(_GAME_DEFS_H_INCLUDED_)
 #define _GAME_DEFS_H_INCLUDED_
 
-#include <limits.h>
-#include <inttypes.h>
 #ifdef USE_SDL2
     #include <SDL2/SDL.h>
     #include <SDL2/SDL_mixer.h>
@@ -34,6 +32,8 @@
     #include <SDL/SDL.h>
     #include <SDL/SDL_mixer.h>
 #endif
+#include <limits.h>
+#include "ptr32.h"
 
 
 /* Maximum available memory = 16MiB */
@@ -174,59 +174,6 @@ typedef union _Game_register_ {
     } b;
 } Game_register;
 
-typedef struct _Game_SREGS_ {
-  uint16_t es;
-  uint16_t cs;
-  uint16_t ss;
-  uint16_t ds;
-  uint16_t fs;
-  uint16_t gs;
-} Game_SREGS;
-
-typedef struct _Game_DWORDREGS_ {
-  uint32_t eax;
-  uint32_t ebx;
-  uint32_t ecx;
-  uint32_t edx;
-  uint32_t esi;
-  uint32_t edi;
-  uint32_t cflag;
-} Game_DWORDREGS;
-
-typedef struct _Game_WORDREGS_ {
-  uint16_t ax, _upper_ax;
-  uint16_t bx, _upper_bx;
-  uint16_t cx, _upper_cx;
-  uint16_t dx, _upper_dx;
-  uint16_t si, _upper_si;
-  uint16_t di, _upper_di;
-  uint32_t cflag;
-} Game_WORDREGS;
-
-typedef struct _Game_BYTEREGS_ {
-  uint8_t al;
-  uint8_t ah;
-  uint16_t _upper_ax;
-  uint8_t bl;
-  uint8_t bh;
-  uint16_t _upper_bx;
-  uint8_t cl;
-  uint8_t ch;
-  uint16_t _upper_cx;
-  uint8_t dl;
-  uint8_t dh;
-  uint16_t _upper_dx;
-  uint16_t si, _upper_si;
-  uint16_t di, _upper_di;
-  uint32_t cflag;
-} Game_BYTEREGS;
-
-typedef union _Game_REGS_ {
-  Game_DWORDREGS d;
-  Game_WORDREGS w;
-  Game_BYTEREGS h;
-} Game_REGS;
-
 
 typedef void (*Game_Flip_Procedure)(void *src, void *dst);
 typedef void (*Game_Advanced_Flip_Procedure)(void *src, void *dst1, void *dst2, int *dst2_used);
@@ -272,34 +219,6 @@ typedef struct _Game_sample {
     uint32_t orig_data_offset[3];
     uint8_t data[];
 } Game_sample;
-
-typedef struct _AIL_sample
-{
-    int channel;
-    Game_sample *sample;
-    int _stereo, _16bit, _signed;
-    void *start;
-    uint32_t len;
-    int32_t playback_rate;	/* Hz */
-    int32_t volume;			/* 0-127 */
-    int32_t pan;			/* (0=L ... 127=R) */
-    int32_t loop_count;
-    Mix_Chunk chunk;
-} AIL_sample;
-
-typedef struct _AIL_sequence
-{
-    int status;
-    void *start;
-    int32_t sequence_num;
-    int32_t volume;			/* 0-127 */
-    int32_t loop_count;
-    uint8_t *midi;
-    uint32_t midi_size;
-    SDL_RWops *midi_RW;
-    Mix_Music *midi_music;
-    void *mp_sequence;
-} AIL_sequence;
 
 
 #endif /* _GAME_DEFS_H_INCLUDED_ */

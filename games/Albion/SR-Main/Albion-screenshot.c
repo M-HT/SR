@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -51,6 +51,13 @@
 
 #ifdef ZLIB_DYNAMIC
 #include <dlfcn.h>
+
+#ifdef __cplusplus
+#define ZLIB_TYPEOF(t) decltype(t)
+#else
+#define ZLIB_TYPEOF(t) void*
+#endif
+
 
 static int (*zlib_deflateInit2_) (z_streamp strm, int  level, int  method,
                                       int windowBits, int memLevel,
@@ -932,6 +939,9 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
 
 // http://www.shikadi.net/moddingwiki/LBM_Format
 
+#ifdef __cplusplus
+extern "C"
+#endif
 void Game_save_screenshot(const char *filename)
 {
     uint8_t *screenshot_src, *buffer, *curptr, *chunk_size_ptr[2];
@@ -966,10 +976,10 @@ void Game_save_screenshot(const char *filename)
                 return;
             }
 
-            zlib_deflateInit2_ = dlsym(zlib_handle, "deflateInit2_");
-            zlib_deflate = dlsym(zlib_handle, "deflate");
-            zlib_deflateEnd = dlsym(zlib_handle, "deflateEnd");
-            zlib_crc32 = dlsym(zlib_handle, "crc32");
+            zlib_deflateInit2_ = (ZLIB_TYPEOF(zlib_deflateInit2_)) dlsym(zlib_handle, "deflateInit2_");
+            zlib_deflate = (ZLIB_TYPEOF(zlib_deflate)) dlsym(zlib_handle, "deflate");
+            zlib_deflateEnd = (ZLIB_TYPEOF(zlib_deflateEnd)) dlsym(zlib_handle, "deflateEnd");
+            zlib_crc32 = (ZLIB_TYPEOF(zlib_crc32)) dlsym(zlib_handle, "crc32");
 
             if ((zlib_deflateInit2_ == NULL) || (zlib_deflate == NULL) || (zlib_deflateEnd == NULL) || (zlib_crc32 == NULL))
             {

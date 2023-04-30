@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2022 Roman Pauer
+ *  Copyright (C) 2022-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -649,16 +649,19 @@ static __attribute__ ((noinline)) void reserve_memory_space(void)
             }
 
 
-            num_map++;
-            if (num_map > MAX_MAPS)
+            if ((start & UINT64_C(0x8000000000000000)) == 0) // ignore maps in kernel address space
             {
-                pr_errprint("Too many maps\n");
-                sys_close(fd);
-                sys_exit(15);
-            }
+                num_map++;
+                if (num_map > MAX_MAPS)
+                {
+                    pr_errprint("Too many maps\n");
+                    sys_close(fd);
+                    sys_exit(15);
+                }
 
-            maps[2 * num_map - 2] = start;
-            maps[2 * num_map - 1] = end;
+                maps[2 * num_map - 2] = start;
+                maps[2 * num_map - 1] = end;
+            }
 
 
             ofs1 = ofs2 + 1;

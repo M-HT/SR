@@ -45,7 +45,8 @@ clean = env.GetOption('clean')
 if device == 'none':
     device = 'pc-linux'
     if env['PLATFORM'] == 'posix':
-        if os.uname()[4].startswith('arm'):
+        machine = os.uname()[4]
+        if machine.startswith('arm'):
             device = 'arm-linux'
         elif machine == 'aarch64':
             device = 'arm64-linux-llasm'

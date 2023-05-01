@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -73,10 +73,10 @@ void Game_FloatProcSin3(int32_t *ValuePtr)
 
 #pragma pack(2)
 
-    typedef struct __attribute__ ((__packed__)) {
+    typedef struct {
         int32_t result2;
         double result1;
-        uint8_t *ptr1;
+        PTR32(uint8_t) ptr1;
         int32_t reserved1;
         int32_t result3;
         int32_t reserved2;
@@ -127,10 +127,10 @@ void Game_FloatProcSin4(int32_t *ValuePtr)
 
 #pragma pack(2)
 
-    typedef struct __attribute__ ((__packed__)) {
+    typedef struct {
         int32_t result2;
         double result1;
-        uint8_t *ptr1;
+        PTR32(uint8_t) ptr1;
         int32_t reserved1;
         int32_t result3;
         int32_t reserved2[2];

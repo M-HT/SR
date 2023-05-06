@@ -602,6 +602,7 @@ static int MidiPlugin_ProcessData(void *data)
 
 int MidiPlugin_Startup(void)
 {
+    const char *plugin_name;
     midi_plugin_initialize MP_initialize;
     midi_plugin_parameters MP_parameters;
     int index;
@@ -610,43 +611,74 @@ int MidiPlugin_Startup(void)
     last_volume[1] = -1;
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
-    if (Game_MidiSubsystem == 1) {
-        MP_handle[0] = LoadLibrary(".\\midi-wildmidi.dll");
-    } else if (Game_MidiSubsystem == 2) {
-        MP_handle[0] = LoadLibrary(".\\midi-bassmidi.dll");
-    } else if (Game_MidiSubsystem == 3) {
-        MP_handle[0] = LoadLibrary(".\\midi-adlmidi.dll");
-    } else return 1;
-
-    MP_handle[1] = LoadLibrary(".\\midiA-wildmidi.dll");
-
     #define free_library FreeLibrary
     #define get_proc_address GetProcAddress
-#else
-    if (Game_MidiSubsystem == 1) {
-        MP_handle[0] = dlopen("./midi-wildmidi.so", RTLD_LAZY);
-    } else if (Game_MidiSubsystem == 2) {
-        MP_handle[0] = dlopen("./midi-bassmidi.so", RTLD_LAZY);
-    } else if (Game_MidiSubsystem == 3) {
-        MP_handle[0] = dlopen("./midi-adlmidi.so", RTLD_LAZY);
-    } else return 1;
 
-    MP_handle[1] = dlopen("./midiA-wildmidi.so", RTLD_LAZY);
-
-    #define free_library dlclose
-    #define get_proc_address dlsym
-#endif
-    if ((MP_handle[0] == NULL) || (MP_handle[1] == NULL))
+    if (Game_MidiSubsystem == 1) plugin_name = ".\\midi-wildmidi.dll";
+    else if (Game_MidiSubsystem == 2) plugin_name = ".\\midi-bassmidi.dll";
+    else if (Game_MidiSubsystem == 3) plugin_name = ".\\midi-adlmidi.dll";
+    else
     {
-        if (MP_handle[1] != NULL) free_library(MP_handle[1]);
-        if (MP_handle[0] != NULL) free_library(MP_handle[0]);
+        fprintf(stderr, "%s: error: %s\n", "midi", "unknown plugin");
+        return 1;
+    }
+
+    fprintf(stderr, "%s: loading dynamic library: %s\n", "midi", plugin_name);
+    MP_handle[0] = LoadLibraryA(plugin_name);
+
+    if (MP_handle[0] == NULL)
+    {
+        fprintf(stderr, "%s: load error: 0x%x\n", "midi", GetLastError());
         return 2;
     }
+
+    fprintf(stderr, "%s: loading dynamic library: %s\n", "midiA", ".\\midiA-wildmidi.dll");
+    MP_handle[1] = LoadLibraryA(".\\midiA-wildmidi.dll");
+
+    if (MP_handle[1] == NULL)
+    {
+        fprintf(stderr, "%s: load error: 0x%x\n", "midiA", GetLastError());
+        free_library(MP_handle[0]);
+        return 2;
+    }
+#else
+    #define free_library dlclose
+    #define get_proc_address dlsym
+
+    if (Game_MidiSubsystem == 1) plugin_name = "./midi-wildmidi.so";
+    else if (Game_MidiSubsystem == 2) plugin_name = "./midi-bassmidi.so";
+    else if (Game_MidiSubsystem == 3) plugin_name = "./midi-adlmidi.so";
+    else
+    {
+        fprintf(stderr, "%s: error: %s\n", "midi", "unknown plugin");
+        return 1;
+    }
+
+    fprintf(stderr, "%s: loading shared object: %s\n", "midi", plugin_name);
+    MP_handle[0] = dlopen(plugin_name, RTLD_LAZY);
+
+    if (MP_handle[0] == NULL)
+    {
+        fprintf(stderr, "%s: load error: %s\n", "midi", dlerror());
+        return 2;
+    }
+
+    fprintf(stderr, "%s: loading shared object: %s\n", "midiA", "./midiA-wildmidi.so");
+    MP_handle[1] = dlopen("./midiA-wildmidi.so", RTLD_LAZY);
+
+    if (MP_handle[1] == NULL)
+    {
+        fprintf(stderr, "%s: load error: %s\n", "midiA", dlerror());
+        free_library(MP_handle[0]);
+        return 2;
+    }
+#endif
 
     MP_initialize = (midi_plugin_initialize) get_proc_address(MP_handle[0], MIDI_PLUGIN_INITIALIZE);
 
     if (MP_initialize == NULL)
     {
+        fprintf(stderr, "%s: error: %s\n", "midi", "initialization function not available in plugin");
         free_library(MP_handle[1]);
         free_library(MP_handle[0]);
         return 3;
@@ -659,6 +691,7 @@ int MidiPlugin_Startup(void)
 
     if (MP_initialize(Game_AudioRate, &MP_parameters, &(MP_functions[0])))
     {
+        fprintf(stderr, "%s: error: %s\n", "midi", "failed to initialize plugin");
         free_library(MP_handle[1]);
         free_library(MP_handle[0]);
         return 4;
@@ -668,6 +701,7 @@ int MidiPlugin_Startup(void)
 
     if (MP_initialize == NULL)
     {
+        fprintf(stderr, "%s: error: %s\n", "midiA", "initialization function not available in plugin");
         MP_functions[0].shutdown_plugin();
         free_library(MP_handle[1]);
         free_library(MP_handle[0]);
@@ -676,6 +710,7 @@ int MidiPlugin_Startup(void)
 
     if (MP_initialize(Game_AudioRate, &MP_parameters, &(MP_functions[1])))
     {
+        fprintf(stderr, "%s: error: %s\n", "midiA", "failed to initialize plugin");
         MP_functions[0].shutdown_plugin();
         free_library(MP_handle[1]);
         free_library(MP_handle[0]);
@@ -744,6 +779,7 @@ int MidiPlugin_Startup(void)
     );
     if (MP_thread == NULL)
     {
+        fprintf(stderr, "%s: error: %s\n", "midi", "failed to create thread");
         if (temp_buf != NULL)
         {
             free(temp_buf);
@@ -761,6 +797,9 @@ int MidiPlugin_Startup(void)
 
     // set mixer
     Mix_HookMusic(&MidiPlugin_MusicPlayer, temp_buf);
+
+    fprintf(stderr, "%s: OK\n", "midi");
+    fprintf(stderr, "%s: OK\n", "midiA");
 
     return 0;
 

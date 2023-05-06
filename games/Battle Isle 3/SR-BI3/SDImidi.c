@@ -201,41 +201,63 @@ static DWORD WINAPI MP_ProcessData(LPVOID lpParameter)
 
 static int MP_Startup(void)
 {
+    const char *plugin_name;
     midi_plugin_initialize MP_initialize;
     midi_plugin_parameters MP_parameters;
     WAVEFORMATEX waveFormat;
+    MMRESULT res;
 
     if (MP_handle != NULL) return 0;
 
 #if defined(MIDI_WINDOWS)
-    if (Audio_MidiSubsystem == 1) {
-        MP_handle = LoadLibrary(".\\midi-wildmidi.dll");
-    } else if (Audio_MidiSubsystem == 2) {
-        MP_handle = LoadLibrary(".\\midi-bassmidi.dll");
-    } else if (Audio_MidiSubsystem == 3) {
-        MP_handle = LoadLibrary(".\\midi-adlmidi.dll");
-    } else return 1;
-
     #define free_library FreeLibrary
     #define get_proc_address GetProcAddress
-#else
-    if (Audio_MidiSubsystem == 1) {
-        MP_handle = dlopen("./midi-wildmidi.so", RTLD_LAZY);
-    } else if (Audio_MidiSubsystem == 2) {
-        MP_handle = dlopen("./midi-bassmidi.so", RTLD_LAZY);
-    } else if (Audio_MidiSubsystem == 3) {
-        MP_handle = dlopen("./midi-adlmidi.so", RTLD_LAZY);
-    } else return 1;
 
+    if (Audio_MidiSubsystem == 1) plugin_name = ".\\midi-wildmidi.dll";
+    else if (Audio_MidiSubsystem == 2) plugin_name = ".\\midi-bassmidi.dll";
+    else if (Audio_MidiSubsystem == 3) plugin_name = ".\\midi-adlmidi.dll";
+    else
+    {
+        fprintf(stderr, "%s: error: %s\n", "midi", "unknown plugin");
+        return 1;
+    }
+
+    fprintf(stderr, "%s: loading dynamic library: %s\n", "midi", plugin_name);
+    MP_handle = LoadLibraryA(plugin_name);
+
+    if (MP_handle == NULL)
+    {
+        fprintf(stderr, "%s: load error: 0x%x\n", "midi", GetLastError());
+        return 2;
+    }
+#else
     #define free_library dlclose
     #define get_proc_address dlsym
+
+    if (Audio_MidiSubsystem == 1) plugin_name = "./midi-wildmidi.so";
+    else if (Audio_MidiSubsystem == 2) plugin_name = "./midi-bassmidi.so";
+    else if (Audio_MidiSubsystem == 3) plugin_name = "./midi-adlmidi.so";
+    else
+    {
+        fprintf(stderr, "%s: error: %s\n", "midi", "unknown plugin");
+        return 1;
+    }
+
+    fprintf(stderr, "%s: loading shared object: %s\n", "midi", plugin_name);
+    MP_handle = dlopen(plugin_name, RTLD_LAZY);
+
+    if (MP_handle == NULL)
+    {
+        fprintf(stderr, "%s: load error: %s\n", "midi", dlerror());
+        return 2;
+    }
 #endif
-    if (MP_handle == NULL) return 2;
 
     MP_initialize = (midi_plugin_initialize) get_proc_address(MP_handle, MIDI_PLUGIN_INITIALIZE);
 
     if (MP_initialize == NULL)
     {
+        fprintf(stderr, "%s: error: %s\n", "midi", "initialization function not available in plugin");
         free_library(MP_handle);
         MP_handle = NULL;
         return 3;
@@ -248,6 +270,7 @@ static int MP_Startup(void)
 
     if (MP_initialize(44100, &MP_parameters, &MP_functions))
     {
+        fprintf(stderr, "%s: error: %s\n", "midi", "failed to initialize plugin");
         free_library(MP_handle);
         MP_handle = NULL;
         return 4;
@@ -266,8 +289,10 @@ static int MP_Startup(void)
     waveFormat.wBitsPerSample = 16;
     waveFormat.cbSize = 0;
 
-    if (MMSYSERR_NOERROR != waveOutOpen(&hWaveOut, WAVE_MAPPER, &waveFormat, 0, 0, WAVE_ALLOWSYNC))
+    res = waveOutOpen(&hWaveOut, WAVE_MAPPER, &waveFormat, 0, 0, WAVE_ALLOWSYNC);
+    if (MMSYSERR_NOERROR != res)
     {
+        fprintf(stderr, "%s: %s error: 0x%x\n", "midi", "waveOutOpen", res);
         DeleteCriticalSection(&(MP_sequence.critsec));
         MP_functions.shutdown_plugin();
         free_library(MP_handle);
@@ -280,8 +305,10 @@ static int MP_Startup(void)
     MP_sequence.header[1].lpData = (LPSTR) &(MP_sequence.buffer[1]);
     MP_sequence.header[1].dwBufferLength = BUFFER_SIZE;
 
-    if (MMSYSERR_NOERROR != waveOutPrepareHeader(hWaveOut, &(MP_sequence.header[0]), sizeof(WAVEHDR)))
+    res = waveOutPrepareHeader(hWaveOut, &(MP_sequence.header[0]), sizeof(WAVEHDR));
+    if (MMSYSERR_NOERROR != res)
     {
+        fprintf(stderr, "%s: %s error: 0x%x\n", "midi", "waveOutPrepareHeader", res);
         waveOutClose(hWaveOut);
         DeleteCriticalSection(&(MP_sequence.critsec));
         MP_functions.shutdown_plugin();
@@ -289,8 +316,10 @@ static int MP_Startup(void)
         MP_handle = NULL;
         return 5;
     }
-    if (MMSYSERR_NOERROR != waveOutPrepareHeader(hWaveOut, &(MP_sequence.header[1]), sizeof(WAVEHDR)))
+    res = waveOutPrepareHeader(hWaveOut, &(MP_sequence.header[1]), sizeof(WAVEHDR));
+    if (MMSYSERR_NOERROR != res)
     {
+        fprintf(stderr, "%s: %s error: 0x%x\n", "midi", "waveOutPrepareHeader", res);
         waveOutUnprepareHeader(hWaveOut, &(MP_sequence.header[0]), sizeof(WAVEHDR));
         waveOutClose(hWaveOut);
         DeleteCriticalSection(&(MP_sequence.critsec));
@@ -308,6 +337,7 @@ static int MP_Startup(void)
     MP_thread = CreateThread(NULL, 0, MP_ProcessData, NULL, 0, NULL);
     if (MP_thread == NULL)
     {
+        fprintf(stderr, "%s: error: %s\n", "midi", "failed to create thread");
         DeleteCriticalSection(&(MP_sequence.critsec));
         MP_functions.shutdown_plugin();
         free_library(MP_handle);
@@ -316,6 +346,8 @@ static int MP_Startup(void)
     }
 
     midi_status = MS_STOPPED;
+
+    fprintf(stderr, "%s: OK\n", "midi");
 
     return 0;
 
@@ -358,32 +390,59 @@ static void MP_Shutdown(void)
 
 static int MP2_Startup(void)
 {
+    const char *plugin_name;
     midi_plugin2_initialize MP2_initialize;
     midi_plugin2_parameters MP2_parameters;
 
     if (MP2_handle != NULL) return 0;
 
 #if defined(MIDI_WINDOWS)
-    if (Audio_MidiSubsystem == 11) {
-        MP2_handle = LoadLibraryA(".\\midi2-windows.dll");
-    } else return 1;
-
     #define free_library FreeLibrary
     #define get_proc_address GetProcAddress
-#else
-    if (Audio_MidiSubsystem == 12) {
-        MP2_handle = dlopen("./midi2-alsa.so", RTLD_LAZY);
-    } else return 1;
 
+    if (Audio_MidiSubsystem == 11) plugin_name = ".\\midi2-windows.dll";
+    else if (Audio_MidiSubsystem == 12) plugin_name = ".\\midi2-alsa.dll";
+    else
+    {
+        fprintf(stderr, "%s: error: %s\n", "midi2", "unknown plugin");
+        return 1;
+    }
+
+    fprintf(stderr, "%s: loading dynamic library: %s\n", "midi2", plugin_name);
+    MP2_handle = LoadLibraryA(plugin_name);
+
+    if (MP2_handle == NULL)
+    {
+        fprintf(stderr, "%s: load error: 0x%x\n", "midi2", GetLastError());
+        return 2;
+    }
+#else
     #define free_library dlclose
     #define get_proc_address dlsym
+
+    if (Audio_MidiSubsystem == 11) plugin_name = "./midi2-windows.so";
+    else if (Audio_MidiSubsystem == 12) plugin_name = "./midi2-alsa.so";
+    else
+    {
+        fprintf(stderr, "%s: error: %s\n", "midi2", "unknown plugin");
+        return 1;
+    }
+
+    fprintf(stderr, "%s: loading shared object: %s\n", "midi2", plugin_name);
+    MP2_handle = dlopen(plugin_name, RTLD_LAZY);
+
+    if (MP2_handle == NULL)
+    {
+        fprintf(stderr, "%s: load error: %s\n", "midi2", dlerror());
+        return 2;
+    }
 #endif
-    if (MP2_handle == NULL) return 2;
 
     MP2_initialize = (midi_plugin2_initialize) get_proc_address(MP2_handle, MIDI_PLUGIN2_INITIALIZE);
 
     if (MP2_initialize == NULL)
     {
+        fprintf(stderr, "%s: error: %s\n", "midi2", "initialization function not available in plugin");
         free_library(MP2_handle);
         MP2_handle = NULL;
         return 3;
@@ -394,6 +453,7 @@ static int MP2_Startup(void)
 
     if (MP2_initialize(&MP2_parameters, &MP2_functions))
     {
+        fprintf(stderr, "%s: error: %s\n", "midi2", "failed to initialize plugin");
         free_library(MP2_handle);
         MP2_handle = NULL;
         return 4;
@@ -403,6 +463,8 @@ static int MP2_Startup(void)
     midi_status = MS_STOPPED;
 
     MP2_functions.set_volume(Audio_MidiVolume);
+
+    fprintf(stderr, "%s: OK\n", "midi2");
 
     return 0;
 

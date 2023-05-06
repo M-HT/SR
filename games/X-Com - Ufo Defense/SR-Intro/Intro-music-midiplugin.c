@@ -420,47 +420,64 @@ static int MidiPlugin_ProcessData(void *data)
 
 int MidiPlugin_Startup(void)
 {
+    const char *plugin_name;
     midi_plugin_initialize MP_initialize;
     midi_plugin_parameters MP_parameters;
     char temp_str[MAX_PATH];
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
-    if (Game_MidiSubsystem == 1) {
-        MP_handle = LoadLibrary(".\\midi-wildmidi.dll");
-    } else if (Game_MidiSubsystem == 2) {
-        MP_handle = LoadLibrary(".\\midi-bassmidi.dll");
-    } else if (Game_MidiSubsystem == 3) {
-        MP_handle = LoadLibrary(".\\midi-adlmidi.dll");
-    } else if (Game_MidiSubsystem == 10) {
-        MP_handle = LoadLibrary(".\\adlib-dosbox_opl.dll");
-    } else if (Game_MidiSubsystem == 11) {
-        MP_handle = LoadLibrary(".\\mt32-munt.dll");
-    } else return 1;
-
     #define free_library FreeLibrary
     #define get_proc_address GetProcAddress
-#else
-    if (Game_MidiSubsystem == 1) {
-        MP_handle = dlopen("./midi-wildmidi.so", RTLD_LAZY);
-    } else if (Game_MidiSubsystem == 2) {
-        MP_handle = dlopen("./midi-bassmidi.so", RTLD_LAZY);
-    } else if (Game_MidiSubsystem == 3) {
-        MP_handle = dlopen("./midi-adlmidi.so", RTLD_LAZY);
-    } else if (Game_MidiSubsystem == 10) {
-        MP_handle = dlopen("./adlib-dosbox_opl.so", RTLD_LAZY);
-    } else if (Game_MidiSubsystem == 11) {
-        MP_handle = dlopen("./mt32-munt.so", RTLD_LAZY);
-    } else return 1;
 
+    if (Game_MidiSubsystem == 1) plugin_name = ".\\midi-wildmidi.dll";
+    else if (Game_MidiSubsystem == 2) plugin_name = ".\\midi-bassmidi.dll";
+    else if (Game_MidiSubsystem == 3) plugin_name = ".\\midi-adlmidi.dll";
+    else if (Game_MidiSubsystem == 10) plugin_name = ".\\adlib-dosbox_opl.dll";
+    else if (Game_MidiSubsystem == 11) plugin_name = ".\\mt32-munt.dll";
+    else
+    {
+        fprintf(stderr, "%s: error: %s\n", "midi", "unknown plugin");
+        return 1;
+    }
+
+    fprintf(stderr, "%s: loading dynamic library: %s\n", "midi", plugin_name);
+    MP_handle = LoadLibraryA(plugin_name);
+
+    if (MP_handle == NULL)
+    {
+        fprintf(stderr, "%s: load error: 0x%x\n", "midi", GetLastError());
+        return 2;
+    }
+#else
     #define free_library dlclose
     #define get_proc_address dlsym
+
+    if (Game_MidiSubsystem == 1) plugin_name = "./midi-wildmidi.so";
+    else if (Game_MidiSubsystem == 2) plugin_name = "./midi-bassmidi.so";
+    else if (Game_MidiSubsystem == 3) plugin_name = "./midi-adlmidi.so";
+    else if (Game_MidiSubsystem == 10) plugin_name = "./adlib-dosbox_opl.so";
+    else if (Game_MidiSubsystem == 11) plugin_name = "./mt32-munt.so";
+    else
+    {
+        fprintf(stderr, "%s: error: %s\n", "midi", "unknown plugin");
+        return 1;
+    }
+
+    fprintf(stderr, "%s: loading shared object: %s\n", "midi", plugin_name);
+    MP_handle = dlopen(plugin_name, RTLD_LAZY);
+
+    if (MP_handle == NULL)
+    {
+        fprintf(stderr, "%s: load error: %s\n", "midi", dlerror());
+        return 2;
+    }
 #endif
-    if (MP_handle == NULL) return 2;
 
     MP_initialize = (midi_plugin_initialize) get_proc_address(MP_handle, MIDI_PLUGIN_INITIALIZE);
 
     if (MP_initialize == NULL)
     {
+        fprintf(stderr, "%s: error: %s\n", "midi", "initialization function not available in plugin");
         free_library(MP_handle);
         return 3;
     }
@@ -476,6 +493,7 @@ int MidiPlugin_Startup(void)
 
     if (MP_initialize(Game_AudioRate, &MP_parameters, &MP_functions))
     {
+        fprintf(stderr, "%s: error: %s\n", "midi", "failed to initialize plugin");
         free_library(MP_handle);
         return 4;
     }
@@ -541,6 +559,7 @@ int MidiPlugin_Startup(void)
     );
     if (MP_thread == NULL)
     {
+        fprintf(stderr, "%s: error: %s\n", "midi", "failed to create thread");
         if (temp_buf != NULL)
         {
             free(temp_buf);
@@ -554,6 +573,8 @@ int MidiPlugin_Startup(void)
 
     // set mixer
     Mix_HookMusic(&MidiPlugin_MusicPlayer, temp_buf);
+
+    fprintf(stderr, "%s: OK\n", "midi");
 
     return 0;
 

@@ -965,13 +965,18 @@ void Game_save_screenshot(const char *filename)
         if (zlib_state < 0) return;
         else if (zlib_state == 0)
         {
+            fprintf(stderr, "%s: loading shared object: %s\n", "zlib", "libz.so");
             zlib_handle = dlopen("libz.so", RTLD_LAZY);
             if (zlib_handle == NULL)
             {
+                fprintf(stderr, "%s: load error: %s\n", "zlib", dlerror());
+
+                fprintf(stderr, "%s: loading shared object: %s\n", "zlib", "./libz.so");
                 zlib_handle = dlopen("./libz.so", RTLD_LAZY);
             }
             if (zlib_handle == NULL)
             {
+                fprintf(stderr, "%s: load error: %s\n", "zlib", dlerror());
                 zlib_state = -1;
                 return;
             }
@@ -983,11 +988,13 @@ void Game_save_screenshot(const char *filename)
 
             if ((zlib_deflateInit2_ == NULL) || (zlib_deflate == NULL) || (zlib_deflateEnd == NULL) || (zlib_crc32 == NULL))
             {
+                fprintf(stderr, "%s: error: %s\n", "zlib", "functions not available in shared object");
                 dlclose(zlib_handle);
                 zlib_state = -1;
                 return;
             }
 
+            fprintf(stderr, "%s: OK\n", "zlib");
             zlib_state = 1;
         }
     }

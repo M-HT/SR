@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -81,38 +81,58 @@ static int ActivateSequence(MP_midi *seq)
 
 int MidiPlugin2_Startup(void)
 {
+    const char *plugin_name;
     midi_plugin2_initialize MP2_initialize;
     midi_plugin2_parameters MP2_parameters;
     int index;
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
-    if (Game_MidiSubsystem == 11) {
-        MP2_handle = LoadLibrary(".\\midi2-windows.dll");
-    } else if (Game_MidiSubsystem == 12) {
-        MP2_handle = LoadLibrary(".\\midi2-alsa.dll");
-    } else return 1;
-
     #define free_library FreeLibrary
     #define get_proc_address GetProcAddress
-#else
-    if (Game_MidiSubsystem == 11) {
-        MP2_handle = dlopen("./midi2-windows.so", RTLD_LAZY);
-    } else if (Game_MidiSubsystem == 12) {
-        MP2_handle = dlopen("./midi2-alsa.so", RTLD_LAZY);
-    } else return 1;
 
-    #define free_library dlclose
-    #define get_proc_address dlsym
-#endif
+    if (Game_MidiSubsystem == 11) plugin_name = ".\\midi2-windows.dll";
+    else if (Game_MidiSubsystem == 12) plugin_name = ".\\midi2-alsa.dll";
+    else
+    {
+        fprintf(stderr, "%s: error: %s\n", "midi2", "unknown plugin");
+        return 1;
+    }
+
+    fprintf(stderr, "%s: loading dynamic library: %s\n", "midi2", plugin_name);
+    MP2_handle = LoadLibraryA(plugin_name);
+
     if (MP2_handle == NULL)
     {
+        fprintf(stderr, "%s: load error: 0x%x\n", "midi2", GetLastError());
         return 2;
     }
+#else
+    #define free_library dlclose
+    #define get_proc_address dlsym
+
+    if (Game_MidiSubsystem == 11) plugin_name = "./midi2-windows.so";
+    else if (Game_MidiSubsystem == 12) plugin_name = "./midi2-alsa.so";
+    else
+    {
+        fprintf(stderr, "%s: error: %s\n", "midi2", "unknown plugin");
+        return 1;
+    }
+
+    fprintf(stderr, "%s: loading shared object: %s\n", "midi2", plugin_name);
+    MP2_handle = dlopen(plugin_name, RTLD_LAZY);
+
+    if (MP2_handle == NULL)
+    {
+        fprintf(stderr, "%s: load error: %s\n", "midi2", dlerror());
+        return 2;
+    }
+#endif
 
     MP2_initialize = (midi_plugin2_initialize) get_proc_address(MP2_handle, MIDI_PLUGIN2_INITIALIZE);
 
     if (MP2_initialize == NULL)
     {
+        fprintf(stderr, "%s: error: %s\n", "midi2", "initialization function not available in plugin");
         free_library(MP2_handle);
         return 3;
     }
@@ -122,6 +142,7 @@ int MidiPlugin2_Startup(void)
 
     if (MP2_initialize(&MP2_parameters, &MP2_functions))
     {
+        fprintf(stderr, "%s: error: %s\n", "midi2", "failed to initialize plugin");
         free_library(MP2_handle);
         return 4;
     }
@@ -131,6 +152,8 @@ int MidiPlugin2_Startup(void)
     {
         memset(&(MP_sequence[index]), 0, sizeof(MP_midi));
     }
+
+    fprintf(stderr, "%s: OK\n", "midi2");
 
     return 0;
 

@@ -82,38 +82,66 @@ static int ScalerPlugin_Thread(thread_data_t *data)
 
 int ScalerPlugin_Startup(void)
 {
+    const char *plugin_name;
     scaler_plugin_initialize SP_initialize;
     int cpu_count, index, extra_num;
 
     if (plugin_initialized) return 0;
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
-    if (Game_AdvancedScaler == 2) SP_handle = LoadLibrary(".\\scaler-hqx.dll");
-    else if (Game_AdvancedScaler == 3) SP_handle = LoadLibrary(".\\scaler-xbrz.dll");
-    else return 1;
-
     #define free_library FreeLibrary
     #define get_proc_address GetProcAddress
-#else
-    if (Game_AdvancedScaler == 2) SP_handle = dlopen("./scaler-hqx.so", RTLD_LAZY);
-    else if (Game_AdvancedScaler == 3) SP_handle = dlopen("./scaler-xbrz.so", RTLD_LAZY);
-    else return 1;
 
+    if (Game_AdvancedScaler == 2) plugin_name = ".\\scaler-hqx.dll";
+    else if (Game_AdvancedScaler == 3) plugin_name = ".\\scaler-xbrz.dll";
+    else
+    {
+        fprintf(stderr, "%s: error: %s\n", "scaler", "unknown plugin");
+        return 1;
+    }
+
+    fprintf(stderr, "%s: loading dynamic library: %s\n", "scaler", plugin_name);
+    SP_handle = LoadLibraryA(plugin_name);
+
+    if (SP_handle == NULL)
+    {
+        fprintf(stderr, "%s: load error: 0x%x\n", "scaler", GetLastError());
+        return 2;
+    }
+#else
     #define free_library dlclose
     #define get_proc_address dlsym
+
+    if (Game_AdvancedScaler == 2) plugin_name = "./scaler-hqx.so";
+    else if (Game_AdvancedScaler == 3) plugin_name = "./scaler-xbrz.so";
+    else
+    {
+        fprintf(stderr, "%s: error: %s\n", "scaler", "unknown plugin");
+        return 1;
+    }
+
+    fprintf(stderr, "%s: loading shared object: %s\n", "scaler", plugin_name);
+    SP_handle = dlopen(plugin_name, RTLD_LAZY);
+
+    if (SP_handle == NULL)
+    {
+        fprintf(stderr, "%s: load error: %s\n", "scaler", dlerror());
+        return 2;
+    }
 #endif
-    if (SP_handle == NULL) return 2;
 
     SP_initialize = (scaler_plugin_initialize) get_proc_address(SP_handle, SCALER_PLUGIN_INITIALIZE);
 
     if (SP_initialize == NULL)
     {
+        fprintf(stderr, "%s: error: %s\n", "scaler", "initialization function not available in plugin");
         free_library(SP_handle);
         return 3;
     }
 
     if (SP_initialize(&SP_functions))
     {
+        fprintf(stderr, "%s: error: %s\n", "scaler", "failed to initialize plugin");
         free_library(SP_handle);
         return 4;
     }
@@ -190,8 +218,10 @@ int ScalerPlugin_Startup(void)
         }
     }
 
+    fprintf(stderr, "%s: using %i extra threads\n", "scaler", extra_num);
     num_extra_threads = extra_num;
 
+    fprintf(stderr, "%s: OK\n", "scaler");
     plugin_initialized = 1;
 
     return 0;

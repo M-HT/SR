@@ -1333,12 +1333,6 @@ uint32_t IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, struct _r
             SDL_RenderCopy(lpThis->Renderer, lpThis->Texture[lpThis->current_texture], NULL, NULL);
             SDL_RenderPresent(lpThis->Renderer);
 
-            lpThis->current_texture++;
-            if (lpThis->current_texture > 2)
-            {
-                lpThis->current_texture = 0;
-            }
-
             // clear next frame
             SDL_SetRenderDrawColor(lpThis->Renderer, 0, 0, 0, 255);
             SDL_RenderClear(lpThis->Renderer);
@@ -1469,15 +1463,15 @@ uint32_t IDirectDrawSurface_Flip_c(struct IDirectDrawSurface_c *lpThis, struct I
     if (lpDDSurfaceTargetOverride == NULL)
     {
 #if SDL_VERSION_ATLEAST(2,0,0)
-        CopyBackbufferSurfaceToTexture(lpThis->lpBackbuffer->Surface, lpThis->Texture[lpThis->current_texture]);
-        SDL_RenderCopy(lpThis->Renderer, lpThis->Texture[lpThis->current_texture], NULL, NULL);
-        SDL_RenderPresent(lpThis->Renderer);
-
         lpThis->current_texture++;
         if (lpThis->current_texture > 2)
         {
             lpThis->current_texture = 0;
         }
+
+        CopyBackbufferSurfaceToTexture(lpThis->lpBackbuffer->Surface, lpThis->Texture[lpThis->current_texture]);
+        SDL_RenderCopy(lpThis->Renderer, lpThis->Texture[lpThis->current_texture], NULL, NULL);
+        SDL_RenderPresent(lpThis->Renderer);
 
         SDL_Delay(Display_DelayAfterFlip);
 

@@ -337,9 +337,10 @@ void init_sleepmode(void)
 
 static int find_event(SDL_Event *event, int remove, int wait)
 {
-    int pump_events;
+    int pump_events, can_sleep;
 
     pump_events = 1;
+    can_sleep = (CPU_SleepMode != 2)?1:0;
 
     while (1)
     {
@@ -362,8 +363,29 @@ static int find_event(SDL_Event *event, int remove, int wait)
             else if (pump_events)
             {
                 pump_events = 0;
+                SDL_PumpEvents();
+                continue;
+            }
+            else if (can_sleep)
+            {
+                if (Display_DelayAfterFlip
+#if SDL_VERSION_ATLEAST(2,0,0)
+                    || Display_VSync
+#endif
+                )
+                {
+                    static Uint32 last_time;
+                    Uint32 current_time;
 
-                if (CPU_SleepMode != 2)
+                    current_time = SDL_GetTicks();
+                    if (current_time != last_time)
+                    {
+                        last_time = current_time;
+                        can_sleep = 0;
+                    }
+                }
+
+                if (can_sleep)
                 {
                     // Send Septerra Core to sleep to prevent it from consuming too much cpu
 #ifdef _WIN32
@@ -386,10 +408,11 @@ static int find_event(SDL_Event *event, int remove, int wait)
 
                     nanosleep(&_tp, NULL);
 #endif
-                }
 
-                SDL_PumpEvents();
-                continue;
+                    can_sleep = 0;
+                    SDL_PumpEvents();
+                    continue;
+                }
             }
 
             return 0;

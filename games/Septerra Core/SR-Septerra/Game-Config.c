@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -39,6 +39,8 @@
 #define CONFIG_FILE "Septerra.cfg"
 #endif
 
+extern int32_t Patch_PreselectCharacters;
+
 static char *trim_string(char *buf)
 {
     int len;
@@ -75,6 +77,8 @@ void ReadConfiguration(void)
     Display_DelayAfterFlip = 0;
 
     Audio_BufferSize = 0;
+
+    Patch_PreselectCharacters = 1;
 
     Option_DefaultMovement = 0;
     Option_MovieResolution = 1;
@@ -257,6 +261,24 @@ void ReadConfiguration(void)
                 if (num_int > 0)
                 {
                     Audio_BufferSize = num_int;
+                }
+            }
+        }
+        else if ( strncasecmp(str, "Patch_", 6) == 0 ) // str begins with "Patch_"
+        {
+            // patch settings
+
+            str += 6;
+
+            if ( strcasecmp(str, "PreselectCharacters") == 0 ) // str equals "PreselectCharacters"
+            {
+                if ( strcasecmp(param, "yes") == 0 ) // param equals "yes"
+                {
+                    Patch_PreselectCharacters = 1;
+                }
+                else if ( strcasecmp(param, "no") == 0 ) // param equals "no"
+                {
+                    Patch_PreselectCharacters = 0;
                 }
             }
         }

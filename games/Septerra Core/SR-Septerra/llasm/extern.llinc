@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2023 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -138,6 +138,13 @@ proc SoundEngine_StartTimer_asm2c external
 proc SoundEngine_StopTimer_asm2c external
 proc SoundEngine_DecodeMP3Stream_asm2c external
 proc SoundEngine_OpenMP3Stream_asm2c external
+
+
+extern Patch_PreselectCharacters
+extern Patch_IsPreselected
+extern Patch_PreselectTime
+extern Patch_IsBattle
+proc Patch_PushKeyEvent_asm2c external
 
 
 ; DDRAW.dll

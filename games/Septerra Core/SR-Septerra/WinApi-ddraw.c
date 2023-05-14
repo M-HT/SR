@@ -298,6 +298,7 @@ extern uint32_t IDirectDrawVtbl_asm2c;
 extern uint32_t IDirectDrawSurfaceVtbl_asm2c;
 
 extern int sdl_versionnum;
+extern uint8_t Patch_IsPreselected[4];
 
 
 #if SDL_VERSION_ATLEAST(2,0,0)
@@ -1323,6 +1324,28 @@ uint32_t IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, struct _r
             eprintf("error\n");
 #endif
             return DDERR_SURFACEBUSY;
+        }
+
+        // show visual indication of preselected characters in combat
+        if (lpThis->backbuffer && (Patch_IsPreselected[0] || Patch_IsPreselected[1] || Patch_IsPreselected[2]))
+        {
+            int charnum;
+            SDL_Rect preselect_rect;
+            Uint32 color;
+
+            preselect_rect.x = 20;
+            preselect_rect.y = 43;
+            preselect_rect.w = 8;
+            preselect_rect.h = 8;
+            color = SDL_MapRGB(lpThis->Surface->format, 0, 0, 255);
+
+            for (charnum = 0; charnum <= 2; charnum++, preselect_rect.y += 100)
+            {
+                if (Patch_IsPreselected[charnum])
+                {
+                    SDL_FillRect(lpThis->Surface, &preselect_rect, color);
+                }
+            }
         }
 
         if (lpThis->primary)

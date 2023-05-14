@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2023 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -19,6 +19,13 @@
 ;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;;  SOFTWARE.
 ;;
+
+%ifidn __OUTPUT_FORMAT__, win32
+    %define Patch_PreselectCharacters _Patch_PreselectCharacters
+    %define Patch_IsPreselected _Patch_IsPreselected
+    %define Patch_PreselectTime _Patch_PreselectTime
+    %define Patch_IsBattle _Patch_IsBattle
+%endif
 
 extern ASI_startup_asm2c
 extern ASI_shutdown_asm2c
@@ -138,6 +145,13 @@ extern SoundEngine_StartTimer_asm2c
 extern SoundEngine_StopTimer_asm2c
 extern SoundEngine_DecodeMP3Stream_asm2c
 extern SoundEngine_OpenMP3Stream_asm2c
+
+
+extern Patch_PreselectCharacters
+extern Patch_IsPreselected
+extern Patch_PreselectTime
+extern Patch_IsBattle
+extern Patch_PushKeyEvent_asm2c
 
 
 ; DDRAW.dll

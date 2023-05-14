@@ -1519,7 +1519,12 @@ uint32_t GetCursorPos_c(void *lpPoint)
     eprintf("GetCursorPos: 0x%" PRIxPTR " - ", (uintptr_t)lpPoint);
 #endif
 
+#if SDL_VERSION_ATLEAST(2,0,0)
+    x = mouse_x;
+    y = mouse_y;
+#else
     SDL_GetMouseState(&x, &y);
+#endif
 
     ((lppoint)lpPoint)->x = x;
     ((lppoint)lpPoint)->y = y;

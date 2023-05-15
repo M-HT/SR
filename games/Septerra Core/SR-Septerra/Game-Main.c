@@ -30,13 +30,12 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <unistd.h>
-#else
-#include <stdio.h>
 #endif
 
 #include <SDL.h>
 #include <time.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "Game-Config.h"
 
 #if (SDL_MAJOR_VERSION == 1) && SDL_VERSION_ATLEAST(1, 2, 50)

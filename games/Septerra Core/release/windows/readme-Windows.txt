@@ -1,5 +1,5 @@
 Septerra Core for Windows (x86)
-Version 1.04.0.7
+Version 1.04.0.8
 
 Original Septerra Core version 1.04 is required for playing.
 (version from GOG.com can be used for playing)
@@ -36,6 +36,13 @@ Setting CPU_SleepMode (in configuration file) to "reduced" can help. If not, the
 
 Changes
 -------
+v1.04.0.8 (2023-05-15)
+* add option to use right mouse click to preselect characters in combat (based on unofficial patch)
+* change mouse cursor position handling
+* fix screen shake when loading new area
+* don't add sleep (to prevent too much CPU utilization) when not necessary
+* minor bug fixes
+
 v1.04.0.7 (2022-01-08)
 * add option to only use integer scaling
 

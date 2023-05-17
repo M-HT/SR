@@ -1,5 +1,5 @@
 Septerra Core for Linux (armv7-gnueabihf)
-Version 1.04.0.8
+Version 1.04.0.9
 
 Original Septerra Core version 1.04 is required for playing.
 (version from GOG.com can be used for playing)
@@ -30,6 +30,9 @@ Setting CPU_SleepMode (in configuration file) to "reduced" can help. If not, the
 
 Changes
 -------
+v1.04.0.9 (2023-05-17)
+* fix moving mouse cursor outside the game area in fullscreen
+
 v1.04.0.8 (2023-05-15)
 * add option to use right mouse click to preselect characters in combat (based on unofficial patch)
 * change mouse cursor position handling

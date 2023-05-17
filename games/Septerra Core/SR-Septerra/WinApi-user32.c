@@ -537,20 +537,25 @@ static int find_event(SDL_Event *event, int remove, int wait)
                     window = SDL_GetWindowFromID(event->motion.windowID);
                     renderer = SDL_GetRenderer(window);
 #if SDL_VERSION_ATLEAST(2,0,18)
-                    SDL_RenderLogicalToWindow(renderer, newx, newy, &newx, &newy);
-#else
-                    float scaleX, scaleY;
-                    SDL_Rect viewport;
-                    int output_w, output_h, window_w, window_h;
-
-                    SDL_RenderGetScale(renderer, &scaleX, &scaleY);
-                    SDL_RenderGetViewport(renderer, &viewport);
-                    SDL_GetRendererOutputSize(renderer, &output_w, &output_h);
-                    SDL_GetWindowSize(window, &window_w, &window_h);
-
-                    newx = (int) (((newx + viewport.x) * scaleX * window_w) / output_w);
-                    newy = (int) (((newy + viewport.y) * scaleY * window_h) / output_h);
+                    if (sdl_versionnum >= SDL_VERSIONNUM(2,0,18))
+                    {
+                        SDL_RenderLogicalToWindow(renderer, newx, newy, &newx, &newy);
+                    }
+                    else
 #endif
+                    {
+                        float scaleX, scaleY;
+                        SDL_Rect viewport;
+                        int output_w, output_h, window_w, window_h;
+
+                        SDL_RenderGetScale(renderer, &scaleX, &scaleY);
+                        SDL_RenderGetViewport(renderer, &viewport);
+                        SDL_GetRendererOutputSize(renderer, &output_w, &output_h);
+                        SDL_GetWindowSize(window, &window_w, &window_h);
+
+                        newx = (int) (((newx + viewport.x) * scaleX * window_w) / output_w);
+                        newy = (int) (((newy + viewport.y) * scaleY * window_h) / output_h);
+                    }
                     SDL_WarpMouseInWindow(window, newx, newy);
                 }
             }

@@ -246,6 +246,12 @@ static int mouse_last_x[3], mouse_last_y[3], mouse_current_x[3], mouse_current_y
 static int mouse_last_peep[3];
 // doubleclick detection - END
 
+#if SDL_VERSION_ATLEAST(2,0,0)
+static int mouse_clip_w = 0;
+static int mouse_clip_h = 0;
+#endif
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -346,6 +352,10 @@ static int find_event(SDL_Event *event, int remove, int wait)
     {
         int num_events, keep_event;
         int mouse_button;
+#if SDL_VERSION_ATLEAST(2,0,0)
+        SDL_Window *window;
+        SDL_Renderer *renderer;
+#endif
 
 
 #if SDL_VERSION_ATLEAST(2,0,0)
@@ -491,6 +501,60 @@ static int find_event(SDL_Event *event, int remove, int wait)
             }
             mouse_x = event->motion.x;
             mouse_y = event->motion.y;
+#if SDL_VERSION_ATLEAST(2,0,0)
+            if (Display_Mode)
+            {
+                int newx, newy;
+
+                if (mouse_x < 0) mouse_x = 0;
+                else if (mouse_x >= mouse_clip_w) mouse_x = mouse_clip_w - 1;
+
+                if (mouse_y < 0) mouse_y = 0;
+                else if (mouse_y >= mouse_clip_h) mouse_y = mouse_clip_h - 1;
+
+                newx = event->motion.x;
+                newy = event->motion.y;
+                if (event->motion.xrel > 0)
+                {
+                    if (newx < 0) newx = event->motion.xrel;
+                }
+                else if (event->motion.xrel < 0)
+                {
+                    if (newx >= mouse_clip_w) newx = mouse_clip_w + event->motion.xrel - 1;
+                }
+
+                if (event->motion.yrel > 0)
+                {
+                    if (newy < 0) newy = event->motion.yrel;
+                }
+                else if (event->motion.yrel < 0)
+                {
+                    if (newy >= mouse_clip_h) newy = mouse_clip_h + event->motion.yrel - 1;
+                }
+
+                if ((newx != event->motion.x) || (newy != event->motion.y))
+                {
+                    window = SDL_GetWindowFromID(event->motion.windowID);
+                    renderer = SDL_GetRenderer(window);
+#if SDL_VERSION_ATLEAST(2,0,18)
+                    SDL_RenderLogicalToWindow(renderer, newx, newy, &newx, &newy);
+#else
+                    float scaleX, scaleY;
+                    SDL_Rect viewport;
+                    int output_w, output_h, window_w, window_h;
+
+                    SDL_RenderGetScale(renderer, &scaleX, &scaleY);
+                    SDL_RenderGetViewport(renderer, &viewport);
+                    SDL_GetRendererOutputSize(renderer, &output_w, &output_h);
+                    SDL_GetWindowSize(window, &window_w, &window_h);
+
+                    newx = (int) (((newx + viewport.x) * scaleX * window_w) / output_w);
+                    newy = (int) (((newy + viewport.y) * scaleY * window_h) / output_h);
+#endif
+                    SDL_WarpMouseInWindow(window, newx, newy);
+                }
+            }
+#endif
             break;
 
         case SDL_MOUSEBUTTONDOWN:
@@ -574,6 +638,16 @@ static int find_event(SDL_Event *event, int remove, int wait)
             }
             mouse_x = event->button.x;
             mouse_y = event->button.y;
+#if SDL_VERSION_ATLEAST(2,0,0)
+            if (Display_Mode)
+            {
+                if (mouse_x < 0) mouse_x = 0;
+                else if (mouse_x >= mouse_clip_w) mouse_x = mouse_clip_w - 1;
+
+                if (mouse_y < 0) mouse_y = 0;
+                else if (mouse_y >= mouse_clip_h) mouse_y = mouse_clip_h - 1;
+            }
+#endif
             break;
 
         case SDL_JOYAXISMOTION:
@@ -682,6 +756,14 @@ static int find_event(SDL_Event *event, int remove, int wait)
             case SDL_WINDOWEVENT_FOCUS_GAINED:
             case SDL_WINDOWEVENT_FOCUS_LOST:
                 keep_event = 1;
+                break;
+            case SDL_WINDOWEVENT_SHOWN:
+                window = SDL_GetWindowFromID(event->motion.windowID);
+                renderer = (window != NULL)?SDL_GetRenderer(window):NULL;
+                if (renderer != NULL)
+                {
+                    SDL_RenderGetLogicalSize(renderer, &mouse_clip_w, &mouse_clip_h);
+                }
                 break;
             default:
                 break;
@@ -1520,6 +1602,8 @@ uint32_t GetCursorPos_c(void *lpPoint)
 #endif
 
 #if SDL_VERSION_ATLEAST(2,0,0)
+    // SDL_GetMouseState returns real window coordinates instead of renderer logical coordinates
+    // also last event coordinates are probably more appropriate for Septerra Core
     x = mouse_x;
     y = mouse_y;
 #else

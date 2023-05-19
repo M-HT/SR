@@ -231,7 +231,7 @@ static void pr_errprint(const char *text)
 
 static __attribute__ ((noinline)) void read_stack(uint64_t *stack)
 {
-    intptr_t index;
+    int64_t index;
 
     if (sizeof(void *) != 8)
     {
@@ -418,8 +418,10 @@ static void read_hugepagesize_set(void)
 
 static __attribute__ ((noinline)) void read_page_sizes(void)
 {
+    int64_t index;
+
     page_size = 0;
-    for (intptr_t index = 0; index < auxc; index++)
+    for (index = 0; index < auxc; index++)
     {
         if (auxv[index].a_type == AT_PAGESZ)
         {
@@ -1014,7 +1016,7 @@ static __attribute__ ((noinline)) void load_elf_executable(void)
     program_entry = elf_entry[elf_interpreter ? 1 : 0];
 
     // replace auxiliary vectors
-    for (intptr_t index = 0; index < auxc; index++)
+    for (index = 0; index < auxc; index++)
     {
         switch (auxv[index].a_type)
         {

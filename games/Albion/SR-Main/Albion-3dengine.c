@@ -3094,8 +3094,11 @@ static void draw_floor_and_ceiling(void)
 
                 d3_param_dword_1A5E00 = g_dword_196CEC;
                 var_1C = 1;
-                d3_param_dword_1A5E04 = g_dword_14A4A6[(uint32_t)d3_param_current_mapdata_ptr[1] - 1].field_0;
-                draw_floor_ceiling_tile(distance, firstline_mapgrid_point, nextline_mapgrid_point); // floor
+                if (d3_param_current_mapdata_ptr[1]) // fix bug in original code
+                {
+                    d3_param_dword_1A5E04 = g_dword_14A4A6[(uint32_t)d3_param_current_mapdata_ptr[1] - 1].field_0;
+                    draw_floor_ceiling_tile(distance, firstline_mapgrid_point, nextline_mapgrid_point); // floor
+                }
 
                 if ( !d3_without_ceiling && d3_param_current_mapdata_ptr[2] )
                 {

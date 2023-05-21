@@ -101,6 +101,8 @@ loc_94C79,6,@mov [loc_13FFB0], esi|LDR tmpadr, =loc_13FFB0|str esi, [tmpadr]|@cm
 
 loc_7C738,2,@mov ebp, esp|mov ebp, esp|@cmp ebx, 99|cmp ebx, #99|@jbe loc_7C73A|bls loc_7C73A|@cmp ebx, 255|cmp ebx, #255|@ja loc_7C73A|bhi loc_7C73A|@mov ebx, 99|mov ebx, #99|loc_7C73A: @ limit number of items to 99
 
+loc_C0BA5,5,@and eax, 0xff|andS eax, eax, #255|@jz short loc_C0BC7|beq loc_C0BC2_after_call @ fix bug in original code
+
 loc_CDC08,2,@dec bp|mrs tmplr, cpsr|mov tmp1, ebp, lsl #16|bic ebp, ebp, #0x00ff|bic ebp, ebp, #0xff00|subS tmp1, tmp1, #0x00010000|orr ebp, ebp, tmp1, lsr #16|mrs tmp1, cpsr|and tmplr, tmplr, #0x20000000|orr tmp1, tmp1, #0x20000000|eor tmp1, tmp1, tmplr|msr cpsr_f, tmp1 @ on ARM swap carry bit before or after instruction ('dec bp' must set flags for 'jz')
 
 loc_CDC36,2,@rcr edx, 1|mrs tmp1, cpsr|eor tmp1, tmp1, #0x20000000|msr cpsr_f, tmp1|mov edx, edx, rrx @ on ARM swap carry bit before instruction ('rcr edx, 1' must set flags for 'rcr')

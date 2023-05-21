@@ -96,6 +96,8 @@ loc_94C84,5,;_After3DEngine:|;mov eax, [loc_14A4DA]|load eax, loc_14A4DA, 2 ; la
 
 loc_7C738,2,;mov ebp, esp|mov ebp, esp|;cmp ebx, 99|cmovugt ebx, 99, tmpcnd, 1, 0|;jbe loc_7C73A|;cmp ebx, 255|cmovugt ebx, 255, tmpcnd, 0, tmpcnd|;ja loc_7C73A|ifnz tmpcnd|;mov ebx, 99|mov ebx, 99|endif|;loc_7C73A: ; limit number of items to 99
 
+loc_C0BA5,5,;and eax, 0xff|and eax, eax, 0xff|;jz short loc_C0BC7|ctcallz eax, loc_C0BC7|tcall loc_C0BA5_after|endp|proc loc_C0BA5_after ; fix bug in original code
+
 loc_25156,1,;pop ebx|POP ebx|;call SR_Sync|PUSH loc_25157|tcall SR_Sync|endp|proc loc_25157 ; call sync after save
 
 loc_22F61,83,;mov eax, 1|mov eax, 1 ; skip cdrom check

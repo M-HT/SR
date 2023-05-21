@@ -98,6 +98,9 @@ loc_94C84,5,_After3DEngine:|mov eax, [loc_14A4DA] ; label after 3d engine
 
 loc_7C738,2,mov ebp, esp|cmp ebx, 99|jbe loc_7C73A|cmp ebx, 255|ja loc_7C73A|mov ebx, 99|loc_7C73A: ; limit number of items to 99
 
+loc_C0BA5,5,and eax, 0xff|jz short loc_C0BC7 ; fix bug in original code
+loc_C0BC7,7,loc_C0BC7:|cmp byte [loc_143D59], 0x0 ; fix bug in original code
+
 loc_CDC08,2,dec bp ; on ARM swap carry bit before or after instruction ('dec bp' must set flags for 'jz')
 
 loc_CDC36,2,rcr edx, 1 ; on ARM swap carry bit before instruction ('rcr edx, 1' must set flags for 'rcr')

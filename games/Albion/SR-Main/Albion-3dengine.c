@@ -390,15 +390,15 @@ extern int32_t d3_dword_143D68;
 extern PTR32(uint8_t) g_mapdata_ptr;
 extern int32_t g_viewport_maximum_x;
 extern int32_t g_dword_140004;
-extern PTR32(PTR32(void)) g_dword_14A4AE;
+extern PTR32_ALIGN(PTR32(void),2) g_dword_14A4AE;
 extern int32_t g_dword_14000C;
 extern uint16_t g_word_14A4CA[4];
 // insert_into_list_sm1234
 extern struct struc_8 d3_mapobjects_list_index[D3_MAXIMUM_NUMBER_OF_MAPOBJECTS];
 extern struct struc_2 d3_stru_1999E8;
 // d3_sub_BED08
-extern PTR32(int16_t) g_dword_14A4A2; // struct ??? (i16, i16, i16, u16)
-extern PTR32(uint8_t) g_dword_14A4AA; // struct ???
+extern PTR32_ALIGN(int16_t,2) g_dword_14A4A2; // struct ??? (i16, i16, i16, u16)
+extern PTR32_ALIGN(uint8_t,2) g_dword_14A4AA; // struct ???
 extern int32_t g_dword_140000;
 extern int32_t g_dword_140008;
 extern int32_t g_viewport_minimum_y;
@@ -406,7 +406,7 @@ extern int32_t g_viewport_minimum_y;
 extern int32_t g_viewport_minimum_x;
 // fill_stru_1999E8_1
 // d3_sub_BF4D4
-extern PTR32(struct struc_5) g_dword_14A4B2;
+extern PTR32_ALIGN(struct struc_5,2) g_dword_14A4B2;
 extern uint16_t g_word_14A4B6;
 // d3_sub_BF9BC
 extern int32_t d3_param_dword_143D74;
@@ -414,7 +414,7 @@ extern int32_t g_viewport_maximum_y;
 extern int32_t d3_param_dword_143D78;
 // d3_sub_BF644
 // draw_background
-extern PTR32(uint8_t) g_sky_texture_ptr;
+extern PTR32_ALIGN(uint8_t,2) g_sky_texture_ptr;
 extern uint16_t g_word_14A496;
 extern uint16_t g_sky_texture_width;
 extern uint8_t g_fillvalue1;
@@ -435,7 +435,7 @@ extern int32_t g_dword_143D6C;
 extern int32_t g_dword_143D70;
 extern PTR32(uint8_t) d3_param_current_mapdata_ptr;
 extern int32_t d3_param_dword_1A5E00;
-extern PTR32(struct struc_6) g_dword_14A4A6;
+extern PTR32_ALIGN(struct struc_6,2) g_dword_14A4A6;
 extern int32_t d3_param_dword_1A5E04;
 // draw_list_sm1234
 // sm1234_hyperproc
@@ -494,8 +494,8 @@ extern uint8_t d3_param_byte_144E8D;
 extern uint8_t d3_param_byte_144E92;
 // draw_textured_tile
 extern int16_t d3_word_199A58[40];
-extern int32_t d3_param_dword_144EDE_fp8;
-extern int32_t d3_param_dword_144EE2_fp8;
+extern int32_t d3_param_dword_144EDE_fp8 __attribute__ ((aligned (2)));
+extern int32_t d3_param_dword_144EE2_fp8 __attribute__ ((aligned (2)));
 extern int32_t d3_dword_144F30;
 extern uint8_t d3_param_byte_144E8E;
 // d3_sub_C61A7

@@ -32,49 +32,49 @@
 #include <cstddef>
 #include <type_traits>
 
-template<class T>
+template<class T, int A=4>
 class ptr32_t
 {
 private:
-    uint32_t value;
+    uint32_t value __attribute__ ((packed)) __attribute__ ((aligned (A)));
 
 public:
-    ptr32_t<T> ()
+    ptr32_t<T,A> ()
     {
     }
 
-    ptr32_t<T> (void *p)
+    ptr32_t<T,A> (void *p)
     {
         value = (uint32_t)(uintptr_t)p;
     }
 
     template<class Q = T, typename = typename std::enable_if<!std::is_void<Q>::value>::type>
-    ptr32_t<T> (T* p) // constructor for T* if T isn't void
+    ptr32_t<T,A> (T* p) // constructor for T* if T isn't void
     {
         value = (uint32_t)(uintptr_t)p;
     }
 
-    ptr32_t<T> (std::nullptr_t)
+    ptr32_t<T,A> (std::nullptr_t)
     {
         value = 0;
     }
 
-    ptr32_t<T> (uintptr_t p)
+    ptr32_t<T,A> (uintptr_t p)
     {
         value = p;
     }
 
 // Unary operators
 
-    ptr32_t<T>& operator ++ () // Overload ++ when used as prefix
+    ptr32_t<T,A>& operator ++ () // Overload ++ when used as prefix
     {
         value += sizeof(T);
         return *this;
     }
 
-    ptr32_t<T> operator ++ (int) // Overload ++ when used as postfix
+    ptr32_t<T,A> operator ++ (int) // Overload ++ when used as postfix
     {
-        ptr32_t<T> temp;
+        ptr32_t<T,A> temp;
 
         temp.value = value;
         value += sizeof(T);
@@ -82,15 +82,15 @@ public:
         return temp;
     }
 
-    ptr32_t<T>& operator -- () // Overload -- when used as prefix
+    ptr32_t<T,A>& operator -- () // Overload -- when used as prefix
     {
         value -= sizeof(T);
         return *this;
     }
 
-    ptr32_t<T> operator -- (int) // Overload -- when used as postfix
+    ptr32_t<T,A> operator -- (int) // Overload -- when used as postfix
     {
-        ptr32_t<T> temp;
+        ptr32_t<T,A> temp;
 
         temp.value = value;
         value -= sizeof(T);
@@ -153,7 +153,7 @@ public:
 
 // Binary operators
 
-    bool operator == (ptr32_t<T> const& p) const
+    bool operator == (ptr32_t<T,A> const& p) const
     {
         return value == p.value;
     }
@@ -174,7 +174,7 @@ public:
         return value == 0;
     }
 
-    bool operator != (ptr32_t<T> const& p) const
+    bool operator != (ptr32_t<T,A> const& p) const
     {
         return value != p.value;
     }
@@ -195,7 +195,7 @@ public:
         return value != 0;
     }
 
-    bool operator < (ptr32_t<T> const& p) const
+    bool operator < (ptr32_t<T,A> const& p) const
     {
         return value < p.value;
     }
@@ -205,7 +205,7 @@ public:
         return value < (uintptr_t)p;
     }
 
-    bool operator > (ptr32_t<T> const& p) const
+    bool operator > (ptr32_t<T,A> const& p) const
     {
         return value > p.value;
     }
@@ -215,7 +215,7 @@ public:
         return value > (uintptr_t)p;
     }
 
-    bool operator <= (ptr32_t<T> const& p) const
+    bool operator <= (ptr32_t<T,A> const& p) const
     {
         return value <= p.value;
     }
@@ -225,7 +225,7 @@ public:
         return value < (uintptr_t)p;
     }
 
-    bool operator >= (ptr32_t<T> const& p) const
+    bool operator >= (ptr32_t<T,A> const& p) const
     {
         return value >= p.value;
     }
@@ -235,121 +235,121 @@ public:
         return value >= (uintptr_t)p;
     }
 
-    ptr32_t<T> operator + (int32_t n) const
+    ptr32_t<T,A> operator + (int32_t n) const
     {
-        ptr32_t<T> temp;
+        ptr32_t<T,A> temp;
 
         temp.value = value + n * sizeof(T);
 
         return temp;
     }
 
-    ptr32_t<T> operator + (uint32_t n) const
+    ptr32_t<T,A> operator + (uint32_t n) const
     {
-        ptr32_t<T> temp;
+        ptr32_t<T,A> temp;
 
         temp.value = value + n * sizeof(T);
 
         return temp;
     }
 
-    ptr32_t<T> operator + (int64_t n) const
+    ptr32_t<T,A> operator + (int64_t n) const
     {
-        ptr32_t<T> temp;
+        ptr32_t<T,A> temp;
 
         temp.value = value + n * sizeof(T);
 
         return temp;
     }
 
-    ptr32_t<T> operator + (uint64_t n) const
+    ptr32_t<T,A> operator + (uint64_t n) const
     {
-        ptr32_t<T> temp;
+        ptr32_t<T,A> temp;
 
         temp.value = value + n * sizeof(T);
 
         return temp;
     }
 
-    ptr32_t<T> operator - (int32_t n) const
+    ptr32_t<T,A> operator - (int32_t n) const
     {
-        ptr32_t<T> temp;
+        ptr32_t<T,A> temp;
 
         temp.value = value - n * sizeof(T);
 
         return temp;
     }
 
-    ptr32_t<T> operator - (uint32_t n) const
+    ptr32_t<T,A> operator - (uint32_t n) const
     {
-        ptr32_t<T> temp;
+        ptr32_t<T,A> temp;
 
         temp.value = value - n * sizeof(T);
 
         return temp;
     }
 
-    ptr32_t<T> operator - (int64_t n) const
+    ptr32_t<T,A> operator - (int64_t n) const
     {
-        ptr32_t<T> temp;
+        ptr32_t<T,A> temp;
 
         temp.value = value - n * sizeof(T);
 
         return temp;
     }
 
-    ptr32_t<T> operator - (uint64_t n) const
+    ptr32_t<T,A> operator - (uint64_t n) const
     {
-        ptr32_t<T> temp;
+        ptr32_t<T,A> temp;
 
         temp.value = value - n * sizeof(T);
 
         return temp;
     }
 
-    ptr32_t<T>& operator += (int32_t n)
+    ptr32_t<T,A>& operator += (int32_t n)
     {
         value += n * sizeof(T);
         return *this;
     }
 
-    ptr32_t<T>& operator += (uint32_t n)
+    ptr32_t<T,A>& operator += (uint32_t n)
     {
         value += n * sizeof(T);
         return *this;
     }
 
-    ptr32_t<T>& operator += (int64_t n)
+    ptr32_t<T,A>& operator += (int64_t n)
     {
         value += n * sizeof(T);
         return *this;
     }
 
-    ptr32_t<T>& operator += (uint64_t n)
+    ptr32_t<T,A>& operator += (uint64_t n)
     {
         value += n * sizeof(T);
         return *this;
     }
 
-    ptr32_t<T>& operator -= (int32_t n)
+    ptr32_t<T,A>& operator -= (int32_t n)
     {
         value -= n * sizeof(T);
         return *this;
     }
 
-    ptr32_t<T>& operator -= (uint32_t n)
+    ptr32_t<T,A>& operator -= (uint32_t n)
     {
         value -= n * sizeof(T);
         return *this;
     }
 
-    ptr32_t<T>& operator -= (int64_t n)
+    ptr32_t<T,A>& operator -= (int64_t n)
     {
         value -= n * sizeof(T);
         return *this;
     }
 
-    ptr32_t<T>& operator -= (uint64_t n)
+    ptr32_t<T,A>& operator -= (uint64_t n)
     {
         value -= n * sizeof(T);
         return *this;
@@ -378,6 +378,7 @@ public:
 };
 
 #define PTR32(t) ptr32_t<t>
+#define PTR32_ALIGN(t,a) ptr32_t<t,a>
 
 #undef NULL
 #define NULL nullptr
@@ -385,6 +386,7 @@ public:
 #else
 
 #define PTR32(t) t*
+#define PTR32_ALIGN(t,a) t* __attribute__ ((aligned (a)))
 
 #endif
 

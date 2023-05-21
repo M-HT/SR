@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -925,7 +925,7 @@ void Game_AIL_start_sample(AIL_sample *S)
         S->chunk.alen = sample->len_cvt;
 
         S->status = 4;
-        Mix_PlayChannel(S->channel_num, &S->chunk, S->loop_count);
+        Mix_PlayChannelTimed(S->channel_num, &S->chunk, S->loop_count, -1);
     }
 
 }

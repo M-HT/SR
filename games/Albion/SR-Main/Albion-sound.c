@@ -828,7 +828,7 @@ void Game_AIL_start_sample(struct _AIL_sample *S)
         S->chunk.abuf = (Uint8 *) &(sample->data);
         S->chunk.alen = sample->len_cvt;
 
-        Mix_PlayChannel(S->channel, &S->chunk, S->loop_count);
+        Mix_PlayChannelTimed(S->channel, &S->chunk, S->loop_count, -1);
     }
 
 }

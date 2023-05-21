@@ -72,7 +72,7 @@ static void Game_PlayAudio(void)
         Game_AudioChunk.alen = Game_samples[0].len_cvt;
     }
 
-    Mix_PlayChannel(GAME_SOUND_CHANNEL, &Game_AudioChunk, 0);
+    Mix_PlayChannelTimed(GAME_SOUND_CHANNEL, &Game_AudioChunk, 0, -1);
 
     //if (Game_samples[0].IsPlaying != NULL) *(Game_samples[0].IsPlaying) = 1;
 }

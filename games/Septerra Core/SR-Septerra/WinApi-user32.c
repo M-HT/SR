@@ -247,6 +247,8 @@ static int mouse_last_peep[3];
 // doubleclick detection - END
 
 #if SDL_VERSION_ATLEAST(2,0,0)
+static SDL_Window *mouse_window = NULL;
+static SDL_Renderer *mouse_renderer = NULL;
 static int mouse_clip_w = 0;
 static int mouse_clip_h = 0;
 #endif
@@ -337,6 +339,36 @@ void init_sleepmode(void)
                 atexit(end_timer_period);
             }
         }
+    }
+}
+#endif
+
+#if SDL_VERSION_ATLEAST(2,0,0)
+void warp_mouse(int x, int y)
+{
+    if (mouse_renderer != NULL)
+    {
+#if SDL_VERSION_ATLEAST(2,0,18)
+        if (sdl_versionnum >= SDL_VERSIONNUM(2,0,18))
+        {
+            SDL_RenderLogicalToWindow(mouse_renderer, x, y, &x, &y);
+        }
+        else
+#endif
+        {
+            float scaleX, scaleY;
+            SDL_Rect viewport;
+            int output_w, output_h, window_w, window_h;
+
+            SDL_RenderGetScale(mouse_renderer, &scaleX, &scaleY);
+            SDL_RenderGetViewport(mouse_renderer, &viewport);
+            SDL_GetRendererOutputSize(mouse_renderer, &output_w, &output_h);
+            SDL_GetWindowSize(mouse_window, &window_w, &window_h);
+
+            x = (int) (((x + viewport.x) * scaleX * window_w + output_w - scaleX) / output_w);
+            y = (int) (((y + viewport.y) * scaleY * window_h + output_h - scaleY) / output_h);
+        }
+        SDL_WarpMouseInWindow(mouse_window, x, y);
     }
 }
 #endif
@@ -534,29 +566,7 @@ static int find_event(SDL_Event *event, int remove, int wait)
 
                 if ((newx != event->motion.x) || (newy != event->motion.y))
                 {
-                    window = SDL_GetWindowFromID(event->motion.windowID);
-                    renderer = SDL_GetRenderer(window);
-#if SDL_VERSION_ATLEAST(2,0,18)
-                    if (sdl_versionnum >= SDL_VERSIONNUM(2,0,18))
-                    {
-                        SDL_RenderLogicalToWindow(renderer, newx, newy, &newx, &newy);
-                    }
-                    else
-#endif
-                    {
-                        float scaleX, scaleY;
-                        SDL_Rect viewport;
-                        int output_w, output_h, window_w, window_h;
-
-                        SDL_RenderGetScale(renderer, &scaleX, &scaleY);
-                        SDL_RenderGetViewport(renderer, &viewport);
-                        SDL_GetRendererOutputSize(renderer, &output_w, &output_h);
-                        SDL_GetWindowSize(window, &window_w, &window_h);
-
-                        newx = (int) (((newx + viewport.x) * scaleX * window_w) / output_w);
-                        newy = (int) (((newy + viewport.y) * scaleY * window_h) / output_h);
-                    }
-                    SDL_WarpMouseInWindow(window, newx, newy);
+                    warp_mouse(newx, newy);
                 }
             }
 #endif
@@ -767,6 +777,8 @@ static int find_event(SDL_Event *event, int remove, int wait)
                 renderer = (window != NULL)?SDL_GetRenderer(window):NULL;
                 if (renderer != NULL)
                 {
+                    mouse_window = window;
+                    mouse_renderer = renderer;
                     SDL_RenderGetLogicalSize(renderer, &mouse_clip_w, &mouse_clip_h);
                 }
                 break;
@@ -2121,7 +2133,7 @@ uint32_t SetCursorPos_c(int32_t X, int32_t Y)
 #endif
 
 #if SDL_VERSION_ATLEAST(2,0,0)
-    SDL_WarpMouseInWindow(NULL, X, Y);
+    warp_mouse(X, Y);
 #else
     SDL_WarpMouse(X, Y);
 #endif

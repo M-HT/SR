@@ -1,4 +1,4 @@
-Septerra Core for Linux (armv7-gnueabihf)
+Septerra Core for Linux (x64)
 Version 1.04.0.10
 
 Original Septerra Core version 1.04 is required for playing.
@@ -19,7 +19,7 @@ Configuration is stored in the file Septerra.cfg.
 Misc
 ----
 
-The game requires following 32-bit libraries: SDL2, mpg123, quicktime2
+The game requires following 64-bit libraries: SDL2, mpg123, quicktime2
 On debian based distributions these libraries are in following packages: libsdl2-2.0-0 libmpg123-0 libquicktime2
 
 Source code is available on GitHub: https://github.com/M-HT/SR
@@ -33,22 +33,5 @@ Changes
 v1.04.0.10 (2023-05-23)
 * fix repositioning mouse cursor
 
-v1.04.0.9 (2023-05-17)
-* fix moving mouse cursor outside the game area in fullscreen
-
-v1.04.0.8 (2023-05-15)
-* add option to use right mouse click to preselect characters in combat (based on unofficial patch)
-* change mouse cursor position handling
-* fix screen shake when loading new area
-* don't add sleep (to prevent too much CPU utilization) when not necessary
-* minor bug fixes
-
-v1.04.0.7 (2022-01-08)
-* add option to only use integer scaling
-
-v1.04.0.6 (2021-11-04)
-* add option to reduce cpu sleep, to help with higher mouse poll rates
-* optimize recompiled code
-
-v1.04.0.5 (2021-05-21)
-first Linux (armv7-gnueabihf) version
+v1.04.0.9 (2023-05-19)
+first Linux (x64) version

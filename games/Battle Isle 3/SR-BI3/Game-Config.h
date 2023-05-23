@@ -49,6 +49,8 @@ GAME_CONFIG_STORAGE int Audio_OPL3Emulator;             /* OPL3 emulator
                                                            0: fast - DOSBox
                                                            1: precise - Nuked OPL3 */
 
+GAME_CONFIG_STORAGE int Patch_IncreaseMaxWindowSize;    /* increase max window size ? */
+
 void ReadConfiguration(void);
 
 #endif

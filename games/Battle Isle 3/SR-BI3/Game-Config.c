@@ -72,6 +72,8 @@ void ReadConfiguration(void)
     Audio_OPL3BankNumber = 59;
     Audio_OPL3Emulator = 1;
 
+    Patch_IncreaseMaxWindowSize = 0;
+
     f = fopen(CONFIG_FILE, "rt");
     if (f == NULL) return;
 
@@ -225,6 +227,25 @@ void ReadConfiguration(void)
                 else if ( strcasecmp(param, "precise") == 0 ) // param equals "precise"
                 {
                     Audio_OPL3Emulator = 1;
+                }
+            }
+
+        }
+        else if ( strncasecmp(str, "Patch_", 6) == 0 ) // str begins with "Patch_"
+        {
+            // patch settings
+
+            str += 6;
+
+            if ( strcasecmp(str, "IncreaseMaxWindowSize") == 0 ) // str equals "IncreaseMaxWindowSize"
+            {
+                if ( strcasecmp(param, "yes") == 0 ) // param equals "yes"
+                {
+                    Patch_IncreaseMaxWindowSize = 1;
+                }
+                else if ( strcasecmp(param, "no") == 0 ) // param equals "no"
+                {
+                    Patch_IncreaseMaxWindowSize = 0;
                 }
             }
 

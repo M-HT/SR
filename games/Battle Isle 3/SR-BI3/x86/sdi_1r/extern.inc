@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019-2021 Roman Pauer
+;;  Copyright (C) 2019-2023 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -23,6 +23,7 @@
 %ifidn __OUTPUT_FORMAT__, win32
     %define Intro_Play _Intro_Play
     %define Outro_Play _Outro_Play
+    %define Patch_IncreaseMaxWindowSize _Patch_IncreaseMaxWindowSize
 %endif
 
 extern ms_strlen_asm2c
@@ -76,6 +77,7 @@ extern sync_asm2c
 
 extern Intro_Play
 extern Outro_Play
+extern Patch_IncreaseMaxWindowSize
 
 
 ; gdi32.dll

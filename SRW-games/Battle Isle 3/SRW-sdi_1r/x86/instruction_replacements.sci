@@ -62,15 +62,15 @@ loc_4CFEF0,12, ; video - RegisterClass_SS_Video
 loc_40146F,10, ; video - SS_VideoCallback
 loc_482A3E,159, ; video - SS_VideoCallback
 
-loc_480B11,1,cmp dword [Intro_Play], 0|jnz loc_480B11_after|retn|loc_480B11_after:|push ebp ; skip Intro videos
-loc_48183D,1,cmp dword [Outro_Play], 0|jnz loc_48183D_after|retn|loc_48183D_after:|push ebp ; skip Outro videos
+loc_480B11,1,cmp dword [Intro_Play], 0|jnz short loc_480B11_after|retn|loc_480B11_after:|push ebp ; skip Intro videos
+loc_48183D,1,cmp dword [Outro_Play], 0|jnz short loc_48183D_after|retn|loc_48183D_after:|push ebp ; skip Outro videos
 
 loc_47F62C,3,add esp, byte 8|push dword [ebp+8]|call video_Open_PRE_Video_asm2c|or eax, eax|jge loc_47F93F ; video - Open_PRE_Video
-loc_47F973,1,push edi|call video_Close_PRE_Video_asm2c|or eax, eax|jge loc_47F9DD ; video - Close_PRE_Video
+loc_47F973,1,push edi|call video_Close_PRE_Video_asm2c|or eax, eax|jge short loc_47F9DD ; video - Close_PRE_Video
 loc_47FC27,3,add esp, byte 4|push dword [ebp+12]|call video_Play_PRE_Video_asm2c|or eax, eax|jge loc_480ADC ; video - Play_PRE_Video
 
 loc_481504,3,add esp, byte 8|push dword [ebp+8]|call video_Open_POST_Video_asm2c|or eax, eax|jge loc_4816D9 ; video - Open_POST_Video
-loc_4816E6,1,push edi|call video_Close_POST_Video_asm2c|or eax, eax|jge loc_481705 ; video - Close_POST_Video
+loc_4816E6,1,push edi|call video_Close_POST_Video_asm2c|or eax, eax|jge short loc_481705 ; video - Close_POST_Video
 loc_481705,2,loc_481705:|push byte 0 ; video - Close_POST_Video
 loc_481954,3,add esp, byte 4|push dword [ebp+8]|call video_Play_POST_Video_asm2c|or eax, eax|jge loc_482332 ; video - Play_POST_Video
 loc_482332,2,loc_482332:|push byte 1 ; video - Play_POST_Video
@@ -90,3 +90,6 @@ loc_47EF2B,5,push dword 11|call SDI_CheckTicksDelay_asm2c|call SYSTEM_GetTicks ;
 loc_484C8F,5,push dword 12|call SDI_CheckTicksDelay_asm2c|call SYSTEM_GetTicks ; insert delays into active waiting
 
 loc_476A31,7,call sync_asm2c|mov byte [ebp-0x18c], 0x1 ; sync after save
+
+loc_46B0BF,10,cmp dword [Patch_IncreaseMaxWindowSize], 0|jz short loc_46B0BF_after|mov byte [ecx+eax*8+0x3f], 0x40|loc_46B0BF_after:|movzx eax, word [ecx+eax*8+0x3e] ; increase max window size
+loc_46B153,10,cmp dword [Patch_IncreaseMaxWindowSize], 0|jz short loc_46B153_after|mov byte [ecx+eax*8+0x7], 0x40|loc_46B153_after:|movzx eax, word [ecx+eax*8+0x6] ; increase max window size

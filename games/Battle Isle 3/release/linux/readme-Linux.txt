@@ -1,5 +1,5 @@
 Battle Isle 3 for Linux (x86)
-Version 1.0.1
+Version 1.0.2
 
 Original Battle Isle 3 is required for playing.
 (version from GOG.com can be used for playing)
@@ -62,6 +62,11 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 
 Changes
 -------
+
+v1.0.2 (2023-05-25)
+* add option to change resolution
+* add option to increase max window size
+
 
 v1.0.1 (2023-03-26)
 * use latest versions of libADLMIDI, WildMIDI, BASSMIDI libraries

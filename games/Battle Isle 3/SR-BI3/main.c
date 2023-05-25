@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,6 +25,7 @@
 #include "SDI.h"
 #include "SDImidi.h"
 #include "Game-Config.h"
+#include "Game-Display.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
@@ -62,6 +63,8 @@ int CALLBACK WinMain(
   int       nCmdShow
 )
 {
+    int return_value;
+
     if (!SDI_LocatePaths())
     {
         MessageBoxA(NULL, "Unable to find game paths", "Error", MB_OK);
@@ -74,10 +77,16 @@ int CALLBACK WinMain(
 
     X86_InitializeExceptions();
 
+    SetResolution();
+
 #if defined(__WINE__)
-    return WinMain_asm(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
+    return_value = WinMain_asm(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
 #else
-    return WinMain_(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
+    return_value = WinMain_(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
 #endif
+
+    RestoreResolution();
+
+    return return_value;
 }
 

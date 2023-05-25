@@ -227,7 +227,7 @@ static int MP_Startup(void)
 
     if (MP_handle == NULL)
     {
-        fprintf(stderr, "%s: load error: 0x%x\n", "midi", GetLastError());
+        fprintf(stderr, "%s: load error: 0x%x\n", "midi", (unsigned int)GetLastError());
         return 2;
     }
 #else
@@ -413,7 +413,7 @@ static int MP2_Startup(void)
 
     if (MP2_handle == NULL)
     {
-        fprintf(stderr, "%s: load error: 0x%x\n", "midi2", GetLastError());
+        fprintf(stderr, "%s: load error: 0x%x\n", "midi2", (unsigned int)GetLastError());
         return 2;
     }
 #else

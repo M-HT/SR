@@ -72,6 +72,11 @@ void ReadConfiguration(void)
     Audio_OPL3BankNumber = 59;
     Audio_OPL3Emulator = 1;
 
+    Display_Width = 0;
+    Display_Height = 0;
+    Display_BitsPerPixel = 0;
+    Display_Frequency = 0;
+
     Patch_IncreaseMaxWindowSize = 0;
 
     f = fopen(CONFIG_FILE, "rt");
@@ -227,6 +232,50 @@ void ReadConfiguration(void)
                 else if ( strcasecmp(param, "precise") == 0 ) // param equals "precise"
                 {
                     Audio_OPL3Emulator = 1;
+                }
+            }
+
+        }
+        else if ( strncasecmp(str, "Display_", 8) == 0 ) // str begins with "Display_"
+        {
+            // display settings
+
+            str += 8;
+
+            if ( strcasecmp(str, "Width") == 0 ) // str equals "Width"
+            {
+                num_int = 0;
+                sscanf(param, "%i", &num_int);
+                if (num_int >= 0)
+                {
+                    Display_Width = num_int;
+                }
+            }
+            else if ( strcasecmp(str, "Height") == 0 ) // str equals "Height"
+            {
+                num_int = 0;
+                sscanf(param, "%i", &num_int);
+                if (num_int >= 0)
+                {
+                    Display_Height = num_int;
+                }
+            }
+            else if ( strcasecmp(str, "BitsPerPixel") == 0 ) // str equals "BitsPerPixel"
+            {
+                num_int = 0;
+                sscanf(param, "%i", &num_int);
+                if (num_int >= 0)
+                {
+                    Display_BitsPerPixel = num_int;
+                }
+            }
+            else if ( strcasecmp(str, "Frequency") == 0 ) // str equals "Frequency"
+            {
+                num_int = 0;
+                sscanf(param, "%i", &num_int);
+                if (num_int >= 0)
+                {
+                    Display_Frequency = num_int;
                 }
             }
 

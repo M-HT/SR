@@ -230,7 +230,7 @@ extern const uint32_t errno_table[ERRNO_NUM];
 
 
 
-extern int Game_Main_Asm(int argc, char *argv[]);
+extern int Game_Main_Asm(int argc, PTR32(char) argv[]);
 extern void Game_StopMain_Asm(void) __attribute__ ((__noreturn__));
 
 extern void Game_RunTimer_Asm(void);

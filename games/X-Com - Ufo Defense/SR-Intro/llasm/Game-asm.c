@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <setjmp.h>
+#include "../Game_defs.h"
 #include "llasm_cpu.h"
 
 #ifdef __cplusplus
@@ -26,7 +27,7 @@ void Game_StopMain_Asm(void)
     longjmp(exit_env, 1);
 }
 
-int Game_Main_Asm(int argc, char *argv[])
+int Game_Main_Asm(int argc, PTR32(char) argv[])
 {
     if (setjmp(exit_env) == 0)
     {

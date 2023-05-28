@@ -268,7 +268,7 @@ extern uint32_t screen_window_ptr[4];
 extern uint8_t keyboard_keys[0x80];
 
 
-extern int Game_Main_Asm(int argc, char *argv[]);
+extern int Game_Main_Asm(int argc, PTR32(char) argv[]);
 extern void Game_StopMain_Asm(void) __attribute__ ((__noreturn__));
 
 

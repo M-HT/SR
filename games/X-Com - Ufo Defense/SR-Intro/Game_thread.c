@@ -30,6 +30,12 @@
 #else
     #include <SDL/SDL.h>
 #endif
+#if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
+    #ifndef __USE_GNU
+        #define __USE_GNU
+    #endif
+    #include <pthread.h>
+#endif
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Game_scalerplugin.h"
@@ -37,13 +43,6 @@
 #include "Intro-proc-events.h"
 #include "main.h"
 #include "display.h"
-
-#if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
-    #ifndef __USE_GNU
-        #define __USE_GNU
-    #endif
-    #include <pthread.h>
-#endif
 
 static void ChangeThreadPriority(void)
 {
@@ -61,7 +60,7 @@ int Game_Main(void)
 
     const static char main_filename[MLEN+1] = "INTRO.EXE";
     char main_filename_local[MLEN+1];
-    char *main_filename_local_ptr[3];
+    PTR32(char) main_filename_local_ptr[3];
 
     memcpy(main_filename_local, main_filename, MLEN+1);
     if (main_arg1 != NULL) strcpy(main_arg1, main_argv[1]);

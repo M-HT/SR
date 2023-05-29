@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -31,20 +31,21 @@ typedef void (*sighandler_t)(int);
 extern "C" {
 #endif
 
-extern int Game_errno(void);
+extern int32_t Game_errno(void);
 extern uint32_t Game_clock(void);
-extern int Game_cputs(const char *buf);
+extern int32_t Game_cputs(const char *buf);
 extern void Game_delay(uint32_t milliseconds);
 extern void Game_dos_gettime(void *dtime);
-extern int Game_fmemcmp(void *s1, uint32_t s1_seg, const void *s2, uint32_t s2_seg, size_t n);
-extern uint64_t Game_fmemcpy(void *dest, uint32_t dest_seg, const void *src, uint32_t src_seg, size_t n);
-extern uint64_t Game_fmemset(void *s, uint32_t s_seg, int c, size_t n);
-extern int Game_raise(int condition);
-extern int Game_setvbuf(FILE *fp, char *buf, int mode, size_t size);
-extern sighandler_t Game_signal(int signum, sighandler_t handler);
+extern int32_t Game_fmemcmp(void *s1, uint32_t s1_seg, const void *s2, uint32_t s2_seg, uint32_t n);
+extern uint64_t Game_fmemcpy(void *dest, uint32_t dest_seg, const void *src, uint32_t src_seg, uint32_t n);
+extern uint64_t Game_fmemset(void *s, uint32_t s_seg, int32_t c, uint32_t n);
+extern int32_t Game_raise(int32_t condition);
+extern int32_t Game_setvbuf(FILE *fp, char *buf, int32_t mode, uint32_t size);
+extern sighandler_t Game_signal(int32_t signum, sighandler_t handler);
+extern uint32_t Game_strtoul(const char *nptr, PTR32(char) *endptr, int32_t base);
 extern void Game_FlipScreen(void);
 extern void Game_Sync(void);
-extern int Game_openFlags(int flags);
+extern int32_t Game_openFlags(int32_t flags);
 
 #ifdef __cplusplus
 }

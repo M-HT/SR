@@ -1,0 +1,124 @@
+;;
+;;  Copyright (C) 2016-2023 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+extern Game_ScreenWindow
+extern Game_Sound
+extern Game_Music
+extern Game_VSyncTick
+extern Game_stdin
+extern Game_stdout
+extern Game_stderr
+
+proc SR_Sync external
+funcv SR_CheckTimer
+
+; null procedures
+proc SR___GETDS external
+proc SR__harderr external
+; stack params
+proc SR_fprintf external
+proc SR_printf external
+proc SR_sprintf external
+proc SR_open external
+
+proc SR_AIL_active_sample_count external
+proc SR_AIL_allocate_sample_handle external
+proc SR_AIL_end_sample external
+proc SR_AIL_init_sample external
+proc SR_AIL_register_EOS_callback external
+proc SR_AIL_release_sample_handle external
+proc SR_AIL_sample_status external
+proc SR_AIL_set_sample_address external
+proc SR_AIL_set_sample_loop_count external
+proc SR_AIL_set_sample_pan external
+proc SR_AIL_set_sample_playback_rate external
+proc SR_AIL_set_sample_type external
+proc SR_AIL_set_sample_volume external
+proc SR_AIL_start_sample external
+
+proc SR_AIL_allocate_sequence_handle external
+proc SR_AIL_end_sequence external
+proc SR_AIL_init_sequence external
+proc SR_AIL_release_sequence_handle external
+proc SR_AIL_resume_sequence external
+proc SR_AIL_sequence_status external
+proc SR_AIL_set_sequence_loop_count external
+proc SR_AIL_set_sequence_volume external
+proc SR_AIL_start_sequence external
+proc SR_AIL_stop_sequence external
+; 0 params
+proc SR___clock external
+proc SR_j___clock external
+; 1 param
+proc SR___close external
+proc SR_j___close external
+proc SR_cputs external
+proc SR___delay external
+proc SR_j___delay external
+proc SR__dos_gettime external
+proc SR_exit external
+proc SR_fclose external
+proc SR_fgetc external
+proc SR__nfree external
+proc SR_ftell external
+proc SR_getenv external
+proc SR_inp external
+proc SR__nmalloc external
+proc SR_puts external
+proc SR_raise external
+proc SR_strlen external
+proc SR_time external
+proc SR_unlink external
+proc SR_j_unlink external
+; 2 params
+proc SR_fopen external
+proc SR_fputc external
+proc SR_fputs external
+proc SR_outp external
+proc SR_signal external
+proc SR_strcat external
+proc SR_strcmp external
+proc SR_strcpy external
+proc SR_strrchr external
+proc SR_vprintf external
+; 3 params
+proc SR_fgets external
+proc SR_fseek external
+proc SR_lseek external
+proc SR_memcmp external
+proc SR_memcpy external
+proc SR_memmove external
+proc SR_memset external
+proc SR_read external
+proc SR_strncmp external
+proc SR_strncpy external
+proc SR_strnicmp external
+proc SR_strtoul external
+; 4 params
+proc SR__fmemset external
+proc SR_fread external
+proc SR_fwrite external
+proc SR_int386x external
+proc SR_setvbuf external
+; 5 params
+proc SR__fmemcmp external
+proc SR__fmemcpy external

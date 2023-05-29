@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -64,14 +64,14 @@ uint32_t Game_int386x(
 #if defined(__DEBUG__)
 					fprintf(stderr, "Setting interrupt vector: %i\n", AL);
 #endif
-					Game_InterruptTable[AL] = (void *) EDX;
+					Game_InterruptTable[AL] = EDX;
 
 					break;
 					// case 0x25:
 				case 0x35:
 				// Get interrupt vector
 
-					EBX = (uint32_t) Game_InterruptTable[AL];
+					EBX = Game_InterruptTable[AL];
 
 					break;
 					// case 0x35:
@@ -86,8 +86,8 @@ uint32_t Game_int386x(
 			{
 				case 0x0500:
 				// GET FREE MEMORY INFORMATION
-					memset((void *) EDI, -1, 0x30);
-					*((uint32_t *)EDI) = GAME_MAX_FREE_MEMORY;
+					memset((void *)(uintptr_t) EDI, -1, 0x30);
+					*((uint32_t *)(uintptr_t)EDI) = GAME_MAX_FREE_MEMORY;
 
                     CLEAR_FLAG(CARRY_FLAG);
 
@@ -157,7 +157,7 @@ uint32_t Game_int386x(
 						{
 							if (mask & 1)
 							{
-								Game_MouseTable[i] = (void *) EDX;
+								Game_MouseTable[i] = (void *)(uintptr_t) EDX;
 							}
 							mask = mask >> 1;
 						}

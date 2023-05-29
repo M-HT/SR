@@ -1272,7 +1272,7 @@ void Game_ProcessKEvents(void)
 
                 }
 
-                if (Game_InterruptTable[9] != NULL)
+                if (Game_InterruptTable[9] != 0)
                 {
                     Game_RunInt9_Asm();
                 }

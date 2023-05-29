@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -51,14 +51,14 @@ void Game_RunTimer(void)
 
                 Game_TimerRun++;
 
-                if (/*X86_InterruptFlag &&*/ Game_InterruptTable[8] != NULL)
+                if (/*X86_InterruptFlag &&*/ Game_InterruptTable[8] != 0)
                 {
                     Game_TimerRunning = 1;
                     Game_RunTimer_Asm();
                     Game_TimerRunning = 0;
                 }
 
-                if (/*X86_InterruptFlag &&*/ Game_InterruptTable[9] != NULL)
+                if (/*X86_InterruptFlag &&*/ Game_InterruptTable[9] != 0)
                 {
                     int ret;
 

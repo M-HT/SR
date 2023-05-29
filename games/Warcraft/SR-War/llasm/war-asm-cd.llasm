@@ -1,0 +1,21 @@
+include llasm.llinc
+include extern.llinc
+include macros.llinc
+
+datasegment cseg01 constant
+include cdver/seg01_data.llinc
+endd
+
+datasegment dseg02
+include cdver/seg02_data.llinc
+endd
+
+datasegment useg03 uninitialized
+include cdver/seg03_data.llinc
+endd
+
+define loc_1E288 main_
+define loc_31234 keyboard_interrupt
+define loc_3855E update_timer
+
+include cdver/seg01_code.llinc

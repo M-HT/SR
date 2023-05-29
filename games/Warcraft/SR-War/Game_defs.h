@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,8 +25,6 @@
 #if !defined(_GAME_DEFS_H_INCLUDED_)
 #define _GAME_DEFS_H_INCLUDED_
 
-#include <limits.h>
-#include <inttypes.h>
 #ifdef USE_SDL2
     #include <SDL2/SDL.h>
     #include <SDL2/SDL_mixer.h>
@@ -34,6 +32,8 @@
     #include <SDL/SDL.h>
     #include <SDL/SDL_mixer.h>
 #endif
+#include <limits.h>
+#include "ptr32.h"
 
 
 /* Maximum available memory = 16MiB */

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -523,53 +523,3 @@ uint32_t Game_AIL_sequence_status(AIL_sequence *S)
     }
 }
 
-void *Game_AIL_create_wave_synthesizer(void *dig, void *mdi, void *wave_lib, int32_t polyphony)
-{
-    void *ret;
-
-#define WAVE_SYNTH_SIZE 1948
-
-    //ret = malloc(WAVE_SYNTH_SIZE);
-
-    static char wave_synth[WAVE_SYNTH_SIZE];
-
-    ret = &(wave_synth[0]);
-
-#if defined(__DEBUG__)
-    fprintf(stderr, "AIL_create_wave_synthesizer: return: 0x%" PRIxPTR "\n", (uintptr_t) ret);
-#endif
-
-    if (ret != NULL)
-    {
-        memset(ret, 0, WAVE_SYNTH_SIZE);
-    }
-
-    return ret;
-
-#undef WAVE_SYNTH_SIZE
-}
-
-void Game_AIL_destroy_wave_synthesizer(void *W)
-{
-    if (W != NULL)
-    {
-        //free(W);
-    }
-}
-
-
-/*
-AIL_allocate_sequence_handle
-AIL_create_wave_synthesizer
-AIL_destroy_wave_synthesizer
-AIL_end_sequence
-AIL_init_sequence
-AIL_release_sequence_handle
-AIL_resume_sequence
-AIL_sequence_status
-AIL_set_sequence_loop_count
-AIL_set_sequence_volume
-AIL_start_sequence
-AIL_stop_sequence
-
-*/

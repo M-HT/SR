@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -47,7 +47,18 @@
     #include <sys/timeb.h>
 #endif
 
-int Game_errno(void)
+
+#define SIGNAL_NUM 8
+
+#if !defined(SIGBREAK)
+    #define SIGBREAK SIGTSTP
+#endif
+static int signal_table[SIGNAL_NUM] = {
+    0, SIGABRT, SIGFPE, SIGILL, SIGINT, SIGSEGV, SIGTERM, SIGBREAK
+};
+
+
+int32_t Game_errno(void)
 {
     int err;
 
@@ -75,7 +86,7 @@ uint32_t Game_clock(void)
     }
 }
 
-int Game_cputs(const char *buf)
+int32_t Game_cputs(const char *buf)
 {
     int ret;
 
@@ -107,10 +118,10 @@ void Game_dos_gettime(void *dtime)
 {
 #pragma pack(1)
     struct __attribute__ ((__packed__)) watcom_dostime_t {
-        unsigned char hour; /* 0-23 */
-        unsigned char minute; /* 0-59 */
-        unsigned char second; /* 0-59 */
-        unsigned char hsecond; /* 1/100 second; 0-99 */
+        uint8_t hour; /* 0-23 */
+        uint8_t minute; /* 0-59 */
+        uint8_t second; /* 0-59 */
+        uint8_t hsecond; /* 1/100 second; 0-99 */
     };
 #pragma pack()
 
@@ -143,12 +154,12 @@ void Game_dos_gettime(void *dtime)
 #endif
 }
 
-int Game_fmemcmp(void *s1, uint32_t s1_seg, const void *s2, uint32_t s2_seg, size_t n)
+int32_t Game_fmemcmp(void *s1, uint32_t s1_seg, const void *s2, uint32_t s2_seg, uint32_t n)
 {
     return memcmp(s1, s2, n);
 }
 
-uint64_t Game_fmemcpy(void *dest, uint32_t dest_seg, const void *src, uint32_t src_seg, size_t n)
+uint64_t Game_fmemcpy(void *dest, uint32_t dest_seg, const void *src, uint32_t src_seg, uint32_t n)
 {
     uint32_t ret2;
 
@@ -157,7 +168,7 @@ uint64_t Game_fmemcpy(void *dest, uint32_t dest_seg, const void *src, uint32_t s
     return ret2 + ( ((uint64_t) dest_seg) << 32 );
 }
 
-uint64_t Game_fmemset(void *s, uint32_t s_seg, int c, size_t n)
+uint64_t Game_fmemset(void *s, uint32_t s_seg, int32_t c, uint32_t n)
 {
     uint32_t ret2;
 
@@ -166,7 +177,7 @@ uint64_t Game_fmemset(void *s, uint32_t s_seg, int c, size_t n)
     return ret2 + ( ((uint64_t) s_seg) << 32 );
 }
 
-int Game_raise(int condition)
+int32_t Game_raise(int32_t condition)
 {
     int newcondition;
 
@@ -189,7 +200,7 @@ int Game_raise(int condition)
 #define WATCOM_IOLBF  0x0200  /* line buffering */
 #define WATCOM_IONBF  0x0400  /* no buffering */
 
-int Game_setvbuf(FILE *fp, char *buf, int mode, size_t size)
+int32_t Game_setvbuf(FILE *fp, char *buf, int32_t mode, uint32_t size)
 {
     int newmode;
 
@@ -205,7 +216,7 @@ int Game_setvbuf(FILE *fp, char *buf, int mode, size_t size)
 #define WATCOM_SIG_DFL         ((sighandler_t) 2)
 #define WATCOM_SIG_ERR         ((sighandler_t) 3)
 
-sighandler_t Game_signal(int signum, sighandler_t handler)
+sighandler_t Game_signal(int32_t signum, sighandler_t handler)
 {
     int newsignum;
     sighandler_t newhandler, oldhandler;
@@ -231,6 +242,16 @@ sighandler_t Game_signal(int signum, sighandler_t handler)
     else if (oldhandler == SIG_DFL) return WATCOM_SIG_DFL;
     else if (oldhandler == SIG_ERR) return WATCOM_SIG_ERR;
     else return oldhandler;
+}
+
+uint32_t Game_strtoul(const char *nptr, PTR32(char) *endptr, int32_t base)
+{
+    char *endptr2;
+    unsigned long ret;
+
+    ret = strtoul(nptr, &endptr2, base);
+    if (endptr != NULL) *endptr = endptr2;
+    return ret;
 }
 
 void Game_FlipScreen(void)
@@ -268,7 +289,7 @@ void Game_Sync(void)
 #define WATCOM_O_BINARY       0x0200  /* binary file */
 #define WATCOM_O_EXCL         0x0400  /* exclusive open */
 
-int Game_openFlags(int flags)
+int32_t Game_openFlags(int32_t flags)
 {
     int newflags;
 

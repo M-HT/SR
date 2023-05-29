@@ -204,13 +204,13 @@ static void Game_Display_Create(void)
 
                 if (0 == SDL_GetRendererInfo(Game_Renderer, &info))
                 {
-                    if (info.max_texture_width > Picture_Width)
+                    if (info.max_texture_width > (int)Picture_Width)
                     {
-                        while (horizontal_factor * Render_Width > info.max_texture_width) horizontal_factor--;
+                        while (horizontal_factor * (int)Render_Width > info.max_texture_width) horizontal_factor--;
                     }
-                    if (info.max_texture_height > Picture_Height)
+                    if (info.max_texture_height > (int)Picture_Height)
                     {
-                        while (vertical_factor * Render_Height > info.max_texture_height) vertical_factor--;
+                        while (vertical_factor * (int)Render_Height > info.max_texture_height) vertical_factor--;
                     }
                 }
 
@@ -270,13 +270,13 @@ static void Game_Display_Create(void)
 
                 if (0 == SDL_GetRendererInfo(Game_Renderer, &info))
                 {
-                    if (info.max_texture_width > Picture_Width)
+                    if (info.max_texture_width > (int)Picture_Width)
                     {
-                        while (Scaler_ScaleFactor * Render_Width > info.max_texture_width) Scaler_ScaleFactor--;
+                        while (Scaler_ScaleFactor * (int)Render_Width > info.max_texture_width) Scaler_ScaleFactor--;
                     }
-                    if (info.max_texture_height > Picture_Height)
+                    if (info.max_texture_height > (int)Picture_Height)
                     {
-                        while (Scaler_ScaleFactor * Render_Height > info.max_texture_height) Scaler_ScaleFactor--;
+                        while (Scaler_ScaleFactor * (int)Render_Height > info.max_texture_height) Scaler_ScaleFactor--;
                     }
                 }
             }
@@ -497,13 +497,13 @@ static void Game_Display_Create(void)
 
                 max_texture_size = 0;
                 glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
-                if (max_texture_size > Picture_Width)
+                if (max_texture_size > (int)Picture_Width)
                 {
-                    while (horizontal_factor * Render_Width > max_texture_size) horizontal_factor--;
+                    while (horizontal_factor * (int)Render_Width > max_texture_size) horizontal_factor--;
                 }
-                if (max_texture_size > Picture_Height)
+                if (max_texture_size > (int)Picture_Height)
                 {
-                    while (vertical_factor * Render_Height > max_texture_size) vertical_factor--;
+                    while (vertical_factor * (int)Render_Height > max_texture_size) vertical_factor--;
                 }
 
                 Scaler_ScaleFactor = 1;
@@ -562,13 +562,13 @@ static void Game_Display_Create(void)
 
                 max_texture_size = 0;
                 glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
-                if (max_texture_size > Picture_Width)
+                if (max_texture_size > (int)Picture_Width)
                 {
-                    while (Scaler_ScaleFactor * Render_Width > max_texture_size) Scaler_ScaleFactor--;
+                    while (Scaler_ScaleFactor * (int)Render_Width > max_texture_size) Scaler_ScaleFactor--;
                 }
-                if (max_texture_size > Picture_Height)
+                if (max_texture_size > (int)Picture_Height)
                 {
-                    while (Scaler_ScaleFactor * Render_Height > max_texture_size) Scaler_ScaleFactor--;
+                    while (Scaler_ScaleFactor * (int)Render_Height > max_texture_size) Scaler_ScaleFactor--;
                 }
             }
         }
@@ -1034,7 +1034,7 @@ static void Game_ReadFontData(void)
 
     fclose(f);
 
-    if (items != fsize)
+    if (items != (size_t)fsize)
     {
         free(Warcraft_Font);
         Warcraft_Font = NULL;

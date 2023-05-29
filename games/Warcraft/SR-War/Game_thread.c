@@ -45,7 +45,7 @@ int Game_Main(void)
 
     const static char main_filename[MLEN+1] = ".\\war.exe";
     char main_filename_local[MLEN+1];
-    char *main_filename_local_ptr[2];
+    PTR32(char) main_filename_local_ptr[2];
 
     memcpy(main_filename_local, main_filename, MLEN+1);
     main_filename_local_ptr[0] = main_filename_local;

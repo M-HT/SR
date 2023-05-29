@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,98 +25,13 @@
 #if !defined(_WARCRAFT_PROC_VFS_H_INCLUDED_)
 #define _WARCRAFT_PROC_VFS_H_INCLUDED_
 
-#include <stdio.h>
-
-#pragma pack(1)
-
-typedef struct __attribute__ ((__packed__)) {
-    uint16_t twosecs : 5;    // seconds / 2
-    uint16_t minutes : 6;    // minutes (0,59)
-    uint16_t hours   : 5;    // hours (0,23)
-} watcom_ftime_t;
-
-typedef struct __attribute__ ((__packed__)) {
-    uint16_t day     : 5;    // day (1,31)
-    uint16_t month   : 4;    // month (1,12)
-    uint16_t year    : 7;    // 0 is 1980
-} watcom_fdate_t;
-
-struct __attribute__ ((__packed__)) watcom_dirent {
-    union __attribute__ ((__packed__)) {
-        struct __attribute__ ((__packed__)) {
-            void *realdir;
-            char *pattern;
-            uint8_t isfirst;
-            uint8_t readdirtype;
-        } v;
-        uint8_t        d_dta[10];       /* disk transfer area */
-    } u;
-    uint16_t           d_ctime;         /* file's creation time */
-    uint16_t           d_cdate;         /* file's creation date */
-    uint16_t           d_atime;         /* file's last access time */
-    uint16_t           d_adate;         /* file's last access date */
-    uint16_t           d_lfnax;         /* DOS LFN search handle */
-    uint8_t            d_lfnsup;        /* DOS LFN support status */
-    uint8_t            d_attr;          /* file's attribute */
-    union __attribute__ ((__packed__)) {
-        uint16_t           d_time;          /* file's time */
-        watcom_ftime_t     vt;
-    } ut;
-    union __attribute__ ((__packed__)) {
-        uint16_t           d_date;          /* file's date */
-        watcom_fdate_t     vd;
-    } ud;
-    uint32_t           d_size;          /* file's size */
-    char               d_name[13];      /* file's name */
-    uint16_t           d_ino;           /* serial number (not used) */
-    uint8_t            d_first;         /* flag for 1st time */
-    char               *d_openpath;     /* path specified to opendir */
-    void               *v_cur_res;      /* current result */
-};
-
-struct __attribute__ ((__packed__)) watcom_find_t {
-    uint16_t cr_time;			/* time of file creation		*/
-    uint16_t cr_date;			/* date of file creation		*/
-    uint16_t ar_time;			/* time of last file access		*/
-    uint16_t ar_date;			/* date of last file access		*/
-    uint16_t lfnax;				/* DOS LFN search handle		*/
-    uint8_t  lfnsup;			/* DOS LFN support status		*/
-    union __attribute__ ((__packed__)) {
-        uint8_t reserved[10];	/* reserved for use by DOS		*/
-        struct __attribute__ ((__packed__)) {
-            uint8_t find_attrib;
-            struct watcom_dirent *dirp;
-            uint32_t signature1;
-            uint8_t signature2;
-        } v;
-    } u;
-    uint8_t attrib;				/* attribute byte for file		*/
-    uint16_t wr_time;			/* time of last write to file	*/
-    uint16_t wr_date;			/* date of last write to file	*/
-    uint32_t size;				/* length of file in bytes		*/
-    char name[13];				/* null-terminated filename		*/
-};
-
-#pragma pack()
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern int Game_access(const char *path, int mode);
-extern int Game_chdir(const char *path);
-extern char *Game_getcwd(char *buf, size_t size);
 extern FILE *Game_fopen(const char *filename, const char *mode);
-extern int Game_open(const char *pathname, int flags, mode_t mode);
-extern int Game_mkdir(const char *pathname);
-extern int Game_unlink(const char *pathname);
-extern int Game_rename(const char *oldpath, const char *newpath);
-extern struct watcom_dirent *Game_opendir(const char *dirname);
-extern struct watcom_dirent *Game_readdir(struct watcom_dirent *dirp);
-extern int Game_closedir(struct watcom_dirent *dirp);
-extern uint32_t Game_dos_findfirst(const char *path, const uint32_t attributes, struct watcom_find_t *buffer);
-extern uint32_t Game_dos_findnext(struct watcom_find_t *buffer);
-extern uint32_t Game_dos_findclose(struct watcom_find_t *buffer);
+extern int32_t Game_open(const char *pathname, int32_t flags, uint32_t mode);
+extern int32_t Game_unlink(const char *pathname);
 
 #ifdef __cplusplus
 }

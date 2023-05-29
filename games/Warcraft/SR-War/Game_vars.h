@@ -26,7 +26,6 @@
 #define _GAME_VARS_H_INCLUDED_
 
 #include <errno.h>
-#include <signal.h>
 #include <stdio.h>
 #ifdef USE_SDL2
     #include <SDL2/SDL.h>
@@ -47,8 +46,8 @@
 EXTERNAL_VARIABLE uint32_t X86_InterruptFlag;		/* interrupt flag indicator */
 
 EXTERNAL_VARIABLE uint8_t *Game_FrameBuffer;		/* video memory (all) */
-EXTERNAL_VARIABLE uint8_t *Game_ScreenWindow;		/* video bank (64KiB) */
-EXTERNAL_VARIABLE void *Game_InterruptTable[256];	/* interrupt table */
+EXTERNAL_VARIABLE PTR32(uint8_t) Game_ScreenWindow;	/* video bank (64KiB) */
+EXTERNAL_VARIABLE uint32_t Game_InterruptTable[256];	/* interrupt table */
 EXTERNAL_VARIABLE void *Game_MouseTable[8];			/* mouse functions table */
 EXTERNAL_VARIABLE void *Game_AllocatedMemory[256];	/* dos allocated memory table */
 EXTERNAL_VARIABLE pixel_format_orig Game_Palette_Or[256];	/* original palette (rgba) */
@@ -160,9 +159,9 @@ EXTERNAL_VARIABLE AIL_sample Game_samples[GAME_SAMPLES_MAXIMUM];
 
 EXTERNAL_VARIABLE uint32_t Game_BaseClockValue;		/* clock base value */
 EXTERNAL_VARIABLE uint32_t Game_LastClockValue;		/* last value returned by clock */
-EXTERNAL_VARIABLE FILE *Game_stdin;					/* stdin */
-EXTERNAL_VARIABLE FILE *Game_stdout;				/* stdout */
-EXTERNAL_VARIABLE FILE *Game_stderr;				/* stderr */
+EXTERNAL_VARIABLE PTR32(FILE) Game_stdin;			/* stdin */
+EXTERNAL_VARIABLE PTR32(FILE) Game_stdout;			/* stdout */
+EXTERNAL_VARIABLE PTR32(FILE) Game_stderr;			/* stderr */
 
 EXTERNAL_VARIABLE uint8_t *Warcraft_Font;			/* warcraft font data */
 EXTERNAL_VARIABLE uint8_t *Temp_Font_Data;			/* temporary font data */
@@ -205,7 +204,6 @@ EXTERNAL_VARIABLE uint32_t errno_rtable[256];		/* reverse errno table */
 #undef EXTERNAL_VARIABLE
 
 #define ERRNO_NUM 41
-#define SIGNAL_NUM 8
 
 #if defined(DEFINE_VARIABLES)
 
@@ -229,23 +227,15 @@ const static uint32_t errno_table[ERRNO_NUM] = {
     ESRCH, ETXTBSY, EFAULT, ENAMETOOLONG, ENODEV, ENOLCK, ENOSYS, ENOTEMPTY, EILSEQ
 };
 
-
-#if !defined(SIGBREAK)
-    #define SIGBREAK SIGTSTP
-#endif
-int signal_table[SIGNAL_NUM] = {
-    0, SIGABRT, SIGFPE, SIGILL, SIGINT, SIGSEGV, SIGTERM, SIGBREAK
-};
 #else
 /*extern const uint32_t errno_table[ERRNO_NUM];*/
-extern const int signal_table[SIGNAL_NUM];
 #endif
 
 
-extern char **argv_val;
+extern PTR32(PTR32(char)) argv_val;
 
 
-extern int Game_Main_Asm(int argc, char *argv[]);
+extern int Game_Main_Asm(int argc, PTR32(char) argv[]);
 extern void Game_StopMain_Asm(void) __attribute__ ((__noreturn__));
 
 extern uint32_t Game_MouseMove(uint32_t state, uint32_t x, uint32_t y);
@@ -258,7 +248,7 @@ extern void Game_RunAILcallback_Asm(AIL_sample_CB callback, AIL_sample *sample);
 extern "C" {
 #endif
 
-extern int errno_val;
+extern int32_t errno_val;
 extern int32_t default_sample_volume;
 extern int32_t default_sequence_volume;
 

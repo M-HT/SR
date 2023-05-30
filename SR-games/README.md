@@ -2,11 +2,11 @@
 
 The information about the original DOS executables.
 
-To generate an assembler version of the original executable, put the static recompiler (*SR.exe*) and the original executable in the appropriate subdirectory and run *build-x86.sh* (or *build-arm.sh*).
+To generate an assembler version of the original executable, put the static recompiler (*SR.exe*) and the original executable in the appropriate subdirectory and run *build-x86.sh* (or *build-arm.sh* or *build-llasm.sh*).
 
 [NASM](https://www.nasm.us/) (Netwide Assembler) is needed to generate (and to compile) the x86 assembler version. Versions 2.15.03 -- 2.15.05 contain a bug which prevents them from working with the static recompiler. Use an earlier (or later) version.
 
-The generated assembler version consists of *.asm* (or *.s*) and *.inc* files. Move these files into the appropriate subdirectory in the *games* subproject.
+The generated assembler version consists of *.asm* (or *.s*) and *.inc* files (or *.llasm* and *.llinc* files). Move these files into the appropriate subdirectory in the *games* subproject.
 
 ## Albion
 
@@ -19,7 +19,7 @@ The original executable is *MAIN.EXE* from the English version 1.38.
 * sha1: e8f3a6df8909f8e6bc54bcced643cd4a6e2dd3cc
 * sha256: 476227b0391cf3452166b7a1d52b012ccf6c86bc9e46886dafbed343e9140710
 
-The generated files should be moved to *Albion/SR-Main/x86* (or *arm*) subdirectory in *games* subproject.
+The generated files should be moved to *Albion/SR-Main/x86* (or *arm* or *llasm*) subdirectory in *games* subproject.
 
 ## X-Com: UFO Defense (UFO: Enemy Unknown)
 
@@ -124,7 +124,7 @@ The original executable is *WAR.EXE* from the DOS Floppy English version 1.21.
 * sha1: 656aeb0d2d1384ad4442e8d63911701ba5885e81
 * sha256: 43c07a258cb3044a7e39211830c837567e17201a494718fab678b17253b77639
 
-The generated files should be moved to *Warcraft/SR-War/x86* (or *arm*) subdirectory in *games* subproject.
+The generated files should be moved to *Warcraft/SR-War/x86* (or *arm* or or *llasm*) subdirectory in *games* subproject.
 
 #### SR-cd
 
@@ -135,9 +135,9 @@ The original executable is *WAR.EXE* from the DOS CD English version 1.21.
 * sha1: 35761741340cd8fb64caadd8eb7565e65d779b33
 * sha256: aac8ae8d2a9e27039851147433d3365a61d7633acf003fc409ef5e5df5434dd5
 
-The generated *.inc* files should be moved to *Warcraft/SR-War/x86/cdver* (or *arm/cdver*) subdirectory in *games* subproject.
+The generated *.inc* files should be moved to *Warcraft/SR-War/x86/cdver* (or *arm/cdver* or *llasm/cdver*) subdirectory in *games* subproject.
 
-The generated *.asm* (or *.s*) files should be modified (change the path to *.inc* files) according to existing files and then moved to *Warcraft/SR-War/x86* (or *arm*) subdirectory in *games* subproject.
+The generated *.asm* (or *.s* or *.llasm*) files should be modified (change the path to *.inc* (or *.llinc*) files) according to existing files and then moved to *Warcraft/SR-War/x86* (or *arm* or *llasm*) subdirectory in *games* subproject.
 
 #### SR-cd-gog
 
@@ -148,7 +148,7 @@ The original executable is *WAR.EXE* from the DOS CD English version 1.22 (from 
 * sha1: b32ef7d87d1e51f3f0b20ce7911053f32a0d509a
 * sha256: 1e966220bf09ab007c49c5ea5ebc42eb494f5cf2f74f894d3969b6115df8d8a9
 
-The generated *.inc* files should be moved to *Warcraft/SR-War/x86/cdgogver* (or *arm/cdgogver*) subdirectory in *games* subproject.
+The generated *.inc* files should be moved to *Warcraft/SR-War/x86/cdgogver* (or *arm/cdgogver* or *llasm/cdgogver*) subdirectory in *games* subproject.
 
-The generated *.asm* (or *.s*) files should be modified (change the path to *.inc* files) according to existing files and then moved to *Warcraft/SR-War/x86* (or *arm*) subdirectory in *games* subproject.
+The generated *.asm* (or *.s* or *.llasm*) files should be modified (change the path to *.inc* (or *.llinc* files) according to existing files and then moved to *Warcraft/SR-War/x86* (or *arm* or *llasm*) subdirectory in *games* subproject.
 

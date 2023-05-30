@@ -11,9 +11,9 @@ The directory *wildmidiA-0.2.3.5svn* contains the library, which is a modificati
 To compile:
 
 * run `./bootstrap`
-* on 32-bit linux:
+* to compile a native version:
   * run `./configure`
-* on 64-bit linux (x64 / x86_64):
+* to compile a 32-bit (x86) version on 64-bit (x64 / x86_64) Linux:
   * run `./configure --build=i686-pc-linux-gnu "CFLAGS=-m32" "LDFLAGS=-m32"`
 * run `make`
 

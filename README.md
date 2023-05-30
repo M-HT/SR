@@ -19,7 +19,7 @@ For the purpose of using the code in GPL projects, the source code is also relea
 
 <hr/>
 
-The projects consists of following subprojects (read the readmes in subproject directories for more information):
+The projects consists of following subprojects (read the readme files in subproject directories for more information):
 
 * **SR**
   * The static recompiler (for DOS executables) itself.
@@ -30,7 +30,7 @@ The projects consists of following subprojects (read the readmes in subproject d
   * It takes the original executable as an input together with information about the original executable and produces x86 / llasm assembler version of the executable.
   * The generated x86/llasm assembler version of the executable is not part of the project.
 * **llasm**
-  * Program which converts *.llasm* file to [LLVM](https://llvm.org/ "LLVM") language-independent intermediate representation, which can be compiled to x86 / arm code.
+  * Program which converts *.llasm* file to [LLVM](https://llvm.org/ "LLVM") language-independent intermediate representation, which can be compiled to native code.
 * **SR-games**
   * The information about the original DOS executables.
 * **SRW-games**
@@ -58,5 +58,5 @@ Some notes:
 * The generated arm version is little-endian, not big-endian.
 * The generated arm version supports softfp and hardfp calling conventions.
 * Creating 64-bit versions is experimental.
-  * Only Linux (x64, arm64) versions of Albion and Septerra Core are working at the moment.
+  * Only Linux (x64, arm64) versions of Albion, Septerra Core and Warcraft are working at the moment.
   * 64-bit versions require a loader.

@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016-2021 Roman Pauer
+#  Copyright (C) 2016-2023 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -31,14 +31,14 @@ vars.Add(EnumVariable('debug', 'Set debug level (0 = release version)', '0',
 vars.Add(EnumVariable('device', 'Set target device', 'none',
                                  allowed_values=('none', 'pc-windows', 'pc-linux', 'arm-linux', 'gp2x', 'pandora'),
                                  ignorecase=2))
-vars.Add(EnumVariable('sdl2', 'Use SDL2 instead of SDL? (1 = yes)', '0',
-                                 allowed_values=('0', '1'),
+vars.Add(EnumVariable('sdl', 'Set SDL version', '2',
+                                 allowed_values=('1', '2'),
                                  ignorecase=2))
 env = Environment(variables = vars)
 
 debug = int(env['debug'])
 device = env['device']
-sdl2 = int(env['sdl2'])
+sdl = int(env['sdl'])
 clean = env.GetOption('clean')
 
 if device == 'none':
@@ -52,9 +52,12 @@ if device == 'none':
 
 Help(vars.GenerateHelpText(env))
 
+if device == 'gp2x' or device == 'pandora':
+    sdl = 1
+
 if device == 'pc-linux':
     # default settings
-    if sdl2 > 0:
+    if sdl == 2:
         env = Environment(CCFLAGS      = '-m32 -O2 -Wall -DUSE_SDL2',
                           LINKFLAGS    = '-m32 -Wl,-z,noexecstack',
                           LIBS         = ['SDL2_mixer', 'SDL2', 'pthread', 'm', 'dl']
@@ -65,7 +68,7 @@ if device == 'pc-linux':
                           LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'm', 'dl', 'GL']
                          )
 elif device == 'arm-linux':
-    if sdl2 > 0:
+    if sdl == 2:
         env = Environment(CCFLAGS      = '-O2 -Wall -DUSE_SDL2',
                           LINKFLAGS    = '-Wl,-z,noexecstack',
                           LIBS         = ['SDL2_mixer', 'SDL2', 'pthread', 'm', 'dl'],
@@ -80,7 +83,7 @@ elif device == 'arm-linux':
     # see arm/armconf.inc for explanation of these options (and others)
     env.Append(ASFLAGS = ' --defsym USE_R9=1 --defsym ALLOW_UNALIGNED_MEMORY_ACCESS=1')
 elif device == 'pc-windows':
-    if sdl2 > 0:
+    if sdl == 2:
         env = Environment(CCFLAGS      = '-m32 -O2 -Wall -DUSE_SDL2',
                           LINKFLAGS    = '-m32 -mwindows',
                           LIBS         = ['mingw32', 'SDL2main', 'SDL2_mixer', 'SDL2', 'pthread']

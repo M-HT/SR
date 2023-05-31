@@ -31,14 +31,14 @@ vars.Add(EnumVariable('debug', 'Set debug level (0 = release version)', '0',
 vars.Add(EnumVariable('device', 'Set target device', 'none',
                                  allowed_values=('none', 'pc-windows', 'pc-linux', 'arm-linux', 'gp2x', 'pandora', 'pc-linux-llasm', 'pandora-llasm', 'pc64-linux-llasm', 'arm64-linux-llasm'),
                                  ignorecase=2))
-vars.Add(EnumVariable('sdl2', 'Use SDL2 instead of SDL? (1 = yes)', '0',
-                                 allowed_values=('0', '1'),
+vars.Add(EnumVariable('sdl', 'Set SDL version', '2',
+                                 allowed_values=('1', '2'),
                                  ignorecase=2))
 env = Environment(variables = vars)
 
 debug = int(env['debug'])
 device = env['device']
-sdl2 = int(env['sdl2'])
+sdl = int(env['sdl'])
 clean = env.GetOption('clean')
 
 if device == 'none':
@@ -59,13 +59,16 @@ llasm_version = False
 llasm_params = ""
 llvm_params = ""
 
-if device.endswith("-llasm"):
+if device.endswith('-llasm'):
     llasm_version = True
     device = device[0:-6]
 
+if device == 'gp2x' or device == 'pandora':
+    sdl = 1
+
 if device == 'pc-linux':
     # default settings
-    if sdl2 > 0:
+    if sdl == 2:
         env = Environment(CCFLAGS      = '-m32 -O2 -Wall -DUSE_SDL2',
                           LINKFLAGS    = '-m32 -Wl,-z,noexecstack',
                           LIBS         = ['SDL2_mixer', 'SDL2', 'pthread', 'dl']
@@ -79,7 +82,7 @@ if device == 'pc-linux':
         llvm_params = '-mtriple=i686-unknown-linux-gnu'
         env.Append(ENV = {'PATH' : os.environ['PATH']})
 elif device == 'pc64-linux':
-    if sdl2 > 0:
+    if sdl == 2:
         env = Environment(CCFLAGS      = '-m64 -x c++ -O2 -Wall -DUSE_SDL2',
                           LINKFLAGS    = '-m64 -Wl,-z,noexecstack',
                           LIBS         = ['SDL2_mixer', 'SDL2', 'pthread', 'dl'],
@@ -94,7 +97,7 @@ elif device == 'pc64-linux':
     llasm_params = '-m64'
     llvm_params = '-mtriple=x86_64-unknown-linux-gnu'
 elif device == 'arm-linux':
-    if sdl2 > 0:
+    if sdl == 2:
         env = Environment(CCFLAGS      = '-O2 -Wall -DUSE_SDL2',
                           LINKFLAGS    = '-Wl,-z,noexecstack',
                           LIBS         = ['SDL2_mixer', 'SDL2', 'pthread', 'dl'],
@@ -109,7 +112,7 @@ elif device == 'arm-linux':
     # see arm/armconf.inc for explanation of these options (and others)
     env.Append(ASFLAGS = ' --defsym USE_R9=1 --defsym ALLOW_UNALIGNED_MEMORY_ACCESS=1')
 elif device == 'arm64-linux':
-    if sdl2 > 0:
+    if sdl == 2:
         env = Environment(CCFLAGS      = '-x c++ -O2 -Wall -DUSE_SDL2',
                           LINKFLAGS    = '-Wl,-z,noexecstack',
                           LIBS         = ['SDL2_mixer', 'SDL2', 'pthread', 'dl'],
@@ -124,7 +127,7 @@ elif device == 'arm64-linux':
     llasm_params = '-m64'
     llvm_params = '-mtriple=arm64-unknown-linux-gnu'
 elif device == 'pc-windows':
-    if sdl2 > 0:
+    if sdl == 2:
         env = Environment(CCFLAGS      = '-m32 -O2 -Wall -DUSE_SDL2',
                           LINKFLAGS    = '-m32 -mwindows',
                           LIBS         = ['mingw32', 'SDL2main', 'SDL2_mixer', 'SDL2', 'pthread']

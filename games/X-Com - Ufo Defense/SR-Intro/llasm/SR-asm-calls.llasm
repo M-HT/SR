@@ -43,7 +43,8 @@ func fread *ptr, size, nmemb, *stream
 func Game_int386x IntNum, *in_regs, *out_regs, *seg_regs
 ; 5 params
 
-extern errno_val
+extern intro_errno_val
+define errno_val intro_errno_val
 
 
 ; null procedures

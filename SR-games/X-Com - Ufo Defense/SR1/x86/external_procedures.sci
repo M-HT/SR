@@ -30,8 +30,6 @@ loc_47C5D,SR_fclose
 loc_49F60,SR_fflush
 loc_47D9F,SR_fgetc
 loc_49C60,SR__nfree
-loc_50E99,SR_getenv
-loc_4CBD4,SR_isatty
 loc_49AE1,SR__nmalloc
 loc_49697,SR_time
 loc_10AC0,SR_WaitVerticalRetraceTicks2
@@ -42,7 +40,6 @@ loc_49D1A,SR_strcat
 loc_49A40,SR_strcmp
 loc_49CFB,SR_strcpy
 
-loc_4CC60,SR_memset
 loc_47F02,SR_strncmp
 
 loc_47A93,SR_fread

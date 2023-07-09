@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2019 Roman Pauer
+;;  Copyright (C) 2016-2023 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -54,8 +54,6 @@
     %define fgetc _fgetc
     %define Game_filelength2 _Game_filelength2
     %define Game_free _Game_free
-    %define ftell _ftell
-    %define isatty _isatty
     %define Game_malloc _Game_malloc
     %define time _time
 
@@ -107,8 +105,6 @@ extern feof
 extern fgetc
 extern Game_filelength2
 extern Game_free
-extern ftell
-extern isatty
 extern Game_malloc
 extern time
 ; 2 params
@@ -126,7 +122,8 @@ extern fwrite
 extern Game_int386x
 ; 5 params
 
-extern errno_val
+extern tactical_errno_val
+%define errno_val tactical_errno_val
 
 ; null procedures
 global SR___CHK
@@ -162,8 +159,6 @@ global SR_feof
 global SR_fgetc
 global SR_filelength2
 global SR__nfree
-global SR_ftell
-global SR_isatty
 global SR__nmalloc
 global SR_time
 global SR_WaitVerticalRetraceTicks2
@@ -485,24 +480,6 @@ SR__nfree:
         Game_Call_Asm_Reg1 Game_free,-1
 
 ; end procedure SR__nfree
-
-align 16
-SR_ftell:
-
-; eax = FILE *fp
-
-        Game_Call_Asm_Reg1 ftell,'get_errno_val'
-
-; end procedure SR_ftell
-
-align 16
-SR_isatty:
-
-; eax = int handle
-
-        Game_Call_Asm_Reg1 isatty,'get_errno_val'
-
-; end procedure SR_isatty
 
 align 16
 SR__nmalloc:

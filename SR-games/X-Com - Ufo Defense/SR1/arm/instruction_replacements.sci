@@ -55,6 +55,11 @@ loc_2B101,2,@sub eax, edx|sub eax, eax, edx|@mov esi, 0xffffffff|mvn esi, #0 @ f
 
 loc_48669,220,@lea eax, [ebp-0x40]|sub eax, ebp, #0x40|@mov edx, [ebp-8]|ldr edx, [ebp, #(-8)]|@mov ebx, [loc_6C918]|LDR tmpadr, =loc_6C918|ldr ebx, [tmpadr]|@call SR_ReadSong|ADR tmp1, loc_48669_after_call|stmfd esp!, {tmp1}|b SR_ReadSong|LTORG_CALL|loc_48669_after_call:|@or eax, eax|cmp eax, #0|@jz loc_48779|beq loc_48779 @ music - load midi or song from catalog
 
+loc_44F20,1,@push edx|PUSH_REG edx|@movsx eax, word [loc_6C502]|LDR tmpadr, =loc_6C502|ldrsh tmp1, [tmpadr]|@cmp eax, 90|cmp tmp1, #90|@jge loc_44F20_after|@mov word [loc_6C502], 90|movlt tmp1, #90|strlth tmp1, [tmpadr]|@loc_44F20_after: @ fix reading uninitialized/not reinitialized variable
+
+loc_44F09,5,@call loc_10180|ADR tmp1, loc_44F09_after_call1|stmfd esp!, {tmp1}|b loc_10180|LTORG_CALL|loc_44F09_after_call1:|@mov eax, 5|mov eax, #5|@call SR_WaitVerticalRetraceTicks2|ADR tmp1, loc_44F09_after_call2|stmfd esp!, {tmp1}|b SR_WaitVerticalRetraceTicks2|LTORG_CALL|loc_44F09_after_call2: @ slow down animation
+loc_44F51,3,@sub edx, 20|sub edx, edx, #20|@mov eax, 5|mov eax, #5|@call SR_WaitVerticalRetraceTicks2|ADR tmp1, loc_44F51_after_call|stmfd esp!, {tmp1}|b SR_WaitVerticalRetraceTicks2|LTORG_CALL|loc_44F51_after_call: @ slow down animation
+
 loc_4F684,2,@adc eax, eax|mrs tmp1, cpsr|eor tmp1, tmp1, #0x20000000|msr cpsr_f, tmp1|adcS eax, eax, eax @ on ARM swap carry bit before instruction ('adc eax, eax' must set flags for 'adc')
 
 loc_4F6AC,2,@jnb short loc_4F6BF|bhs loc_4F6BF|mrs tmp1, cpsr|eor tmp1, tmp1, #0x20000000|msr cpsr_f, tmp1 @ on ARM swap carry bit after instruction

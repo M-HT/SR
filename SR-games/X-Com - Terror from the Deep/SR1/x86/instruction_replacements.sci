@@ -53,6 +53,9 @@ loc_513B9,3,add esp, 3*4|call SR_StopAnimVideo ; restore sound on stop of animat
 
 loc_13B48,1,cmp dword [Game_PlayIntro], 0|je loc_13C36|push edi ; skip intro
 
+loc_4B002,5,call loc_10170|mov eax, 5|call SR_WaitVerticalRetraceTicks2 ; slow down animation
+loc_4B079,3,sub edx, 20|mov eax, 5|call SR_WaitVerticalRetraceTicks2 ; slow down animation
+
 loc_581E0,2,adc eax, eax ; on ARM swap carry bit before instruction ('adc eax, eax' must set flags for 'adc')
 
 loc_58208,2,jnb short loc_5821B ; on ARM swap carry bit after instruction

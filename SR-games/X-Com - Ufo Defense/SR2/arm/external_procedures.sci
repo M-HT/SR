@@ -27,8 +27,6 @@ loc_4CEF4,SR_exit
 loc_4B401,SR_fclose
 loc_4B543,SR_fgetc
 loc_4D2C3,SR__nfree
-loc_4DF28,SR_ftell
-loc_5009F,SR_isatty
 loc_4CF5F,SR__nmalloc
 loc_4D3B2,SR_time
 loc_10AC0,SR_WaitVerticalRetraceTicks2
@@ -38,7 +36,6 @@ loc_4EEA6,SR_fputc
 loc_4EE02,SR_fputs
 loc_4E68E,SR_strcat
 
-loc_50130,SR_memset
 loc_4B6A6,SR_strncmp
 
 loc_4B237,SR_fread

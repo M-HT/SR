@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016-2021 Roman Pauer
+@@  Copyright (C) 2016-2023 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -27,8 +27,8 @@
 
 .extern Game_ESP_Original_Value
 
-.extern main_
-.extern update_timer
+.extern geoscape_main_
+.extern geoscape_update_timer
 
 
 .global Game_ExitMain_Asm
@@ -123,7 +123,7 @@ __Z13Game_Main_AsmiPPc:
         ADR lr, Game_ExitMain_Asm
         stmfd esp!, {lr}
         LDR eflags, =0x3202
-        b main_
+        b geoscape_main_
 # end procedure Game_Main_Asm
 
 .type Game_RunTimer_Asm, %function
@@ -140,7 +140,7 @@ __Z17Game_RunTimer_Asmv:
         ADR lr, Game_RunTimer_Asm_after_call
         stmfd esp!, {lr}
         LDR eflags, =0x3202
-        b update_timer
+        b geoscape_update_timer
     Game_RunTimer_Asm_after_call:
 
         ldmfd sp!, {v1-v8,pc}

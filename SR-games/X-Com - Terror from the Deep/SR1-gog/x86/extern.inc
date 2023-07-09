@@ -82,9 +82,7 @@ extern SR_fflush
 extern SR_fgetc
 extern SR_filelength2
 extern SR__nfree
-extern SR_getenv
 extern SR_inp
-extern SR_isatty
 extern SR__nmalloc
 extern SR_time
 extern SR_WaitVerticalRetraceTicks2

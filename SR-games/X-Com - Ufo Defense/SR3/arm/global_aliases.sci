@@ -1,3 +1,8 @@
-loc_1004A,main_
-loc_218D0,errno_val
-loc_111A5,update_timer
+loc_1004A,intro_main_
+loc_218D0,intro_errno_val
+loc_111A5,intro_update_timer
+
+loc_20000,intro_data_begin
+loc_20C3C,intro_data_end
+loc_20F04,intro_bss_begin
+loc_218D4,intro_bss_end

@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2019 Roman Pauer
+;;  Copyright (C) 2016-2023 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -29,8 +29,8 @@
 
 extern Game_ESP_Original_Value
 
-extern main_
-extern update_timer
+extern intro_main_
+extern intro_update_timer
 
 global Game_StopMain_Asm
 global _Game_StopMain_Asm
@@ -118,7 +118,7 @@ __Z13Game_Main_AsmiPPc:
 
         STI
 
-        call main_
+        call intro_main_
 
         CLI
 
@@ -155,7 +155,7 @@ __Z17Game_RunTimer_Asmv:
         push edi
         push ebp
 
-        call update_timer
+        call intro_update_timer
 
         pop ebp
         pop edi

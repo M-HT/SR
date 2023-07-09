@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2019 Roman Pauer
+;;  Copyright (C) 2016-2023 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -78,8 +78,6 @@ extern SR_feof
 extern SR_fgetc
 extern SR_filelength2
 extern SR__nfree
-extern SR_ftell
-extern SR_isatty
 extern SR__nmalloc
 extern SR_time
 extern SR_WaitVerticalRetraceTicks2
@@ -90,7 +88,6 @@ extern SR_fputs
 extern SR_strcat
 ; 3 params
 extern SR_ReadSong
-extern SR_memset
 extern SR_strncmp
 ; 4 params
 extern SR_fread

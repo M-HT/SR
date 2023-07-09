@@ -27,8 +27,6 @@ loc_5000A,SR_exit
 loc_4FCFC,SR_fclose
 loc_4FE3E,SR_fgetc
 loc_503D9,SR__nfree
-loc_50954,SR_ftell
-loc_52C66,SR_isatty
 loc_50075,SR__nmalloc
 loc_504C8,SR_time
 loc_10AA0,SR_WaitVerticalRetraceTicks2

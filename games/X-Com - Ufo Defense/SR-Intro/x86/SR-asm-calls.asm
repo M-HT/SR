@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2019 Roman Pauer
+;;  Copyright (C) 2016-2023 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -110,7 +110,8 @@ extern fread
 extern Game_int386x
 ; 5 params
 
-extern errno_val
+extern intro_errno_val
+%define errno_val intro_errno_val
 
 ; null procedures
 global SR___CHK

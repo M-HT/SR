@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -8581,11 +8581,26 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
         strcpy(&(newstr[1]), output->str);
 
         pos = strchr(newstr, '\n');
-        while (pos != NULL)
+        if (pos == NULL)
         {
-            *pos = '@';
+            if (newstr[1] != 0)
+            {
+                pos = newstr + strlen(newstr) - 1;
+                while (*pos == ' ')
+                {
+                    *pos = 0;
+                    pos--;
+                }
+            }
+        }
+        else
+        {
+            while (pos != NULL)
+            {
+                *pos = '@';
 
-            pos = strchr(pos, '\n');
+                pos = strchr(pos, '\n');
+            }
         }
 
         strcat(newstr, "\n");

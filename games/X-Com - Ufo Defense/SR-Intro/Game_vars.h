@@ -239,7 +239,7 @@ extern void Game_RunTimer_Asm(void);
 extern "C" {
 #endif
 
-extern int32_t errno_val;
+extern int32_t intro_errno_val;
 
 #ifdef __cplusplus
 }

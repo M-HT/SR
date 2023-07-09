@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -71,6 +71,15 @@ output_data *SR_disassemble_offset_init_output(unsigned int SecNum, uint_fast32_
         }
         output->len = length - 1;
         output->type = OT_INSTRUCTION;
+
+        if (section[SecNum].type != ST_CODE)
+        {
+            output->type = OT_UNKNOWN;
+            if (length & 3)
+            {
+                fprintf(stderr, "Warning: data replacement causes misalignement - %i - %i (0x%x)\n", SecNum, (unsigned int)offset, (unsigned int)(section[SecNum].start + offset));
+            }
+        }
     }
 
     return output;

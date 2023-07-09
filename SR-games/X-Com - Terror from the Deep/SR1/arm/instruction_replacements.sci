@@ -53,6 +53,9 @@ loc_513B9,3,@add esp, 3*4|add esp, esp, #3*4|@call SR_StopAnimVideo|ADR tmp1, lo
 
 loc_13B48,1,@cmp dword [Game_PlayIntro], 0|LDR tmpadr, =Game_PlayIntro|ldr tmp1, [tmpadr]|cmp tmp1, #0|@je loc_13C36|beq loc_13C36|@push edi|PUSH_REG edi @ skip intro
 
+loc_4B002,5,@call loc_10170|ADR tmp1, loc_4B002_after_call1|stmfd esp!, {tmp1}|b loc_10170|LTORG_CALL|loc_4B002_after_call1:|@mov eax, 5|mov eax, #5|@call SR_WaitVerticalRetraceTicks2|ADR tmp1, loc_4B002_after_call2|stmfd esp!, {tmp1}|b SR_WaitVerticalRetraceTicks2|LTORG_CALL|loc_4B002_after_call2: @ slow down animation
+loc_4B079,3,@sub edx, 20|sub edx, edx, #20|@mov eax, 5|mov eax, #5|@call SR_WaitVerticalRetraceTicks2|ADR tmp1, loc_4B079_after_call|stmfd esp!, {tmp1}|b SR_WaitVerticalRetraceTicks2|LTORG_CALL|loc_4B079_after_call: @ slow down animation
+
 loc_581E0,2,@adc eax, eax|mrs tmp1, cpsr|eor tmp1, tmp1, #0x20000000|msr cpsr_f, tmp1|adcS eax, eax, eax @ on ARM swap carry bit before instruction ('adc eax, eax' must set flags for 'adc')
 
 loc_58208,2,@jnb short loc_5821B|bhs loc_5821B|mrs tmp1, cpsr|eor tmp1, tmp1, #0x20000000|msr cpsr_f, tmp1 @ on ARM swap carry bit after instruction

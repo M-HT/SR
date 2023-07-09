@@ -31,9 +31,7 @@ loc_523DC,SR_fclose
 loc_52FE7,SR_fflush
 loc_5251E,SR_fgetc
 loc_52D23,SR__nfree
-loc_59A03,SR_getenv
 loc_5321E,SR_inp
-loc_55753,SR_isatty
 loc_52BC1,SR__nmalloc
 loc_52723,SR_time
 loc_10AB0,SR_WaitVerticalRetraceTicks2

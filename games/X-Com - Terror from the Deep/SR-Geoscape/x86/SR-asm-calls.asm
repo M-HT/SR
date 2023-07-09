@@ -59,9 +59,7 @@
     %define fgetc _fgetc
     %define Game_filelength2 _Game_filelength2
     %define Game_free _Game_free
-    %define getenv _getenv
     %define Game_inp _Game_inp
-    %define isatty _isatty
     %define Game_malloc _Game_malloc
     %define time _time
 
@@ -120,9 +118,7 @@ extern fflush
 extern fgetc
 extern Game_filelength2
 extern Game_free
-extern getenv
 extern Game_inp
-extern isatty
 extern Game_malloc
 extern time
 ; 2 params
@@ -142,7 +138,8 @@ extern fread
 extern fwrite
 ; 5 params
 
-extern errno_val
+extern geoscape_errno_val
+%define errno_val geoscape_errno_val
 
 ; null procedures
 global SR___CHK
@@ -184,9 +181,7 @@ global SR_fflush
 global SR_fgetc
 global SR_filelength2
 global SR__nfree
-global SR_getenv
 global SR_inp
-global SR_isatty
 global SR__nmalloc
 global SR_time
 global SR_WaitVerticalRetraceTicks2
@@ -558,15 +553,6 @@ SR__nfree:
 ; end procedure SR__nfree
 
 align 16
-SR_getenv:
-
-; eax = const char *name
-
-        Game_Call_Asm_Reg1 getenv,-1
-
-; end procedure SR_getenv
-
-align 16
 SR_inp:
 
 ; eax = int port
@@ -574,15 +560,6 @@ SR_inp:
         Game_Call_Asm_Reg1 Game_inp,-1
 
 ; end procedure SR_inp
-
-align 16
-SR_isatty:
-
-; eax = int handle
-
-        Game_Call_Asm_Reg1 isatty,'get_errno_val'
-
-; end procedure SR_isatty
 
 align 16
 SR__nmalloc:

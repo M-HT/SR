@@ -257,7 +257,7 @@ extern void Game_RunTimer_Asm(void);
 extern "C" {
 #endif
 
-extern int errno_val;
+extern int geoscape_errno_val;
 
 #ifdef __cplusplus
 }

@@ -55,6 +55,11 @@ loc_2B101,2,sub eax, edx|mov esi, 0xffffffff ; fix reading not reinitialized var
 
 loc_48669,220,lea eax, [ebp-0x40]|mov edx, [ebp-8]|mov ebx, [loc_6C918]|call SR_ReadSong|or eax, eax|jz loc_48779 ; music - load midi or song from catalog
 
+loc_44F20,1,push edx|movsx eax, word [loc_6C502]|cmp eax, 90|jge loc_44F20_after|mov word [loc_6C502], 90|loc_44F20_after: ; fix reading uninitialized/not reinitialized variable
+
+loc_44F09,5,call loc_10180|mov eax, 5|call SR_WaitVerticalRetraceTicks2 ; slow down animation
+loc_44F51,3,sub edx, 20|mov eax, 5|call SR_WaitVerticalRetraceTicks2 ; slow down animation
+
 loc_4F684,2,adc eax, eax ; on ARM swap carry bit before instruction ('adc eax, eax' must set flags for 'adc')
 
 loc_4F6AC,2,jnb short loc_4F6BF ; on ARM swap carry bit after instruction

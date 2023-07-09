@@ -82,7 +82,7 @@ loc_4EEA6,8600, @ CLIB code
 
 loc_74FB8,24, @ CLIB data
 loc_75020,564, @ CLIB data
-loc_75290,340, @ CLIB data
+loc_75294,336, @ CLIB data
 
 loc_937C4,16, @ CLIB data
 loc_937D8,48, @ CLIB data

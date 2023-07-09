@@ -4,14 +4,20 @@
 .include "misc.inc"
 .include "extern.inc"
 .include "macros.inc"
-.global update_timer
-.global _update_timer
-.global main_
-.global _main_
-.global errno_val
-.global _errno_val
-.global stack_start
-.global _stack_start
+.global tactical_update_timer
+.global _tactical_update_timer
+.global tactical_main_
+.global _tactical_main_
+.global tactical_data_begin
+.global _tactical_data_begin
+.global tactical_data_end
+.global _tactical_data_end
+.global tactical_bss_begin
+.global _tactical_bss_begin
+.global tactical_errno_val
+.global _tactical_errno_val
+.global tactical_bss_end
+.global _tactical_bss_end
 
 .section .note.GNU-stack,"",%progbits
 

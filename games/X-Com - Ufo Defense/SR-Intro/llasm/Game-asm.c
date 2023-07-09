@@ -10,8 +10,8 @@ extern "C" {
 extern _cpu *x86_initialize_cpu(void);
 extern void x86_deinitialize_cpu(void);
 
-extern void c_main_(CPU);
-extern void c_update_timer(CPU);
+extern void c_intro_main_(CPU);
+extern void c_intro_update_timer(CPU);
 
 #ifdef __cplusplus
 }
@@ -39,7 +39,7 @@ int Game_Main_Asm(int argc, PTR32(char) argv[])
         eax = argc;
         edx = (uintptr_t)argv;
 
-        c_main_(cpu);
+        c_intro_main_(cpu);
 
         retval = eax;
 
@@ -66,7 +66,7 @@ void Game_RunTimer_Asm(void)
     old_eflags = eflags;
     eflags = 0x3202;
 
-    c_update_timer(cpu);
+    c_intro_update_timer(cpu);
 
     eflags = old_eflags;
     X86_InterruptFlag = old_InterruptFlag;

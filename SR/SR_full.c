@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -71,6 +71,15 @@ output_data *SR_disassemble_offset_init_output(unsigned int SecNum, uint_fast32_
         }
         output->len = length - 1;
         output->type = OT_INSTRUCTION;
+
+        if (section[SecNum].type != ST_CODE)
+        {
+            output->type = OT_UNKNOWN;
+            if (length & 3)
+            {
+                fprintf(stderr, "Warning: data replacement causes misalignement - %i - %i (0x%x)\n", SecNum, (unsigned int)offset, (unsigned int)(section[SecNum].start + offset));
+            }
+        }
     }
 
     return output;
@@ -337,10 +346,12 @@ int SR_full_disassembly(void)
 #if (OUTPUT_TYPE != OUT_ORIG)
     uint_fast32_t offset;
 #endif
+#if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_DOS)
+    replace_data *replace;
+#endif
 #if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
     output_data *output;
     region_data *region;
-    replace_data *replace;
 #endif
 #if ((OUTPUT_TYPE == OUT_X86) || (OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
     Entry_region ER;
@@ -354,7 +365,11 @@ int SR_full_disassembly(void)
 
 
 #if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_DOS)
-    section_alias_list_Insert(ESPObjectNum, ESP, "stack_start");
+    replace = section_replace_list_FindEntryEqualOrLower(ESPObjectNum, ESP - 1);
+    if ((replace == NULL) || (replace->ofs + replace->length < ESP))
+    {
+        section_alias_list_Insert(ESPObjectNum, ESP, "stack_start");
+    }
 
     for (index = 0; index < num_sections; index++)
     {

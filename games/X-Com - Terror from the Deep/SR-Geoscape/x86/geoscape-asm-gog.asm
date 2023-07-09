@@ -2,14 +2,20 @@
 %include "misc.inc"
 %include "extern.inc"
 %include "macros.inc"
-global update_timer
-global _update_timer
-global main_
-global _main_
-global errno_val
-global _errno_val
-global stack_start
-global _stack_start
+global geoscape_update_timer
+global _geoscape_update_timer
+global geoscape_main_
+global _geoscape_main_
+global geoscape_data_begin
+global _geoscape_data_begin
+global geoscape_data_end
+global _geoscape_data_end
+global geoscape_bss_begin
+global _geoscape_bss_begin
+global geoscape_errno_val
+global _geoscape_errno_val
+global geoscape_bss_end
+global _geoscape_bss_end
 
 %ifidn __OUTPUT_FORMAT__, elf32
 section .note.GNU-stack noalloc noexec nowrite progbits

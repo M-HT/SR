@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -33,7 +33,7 @@
 
 static void Game_Set_errno_val(void)
 {
-    errno_val = Game_errno();
+    intro_errno_val = Game_errno();
 }
 
 

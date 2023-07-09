@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2019 Roman Pauer
+;;  Copyright (C) 2016-2023 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -29,8 +29,8 @@
 
 extern Game_ESP_Original_Value
 
-extern main_
-extern update_timer
+extern tactical_main_
+extern tactical_update_timer
 
 global Game_ExitMain_Asm
 global _Game_ExitMain_Asm
@@ -156,7 +156,7 @@ __Z13Game_Main_AsmiPPc:
         STI
 
         push Game_ExitMain_Asm
-        jmp main_
+        jmp tactical_main_
 ; end procedure Game_Main_Asm
 
 align 16
@@ -170,7 +170,7 @@ __Z17Game_RunTimer_Asmv:
         push edi
         push ebp
 
-        call update_timer
+        call tactical_update_timer
 
         pop ebp
         pop edi

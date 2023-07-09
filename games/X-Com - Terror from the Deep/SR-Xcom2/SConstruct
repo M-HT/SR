@@ -1,0 +1,204 @@
+#
+#  Copyright (C) 2016-2023 Roman Pauer
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy of
+#  this software and associated documentation files (the "Software"), to deal in
+#  the Software without restriction, including without limitation the rights to
+#  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+#  of the Software, and to permit persons to whom the Software is furnished to do
+#  so, subject to the following conditions:
+#
+#  The above copyright notice and this permission notice shall be included in all
+#  copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#  SOFTWARE.
+#
+
+import os
+import subprocess
+
+# set help text
+vars = Variables('custom.py')
+vars.Add(EnumVariable('debug', 'Set debug level (0 = release version)', '0',
+                                 allowed_values=('0', '1', '2'),
+                                 ignorecase=2))
+vars.Add(EnumVariable('device', 'Set target device', 'none',
+                                 allowed_values=('none', 'pc-windows', 'pc-linux', 'arm-linux', 'gp2x', 'pandora'),
+                                 ignorecase=2))
+vars.Add(EnumVariable('sdl', 'Set SDL version', '2',
+                                 allowed_values=('1', '2'),
+                                 ignorecase=2))
+vars.Add(EnumVariable('executable', 'Set executable to compile', 'combined',
+                                 allowed_values=('combined', 'geoscape', 'tactical'),
+                                 ignorecase=2))
+vars.Add(EnumVariable('version', 'Set version to compile (dos/gog)', 'none',
+                                 allowed_values=('none', 'dos', 'gog'),
+                                 ignorecase=2))
+env = Environment(variables = vars)
+
+debug = int(env['debug'])
+device = env['device']
+sdl = int(env['sdl'])
+executable = env['executable']
+version = env['version']
+clean = env.GetOption('clean')
+
+if version == 'none':
+    version = 'dos'
+    env['version'] = version
+    print("\nYou didn't set the version to compile (parameter 'version').")
+    print("'" + version + "' version will be compiled.\n")
+
+if device == 'none':
+    device = 'pc-linux'
+    if env['PLATFORM'] == 'posix':
+        if os.uname()[4].startswith('arm'):
+            device = 'arm-linux'
+    env['device'] = device
+    print("\nYou didn't set any target device (parameter 'device').")
+    print("'" + device + "' will be used for compiling.\n")
+
+Help(vars.GenerateHelpText(env))
+
+if device == 'gp2x' or device == 'pandora':
+    sdl = 1
+
+if device == 'pc-linux':
+    # default settings
+    if sdl == 2:
+        env = Environment(CCFLAGS      = '-m32 -O2 -Wall -DUSE_SDL2',
+                          LINKFLAGS    = '-m32 -Wl,-z,noexecstack',
+                          LIBS         = ['SDL2_mixer', 'SDL2', 'pthread', 'm', 'dl']
+                         )
+    else:
+        env = Environment(CCFLAGS      = '-m32 -O2 -Wall -DALLOW_OPENGL',
+                          LINKFLAGS    = '-m32 -Wl,-z,noexecstack',
+                          LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'm', 'dl', 'GL']
+                         )
+elif device == 'arm-linux':
+    if sdl == 2:
+        env = Environment(CCFLAGS      = '-O2 -Wall -DUSE_SDL2',
+                          LINKFLAGS    = '-Wl,-z,noexecstack',
+                          LIBS         = ['SDL2_mixer', 'SDL2', 'pthread', 'm', 'dl'],
+                          ASFLAGS      = ' -I arm/'
+                         )
+    else:
+        env = Environment(CCFLAGS      = '-O2 -Wall -DALLOW_OPENGL',
+                          LINKFLAGS    = '-Wl,-z,noexecstack',
+                          LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'm', 'dl', 'GL'],
+                          ASFLAGS      = ' -I arm/'
+                         )
+    # see arm/armconf.inc for explanation of these options (and others)
+    env.Append(ASFLAGS = ' --defsym USE_R9=1 --defsym ALLOW_UNALIGNED_MEMORY_ACCESS=1')
+elif device == 'pc-windows':
+    if sdl == 2:
+        env = Environment(CCFLAGS      = '-m32 -O2 -Wall -DUSE_SDL2',
+                          LINKFLAGS    = '-m32 -mwindows',
+                          LIBS         = ['mingw32', 'SDL2main', 'SDL2_mixer', 'SDL2', 'pthread']
+                         )
+    else:
+        env = Environment(CCFLAGS      = '-m32 -O2 -Wall -DALLOW_OPENGL',
+                          LINKFLAGS    = '-m32 -mwindows',
+                          LIBS         = ['mingw32', 'SDLmain', 'SDL_mixer', 'SDL', 'pthread', 'opengl32']
+                         )
+elif device == 'gp2x':
+    compiler_path = '/opt/open2x/gcc-4.1.1-glibc-2.3.6/'
+    compiler_prefix = 'arm-open2x-linux-'
+
+    env = Environment(CC           = compiler_prefix + 'gcc',
+                      CCFLAGS      = '-O2 -Wall -DGP2X -march=armv4t -mtune=arm920t',
+                      CPPPATH      = [compiler_path + 'include/SDL/midi', compiler_path + 'include/SDL', compiler_path + 'include'],
+                      INCPREFIX    = '-I',
+                      LIBPATH      = [compiler_path + 'lib/mixer-midi', compiler_path + 'lib'],
+                      LIBDIRPREFIX = '-L',
+                      LINKFLAGS    = '-static -Wl,-z,noexecstack',
+                      LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'm', 'armmem', 'dl'],
+                      ENV          = {'PATH' : compiler_path + 'bin:' + os.environ['PATH']},
+                      AS           = compiler_prefix + 'as',
+                      ASFLAGS      = ' -EL -march=armv4t -mfpu=softfpa -I arm/'
+                     )
+    # see arm/armconf.inc for explanation of these options (and others)
+    env.Append(ASFLAGS = ' --defsym USE_R9=1 --defsym ALLOW_UNALIGNED_PC=1 --defsym ALLOW_UNALIGNED_STACK=1')
+elif device == 'pandora':
+    compiler_path = os.environ['PNDSDK'] + '/'
+    compiler_prefix = 'pandora-'
+
+    env = Environment(CC           = compiler_prefix + 'gcc',
+                      CCFLAGS      = '-O2 -Wall -DPANDORA -pipe -march=armv7-a -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=vfpv3 -mfloat-abi=softfp',
+                      CPPPATH      = [compiler_path + 'usr/include'],
+                      INCPREFIX    = '-I',
+                      LIBPATH      = [compiler_path + 'usr/lib'],
+                      LIBDIRPREFIX = '-L',
+                      LINKFLAGS    = '-Wl,-z,noexecstack',
+                      LIBS         = ['SDL_mixer', 'mad', 'SDL', 'ts', 'pthread', 'm', 'dl'],
+                      ENV          = {'PATH' : compiler_path + 'bin:' + os.environ['PATH']},
+                      AS           = compiler_prefix + 'as',
+                      ASFLAGS      = ' -EL -march=armv7-a -mcpu=cortex-a8 -mfpu=vfpv3 -mfloat-abi=softfp -I arm/'
+                     )
+    # see arm/armconf.inc for explanation of these options (and others)
+    env.Append(ASFLAGS = ' --defsym USE_R9=1 --defsym ALLOW_UNALIGNED_MEMORY_ACCESS=1')
+
+if executable == 'geoscape':
+    program_name = 'SR-Geoscape'
+    env.Append(CCFLAGS = ' -DEXE_BUILD=EXE_GEOSCAPE')
+elif executable == 'tactical':
+    program_name = 'SR-Tactical'
+    env.Append(CCFLAGS = ' -DEXE_BUILD=EXE_TACTICAL')
+else:
+    program_name = 'SR-Xcom2'
+
+def get_compiler_version(compiler_path, env_path):
+    process = subprocess.Popen([compiler_path, '-dumpversion'], stdout=subprocess.PIPE, env={"PATH": env_path})
+    (stdout, stderr) = process.communicate()
+    if not stdout or stdout.isspace():
+        return None
+    version = stdout.strip().split(b'.')
+    return version
+
+def is_version_ge(version, comparand):
+    if version is None or comparand is None:
+        return False
+
+    for i in range(len(comparand)):
+        if i >= len(version):
+            component = 0
+        else:
+            component = int(version[i])
+        if int(comparand[i]) > component:
+            return False
+        if int(comparand[i]) < component:
+            return True
+    return True
+
+if not clean:
+    compiler_version = get_compiler_version(env['CC'], env['ENV']['PATH'])
+    if is_version_ge(compiler_version, [3, 4]):
+        env.Append(CCFLAGS = ' -fno-PIE')
+    if is_version_ge(compiler_version, [6]):
+        env.Append(LINKFLAGS = ' -no-pie')
+
+# debug settings
+if debug <= 0:
+    env.Append(LINKFLAGS = ' -s')
+elif debug == 1:
+    env.Append(CCFLAGS = ' -g')
+else:
+    env.Append(CCFLAGS = ' -g -D__DEBUG__')
+
+display_objs = SConscript('display/SConscript', exports='device env')
+audio_objs = SConscript('audio/SConscript', exports='device env')
+input_objs = SConscript('input/SConscript', exports='device env')
+
+if device == 'pc-windows' or device == 'pc-linux':
+    arch_objs = SConscript('x86/SConscript', exports='device executable version env')
+else:
+    arch_objs = SConscript('arm/SConscript', exports='executable version env')
+
+
+env.Program(program_name, Glob('*.c') + display_objs + audio_objs + input_objs + arch_objs)

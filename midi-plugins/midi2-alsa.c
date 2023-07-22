@@ -57,6 +57,7 @@ typedef struct {
 
 
 static snd_seq_t *midi_seq = NULL;
+static char *dst_address = NULL;
 static int src_client_id, src_port_id, dst_client_id, dst_port_id;
 static int midi_queue;
 static pthread_t midi_thread;
@@ -563,11 +564,12 @@ static void *midi_thread_proc(void *arg)
     midi_event_info *events;
     unsigned int current_event, base_tick, num_events;
     uint64_t base_time;
-    int do_sleep;
+    int do_sleep, num_input_events, dst_port_exists;
     snd_seq_queue_status_t *queue_status;
     const snd_seq_real_time_t *real_time;
     int64_t time_diff, base_diff;
     snd_seq_event_t event;
+    snd_seq_event_t *input_event;
 
     snd_seq_queue_status_alloca(&queue_status);
 
@@ -578,6 +580,7 @@ static void *midi_thread_proc(void *arg)
 
 
     do_sleep = 1;
+    dst_port_exists = 1;
 
     while (1)
     {
@@ -594,6 +597,51 @@ static void *midi_thread_proc(void *arg)
         }
 
         if (midi_quit) return NULL;
+
+        // check announcement events
+        num_input_events = snd_seq_event_input_pending(midi_seq, 1);
+        for (; num_input_events; num_input_events--)
+        {
+            if (snd_seq_event_input(midi_seq, &input_event) < 0) break;
+
+            switch(input_event->type)
+            {
+                case SND_SEQ_EVENT_PORT_START:
+                    if (!dst_port_exists)
+                    {
+                        snd_seq_addr_t addr;
+                        if (snd_seq_parse_address(midi_seq, &addr, dst_address) == 0)
+                        {
+                            if ((input_event->data.addr.client == addr.client) && (input_event->data.addr.port == addr.port))
+                            {
+                                // resubscribe to started port
+
+                                pthread_mutex_lock(&midi_mutex);
+
+                                dst_client_id = addr.client;
+                                dst_port_id = addr.port;
+                                dst_port_exists = 1;
+
+                                snd_seq_connect_to(midi_seq, src_port_id, dst_client_id, dst_port_id);
+
+                                pthread_mutex_unlock(&midi_mutex);
+                            }
+                        }
+                    }
+                    break;
+                case SND_SEQ_EVENT_PORT_EXIT:
+                    if (dst_port_exists)
+                    {
+                        if ((input_event->data.addr.client == dst_client_id) && (input_event->data.addr.port == dst_port_id))
+                        {
+                            dst_port_exists = 0;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
 
         if ((!midi_loaded) || (!midi_playing))
         {
@@ -990,7 +1038,7 @@ static int create_src_port(void)
 
     snd_seq_port_info_set_name(pinfo, "midi2-alsa");
 
-    snd_seq_port_info_set_capability(pinfo, 0);
+    snd_seq_port_info_set_capability(pinfo, SND_SEQ_PORT_CAP_WRITE);
     snd_seq_port_info_set_type(pinfo, SND_SEQ_PORT_TYPE_MIDI_GENERIC | SND_SEQ_PORT_TYPE_APPLICATION);
 
     if (snd_seq_create_port(midi_seq, pinfo) < 0) return -1;
@@ -1006,6 +1054,13 @@ static int find_dst_port(const char *midi_address, int midi_type)
     snd_seq_port_info_t *pinfo;
     int client_id[3], port_id[3];
     unsigned int ptype;
+    char address[32];
+
+    if (dst_address != NULL)
+    {
+        free(dst_address);
+        dst_address = NULL;
+    }
 
     if (midi_address != NULL && *midi_address != 0)
     {
@@ -1025,6 +1080,7 @@ static int find_dst_port(const char *midi_address, int midi_type)
         }
         else
         {
+            dst_address = strdup(midi_address);
             return 0;
         }
     }
@@ -1054,6 +1110,8 @@ static int find_dst_port(const char *midi_address, int midi_type)
                         {
                             dst_client_id = snd_seq_client_info_get_client(cinfo);
                             dst_port_id = snd_seq_port_info_get_port(pinfo);
+                            sprintf(address, "%i:%i", dst_client_id, dst_port_id);
+                            dst_address = strdup(address);
                             return 0;
                         }
                         else if (client_id[0] == -1)
@@ -1088,12 +1146,40 @@ static int find_dst_port(const char *midi_address, int midi_type)
             {
                 dst_client_id = client_id[ptype];
                 dst_port_id = port_id[ptype];
+                sprintf(address, "%i:%i", dst_client_id, dst_port_id);
+                dst_address = strdup(address);
                 return 0;
             }
         }
 
         return -4;
     }
+}
+
+static int subscribe_announcements(int subscribe)
+{
+    snd_seq_addr_t sender, dest;
+    snd_seq_port_subscribe_t *subs;
+
+    sender.client = SND_SEQ_CLIENT_SYSTEM;
+    sender.port = SND_SEQ_PORT_SYSTEM_ANNOUNCE;
+    dest.client = src_client_id;
+    dest.port = src_port_id;
+
+    snd_seq_port_subscribe_alloca(&subs);
+    snd_seq_port_subscribe_set_sender(subs, &sender);
+    snd_seq_port_subscribe_set_dest(subs, &dest);
+
+    if (subscribe)
+    {
+        if (snd_seq_subscribe_port(midi_seq, subs) < 0) return -1;
+    }
+    else
+    {
+        if (snd_seq_unsubscribe_port(midi_seq, subs) < 0) return -1;
+    }
+
+    return 0;
 }
 
 #endif
@@ -1375,6 +1461,12 @@ static void shutdown_plugin(void)
 
         midi_seq = NULL;
     }
+
+    if (dst_address != NULL)
+    {
+        free(dst_address);
+        dst_address = NULL;
+    }
 #endif
 
     if (reset_controller_events != NULL)
@@ -1483,8 +1575,18 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
         return -4;
     }
 
+    if (subscribe_announcements(1) < 0)
+    {
+        snd_seq_free_queue(midi_seq, midi_queue);
+        snd_seq_delete_port(midi_seq, src_port_id);
+        snd_seq_close(midi_seq);
+        midi_seq = NULL;
+        return -6;
+    }
+
     if (snd_seq_connect_to(midi_seq, src_port_id, dst_client_id, dst_port_id) < 0)
     {
+        subscribe_announcements(0);
         snd_seq_free_queue(midi_seq, midi_queue);
         snd_seq_delete_port(midi_seq, src_port_id);
         snd_seq_close(midi_seq);
@@ -1494,6 +1596,7 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 
     if (pthread_mutex_init(&midi_mutex, NULL))
     {
+        subscribe_announcements(0);
         snd_seq_disconnect_to(midi_seq, src_port_id, dst_client_id, dst_port_id);
         snd_seq_free_queue(midi_seq, midi_queue);
         snd_seq_delete_port(midi_seq, src_port_id);
@@ -1520,6 +1623,7 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
     {
         pthread_attr_destroy(&attr);
         pthread_mutex_destroy(&midi_mutex);
+        subscribe_announcements(0);
         snd_seq_disconnect_to(midi_seq, src_port_id, dst_client_id, dst_port_id);
         snd_seq_free_queue(midi_seq, midi_queue);
         snd_seq_delete_port(midi_seq, src_port_id);

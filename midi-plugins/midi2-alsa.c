@@ -61,6 +61,7 @@ static char *dst_address = NULL;
 static int src_client_id, src_port_id, dst_client_id, dst_port_id;
 static int midi_queue;
 static pthread_t midi_thread;
+static unsigned char *initial_sysex_events = NULL;
 
 static volatile int midi_quit = 0;
 static volatile int midi_loaded = 0;
@@ -559,6 +560,11 @@ midi_error_1:
 }
 
 
+static int pause_0(void);
+static int resume(void);
+static int send_initial_sysex_events(unsigned char const *sysex_events);
+static void reset_playing(void);
+
 static void *midi_thread_proc(void *arg)
 {
     midi_event_info *events;
@@ -616,13 +622,43 @@ static void *midi_thread_proc(void *arg)
                             {
                                 // resubscribe to started port
 
+                                int was_playing;
+
                                 pthread_mutex_lock(&midi_mutex);
+
+                                was_playing = (midi_loaded && midi_playing);
+                                if (was_playing)
+                                {
+                                    pause_0();
+                                }
 
                                 dst_client_id = addr.client;
                                 dst_port_id = addr.port;
                                 dst_port_exists = 1;
 
                                 snd_seq_connect_to(midi_seq, src_port_id, dst_client_id, dst_port_id);
+
+                                if (initial_sysex_events != NULL)
+                                {
+                                    send_initial_sysex_events(initial_sysex_events);
+                                }
+
+                                reset_playing();
+
+                                if (midi_loaded && (midi_current_event > 1) && !midi_eof)
+                                {
+                                    // play song from the beginning
+                                    current_event = midi_current_event;
+                                    events = (midi_event_info *) midi_events;
+                                    midi_current_event = 1;
+                                    midi_base_tick += events[current_event].tick;
+                                    midi_base_time += events[current_event].time;
+                                }
+
+                                if (was_playing)
+                                {
+                                    resume();
+                                }
 
                                 pthread_mutex_unlock(&midi_mutex);
                             }
@@ -826,11 +862,14 @@ static void *midi_thread_proc(void *arg)
     };
 }
 
-static void send_initial_sysex_events(unsigned char const *sysex_events)
+static int send_initial_sysex_events(unsigned char const *sysex_events)
 {
     snd_seq_event_t event;
+    int events_len;
 
-    if (midi_seq == NULL) return;
+    if (midi_seq == NULL) return 0;
+
+    events_len = 0;
 
     snd_seq_ev_clear(&event);
     event.queue = midi_queue;
@@ -875,6 +914,7 @@ static void send_initial_sysex_events(unsigned char const *sysex_events)
 
             snd_seq_ev_set_variable(&event, len, (void *)sysex_events);
             sysex_events += len;
+            events_len += len;
             snd_seq_event_output(midi_seq, &event);
         };
 
@@ -894,6 +934,8 @@ static void send_initial_sysex_events(unsigned char const *sysex_events)
     }
 
     pthread_mutex_unlock(&midi_mutex);
+
+    return events_len;
 }
 
 static void reset_playing(void)
@@ -1467,6 +1509,12 @@ static void shutdown_plugin(void)
         free(dst_address);
         dst_address = NULL;
     }
+
+    if (initial_sysex_events != NULL)
+    {
+        free(initial_sysex_events);
+        initial_sysex_events = NULL;
+    }
 #endif
 
     if (reset_controller_events != NULL)
@@ -1482,7 +1530,7 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 {
     char const *address;
     unsigned char const *sysex_events, *controller_events;
-    int midi_type;
+    int midi_type, events_len;
 
     if (functions == NULL) return -3;
 
@@ -1500,17 +1548,15 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 
     if (controller_events != NULL && *controller_events == 0xb0)
     {
-        int len;
+        events_len = 1;
+        while (controller_events[events_len] != 0xff) events_len++;
 
-        len = 1;
-        while (controller_events[len] != 0xff) len++;
-
-        if (len > 1)
+        if (events_len > 1)
         {
-            reset_controller_events = (unsigned char *)malloc(len);
+            reset_controller_events = (unsigned char *)malloc(events_len);
             if (reset_controller_events != NULL)
             {
-                memcpy(reset_controller_events, controller_events + 1, len);
+                memcpy(reset_controller_events, controller_events + 1, events_len);
             }
         }
     }
@@ -1527,7 +1573,8 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 
 #if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 {
-    pthread_attr_t attr;
+    pthread_attr_t thread_attr;
+    pthread_mutexattr_t mutex_attr;
 
     if (snd_seq_open(&midi_seq, "default", SND_SEQ_OPEN_DUPLEX, 0) < 0)
     {
@@ -1594,8 +1641,12 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
         return -6;
     }
 
-    if (pthread_mutex_init(&midi_mutex, NULL))
+    pthread_mutexattr_init(&mutex_attr);
+    pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
+
+    if (pthread_mutex_init(&midi_mutex, &mutex_attr))
     {
+        pthread_mutexattr_destroy(&mutex_attr);
         subscribe_announcements(0);
         snd_seq_disconnect_to(midi_seq, src_port_id, dst_client_id, dst_port_id);
         snd_seq_free_queue(midi_seq, midi_queue);
@@ -1605,23 +1656,34 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
         return -7;
     }
 
+    pthread_mutexattr_destroy(&mutex_attr);
+
     midi_last_tick = 0;
 
     if (sysex_events != NULL && *sysex_events == 0xf0)
     {
-        send_initial_sysex_events(sysex_events);
+        events_len = send_initial_sysex_events(sysex_events);
+
+        if (events_len > 1)
+        {
+            initial_sysex_events = (unsigned char *)malloc(events_len);
+            if (initial_sysex_events != NULL)
+            {
+                memcpy(initial_sysex_events, sysex_events, events_len);
+            }
+        }
     }
 
     reset_playing();
 
-    pthread_attr_init(&attr);
+    pthread_attr_init(&thread_attr);
 
-    //pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+    //pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
+    pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_JOINABLE);
 
-    if (pthread_create(&midi_thread, &attr, &midi_thread_proc, NULL) != 0)
+    if (pthread_create(&midi_thread, &thread_attr, &midi_thread_proc, NULL) != 0)
     {
-        pthread_attr_destroy(&attr);
+        pthread_attr_destroy(&thread_attr);
         pthread_mutex_destroy(&midi_mutex);
         subscribe_announcements(0);
         snd_seq_disconnect_to(midi_seq, src_port_id, dst_client_id, dst_port_id);
@@ -1632,7 +1694,7 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
         return -7;
     }
 
-    pthread_attr_destroy(&attr);
+    pthread_attr_destroy(&thread_attr);
 }
 #endif
 

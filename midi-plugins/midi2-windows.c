@@ -158,10 +158,21 @@ static int readmidi(const uint8_t *midi, unsigned int midilen, unsigned int *num
 		return 5;
 	}
 
-	if (time_division == 0)
+	if (time_division & 0x8000)
 	{
-		// wrong time division
-		return 6;
+		if (((time_division & 0x7f00) == 0) || ((time_division & 0xff) == 0))
+		{
+			// wrong time division
+			return 6;
+		}
+	}
+	else
+	{
+		if (time_division == 0)
+		{
+			// wrong time division
+			return 6;
+		}
 	}
 
 	tracks = (midi_track_info *) malloc(number_of_tracks * sizeof(midi_track_info));

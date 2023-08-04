@@ -368,7 +368,10 @@ int SR_full_disassembly(void)
     replace = section_replace_list_FindEntryEqualOrLower(ESPObjectNum, ESP - 1);
     if ((replace == NULL) || (replace->ofs + replace->length < ESP))
     {
-        section_alias_list_Insert(ESPObjectNum, ESP, "stack_start");
+        if (section_alias_list_FindEntryEqual(ESPObjectNum, ESP) == NULL)
+        {
+            section_alias_list_Insert(ESPObjectNum, ESP, "stack_start");
+        }
     }
 
     for (index = 0; index < num_sections; index++)

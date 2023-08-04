@@ -33,18 +33,18 @@ extern "C" {
 
 extern void Game_Set_errno_val(void);
 extern void Game_Set_errno_val_num(int32_t value);
-extern int Game_checkch(void);
-extern int Game_getch(void);
+extern int32_t Game_checkch(void);
+extern int32_t Game_getch(void);
 extern off_t Game_filelength2(FILE *f);
 extern void *Game_malloc(uint32_t size);
 extern void Game_free(void *ptr);
 extern void *Game_AllocateMemory(uint32_t size);
 extern void Game_FreeMemory(void *mem);
-extern int Game_dlseek(int fd, int offset, int whence);
-extern int Game_dread(void *buf, int count, int fd);
-extern void Game_dclose(int fd);
-extern int Game_fclose(FILE *fp);
-extern int Game_fcloseall(void);
+extern int32_t Game_dlseek(int32_t fd, int32_t offset, int32_t whence);
+extern int32_t Game_dread(void *buf, int32_t count, int32_t fd);
+extern void Game_dclose(int32_t fd);
+extern int32_t Game_fclose(FILE *fp);
+extern int32_t Game_fcloseall(void);
 extern void Game_SlowDownMainLoop(void);
 extern void Game_SlowDownScrolling(void);
 extern void Game_Sync(void);

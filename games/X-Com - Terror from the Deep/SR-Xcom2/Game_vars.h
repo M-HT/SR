@@ -49,8 +49,8 @@ EXTERNAL_VARIABLE int Game_Executable;				/* current executable */
 EXTERNAL_VARIABLE char **main_argv;
 EXTERNAL_VARIABLE uint8_t *Game_FrameMemory;		/* allocated video memory */
 EXTERNAL_VARIABLE uint8_t *Game_FrameBuffer;		/* pointer to video memory (all) */
-EXTERNAL_VARIABLE uint8_t *Game_ScreenWindow;		/* video bank (64KiB) */
-EXTERNAL_VARIABLE void *Game_InterruptTable[256];	/* interrupt table */
+EXTERNAL_VARIABLE PTR32(uint8_t) Game_ScreenWindow;	/* video bank (64KiB) */
+EXTERNAL_VARIABLE uint32_t Game_InterruptTable[256];	/* interrupt table */
 EXTERNAL_VARIABLE void *Game_MouseTable[8];			/* mouse functions table */
 EXTERNAL_VARIABLE pixel_format_orig Game_Palette_Or[256];	/* original palette (rgba) */
 EXTERNAL_VARIABLE uint32_t Game_ESP_Original_Value;	/* original value of ESP */
@@ -64,7 +64,7 @@ EXTERNAL_VARIABLE int Game_MouseCursor;				/* mouse cursor type in window
                                                        0: normal
                                                        1: minimal
                                                        2: none */
-EXTERNAL_VARIABLE int Game_PlayIntro;				/* play intro on start ? */
+EXTERNAL_VARIABLE int32_t Game_PlayIntro;			/* play intro on start ? */
 
 EXTERNAL_VARIABLE void *Game_DopenList;				/* list of files opened using Game_dopen */
 EXTERNAL_VARIABLE void *Game_FopenList;				/* list of files opened using Game_fopen */
@@ -127,7 +127,7 @@ EXTERNAL_VARIABLE int Scaler_ScaledTextureHeight;
 
 EXTERNAL_VARIABLE int Game_Delay_Game;				/* time in ms to delay the game in timer tick */
 EXTERNAL_VARIABLE int Game_Main_Loop_VSync_Ticks;	/* maximum number of vsync ticks to wait in game main loop */
-EXTERNAL_VARIABLE int Game_Skip_Scrolling_SlowDown;	/* skip scrolling slowdown once */
+EXTERNAL_VARIABLE int32_t Game_Skip_Scrolling_SlowDown;	/* skip scrolling slowdown once */
 
 // global audio variables
 EXTERNAL_VARIABLE uint32_t Game_Sound;				/* is sound enabled ? */
@@ -178,11 +178,11 @@ EXTERNAL_VARIABLE int Game_OPL3Emulator;			/* OPL3 emulator
 EXTERNAL_VARIABLE uint32_t Game_Joystick;			/* is joystick used ? */
 
 
-EXTERNAL_VARIABLE FILE *Game_stdin;					/* stdin */
-EXTERNAL_VARIABLE FILE *Game_stdout;				/* stdout */
-EXTERNAL_VARIABLE FILE *Game_stderr;				/* stderr */
+EXTERNAL_VARIABLE PTR32(FILE) Game_stdin;			/* stdin */
+EXTERNAL_VARIABLE PTR32(FILE) Game_stdout;			/* stdout */
+EXTERNAL_VARIABLE PTR32(FILE) Game_stderr;			/* stderr */
 
-EXTERNAL_VARIABLE uint8_t *Zero_Segment;			/* 64KiB of zeros */
+EXTERNAL_VARIABLE PTR32(uint8_t) Zero_Segment;		/* 64KiB of zeros */
 
 EXTERNAL_VARIABLE uint8_t *UFO_Font;				/* ufo font data */
 EXTERNAL_VARIABLE uint8_t *Temp_Font_Data;			/* temporary font data */
@@ -260,24 +260,24 @@ extern const uint32_t errno_table[ERRNO_NUM];
 
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern int Game_Main_Asm(int argc, const char *argv[], void *main_proc);
+extern int Game_Main_Asm(int argc, PTR32(char) argv[], void *main_proc);
 extern void Game_StopMain_Asm(void) __attribute__ ((__noreturn__));
 
 extern void Game_RunTimer_Asm(void *timer_proc);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_GEOSCAPE))
-extern int geoscape_errno_val;
-extern int geoscape_main_();
+extern int32_t geoscape_errno_val;
+extern int32_t geoscape_main_();
 extern void geoscape_update_timer();
 extern uint8_t geoscape_data_begin, geoscape_data_end, geoscape_bss_begin, geoscape_bss_end;
 #endif
 #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_TACTICAL))
-extern int tactical_errno_val;
-extern int tactical_main_();
+extern int32_t tactical_errno_val;
+extern int32_t tactical_main_();
 extern void tactical_update_timer();
 extern uint8_t tactical_data_begin, tactical_data_end, tactical_bss_begin, tactical_bss_end;
 #endif

@@ -55,6 +55,7 @@ def Compact (cFile):
     os.remove(cFile)
     os.rename(cTmpFile, cFile)
 
+os.rename(cPath + "intro-asm.asm", cPath + "intro-asm.llasm")
 Compact(cPath + "seg01_data.llinc")
 Compact(cPath + "seg02_data.llinc")
 Compact(cPath + "seg03_data.llinc")

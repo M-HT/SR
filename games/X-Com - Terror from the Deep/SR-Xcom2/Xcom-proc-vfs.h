@@ -31,9 +31,7 @@
 extern "C" {
 #endif
 
-extern int Game_dopen(const char *path, const char *mode);
-extern int Game_fclose(FILE *fp);
-extern int Game_fcloseall(void);
+extern int32_t Game_dopen(const char *path, const char *mode);
 extern FILE *Game_fopen(const char *filename, const char *mode);
 
 #ifdef __cplusplus

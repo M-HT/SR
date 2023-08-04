@@ -1,0 +1,95 @@
+;;
+;;  Copyright (C) 2016-2023 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+extern Game_ScreenWindow
+extern Game_Skip_Scrolling_SlowDown
+extern Game_stdin
+extern Game_stdout
+extern Game_stderr
+
+extern Zero_Segment
+
+proc SR_Sync external
+funcv SR_CheckTimer
+funcv SR_RunTimerDelay
+funcv SR_SlowDownMainLoop
+funcv SR_SlowDownScrolling
+
+; null procedures
+proc SR___CHK external
+proc SR___GETDS external
+; stack params
+proc SR_cprintf external
+proc SR_fprintf external
+proc SR_printf external
+
+proc SR_dlseek external
+proc SR_dopen external
+proc SR_dread external
+proc SR_dclose external
+
+proc SR_DigPlay external
+proc SR_AudioCapabilities external
+proc SR_StopSound external
+proc SR_PostAudioPending external
+proc SR_SetPlayMode external
+proc SR_PendingAddress external
+proc SR_ReportSemaphoreAddress external
+proc SR_SetBackFillMode external
+proc SR_VerifyDMA external
+proc SR_SetDPMIMode external
+proc SR_FillSoundCfg external
+proc SR_RealPtr external
+; 0 params
+proc SR_checkch external
+proc SR_getch external
+proc SR_fcloseall external
+; 1 param
+proc SR_exit external
+proc SR_fclose external
+proc SR_feof external
+proc SR_fflush external
+proc SR_fgetc external
+proc SR_filelength2 external
+proc SR__nfree external
+proc SR_inp external
+proc SR__nmalloc external
+proc SR_strlen external
+proc SR_time external
+proc SR_WaitVerticalRetraceTicks2 external
+; 2 params
+proc SR_fopen external
+proc SR_fputc external
+proc SR_fputs external
+proc SR_outp external
+proc SR_strcat external
+proc SR_strcmp external
+proc SR_strcpy external
+proc SR_stricmp external
+; 3 params
+proc SR_ReadSong external
+proc SR_strncmp external
+; 4 params
+proc SR_fread external
+proc SR_fwrite external
+proc SR_int386x external
+; 5 params

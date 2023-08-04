@@ -174,7 +174,7 @@ void X86_InterruptProcedure(
 #if defined(__DEBUG__)
                     fprintf(stderr, "Setting interrupt vector: %i\n", AL);
 #endif
-                    Game_InterruptTable[AL] = (void *) EDX;
+                    Game_InterruptTable[AL] = EDX;
 
                     return;
                     // case 0x25:
@@ -188,7 +188,7 @@ void X86_InterruptProcedure(
                 case 0x35:
                 // Get interrupt vector
 
-                    EBX = (uint32_t) Game_InterruptTable[AL];
+                    EBX = Game_InterruptTable[AL];
 
                     return;
                     // case 0x35:
@@ -213,7 +213,7 @@ void X86_InterruptProcedure(
                     }
                     else
                     {
-                        ECX = (uint32_t) Game_AllocateMemory((uint32_t) BX << 4);
+                        ECX = (uint32_t)(uintptr_t) Game_AllocateMemory((uint32_t) BX << 4);
                         if (ECX)
                         {
 #if defined(__DEBUG__)
@@ -246,12 +246,12 @@ void X86_InterruptProcedure(
 
                     {
 
-                        if (Game_InterruptTable[BL] == NULL)
+                        if (Game_InterruptTable[BL] == 0)
                         {
 #if defined(__DEBUG__)
                             fprintf(stderr, "Running Original Interrupt...\n");
 #endif
-                            Game_intDPMI(BL, (Game_DPMIREGS *) EDI);
+                            Game_intDPMI(BL, (Game_DPMIREGS *)(uintptr_t) EDI);
                         }
                         else
                         {

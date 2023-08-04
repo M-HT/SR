@@ -1,0 +1,499 @@
+;part of static recompiler -- do not edit
+
+;;
+;;  Copyright (C) 2019 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+funcv x87_fabs_void $
+
+funcv x87_fadd_float $, num
+funcv x87_fadd_double $, num_low, num_high
+funcv x87_fadd_st $, num
+funcv x87_fadd_to_st $, num
+funcv x87_faddp_st $, num
+
+funcv x87_fchs_void $
+
+funcv x87_fcom_float $, num
+funcv x87_fcom_double $, num_low, num_high
+funcv x87_fcomp_float $, num
+funcv x87_fcomp_double $, num_low, num_high
+
+funcv x87_fcos_void $
+
+funcv x87_fdiv_float $, num
+funcv x87_fdiv_double $, num_low, num_high
+funcv x87_fdiv_st $, num
+funcv x87_fdiv_to_st $, num
+funcv x87_fdivp_st $, num
+funcv x87_fdivr_float $, num
+funcv x87_fdivr_double $, num_low, num_high
+funcv x87_fdivr_st $, num
+funcv x87_fdivrp_st $, num
+
+funcv x87_fiadd_int32 $, num
+funcv x87_fidiv_int32 $, num
+funcv x87_fidivr_int32 $, num
+
+funcv x87_fild_int32 $, num
+funcv x87_fild_int64 $, num_low, num_high
+
+funcv x87_fimul_int32 $, num
+
+funcv x87_fninit_void $
+
+func x87_fistp_int32 $
+func x87_fistp_int64 $
+
+funcv x87_fisub_int32 $, num
+funcv x87_fisubr_int32 $, num
+
+funcv x87_fld_float $, num
+funcv x87_fld_double $, num_low, num_high
+funcv x87_fld_st $, num
+funcv x87_fld1_void $
+funcv x87_fldlg2_void $
+funcv x87_fldln2_void $
+funcv x87_fldz_void $
+
+funcv x87_fldcw_uint16 $, new_cw
+
+funcv x87_fmul_float $, num
+funcv x87_fmul_double $, num_low, num_high
+funcv x87_fmul_st $, num
+funcv x87_fmul_to_st $, num
+funcv x87_fmulp_st $, num
+
+funcv x87_fsin_void $
+
+funcv x87_fsqrt_void $
+
+func x87_fst_float $
+func x87_fst_double $
+funcv x87_fst_st $, num
+func x87_fstp_float $
+func x87_fstp_double $
+funcv x87_fstp_st $, num
+
+func x87_fnstcw_void $
+func x87_fnstsw_void $
+
+funcv x87_fsub_float $, num
+funcv x87_fsub_double $, num_low, num_high
+funcv x87_fsub_st $, num
+funcv x87_fsub_to_st $, num
+funcv x87_fsubp_st $, num
+funcv x87_fsubr_float $, num
+funcv x87_fsubr_double $, num_low, num_high
+funcv x87_fsubr_st $, num
+funcv x87_fsubrp_st $, num
+
+funcv x87_fucom_st $, num
+funcv x87_fucomp_st $, num
+funcv x87_fucompp_void $
+
+funcv x87_fxch_st $, num
+
+funcv x87_fyl2x_void $
+
+
+funcv x87_facos_void $
+funcv x87_fasin_void $
+funcv x87_fatan2_void $
+funcv x87_fatan2r_void $
+funcv x87_flog_void $
+funcv x87_flog10_void $
+funcv x87_fmod_void $
+funcv x87_fmodr_void $
+funcv x87_fpow_void $
+funcv x87_fpowr_void $
+funcv x87_fround_void $
+funcv x87_ftan_void $
+func x87_ftol_int32 $
+func x87_ftol_int64 $
+
+
+macro FABS_VOID
+    call x87_fabs_void $
+endm
+
+
+macro FADD_FLOAT num
+    call x87_fadd_float $, \num
+endm
+
+macro FADD_DOUBLE num_low, num_high
+    call x87_fadd_double $, \num_low, \num_high
+endm
+
+macro FADD_ST num
+    call x87_fadd_st $, \num
+endm
+
+macro FADD_TO_ST num
+    call x87_fadd_to_st $, \num
+endm
+
+macro FADDP_ST num
+    call x87_faddp_st $, \num
+endm
+
+
+macro FCHS_VOID
+    call x87_fchs_void $
+endm
+
+
+macro FCOM_FLOAT num
+    call x87_fcom_float $, \num
+endm
+
+macro FCOM_DOUBLE num_low, num_high
+    call x87_fcom_double $, \num_low, \num_high
+endm
+
+macro FCOM_ST num
+    call x87_fucom_st $, \num
+endm
+
+macro FCOMP_FLOAT num
+    call x87_fcomp_float $, \num
+endm
+
+macro FCOMP_DOUBLE num_low, num_high
+    call x87_fcomp_double $, \num_low, \num_high
+endm
+
+macro FCOMP_ST num
+    call x87_fucomp_st $, \num
+endm
+
+macro FCOMPP_VOID
+    call x87_fucompp_void $
+endm
+
+
+macro FCOS_VOID
+    call x87_fcos_void $
+endm
+
+
+macro FDIV_FLOAT num
+    call x87_fdiv_float $, \num
+endm
+
+macro FDIV_DOUBLE num_low, num_high
+    call x87_fdiv_double $, \num_low, \num_high
+endm
+
+macro FDIV_ST num
+    call x87_fdiv_st $, \num
+endm
+
+macro FDIV_TO_ST num
+    call x87_fdiv_to_st $, \num
+endm
+
+macro FDIVP_ST num
+    call x87_fdivp_st $, \num
+endm
+
+macro FDIVR_FLOAT num
+    call x87_fdivr_float $, \num
+endm
+
+macro FDIVR_DOUBLE num_low, num_high
+    call x87_fdivr_double $, \num_low, \num_high
+endm
+
+macro FDIVR_ST num
+    call x87_fdivr_st $, \num
+endm
+
+macro FDIVRP_ST num
+    call x87_fdivrp_st $, \num
+endm
+
+
+macro FIADD_INT32 num
+    call x87_fiadd_int32 $, \num
+endm
+
+macro FIDIV_INT32 num
+    call x87_fidiv_int32 $, \num
+endm
+
+macro FIDIVR_INT32 num
+    call x87_fidivr_int32 $, \num
+endm
+
+
+macro FILD_INT32 num
+    call x87_fild_int32 $, \num
+endm
+
+macro FILD_INT64 num_low, num_high
+    call x87_fild_int64 $, \num_low, \num_high
+endm
+
+
+macro FNINIT_VOID
+    call x87_fninit_void $
+endm
+
+
+macro FIMUL_INT32 num
+    call x87_fimul_int32 $, \num
+endm
+
+
+macro FISTP_INT32
+    call x87_fistp_int32 $
+endm
+
+macro FISTP_INT64
+    call x87_fistp_int64 $
+endm
+
+
+macro FISUB_INT32 num
+    call x87_fisub_int32 $, \num
+endm
+
+macro FISUBR_INT32 num
+    call x87_fisubr_int32 $, \num
+endm
+
+
+macro FLD_FLOAT num
+    call x87_fld_float $, \num
+endm
+
+macro FLD_DOUBLE num_low, num_high
+    call x87_fld_double $, \num_low, \num_high
+endm
+
+macro FLD_ST num
+    call x87_fld_st $, \num
+endm
+
+macro FLD1_VOID
+    call x87_fld1_void $
+endm
+
+macro FLDLG2_VOID
+    call x87_fldlg2_void $
+endm
+
+macro FLDLN2_VOID
+    call x87_fldln2_void $
+endm
+
+macro FLDZ_VOID
+    call x87_fldz_void $
+endm
+
+
+macro FLDCW_UINT16 new_cw
+    call x87_fldcw_uint16 $, \new_cw
+endm
+
+
+macro FMUL_FLOAT num
+    call x87_fmul_float $, \num
+endm
+
+macro FMUL_DOUBLE num_low, num_high
+    call x87_fmul_double $, \num_low, \num_high
+endm
+
+macro FMUL_ST num
+    call x87_fmul_st $, \num
+endm
+
+macro FMUL_TO_ST num
+    call x87_fmul_to_st $, \num
+endm
+
+macro FMULP_ST num
+    call x87_fmulp_st $, \num
+endm
+
+
+macro FSIN_VOID
+    call x87_fsin_void $
+endm
+
+
+macro FSQRT_VOID
+    call x87_fsqrt_void $
+endm
+
+
+macro FST_FLOAT
+    call x87_fst_float $
+endm
+
+macro FST_DOUBLE
+    call x87_fst_double $
+endm
+
+macro FST_ST num
+    call x87_fst_st $, \num
+endm
+
+macro FSTP_FLOAT
+    call x87_fstp_float $
+endm
+
+macro FSTP_DOUBLE
+    call x87_fstp_double $
+endm
+
+macro FSTP_ST num
+    call x87_fstp_st $, \num
+endm
+
+
+macro FNSTCW_VOID
+    call x87_fnstcw_void $
+endm
+
+macro FNSTSW_VOID
+    call x87_fnstsw_void $
+endm
+
+
+macro FSUB_FLOAT num
+    call x87_fsub_float $, \num
+endm
+
+macro FSUB_DOUBLE num_low, num_high
+    call x87_fsub_double $, \num_low, \num_high
+endm
+
+macro FSUB_ST num
+    call x87_fsub_st $, \num
+endm
+
+macro FSUB_TO_ST num
+    call x87_fsub_to_st $, \num
+endm
+
+macro FSUBP_ST num
+    call x87_fsubp_st $, \num
+endm
+
+macro FSUBR_FLOAT num
+    call x87_fsubr_float $, \num
+endm
+
+macro FSUBR_DOUBLE num_low, num_high
+    call x87_fsubr_double $, \num_low, \num_high
+endm
+
+macro FSUBR_ST num
+    call x87_fsubr_st $, \num
+endm
+
+macro FSUBRP_ST num
+    call x87_fsubrp_st $, \num
+endm
+
+
+macro FUCOM_ST num
+    call x87_fucom_st $, \num
+endm
+
+macro FUCOMP_ST num
+    call x87_fucomp_st $, \num
+endm
+
+macro FUCOMPP_VOID
+    call x87_fucompp_void $
+endm
+
+
+macro FXCH_ST num
+    call x87_fxch_st $, \num
+endm
+
+
+macro FYL2X_VOID
+    call x87_fyl2x_void $
+endm
+
+
+macro FACOS_VOID
+    call x87_facos_void $
+endm
+
+macro FASIN_VOID
+    call x87_fasin_void $
+endm
+
+macro FATAN2_VOID
+    call x87_fatan2_void $
+endm
+
+macro FATAN2R_VOID
+    call x87_fatan2r_void $
+endm
+
+macro FLOG_VOID
+    call x87_flog_void $
+endm
+
+macro FLOG10_VOID
+    call x87_flog10_void $
+endm
+
+macro FMOD_VOID
+    call x87_fmod_void $
+endm
+
+macro FMODR_VOID
+    call x87_fmodr_void $
+endm
+
+macro FPOW_VOID
+    call x87_fpow_void $
+endm
+
+macro FPOWR_VOID
+    call x87_fpowr_void $
+endm
+
+macro FROUND_VOID
+    call x87_fround_void $
+endm
+
+macro FTAN_VOID
+    call x87_ftan_void $
+endm
+
+macro FTOL_INT32
+    call x87_ftol_int32 $
+endm
+
+macro FTOL_INT64
+    call x87_ftol_int64 $
+endm

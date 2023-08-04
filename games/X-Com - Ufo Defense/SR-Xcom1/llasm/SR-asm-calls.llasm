@@ -1,0 +1,540 @@
+;;
+;;  Copyright (C) 2016-2023 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+include llasm.llinc
+include SR-asm-calls.llinc
+
+
+funcv Game_Set_errno_val
+funcv Game_Set_errno_val_num value
+
+funcv Game_Sync
+
+; stack params
+func CLIB_vfprintf *stream, *format, *ap
+func CLIB_vprintf *format, *ap
+funcv Game_WaitVerticalRetraceTicks ticks
+
+func Game_dlseek fd, offset, whence
+func Game_dopen *path, *mode
+func Game_dread *buf, count, fd
+funcv Game_dclose fd
+
+func Game_DigPlay *sndplay
+func Game_AudioCapabilities
+funcv Game_StopSound
+func Game_PostAudioPending *sndplay
+func Game_SetPlayMode playmode
+func Game_PendingAddress
+func Game_ReportSemaphoreAddress
+func Game_SetBackFillMode mode
+func Game_VerifyDMA *data, length
+funcv Game_SetDPMIMode mode
+func Game_FillSoundCfg *buf, count
+func Game_RealPtr ptr
+; 0 params
+func Game_checkch
+func Game_getch
+func Game_fcloseall
+; 1 param
+funcv Game_ExitMain_Asm status
+func Game_fclose *fp
+func feof *fp
+func fflush *fp
+func fgetc *fp
+func Game_filelength2 *fp
+funcv Game_free *ptr
+func Game_inp port
+func Game_malloc size
+func strlen *s
+func time *tloc
+; 2 params
+func Game_fopen *filename, *mode
+func fputc c, *stream
+func fputs *s, *stream
+func Game_outp port, value
+func strcat *dest, *src
+func strcmp *s1, *s2
+func strcpy *dest, *src
+func strcasecmp *s1, *s2
+; 3 params
+func Game_ReadSong *catalog_name, index, *buf
+func strncmp *s1, *s2, n
+; 4 params
+func fread *ptr, size, nmemb, *stream
+func fwrite *ptr, size, nmemb, *stream
+func Game_int386x IntNum, *in_regs, *out_regs, *seg_regs
+; 5 params
+
+
+proc SR_Sync public
+
+        Game_Call_Asm_Reg0_void Game_Sync,-1
+
+endp ; end procedure SR_Sync
+
+; null procedures
+proc SR___CHK public
+
+; [esp] = return address
+
+        ;retn 4
+        Game_Call_Asm_Return -1, 1
+
+endp ; end procedure SR___CHK
+
+proc SR___GETDS public
+
+        tcall null_procedure
+
+endp ; end procedure SR___GETDS
+
+proc null_procedure public
+
+        ;retn
+        Game_Call_Asm_Return -1, 0
+
+endp ; end procedure null_procedure
+
+; stack params
+proc SR_fprintf public
+
+; [esp + 3*4] = ...
+; [esp + 2*4] = const char *format
+; [esp +   4] = FILE *fp
+; [esp      ] = return address
+
+        Game_Call_Asm_VariableStack2 CLIB_vfprintf,-1
+
+endp ; end procedure SR_fprintf
+
+proc SR_cprintf public
+
+    tcall SR_printf
+
+endp ; end procedure SR_cprintf
+
+proc SR_printf public
+
+; [esp + 2*4] = ...
+; [esp +   4] = const char *format
+; [esp      ] = return address
+
+        Game_Call_Asm_VariableStack1 CLIB_vprintf,-1
+
+endp ; end procedure SR_printf
+
+proc SR_dlseek public
+
+; [esp + 3*4] = int whence
+; [esp + 2*4] = int offset
+; [esp +   4] = int fd
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack3 Game_dlseek,-1
+
+endp ; end procedure SR_dlseek
+
+proc SR_dopen public
+
+; [esp + 2*4] = const char *mode
+; [esp +   4] = const char *path
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack2 Game_dopen,-1
+
+endp ; end procedure SR_dopen
+
+proc SR_dread public
+
+; [esp + 3*4] = int fd
+; [esp + 2*4] = int count
+; [esp +   4] = void *buf
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack3 Game_dread,-1
+
+endp ; end procedure SR_dread
+
+proc SR_dclose public
+
+; [esp +   4] = int fd
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_dclose,-1
+
+endp ; end procedure SR_dclose
+
+proc SR_DigPlay public
+
+; [esp +   4] = SNDSTRUC *sndplay
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1 Game_DigPlay,-1
+
+endp ; end procedure SR_DigPlay
+
+proc SR_AudioCapabilities public
+
+        Game_Call_Asm_Reg0 Game_AudioCapabilities,-1
+
+endp ; end procedure SR_AudioCapabilities
+
+proc SR_StopSound public
+
+        Game_Call_Asm_Reg0_void Game_StopSound,-1
+
+endp ; end procedure SR_StopSound
+
+proc SR_PostAudioPending public
+
+; [esp +   4] = SNDSTRUC *sndplay
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1 Game_PostAudioPending,-1
+
+endp ; end procedure SR_PostAudioPending
+
+proc SR_SetPlayMode public
+
+; [esp +   4] = short mode
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1 Game_SetPlayMode,-1
+
+endp ; end procedure SR_SetPlayMode
+
+proc SR_PendingAddress public
+
+        Game_Call_Asm_Reg0 Game_PendingAddress,-1
+
+endp ; end procedure SR_PendingAddress
+
+proc SR_ReportSemaphoreAddress public
+
+        Game_Call_Asm_Reg0 Game_ReportSemaphoreAddress,-1
+
+endp ; end procedure SR_ReportSemaphoreAddress
+
+proc SR_SetBackFillMode public
+
+; [esp +   4] = short mode
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1 Game_SetBackFillMode,-1
+
+endp ; end procedure SR_SetBackFillMode
+
+proc SR_VerifyDMA public
+
+; [esp +   8] = short length
+; [esp +   4] = char *data
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack2 Game_VerifyDMA,-1
+
+endp ; end procedure SR_VerifyDMA
+
+proc SR_SetDPMIMode public
+
+; [esp +   4] = short mode
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1_void Game_SetDPMIMode,-1
+
+endp ; end procedure SR_SetDPMIMode
+
+proc SR_FillSoundCfg public
+
+; [esp +   8] = int count
+; [esp +   4] = void *buf
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack2 Game_FillSoundCfg,-1
+
+endp ; end procedure SR_FillSoundCfg
+
+proc SR_RealPtr public
+
+; [esp +   4] = char *real
+; [esp      ] = return address
+
+        Game_Call_Asm_Stack1 Game_RealPtr,-1
+
+endp ; end procedure SR_RealPtr
+
+
+; 0 params
+proc SR_checkch public
+
+        Game_Call_Asm_Reg0 Game_checkch,-1
+
+endp ; end procedure SR_checkch
+
+proc SR_getch public
+
+        Game_Call_Asm_Reg0 Game_getch,-1
+
+endp ; end procedure SR_getch
+
+proc SR_fcloseall public
+
+        Game_Call_Asm_Reg0 Game_fcloseall,-1
+
+endp ; end procedure SR_fcloseall
+
+
+; 1 param
+proc SR_exit public
+
+; eax = int status
+
+        ;jmp Game_ExitMain_Asm
+        Game_Call_Asm_Reg1_void Game_ExitMain_Asm,-1
+
+endp ; end procedure SR_exit
+
+proc SR_fclose public
+
+; eax = FILE *fp
+
+; errno_val is set inside Game_fclose
+
+        Game_Call_Asm_Reg1 Game_fclose,-1
+
+endp ; end procedure SR_fclose
+
+proc SR_feof public
+
+; eax = FILE *fp
+
+        Game_Call_Asm_Reg1 feof,-1
+
+endp ; end procedure SR_feof
+
+proc SR_fflush public
+
+; eax = FILE *fp
+
+        Game_Call_Asm_Reg1 fflush,-1000
+
+endp ; end procedure SR_fflush
+
+proc SR_fgetc public
+
+; eax = FILE *fp
+
+        Game_Call_Asm_Reg1 fgetc,-1000
+
+endp ; end procedure SR_fgetc
+
+proc SR_filelength2 public
+
+; eax = FILE *fp
+
+        Game_Call_Asm_Reg1 Game_filelength2,-1
+
+endp ; end procedure SR_filelength2
+
+proc SR__nfree public
+
+; eax = void __near *ptr
+
+        Game_Call_Asm_Reg1_void Game_free,-1
+
+endp ; end procedure SR__nfree
+
+proc SR_inp public
+
+; eax = int port
+
+        Game_Call_Asm_Reg1 Game_inp,-1
+
+endp ; end procedure SR_inp
+
+proc SR__nmalloc public
+
+; eax = size_t size
+
+        Game_Call_Asm_Reg1 Game_malloc,-1
+
+endp ; end procedure SR__nmalloc
+
+proc SR_strlen public
+
+; eax = const char *s
+
+        Game_Call_Asm_Reg1 strlen,-1
+
+endp ; end procedure SR_strlen
+
+proc SR_time public
+
+; eax = time_t *tloc
+
+        Game_Call_Asm_Reg1 time,-1
+
+endp ; end procedure SR_time
+
+proc SR_WaitVerticalRetraceTicks2 public
+
+; eax = int ticks
+
+        Game_Call_Asm_Reg1_void Game_WaitVerticalRetraceTicks,-1
+
+endp ; end procedure SR_WaitVerticalRetraceTicks2
+
+
+; 2 params
+proc SR_fopen public
+
+; eax = const char *filename
+; edx = const char *mode
+
+; errno_val is set inside Game_fopen
+
+        Game_Call_Asm_Reg2 Game_fopen,-1
+
+endp ; end procedure SR_fopen
+
+proc SR_fputc public
+
+; eax = int c
+; edx = FILE *fp
+
+    Game_Call_Asm_Reg2 fputc,-1000
+
+endp ; end procedure SR_fputc
+
+proc SR_fputs public
+
+; eax = const char *buf
+; edx = FILE *fp
+
+    Game_Call_Asm_Reg2 fputs,-1000
+
+endp ; end procedure SR_fputs
+
+proc SR_outp public
+
+; eax = int port
+; edx = int value
+
+        Game_Call_Asm_Reg2 Game_outp,-1
+
+endp ; end procedure SR_outp
+
+proc SR_strcat public
+
+; eax = const char *dst
+; edx = const char *src
+
+        Game_Call_Asm_Reg2 strcat,-1
+
+endp ; end procedure SR_strcat
+
+proc SR_strcmp public
+
+; eax = const char *s1
+; edx = const char *s2
+
+        Game_Call_Asm_Reg2 strcmp,-1
+
+endp ; end procedure SR_strcmp
+
+proc SR_strcpy public
+
+; eax = char *dst
+; edx = const char *src
+
+        Game_Call_Asm_Reg2 strcpy,-1
+
+endp ; end procedure SR_strcpy
+
+proc SR_stricmp public
+
+; eax = const char *s1
+; edx = const char *s2
+
+        Game_Call_Asm_Reg2 strcasecmp,-1
+
+endp ; end procedure SR_stricmp
+
+
+; 3 params
+proc SR_ReadSong public
+
+; eax = const char *catalog_name
+; edx = int index
+; ebx = uint8_t *buf
+
+        Game_Call_Asm_Reg3 Game_ReadSong,-1
+
+endp ; end procedure SR_ReadSong
+
+proc SR_strncmp public
+
+; eax = const char *s1
+; edx = const char *s2
+; ebx = size_t n
+
+        Game_Call_Asm_Reg3 strncmp,-1
+
+endp ; end procedure SR_strncmp
+
+
+; 4 params
+proc SR_fread public
+
+; eax = void *buf
+; edx = size_t elsize
+; ebx = size_t nelem
+; ecx = FILE *fp
+
+        Game_Call_Asm_Reg4 fread,-1000
+
+endp ; end procedure SR_fread
+
+proc SR_fwrite public
+
+; eax = const void *buf
+; edx = size_t elsize
+; ebx = size_t nelem
+; ecx = FILE *fp
+
+        Game_Call_Asm_Reg4 fwrite,-1000
+
+endp ; end procedure SR_fwrite
+
+proc SR_int386x public
+
+; eax = int inter_no
+; edx = const union REGS *in_regs
+; ebx = union REGS *out_regs
+; ecx = struct SREGS *seg regs
+
+        Game_Call_Asm_Reg4 Game_int386x,-1
+
+endp ; end procedure SR_int386x
+
+
+; 5 params

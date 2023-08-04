@@ -28,7 +28,7 @@ loc_1A118,0   ,0x08       ; jnz - FL_ZERO
 
 loc_1E19E,0   ,0x08       ; jz - FL_ZERO
 
-loc_21DEA,0x08,0          ; setnz - FL_ZERO
+loc_21BF3,0x08,0          ; setnz - FL_ZERO
 loc_21CA0,0x08,0          ; setnz - FL_ZERO
 loc_21E29,0x08,0          ; setnz - FL_ZERO
 loc_21E2D,0   ,0x08       ; setnz - FL_ZERO
@@ -147,7 +147,7 @@ loc_57A89,0   ,0x10009       ; jbe - FL_ZERO | FL_CARRY | FL_CARRY_SUB_ORIGINAL
 loc_57BD5,0x10001,0          ; jnb - FL_CARRY | FL_CARRY_SUB_ORIGINAL
 loc_57BD9,0x10001,0          ; jnb - FL_CARRY | FL_CARRY_SUB_ORIGINAL
 loc_57BDF,0   ,0x10001       ; jnb - FL_CARRY | FL_CARRY_SUB_ORIGINAL
-loc_58DA3,0x10001,0          ; adc (inverted) - FL_CARRY | FL_CARRY_SUB_ORIGINAL
+loc_57BF5,0x10001,0          ; adc (inverted) - FL_CARRY | FL_CARRY_SUB_ORIGINAL
 loc_57BE5,0x10001,0          ; adc (inverted) - FL_CARRY | FL_CARRY_SUB_ORIGINAL
 
 loc_57CA2,0x08,0          ; jnz - FL_ZERO

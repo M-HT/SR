@@ -25,9 +25,6 @@
 #if !defined(_GAME_DEFS_H_INCLUDED_)
 #define _GAME_DEFS_H_INCLUDED_
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <limits.h>
 #ifdef USE_SDL2
     #include <SDL2/SDL.h>
     #include <SDL2/SDL_mixer.h>
@@ -35,12 +32,8 @@
     #include <SDL/SDL.h>
     #include <SDL/SDL_mixer.h>
 #endif
-
-#ifdef __WIN32__
-    #include <windows.h>
-#else
-    #include <glob.h>
-#endif
+#include <limits.h>
+#include "ptr32.h"
 
 
 #define EXE_COMBINED 0
@@ -187,59 +180,6 @@ typedef union _Game_register_ {
     } b;
 } Game_register;
 
-typedef struct _Game_SREGS_ {
-  uint16_t es;
-  uint16_t cs;
-  uint16_t ss;
-  uint16_t ds;
-  uint16_t fs;
-  uint16_t gs;
-} Game_SREGS;
-
-typedef struct _Game_DWORDREGS_ {
-  uint32_t eax;
-  uint32_t ebx;
-  uint32_t ecx;
-  uint32_t edx;
-  uint32_t esi;
-  uint32_t edi;
-  uint32_t cflag;
-} Game_DWORDREGS;
-
-typedef struct _Game_WORDREGS_ {
-  uint16_t ax, _upper_ax;
-  uint16_t bx, _upper_bx;
-  uint16_t cx, _upper_cx;
-  uint16_t dx, _upper_dx;
-  uint16_t si, _upper_si;
-  uint16_t di, _upper_di;
-  uint32_t cflag;
-} Game_WORDREGS;
-
-typedef struct _Game_BYTEREGS_ {
-  uint8_t al;
-  uint8_t ah;
-  uint16_t _upper_ax;
-  uint8_t bl;
-  uint8_t bh;
-  uint16_t _upper_bx;
-  uint8_t cl;
-  uint8_t ch;
-  uint16_t _upper_cx;
-  uint8_t dl;
-  uint8_t dh;
-  uint16_t _upper_dx;
-  uint16_t si, _upper_si;
-  uint16_t di, _upper_di;
-  uint32_t cflag;
-} Game_BYTEREGS;
-
-typedef union _Game_REGS_ {
-  Game_DWORDREGS d;
-  Game_WORDREGS w;
-  Game_BYTEREGS h;
-} Game_REGS;
-
 
 typedef void (*Game_Flip_Procedure)(void *src, void *dst);
 
@@ -297,13 +237,6 @@ typedef struct __attribute__ ((__packed__)) _Game_SoundConfig_
     uint16_t SoundSwapStereo;
     uint16_t Reserved;
 } Game_SoundConfig;
-
-typedef struct __attribute__ ((__packed__)) {
-    char *sound;		 // address of audio data. (originally real mode ptr)
-    uint16_t sndlen; // Length of audio sample.
-    int16_t *IsPlaying; // Address of play status flag.
-    int16_t frequency;	// Playback frequency. recommended 11khz.
-} DIGPAK_SNDSTRUC;
 
 #pragma pack()
 

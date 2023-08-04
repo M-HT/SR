@@ -1,6 +1,6 @@
-loc_109D4,7,;push eax|PUSH eax|;mov eax, [Game_ScreenWindow]|load eax, Game_ScreenWindow, 4|;mov [ebp-8], eax|add tmpadr, ebp, -8|store eax, tmpadr, 4|;pop eax|POP eax ; get real address of screen window instead of 0x0a0000
-loc_10A27,7,;push eax|PUSH eax|;mov eax, [Game_ScreenWindow]|load eax, Game_ScreenWindow, 4|;mov [ebp-8], eax|add tmpadr, ebp, -8|store eax, tmpadr, 4|;pop eax|POP eax ; get real address of screen window instead of 0x0a0000
-loc_10B74,7,;mov eax, [Game_ScreenWindow]|load eax, Game_ScreenWindow, 4|;mov [ebp-0x2c], eax|add tmpadr, ebp, -44|store eax, tmpadr, 4 ; get real address of screen window instead of 0x0a0000
+loc_109D4,7,;push eax|;mov eax, [Game_ScreenWindow]|load tmp1, Game_ScreenWindow, 4|;mov [ebp-8], eax|sub tmpadr, ebp, 8|store tmp1, tmpadr, 4|;pop eax ; get real address of screen window instead of 0x0a0000
+loc_10A27,7,;push eax|;mov eax, [Game_ScreenWindow]|load tmp1, Game_ScreenWindow, 4|;mov [ebp-8], eax|sub tmpadr, ebp, 8|store tmp1, tmpadr, 4|;pop eax ; get real address of screen window instead of 0x0a0000
+loc_10B74,7,;mov eax, [Game_ScreenWindow]|load eax, Game_ScreenWindow, 4|;mov [ebp-0x2c], eax|sub tmpadr, ebp, 0x2c|store eax, tmpadr, 4 ; get real address of screen window instead of 0x0a0000
 loc_10ED4,5,;mov edi, [Game_ScreenWindow]|load edi, Game_ScreenWindow, 4 ; get real address of screen window instead of 0x0a0000
 loc_1100F,5,;mov edi, [Game_ScreenWindow]|load edi, Game_ScreenWindow, 4 ; get real address of screen window instead of 0x0a0000
 
@@ -14,11 +14,11 @@ loc_11472,21,;call SR_FillSoundCfg|PUSH loc_11487|tcall SR_FillSoundCfg|endp|pro
 
 loc_1047F,7,;movsx edx, word [loc_212E2]|load16s edx, loc_212E2, 2|;call SR_RunTimerDelay|call SR_RunTimerDelay ; update timer - wait for ??? in timer interrupt
 loc_10519,7,;movsx edx, word [loc_212E2]|load16s edx, loc_212E2, 2|;call SR_RunTimerDelay|call SR_RunTimerDelay ; update timer
-loc_107F8,6,;mov ax, [loc_212E2]|load16z tmp1, loc_212E2, 2|and eax, eax, 0xffff0000|or eax, eax, tmp1|;call SR_RunTimerDelay|call SR_RunTimerDelay ; update timer
-loc_1091C,6,;mov ax, [loc_212E2]|load16z tmp1, loc_212E2, 2|and eax, eax, 0xffff0000|or eax, eax, tmp1|;call SR_RunTimerDelay|call SR_RunTimerDelay ; update timer
-loc_10B2D,4,;movzx eax, word [ebp-0xc]|add tmpadr, ebp, -12|load16z eax, tmpadr, 2|;call SR_RunTimerDelay|call SR_RunTimerDelay ; update timer
+loc_107F8,6,;mov ax, [loc_212E2]|load16z eax, loc_212E2, 2|;call SR_RunTimerDelay|call SR_RunTimerDelay ; update timer
+loc_1091C,6,;mov ax, [loc_212E2]|load16z eax, loc_212E2, 2|;call SR_RunTimerDelay|call SR_RunTimerDelay ; update timer
+loc_10B2D,4,;movzx eax, word [ebp-0x0c]|sub tmpadr, ebp, 0x0c|load16z eax, tmpadr, 2|;call SR_RunTimerDelay|call SR_RunTimerDelay ; update timer
 
-loc_11B11,220,;lea eax, [ebp-0x40]|add eax, ebp, -64|;mov edx, [ebp-8]|add tmpadr, ebp, -8|load edx, tmpadr, 4|;mov ebx, [loc_21774]|load ebx, loc_21774, 4|;call SR_ReadSong|PUSH loc_11BEC|tcall SR_ReadSong|endp|proc loc_11BEC|;or eax, eax|;jz loc_11C21|ctcallz eax, loc_11C21|tcall loc_11BED|endp|proc loc_11BED ; music - load midi or song from catalog
+loc_11B11,220,;lea eax, [ebp-0x40]|sub eax, ebp, 0x40|;mov edx, [ebp-8]|sub tmpadr, ebp, 8|load edx, tmpadr, 4|;mov ebx, [loc_21774]|load ebx, loc_21774, 4|;call SR_ReadSong|PUSH loc_11B11_after|tcall SR_ReadSong|endp|proc loc_11B11_after|;or eax, eax|;jz loc_11C21|ctcallz eax, loc_11C21|tcall loc_11BED|endp|proc loc_11BED ; music - load midi or song from catalog
 
 
 loc_111E8,72, ; CLIB code

@@ -70,7 +70,7 @@ void Game_intDPMI(
                     // edx=address in 1st MB (read from file - max 33000 bytes)
                     // play sequence
 
-                    Game_start_sequence((uint8_t *) EDX);
+                    Game_start_sequence((uint8_t *)(uintptr_t) EDX);
 
                     return;
                     // case 0x0104:

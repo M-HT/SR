@@ -40,6 +40,18 @@
 #define PENDINGSOUND 2      // Playing, and a sound is pending.
 
 
+#pragma pack(2)
+
+typedef struct _DIGPAK_SNDSTRUC_ {
+    PTR32(char) sound;          // address of audio data. (originally real mode ptr)
+    uint16_t sndlen;            // Length of audio sample.
+    PTR32(int16_t) IsPlaying;   // Address of play status flag.
+    int16_t frequency;          // Playback frequency. recommended 11khz.
+} DIGPAK_SNDSTRUC;
+
+#pragma pack()
+
+
 static int AnimVideoPlaying = 0;
 static SDL_mutex *AnimVideoMutex = NULL;
 static int AnimVideoReadIndex;
@@ -634,7 +646,7 @@ static int16_t Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
 }
 
 
-int16_t Game_DigPlay(DIGPAK_SNDSTRUC *sndplay)
+int16_t Game_DigPlay(struct _DIGPAK_SNDSTRUC_ *sndplay)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: Playing sound:\n\tsample length: %i\n\tfrequency: %i\n", sndplay->sndlen, sndplay->frequency);
@@ -730,7 +742,7 @@ void Game_StopSound(void)
     }
 }
 
-int16_t Game_PostAudioPending(DIGPAK_SNDSTRUC *sndplay)
+int16_t Game_PostAudioPending(struct _DIGPAK_SNDSTRUC_ *sndplay)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: posting audio pending:\n\tsample length: %i\n\tfrequency: %i\n", sndplay->sndlen, sndplay->frequency);
@@ -858,7 +870,7 @@ void Game_SetDPMIMode(int16_t mode)
 #endif
 }
 
-int Game_FillSoundCfg(void *buf, int count)
+int32_t Game_FillSoundCfg(void *buf, int32_t count)
 {
     memcpy(buf, &Game_SoundCfg, count);
     return count;

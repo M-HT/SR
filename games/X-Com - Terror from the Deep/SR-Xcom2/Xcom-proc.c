@@ -70,7 +70,7 @@ void Game_Set_errno_val_num(int32_t value)
     }
 }
 
-int Game_checkch(void)
+int32_t Game_checkch(void)
 {
     if (Game_KBufferWrite == Game_KBufferRead || SDL_GetTicks() - Game_LastKeyStroke < GAME_KEYBOARD_TYPE_RATE)
     {
@@ -82,7 +82,7 @@ int Game_checkch(void)
     }
 }
 
-int Game_getch(void)
+int32_t Game_getch(void)
 {
     int ret;
 
@@ -169,12 +169,12 @@ void Game_FreeMemory(void *mem)
     free(mem);
 }
 
-int Game_dlseek(int fd, int offset, int whence)
+int32_t Game_dlseek(int32_t fd, int32_t offset, int32_t whence)
 {
     return lseek(fd, offset, ( (whence == 0)?(SEEK_SET):( (whence == 1)?(SEEK_CUR):( (whence == 2)?(SEEK_END):(whence) ) ) ));
 }
 
-int Game_dread(void *buf, int count, int fd)
+int32_t Game_dread(void *buf, int32_t count, int32_t fd)
 {
     ssize_t rcount;
 
@@ -184,13 +184,13 @@ int Game_dread(void *buf, int count, int fd)
 }
 
 
-void Game_dclose(int fd)
+void Game_dclose(int32_t fd)
 {
     Game_list_remove(&Game_DopenList, fd);
     close(fd);
 }
 
-int Game_fclose(FILE *fp)
+int32_t Game_fclose(FILE *fp)
 {
     int ret;
 
@@ -201,7 +201,7 @@ int Game_fclose(FILE *fp)
     return ret;
 }
 
-int Game_fcloseall(void)
+int32_t Game_fcloseall(void)
 {
     Game_list_clear(&Game_FopenList, (void (*)(uintptr_t)) &fclose);
     return 0;

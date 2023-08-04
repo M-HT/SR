@@ -1,0 +1,24 @@
+include llasm.llinc
+include extern.llinc
+include macros.llinc
+
+datasegment cseg01 constant
+include gogver/seg01_data.llinc
+endd
+
+datasegment dseg02
+include gogver/seg02_data.llinc
+endd
+
+datasegment dseg03
+include gogver/seg03_data.llinc
+endd
+
+datasegment useg04 uninitialized
+include gogver/seg04_data.llinc
+endd
+
+define loc_12538 tactical_update_timer
+define loc_30BD0 tactical_main_
+
+include gogver/seg01_code.llinc

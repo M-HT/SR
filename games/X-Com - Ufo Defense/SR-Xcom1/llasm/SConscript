@@ -1,0 +1,61 @@
+#
+#  Copyright (C) 2019-2023 Roman Pauer
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy of
+#  this software and associated documentation files (the "Software"), to deal in
+#  the Software without restriction, including without limitation the rights to
+#  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+#  of the Software, and to permit persons to whom the Software is furnished to do
+#  so, subject to the following conditions:
+#
+#  The above copyright notice and this permission notice shall be included in all
+#  copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#  SOFTWARE.
+#
+
+import re
+
+llasm_include_re = re.compile(r'^include\s+(\S+)\r?$', re.M)
+
+def llasmfile_scan(node, env, path):
+    contents = node.get_text_contents()
+    includes = llasm_include_re.findall(contents)
+    if len(includes) > 0:
+        dirparts = node.dir.path.split('/')
+        if len(dirparts) >= 2 and dirparts[0] == 'llasm':
+            parentdir = node.Dir('..')
+            includes = ['../' + include if not node.File(include).exists() and parentdir.File(include).exists() else include for include in includes]
+    return includes
+
+llasmscan = Scanner(function = llasmfile_scan,
+                    skeys = ['.llasm'],
+                    recursive = True)
+
+SourceFileScanner.add_scanner('.llasm', llasmscan)
+
+
+Import('executable', 'env')
+
+obj = env.Object(Glob('*.c'))
+
+for llasm_file in Glob('*.llasm', strings = True):
+    obj += env.llasm(llasm_file)
+
+if executable == 'combined' or executable == 'geoscape':
+    obj = obj + SConscript('geoscape/SConscript', exports='env')
+
+if executable == 'combined' or executable == 'tactical':
+    obj = obj + SConscript('tactical/SConscript', exports='env')
+
+if executable == 'combined' or executable == 'intro':
+    obj = obj + SConscript('intro/SConscript', exports='env')
+
+Return('obj')
+

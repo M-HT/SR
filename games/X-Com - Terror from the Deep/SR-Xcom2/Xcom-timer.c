@@ -64,7 +64,7 @@ void Game_RunTimer(void)
 
                 Game_TimerRun++;
 
-                if (/*X86_InterruptFlag &&*/ Game_InterruptTable[8] != NULL)
+                if (/*X86_InterruptFlag &&*/ Game_InterruptTable[8] != 0)
                 {
                     Game_TimerRunning = 1;
                     switch (Game_Executable)
@@ -85,7 +85,7 @@ void Game_RunTimer(void)
                     Game_TimerRunning = 0;
                 }
 
-                /*if (Game_InterruptTable[9] != NULL)*/
+                /*if (Game_InterruptTable[9] != 0)*/
                 {
                     Game_ProcessKEvents();
                 }

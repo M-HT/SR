@@ -34,7 +34,7 @@
 #include "virtualfs.h"
 
 
-int Game_dopen(const char *path, const char *mode)
+int32_t Game_dopen(const char *path, const char *mode)
 {
     char temp_str[MAX_PATH];
     int ret;

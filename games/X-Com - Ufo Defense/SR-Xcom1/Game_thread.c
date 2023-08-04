@@ -31,6 +31,12 @@
 #else
     #include <SDL/SDL.h>
 #endif
+#if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
+    #ifndef __USE_GNU
+        #define __USE_GNU 1
+    #endif
+    #include <pthread.h>
+#endif
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Game_scalerplugin.h"
@@ -43,12 +49,6 @@
 #include "main.h"
 #include "display.h"
 
-#if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
-    #ifndef __USE_GNU
-        #define __USE_GNU 1
-    #endif
-    #include <pthread.h>
-#endif
 
 static void ChangeThreadPriority(void)
 {
@@ -99,10 +99,10 @@ static __attribute__ ((noinline)) void Game_CleanAfterMain(void)
 static __attribute__ ((noinline)) int Game_Main_Geoscape(const char *arg1)
 {
     const static char main_filename[] = "GEOSCAPE.EXE";
-    const char *main_argv[3];
+    PTR32(char) main_argv[3];
 
-    main_argv[0] = main_filename;
-    main_argv[1] = arg1;
+    main_argv[0] = (char *) main_filename;
+    main_argv[1] = (char *) arg1;
     main_argv[2] = NULL;
 
 #if (EXE_BUILD == EXE_COMBINED)
@@ -127,10 +127,10 @@ static __attribute__ ((noinline)) int Game_Main_Geoscape(const char *arg1)
 static __attribute__ ((noinline)) int Game_Main_Tactical(const char *arg1)
 {
     const static char main_filename[] = "TACTICAL.EXE";
-    const char *main_argv[3];
+    PTR32(char) main_argv[3];
 
-    main_argv[0] = main_filename;
-    main_argv[1] = arg1;
+    main_argv[0] = (char *) main_filename;
+    main_argv[1] = (char *) arg1;
     main_argv[2] = NULL;
 
 #if (EXE_BUILD == EXE_COMBINED)
@@ -155,9 +155,9 @@ static __attribute__ ((noinline)) int Game_Main_Tactical(const char *arg1)
 static __attribute__ ((noinline)) int Game_Main_Intro(void)
 {
     const static char main_filename[] = "INTRO.EXE";
-    const char *main_argv[2];
+    PTR32(char) main_argv[2];
 
-    main_argv[0] = main_filename;
+    main_argv[0] = (char *) main_filename;
     main_argv[1] = NULL;
 
     memset(&intro_bss_begin, 0, &intro_bss_end - &intro_bss_begin);
@@ -214,31 +214,26 @@ int Game_MainThread(void *data)
 #else
         if (Game_PlayIntro)
         {
-            ret = Game_Main_Intro();
+            Game_Main_Intro();
             Game_CleanAfterMain();
         }
-        else ret = 0;
 
-        if (!ret)
+        if (Game_MidiRemapGM2MT32)
         {
-            if (Game_MidiRemapGM2MT32)
-            {
-                Game_MidiRemapGM2MT32 = 0;
-                Game_SoundCfg.MusicDriver = 1;          // roland lapc-1 / mt32
-                Game_SoundCfg.MusicBasePort = 0x0330;   // MT32 base port
-            }
+            Game_MidiRemapGM2MT32 = 0;
+            Game_SoundCfg.MusicDriver = 1;          // roland lapc-1 / mt32
+            Game_SoundCfg.MusicBasePort = 0x0330;   // MT32 base port
+        }
 
-            ret = Game_Main_Geoscape("0");
+        ret = Game_Main_Geoscape("0");
+        Game_CleanAfterMain();
+
+        while (ret >= 2)
+        {
+            Game_Main_Tactical("1");
             Game_CleanAfterMain();
-
-            while (ret >= 2)
-            {
-                ret = Game_Main_Tactical("1");
-                Game_CleanAfterMain();
-                if (!ret) break;
-                ret = Game_Main_Geoscape("1");
-                Game_CleanAfterMain();
-            }
+            ret = Game_Main_Geoscape("1");
+            Game_CleanAfterMain();
         }
 #endif
 

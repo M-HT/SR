@@ -24,9 +24,9 @@ gcc -c -m32 -march=x86-64 -O3 -Wall -DDISABLE_UNUSED_FUNCTIONS opl3.c
 cd ../..
 gcc -s -shared -o adlib-dosbox_opl.dll -m32 *.o src/*.o src/dosbox_opl/*.o src/nuked_opl3/*.o ../midi.def -lm
 
-rm src/*.o
-rm src/dosbox_opl/*.o
-rm src/nuked_opl3/*.o
+del src\*.o
+del src\dosbox_opl\*.o
+del src\nuked_opl3\*.o
 
 cd src
 gcc -c -m32 -O3 -Wall -Wno-maybe-uninitialized -DDRIVER=ROLAND emu_x86.c -I./include
@@ -38,9 +38,9 @@ g++ -c -m32 -O3 -Wall -fno-exceptions sha1.cpp
 cd ../../../..
 gcc -s -shared -o mt32-munt.dll -m32 *.o src/*.o src/munt-2.7.0/mt32emu/*.o src/munt-2.7.0/mt32emu/sha1/*.o ../midi.def -lstdc++ -lm
 
-rm *.o
-rm src/*.o
-rm src/munt-2.7.0/mt32emu/*.o
-rm src/munt-2.7.0/mt32emu/sha1/*.o
+del *.o
+del src\*.o
+del src\munt-2.7.0\mt32emu\*.o
+del src\munt-2.7.0\mt32emu\sha1\*.o
 
 cd ..

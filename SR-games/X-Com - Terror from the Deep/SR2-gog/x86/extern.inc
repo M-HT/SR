@@ -26,6 +26,7 @@
     %define Game_stdin _Game_stdin
     %define Game_stdout _Game_stdout
     %define Game_stderr _Game_stderr
+    %define Game_PlayIntro _Game_PlayIntro
 
     %define Zero_Segment _Zero_Segment
 %endif
@@ -35,8 +36,13 @@ extern Game_Skip_Scrolling_SlowDown
 extern Game_stdin
 extern Game_stdout
 extern Game_stderr
+extern Game_PlayIntro
 
 extern Zero_Segment
+
+extern SR_acos2
+extern SR_asin2
+extern SR_asin2_2
 
 extern SR_SlowDownMainLoop
 extern SR_SlowDownScrolling
@@ -46,6 +52,7 @@ extern SR_RunTimerDelay
 
 ; null procedures
 extern SR___CHK
+extern SR___GETDS
 ; stack params
 extern SR_cprintf
 extern SR_fprintf
@@ -60,6 +67,7 @@ extern SR_DigPlay
 extern SR_AudioCapabilities
 extern SR_StopSound
 extern SR_PostAudioPending
+extern SR_AudioPendingStatus
 extern SR_SetPlayMode
 extern SR_PendingAddress
 extern SR_ReportSemaphoreAddress
@@ -68,16 +76,21 @@ extern SR_VerifyDMA
 extern SR_SetDPMIMode
 extern SR_FillSoundCfg
 extern SR_RealPtr
+extern SR_StartAnimVideo
+extern SR_StopAnimVideo
 ; 0 params
 extern SR_checkch
 extern SR_getch
+extern SR_fcloseall
 ; 1 param
 extern SR_exit
 extern SR_fclose
 extern SR_feof
+extern SR_fflush
 extern SR_fgetc
 extern SR_filelength2
 extern SR__nfree
+extern SR_inp
 extern SR__nmalloc
 extern SR_time
 extern SR_WaitVerticalRetraceTicks2
@@ -85,9 +98,13 @@ extern SR_WaitVerticalRetraceTicks2
 extern SR_fopen
 extern SR_fputc
 extern SR_fputs
+extern SR_outp
 extern SR_strcat
+extern SR_strcmp
+extern SR_strcpy
 ; 3 params
 extern SR_ReadSong
+extern SR_memcpy
 extern SR_memset
 extern SR_strncmp
 ; 4 params

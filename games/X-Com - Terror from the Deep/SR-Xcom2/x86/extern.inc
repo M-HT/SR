@@ -26,6 +26,7 @@
     %define Game_stdin _Game_stdin
     %define Game_stdout _Game_stdout
     %define Game_stderr _Game_stderr
+    %define Game_PlayIntro _Game_PlayIntro
 
     %define Zero_Segment _Zero_Segment
 %endif

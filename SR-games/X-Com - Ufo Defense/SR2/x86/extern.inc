@@ -38,6 +38,10 @@ extern Game_stderr
 
 extern Zero_Segment
 
+extern SR_acos2
+extern SR_asin2
+extern SR_asin2_2
+
 extern SR_SlowDownMainLoop
 extern SR_SlowDownScrolling
 extern SR_Sync
@@ -46,6 +50,7 @@ extern SR_RunTimerDelay
 
 ; null procedures
 extern SR___CHK
+extern SR___GETDS
 ; stack params
 extern SR_cprintf
 extern SR_fprintf
@@ -71,25 +76,34 @@ extern SR_RealPtr
 ; 0 params
 extern SR_checkch
 extern SR_getch
+extern SR_fcloseall
 ; 1 param
 extern SR_exit
 extern SR_fclose
 extern SR_feof
+extern SR_fflush
 extern SR_fgetc
 extern SR_filelength2
 extern SR__nfree
+extern SR_inp
 extern SR__nmalloc
+extern SR_strlen
 extern SR_time
 extern SR_WaitVerticalRetraceTicks2
 ; 2 params
 extern SR_fopen
 extern SR_fputc
 extern SR_fputs
+extern SR_outp
 extern SR_strcat
+extern SR_strcmp
+extern SR_strcpy
+extern SR_stricmp
 ; 3 params
 extern SR_ReadSong
 extern SR_strncmp
 ; 4 params
 extern SR_fread
 extern SR_fwrite
+extern SR_int386x
 ; 5 params

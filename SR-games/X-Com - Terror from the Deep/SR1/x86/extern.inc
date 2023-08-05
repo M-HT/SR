@@ -22,22 +22,30 @@
 
 %ifidn __OUTPUT_FORMAT__, win32
     %define Game_ScreenWindow _Game_ScreenWindow
+    %define Game_Skip_Scrolling_SlowDown _Game_Skip_Scrolling_SlowDown
     %define Game_stdin _Game_stdin
     %define Game_stdout _Game_stdout
     %define Game_stderr _Game_stderr
+    %define Game_PlayIntro _Game_PlayIntro
+
+    %define Zero_Segment _Zero_Segment
 %endif
 
 extern Game_ScreenWindow
+extern Game_Skip_Scrolling_SlowDown
 extern Game_stdin
 extern Game_stdout
 extern Game_stderr
 extern Game_PlayIntro
+
+extern Zero_Segment
 
 extern SR_acos2
 extern SR_asin2
 extern SR_asin2_2
 
 extern SR_SlowDownMainLoop
+extern SR_SlowDownScrolling
 extern SR_Sync
 extern SR_CheckTimer
 extern SR_RunTimerDelay
@@ -88,6 +96,7 @@ extern SR_time
 extern SR_WaitVerticalRetraceTicks2
 ; 2 params
 extern SR_fopen
+extern SR_fputc
 extern SR_fputs
 extern SR_outp
 extern SR_strcat
@@ -101,4 +110,5 @@ extern SR_strncmp
 ; 4 params
 extern SR_fread
 extern SR_fwrite
+extern SR_int386x
 ; 5 params

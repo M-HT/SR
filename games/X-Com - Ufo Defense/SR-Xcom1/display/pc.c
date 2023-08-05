@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,7 @@
 #include "../Game_defs.h"
 #include "../Game_vars.h"
 #include "palette32bgra.h"
-#include <memory.h>
+#include <string.h>
 
 static int ScaleOutput, ScaledWidth, ScaledHeight, Fullscreen;
 static uint32_t *ScaleSrc;

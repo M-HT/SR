@@ -24,6 +24,7 @@
 
 #include "../Game_defs.h"
 #include "../Game_vars.h"
+#include <string.h>
 
 void Init_Audio(void)
 {

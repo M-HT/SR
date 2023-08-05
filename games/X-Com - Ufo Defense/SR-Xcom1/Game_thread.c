@@ -82,8 +82,8 @@ static __attribute__ ((noinline)) void Game_CleanAfterMain(void)
     }
 
     // close opened files
-    Game_list_clear(&Game_FopenList, (void (*)(uintptr_t)) &fclose);
-    Game_list_clear(&Game_DopenList, (void (*)(uintptr_t)) &close);
+    Game_fcloseall();
+    Game_list_clear(&Game_DopenList, (void (*)(uintptr_t)) &Game_dclose);
 
     // sync data to disk
     fflush(Game_stdout);
@@ -91,8 +91,8 @@ static __attribute__ ((noinline)) void Game_CleanAfterMain(void)
     Game_Sync();
 
     // free allocated memory
-    Game_list_clear(&Game_MallocList, (void (*)(uintptr_t)) &free);
-    Game_list_clear(&Game_AllocateMemoryList, (void (*)(uintptr_t)) &free);
+    Game_list_clear(&Game_MallocList, (void (*)(uintptr_t)) &Game_free);
+    Game_list_clear(&Game_AllocateMemoryList, (void (*)(uintptr_t)) &Game_FreeMemory);
 }
 
 #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_GEOSCAPE))

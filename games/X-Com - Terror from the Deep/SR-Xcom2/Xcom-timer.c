@@ -69,16 +69,16 @@ void Game_RunTimer(void)
                     Game_TimerRunning = 1;
                     switch (Game_Executable)
                     {
-#if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_GEOSCAPE))
+                    #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_GEOSCAPE))
                         case EXE_GEOSCAPE:
                             Game_RunTimer_Asm((void *)geoscape_update_timer);
                             break;
-#endif
-#if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_TACTICAL))
+                    #endif
+                    #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_TACTICAL))
                         case EXE_TACTICAL:
                             Game_RunTimer_Asm((void *)tactical_update_timer);
                             break;
-#endif
+                    #endif
                         default:
                             break;
                     }

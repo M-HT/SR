@@ -122,7 +122,7 @@ off_t Game_filelength2(FILE *f)
 
 void *Game_malloc(uint32_t size)
 {
-    uint8_t *ptr;
+    uint8_t *ptr, *out;
 
     // round the size up to the nearest multiply of 4
     // to prevent buffer overflows with instructions reading word or dword
@@ -131,8 +131,11 @@ void *Game_malloc(uint32_t size)
     // X-Com has a few buffer underflows
     // That's why I allocate 4kB more memory before the resulting pointer and 4kB after (for overflows)
     ptr = (uint8_t *) malloc(size + 8192);
+    if (ptr == NULL) return NULL;
 
-    if (!Game_list_insert(&Game_MallocList, (uintptr_t)ptr))
+    out = ptr + 4096;
+
+    if (!Game_list_insert(&Game_MallocList, (uintptr_t)out))
     {
         free(ptr);
         return NULL;
@@ -140,14 +143,14 @@ void *Game_malloc(uint32_t size)
 
     memset(ptr, 0, size + 8192);
 
-    return ptr + 4096;
+    return out;
 }
 
 void Game_free(void *ptr)
 {
     if (ptr == NULL) return;
 
-    Game_list_remove(&Game_MallocList, ((uintptr_t)ptr) - 4096);
+    Game_list_remove(&Game_MallocList, (uintptr_t)ptr);
     free(((uint8_t *) ptr) - 4096);
 }
 
@@ -156,6 +159,7 @@ void *Game_AllocateMemory(uint32_t size)
     void *mem;
 
     mem = malloc(size);
+    if (mem == NULL) return NULL;
 
     if (!Game_list_insert(&Game_AllocateMemoryList, (uintptr_t)mem))
     {

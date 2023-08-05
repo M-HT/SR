@@ -58,5 +58,5 @@ Some notes:
 * The generated arm version is little-endian, not big-endian.
 * The generated arm version supports softfp and hardfp calling conventions.
 * Creating 64-bit versions is experimental.
-  * Only Linux (x64, arm64) versions of Albion, Septerra Core and Warcraft are working at the moment.
+  * Only Linux (x64, arm64) versions of Albion, Septerra Core, X-COM 1,2 and Warcraft are working at the moment.
   * 64-bit versions require a loader.

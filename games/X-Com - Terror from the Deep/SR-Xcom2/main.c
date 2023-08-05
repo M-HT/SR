@@ -117,14 +117,14 @@ static const char *Game_WindowTitle(void)
 {
     switch (Game_Executable)
     {
-#if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_GEOSCAPE))
+    #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_GEOSCAPE))
         case EXE_GEOSCAPE:
             return "SDL X-Com - Geoscape";
-#endif
-#if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_TACTICAL))
+    #endif
+    #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_TACTICAL))
         case EXE_TACTICAL:
             return "SDL X-Com - Tactical";
-#endif
+    #endif
         default:
             return "SDL X-Com";
     }

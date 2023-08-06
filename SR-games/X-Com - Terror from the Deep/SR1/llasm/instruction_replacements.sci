@@ -47,7 +47,7 @@ loc_2B5AD,8,;call SR_SlowDownMainLoop|call SR_SlowDownMainLoop|;test eax, eax|;j
 
 loc_2CA8E,2,;add edx, eax|add edx, edx, eax|;mov esi, 0xffffffff|mov esi, 0xffffffff ; fix reading not reinitialized variable
 
-loc_50B5E,245,;mov eax, loc_7D540|mov eax, loc_7D540|;mov edx, [ebp-12]|sub edx, ebp, 12|;mov ebx, [loc_7D52C]|load ebx, loc_7D52C, 4|;call SR_ReadSong|PUSH loc_50B5E_after_1|tcall SR_ReadSong|endp|proc loc_50B5E_after_1|;or eax, eax|;jz loc_50C87|ctcallz eax, loc_50C87|tcall loc_50B5E_after_2|endp|proc loc_50B5E_after_2 ; music - load midi or song from catalog
+loc_50B5E,245,;mov eax, loc_7D540|mov eax, loc_7D540|;mov edx, [ebp-12]|sub tmpadr, ebp, 12|load edx, tmpadr, 4|;mov ebx, [loc_7D52C]|load ebx, loc_7D52C, 4|;call SR_ReadSong|PUSH loc_50B5E_after_1|tcall SR_ReadSong|endp|proc loc_50B5E_after_1|;or eax, eax|;jz loc_50C87|ctcallz eax, loc_50C87|tcall loc_50B5E_after_2|endp|proc loc_50B5E_after_2 ; music - load midi or song from catalog
 
 loc_4F3D5,107, ; disable checks to allow animated videos
 loc_5133F,3,;add esp, 4|add esp, esp, 4|;call SR_StartAnimVideo|PUSH loc_5133F_after|tcall SR_StartAnimVideo|endp|proc loc_5133F_after ; set sound on start of animated video

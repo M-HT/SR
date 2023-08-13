@@ -206,10 +206,7 @@ class ConfigFile:
         if platform == "gp2x":
             self.AddEntry("Audio_MIDI_Subsystem", "wildmidi/adlmidi/sdl_mixer", "sdl_mixer")
         else:
-            midi_values = "alsa/wildmidi"
-            if game != "warcraft":
-                midi_values += "/bassmidi"
-            midi_values += "/adlmidi/sdl_mixer"
+            midi_values = "alsa/wildmidi/bassmidi/adlmidi/sdl_mixer"
             if game == "xcom1" or game == "xcom2":
                 midi_values += "/adlib-dosbox_opl"
                 if platform == "pc":
@@ -545,12 +542,10 @@ class ConfigGUI:
             if "alsa" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
                 description += "\nALSA sequencer can use hardware or software synth (like Fluidsynth or TiMidity++)."
 
-            description += "\nWildMIDI sounds better than SDL_mixer."
-
             if game == "albion":
                 description += "\nSDL_mixer can only play one MIDI stream simultaneously."
 
-            description += "\nWildMIDI and SDL_mixer use GUS patch files for playback."
+            description += "\nWildMIDI uses GUS patch files for playback."
             if self.CfgFile.HasEntry("Audio_SoundFont_Path"):
                 description += "\nBASSMIDI uses soundfont for playback."
 

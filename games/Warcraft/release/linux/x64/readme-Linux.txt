@@ -1,8 +1,7 @@
-X-COM: UFO Defense for Linux (x64)
-Version 1.5.0
+Warcraft: Orcs & Humans for Linux (x64)
+Version 1.3.0
 
-Original DOS X-COM: UFO Defense version 1.4 is required for playing.
-(Gold version for Windows should also work)
+Original DOS Warcraft CD version is required for playing.
 (version from GOG.com can be used for playing)
 
 Libraries
@@ -11,7 +10,7 @@ The game (SDL2 version) requires following 64-bit libraries: SDL2, SDL2_mixer
 On debian based distributions these libraries are in following packages: libsdl2-2.0-0 libsdl2-mixer-2.0-0
 
 The game (SDL1 version) requires following 64-bit libraries: SDL, SDL_mixer, OpenGL
-On debian based distributions these libraries are in following packages: libsdl1.2debian libsdl-mixer1.2:i386 libgl1
+On debian based distributions these libraries are in following packages: libsdl1.2debian libsdl-mixer1.2 libgl1
 
 Some midi plugins may require additional libraries.
 
@@ -22,31 +21,30 @@ Installation
 Put files from this archive into the installed game's directory.
 
 Simple instructions:
-1) install X-COM: UFO Defense on your PC
+1) install Warcraft on your PC
 2) copy the files from this archive into the game's directory
-3) run the game using xcom1.sh
+3) run the game using Warcraft.sh
 
 Example (Detailed instructions):
-1) install X-COM: UFO Defense on your PC
+1) install Warcraft on your PC
     - create directory ~/Games
-    - if you have original DOS version then install X-COM: UFO Defense using DOSBox
+    - if you have original DOS version then install Warcraft using DOSBox
       - in dosbox: mount ~/Games as C:
-      - in dosbox: install X-COM: UFO Defense into C:\UFO
-      - in dosbox: if necessary, then install patch(es) for X-COM
-    - if you have version from GOG.com then extract X-COM: UFO Defense from GOG.com windows installer
-      - extract X-COM: UFO Defense using innoextract into ~/Games/UFO
+      - in dosbox: install Warcraft into C:\WARCRAFT
+      - in dosbox: if necessary, then install patch(es) for Warcraft
+    - if you have version from GOG.com then extract Warcraft from GOG.com windows installer
+      - extract Warcraft using innoextract into ~/Games/WARCRAFT
 
 2) copy the files from this archive into the game's directory
-    - copy the content of this archive into ~/Games/UFO
+    - copy the content of this archive into ~/Games/WARCRAFT
 
-3) run the game using xcom1.sh
-    - run xcom1.sh in the game's directory: ~/Games/UFO/xcom1.sh
+3) run the game using Warcraft.sh
+    - run Warcraft.sh in the game's directory: ~/Games/WARCRAFT/Warcraft.sh
 
 
 Music
------
-The game can play General MIDI music (Windows and DOS game versions) or Adlib/MT-32 music (DOS game version).
-The General MIDI music can be played using one of following libraries:
+-------------
+The game's MIDI music can be played using one of following libraries:
 ALSA sequencer, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
 
 libADLMIDI is the default library, others can be selected in the configuration file.
@@ -66,35 +64,25 @@ Soundfont (for BASSMIDI) can be either copied to the game's directory
 or it can be stored anywhere, but the soundfont location must be written
 in the configuration file.
 
-Adlib music can be played without additional files.
-MT-32 music can be played using MUNT emulator or ALSA sequencer.
-MUNT emulator requires Control and PCM roms from MT-32 or CM-32L/LAPC-I.
-
 
 Configuration
 -------------
 
-Configuration is stored in the file Ufo.cfg.
+Configuration is stored in the file Warcraft.cfg.
 
 Configuration can be changed either by editing the configuration file directly,
-or by configuration editor (xcom1-setup.sh).
+or by configuration editor (Warcraft-setup.sh).
 
 
 Misc
 ----
 
-The executable contains fix for the "Difficulty bug".
+Multiplayer does not work (and it's not planned to make it work).
 
 WildMIDI library uses version 3 of the GNU Lesser General Public License (LGPLv3).
 libADLMIDI library uses version 3 of the GNU Lesser General Public License (LGPLv3).
 HQX scaler uses version 2.1 of the GNU Lesser General Public License (LGPLv2.1).
 xBRZ scaler uses version 3 of the GNU General Public License (GPLv3).
-
-Adlib music is played using either 'compat' OPL emulator from DOSBox or Nuked OPL3 emulator.
-DOSBox 'compat' OPL emulator uses version 2.1 or later of the GNU Lesser General Public License (LGPLv2.1).
-Nuked OPL3 emulator uses version 2.1 or later of the GNU Lesser General Public License (LGPLv2.1).
-
-MUNT emulator uses version 2.1 or later of the GNU Lesser General Public License (LGPLv2.1).
 
 Source code is available on GitHub: https://github.com/M-HT/SR
 
@@ -102,5 +90,5 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 Changes
 -------
 
-v1.5.0 (2023-08-12)
+v1.3.0 (2023-08-13)
 first Linux (x64) version

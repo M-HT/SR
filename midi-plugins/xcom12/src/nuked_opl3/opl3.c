@@ -56,17 +56,17 @@
 #endif
 
 #if ( \
-    defined(__ARM_ARCH_6__) || \
-    defined(__ARM_ARCH_6J__) || \
-    defined(__ARM_ARCH_6K__) || \
-    defined(__ARM_ARCH_6Z__) || \
-    defined(__ARM_ARCH_6ZK__) || \
-    defined(__ARM_ARCH_6T2__) || \
-    defined(__ARM_ARCH_7__) || \
-    defined(__ARM_ARCH_7A__) || \
-    defined(__ARM_ARCH_7R__) || \
-    defined(__ARM_ARCH_7M__) || \
-    defined(__ARM_ARCH_7S__) || \
+    defined(__aarch64__) || \
+    defined(_M_ARM64) || \
+    defined(_M_ARM64EC) \
+)
+    #define ARMV8 1
+#else
+    #undef ARMV8
+#endif
+
+#if (!defined(ARMV8)) && ( \
+    (defined(__ARM_ARCH) && (__ARM_ARCH >= 6)) || \
     (defined(_M_ARM) && (_M_ARM >= 6)) || \
     (defined(__TARGET_ARCH_ARM) && (__TARGET_ARCH_ARM >= 6)) || \
     (defined(__TARGET_ARCH_THUMB) && (__TARGET_ARCH_THUMB >= 3)) \
@@ -76,12 +76,8 @@
     #undef ARMV6
 #endif
 
-#if ( \
-    defined(__ARM_ARCH_7__) || \
-    defined(__ARM_ARCH_7A__) || \
-    defined(__ARM_ARCH_7R__) || \
-    defined(__ARM_ARCH_7M__) || \
-    defined(__ARM_ARCH_7S__) || \
+#if (!defined(ARMV8)) && ( \
+    (defined(__ARM_ARCH) && (__ARM_ARCH >= 7)) || \
     (defined(_M_ARM) && (_M_ARM >= 7)) || \
     (defined(__TARGET_ARCH_ARM) && (__TARGET_ARCH_ARM >= 7)) || \
     (defined(__TARGET_ARCH_THUMB) && (__TARGET_ARCH_THUMB >= 4)) \
@@ -91,15 +87,20 @@
     #undef ARMV7
 #endif
 
-#if ( \
-    defined(__aarch64__) \
+#if (!defined(ARMV8)) && ( \
+    defined(__amd64__) || \
+    defined(__amd64) || \
+    defined(__x86_64__) || \
+    defined(__x86_64) || \
+    defined(_M_X64) || \
+    defined(_M_AMD64) \
 )
-    #define ARMV8 1
+    #define X64SSE2 1
 #else
-    #undef ARMV8
+    #undef X64SSE2
 #endif
 
-#if ( \
+#if (!defined(X64SSE2)) && ( \
     defined(__i386) || \
     defined(_M_IX86) || \
     defined(_X86_) || \
@@ -113,25 +114,12 @@
     #undef X86SSE2
 #endif
 
-#if ( \
-    defined(__amd64__) || \
-    defined(__amd64) || \
-    defined(__x86_64__) || \
-    defined(__x86_64) || \
-    defined(_M_X64) || \
-    defined(_M_AMD64) \
-)
-    #define X64SSE2 1
-#else
-    #undef X64SSE2
-#endif
-
 #if defined(X86SSE2) || defined(X64SSE2)
 #include <emmintrin.h>
 #endif
 #if defined(ARMV7) || defined(ARMV8)
 #include <arm_neon.h>
-#elif defined(ARMV6) && defined(__clang__)
+#elif defined(ARMV6) && defined(__ARM_ACLE) && __ARM_FEATURE_SAT
 #include <arm_acle.h>
 #endif
 
@@ -1190,10 +1178,10 @@ static void OPL3_ClipSamples4(int32_t *src4, int16_t *dst4)
 static int16_t OPL3_ClipSample(int32_t sample)
 {
 #ifdef ARMV6
-#ifdef __clang__
+#if defined(__ARM_ACLE) && __ARM_FEATURE_SAT
     return (int16_t)__ssat(sample, 16);
 #else
-    asm volatile ( "ssat %[value], #16, %[value]" : [value] "+r" (sample) );
+    asm ( "ssat %[result], #16, %[value]" : [result] "=r" (sample) : [value] "r" (sample) : "cc" );
     return (int16_t)sample;
 #endif
 #else

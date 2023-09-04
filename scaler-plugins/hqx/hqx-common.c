@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2003  MaxSt ( maxst@hiend3d.com )
  *
- * Copyright (C) 2021  Roman Pauer
+ * Copyright (C) 2021-2023  Roman Pauer
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,8 @@
 
 #if defined(X86SSE2) || defined(X64SSE2)
 #include <xmmintrin.h>
+#elif defined(ARMV6) && defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
+#include <arm_acle.h>
 #endif
 
 
@@ -54,24 +56,46 @@ static inline uint32_t yuv_diff(uint32_t yuv1, uint32_t yuv2)
 
     return _mm_cvtsi64_si32(tmp1);
 #elif defined(ARMV6)
-    register uint32_t tmp1, zero, dist;
+#if defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
+    uint8x4_t tmp1, tmp2, dist;
+
+    dist = 0x300706;
+    tmp1 = __usub8(yuv1, yuv2);     // tmp1 = yuv1 - yuv2
+    tmp2 = __usub8(yuv2, yuv1);     // tmp2 = yuv2 - yuv1
+    tmp2 = __sel(tmp2, tmp1);       // tmp2 = (tmp2 >= 0)?tmp2:tmp1     // tmp2 = abs(yuv1 - yuv2)
+    tmp1 = __usub8(dist, tmp2);     // tmp1 = 0x300706 - abs(yuv1 - yuv2)
+    tmp1 = __sel(0, dist);          // tmp1 = (tmp1 >= 0)?0:0x300706    // tmp1 = (0x300706 >= abs(yuv1 - yuv2))?0:0x300706
+
+    return tmp1;
+#else
+    uint32_t tmp1, tmp2, zero, dist;
 
     zero = 0;
     dist = 0x300706;
 
-    asm volatile (
-        "usub8 %[tmp1], %[value1], %[value2]   \n\t" // tmp1 = value1 - value2             // tmp1 = yuv1 - yuv2
-        "usub8 %[value2], %[value2], %[value1] \n\t" // value2 = value2 - value1           // value2 = yuv2 - yuv1
-        "sel %[tmp1], %[value2], %[tmp1]       \n\t" // tmp1 = (value2 >= 0)?value2:tmp1   // tmp1 = abs(yuv1 - yuv2)
-        "usub8 %[value2], %[dist], %[tmp1]     \n\t" // value2 = dist - tmp1               // value2 = 0x300706 - abs(yuv1 - yuv2)
-        "sel %[value1], %[zero], %[dist]           " // value1 = (value2 >= 0)?zero:dist   // value1 = (0x300706 >= abs(yuv1 - yuv2))?0:0x300706
-
-        : [value1] "+r" (yuv1), [value2] "+r" (yuv2), [tmp1] "=&r" (tmp1)
-        : [zero] "r" (zero), [dist] "r" (dist)
+    asm (
+        "usub8 %[tmp1], %[value1], %[value2]    \n\t"   // tmp1 = value1 - value2           // tmp1 = yuv1 - yuv2
+        : [tmp1] "=r" (tmp1)
+        : [value1] "r" (yuv1), [value2] "r" (yuv2)
+        : "cc"
+    );
+    asm (
+        "usub8 %[tmp2], %[value2], %[value1]    \n\t"   // tmp2 = value2 - value1           // tmp2 = yuv2 - yuv1
+        "sel %[tmp2], %[tmp2], %[tmp1]          \n\t"   // tmp2 = (tmp2 >= 0)?tmp2:tmp1     // tmp2 = abs(yuv1 - yuv2)
+        : [tmp2] "=r" (tmp2)
+        : [value1] "r" (yuv1), [value2] "r" (yuv2), [tmp1] "r" (tmp1)
+        : "cc"
+    );
+    asm (
+        "usub8 %[tmp1], %[dist], %[tmp2]        \n\t"   // tmp1 = dist - tmp2               // tmp1 = 0x300706 - abs(yuv1 - yuv2)
+        "sel %[tmp1], %[zero], %[dist]          \n\t"   // tmp1 = (tmp1 >= 0)?zero:dist     // tmp1 = (0x300706 >= abs(yuv1 - yuv2))?0:0x300706
+        : [tmp1] "=r" (tmp1)
+        : [zero] "r" (zero), [dist] "r" (dist), [tmp2] "r" (tmp2)
         : "cc"
     );
 
-    return yuv1;
+    return tmp1;
+#endif
 #else
     return ( ( abs((yuv1 & Ymask) - (yuv2 & Ymask)) > trY ) ||
              ( abs((yuv1 & Umask) - (yuv2 & Umask)) > trU ) ||

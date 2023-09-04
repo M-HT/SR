@@ -25,17 +25,17 @@
 #include "xbrz_tools.h"
 
 #if ( \
-    defined(__ARM_ARCH_6__) || \
-    defined(__ARM_ARCH_6J__) || \
-    defined(__ARM_ARCH_6K__) || \
-    defined(__ARM_ARCH_6Z__) || \
-    defined(__ARM_ARCH_6ZK__) || \
-    defined(__ARM_ARCH_6T2__) || \
-    defined(__ARM_ARCH_7__) || \
-    defined(__ARM_ARCH_7A__) || \
-    defined(__ARM_ARCH_7R__) || \
-    defined(__ARM_ARCH_7M__) || \
-    defined(__ARM_ARCH_7S__) || \
+    defined(__aarch64__) || \
+    defined(_M_ARM64) || \
+    defined(_M_ARM64EC) \
+)
+    #define ARMV8 1
+#else
+    #undef ARMV8
+#endif
+
+#if (!defined(ARMV8)) && ( \
+    (defined(__ARM_ARCH) && (__ARM_ARCH >= 6)) || \
     (defined(_M_ARM) && (_M_ARM >= 6)) || \
     (defined(__TARGET_ARCH_ARM) && (__TARGET_ARCH_ARM >= 6)) || \
     (defined(__TARGET_ARCH_THUMB) && (__TARGET_ARCH_THUMB >= 3)) \
@@ -45,15 +45,20 @@
     #undef ARMV6
 #endif
 
-#if ( \
-    defined(__aarch64__) \
+#if (!defined(ARMV8)) && ( \
+    defined(__amd64__) || \
+    defined(__amd64) || \
+    defined(__x86_64__) || \
+    defined(__x86_64) || \
+    defined(_M_X64) || \
+    defined(_M_AMD64) \
 )
-    #define ARMV8 1
+    #define X64SSE2 1
 #else
-    #undef ARMV8
+    #undef X64SSE2
 #endif
 
-#if ( \
+#if (!defined(X64SSE2)) && ( \
     defined(__i386) || \
     defined(_M_IX86) || \
     defined(_X86_) || \
@@ -67,26 +72,11 @@
     #undef X86SSE2
 #endif
 
-#if ( \
-    defined(__amd64__) || \
-    defined(__amd64) || \
-    defined(__x86_64__) || \
-    defined(__x86_64) || \
-    defined(_M_X64) || \
-    defined(_M_AMD64) \
-)
-    #define X64SSE2 1
-#else
-    #undef X64SSE2
-#endif
-
 #if defined(X86SSE2) || defined(X64SSE2)
 #include <emmintrin.h>
-#endif
-#if defined(ARMV8)
+#elif defined(ARMV8)
 #include <arm_neon.h>
-#endif
-#if defined(ARMV6) && defined(__clang__)
+#elif defined(ARMV6) && defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
 #include <arm_acle.h>
 #endif
 
@@ -319,25 +309,29 @@ real_t distYCbCrBuffered(uint32_t pix1, uint32_t pix2)
     nn3 = vreinterpret_u32_u8(vabd_u8(nn1, nn2));   // nn3 = ?,abs(r1-r2),abs(g1-g2),abs(b1-b2)
     const uint32_t index = vget_lane_u32(nn3, 0) & 0x00ffffff;
 #elif defined(ARMV6)
-#ifdef __clang__
+#if defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
     uint8x4_t tmp1 = __usub8(pix1, pix2);   // tmp1 = ?,r1-r2,g1-g2,b1-b2
     uint8x4_t tmp2 = __usub8(pix2, pix1);   // tmp2 = ?,r2-r1,g2-g1,b2-b1
     uint8x4_t tmp3 = __sel(tmp2, tmp1);     // tmp3 = ?,abs(r1-r2),abs(g1-g2),abs(b1-b2)
     const uint32_t index = tmp3 & 0x00ffffff;
 #else
-    uint32_t tmp1;
+    uint32_t tmp1, tmp2;
 
-    asm volatile (
+    asm (
         "usub8 %[tmp1], %[value1], %[value2]    \n\t"   // tmp1 = ?,r1-r2,g1-g2,b1-b2
-        "usub8 %[value2], %[value2], %[value1]  \n\t"   // value2 = ?,r2-r1,g2-g1,b2-b1
-        "sel %[value1], %[value2], %[tmp1]      \n\t"   // value1 = ?,abs(r1-r2),abs(g1-g2),abs(b1-b2)
-
-        : [value1] "+r" (pix1), [value2] "+r" (pix2), [tmp1] "=&r" (tmp1)
-        :
+        : [tmp1] "=r" (tmp1)
+        : [value1] "r" (pix1), [value2] "r" (pix2)
+        : "cc"
+    );
+    asm (
+        "usub8 %[tmp2], %[value2], %[value1]    \n\t"   // tmp2 = ?,r2-r1,g2-g1,b2-b1
+        "sel %[tmp2], %[tmp2], %[tmp1]          \n\t"   // tmp2 = ?,abs(r1-r2),abs(g1-g2),abs(b1-b2)
+        : [tmp2] "=r" (tmp2)
+        : [value1] "r" (pix1), [value2] "r" (pix2), [tmp1] "r" (tmp1)
         : "cc"
     );
 
-    const uint32_t index = pix1 & 0x00ffffff;
+    const uint32_t index = tmp2 & 0x00ffffff;
 #endif
 #else
     //if (pix1 == pix2) -> 8% perf degradation!

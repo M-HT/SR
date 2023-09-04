@@ -45,17 +45,17 @@
 #include "midi-plugins.h"
 
 #if ( \
-    defined(__ARM_ARCH_6__) || \
-    defined(__ARM_ARCH_6J__) || \
-    defined(__ARM_ARCH_6K__) || \
-    defined(__ARM_ARCH_6Z__) || \
-    defined(__ARM_ARCH_6ZK__) || \
-    defined(__ARM_ARCH_6T2__) || \
-    defined(__ARM_ARCH_7__) || \
-    defined(__ARM_ARCH_7A__) || \
-    defined(__ARM_ARCH_7R__) || \
-    defined(__ARM_ARCH_7M__) || \
-    defined(__ARM_ARCH_7S__) || \
+    defined(__aarch64__) || \
+    defined(_M_ARM64) || \
+    defined(_M_ARM64EC) \
+)
+    #define ARMV8 1
+#else
+    #undef ARMV8
+#endif
+
+#if (!defined(ARMV8)) && ( \
+    (defined(__ARM_ARCH) && (__ARM_ARCH >= 6)) || \
     (defined(_M_ARM) && (_M_ARM >= 6)) || \
     (defined(__TARGET_ARCH_ARM) && (__TARGET_ARCH_ARM >= 6)) || \
     (defined(__TARGET_ARCH_THUMB) && (__TARGET_ARCH_THUMB >= 3)) \
@@ -65,6 +65,11 @@
     #undef ARMV6
 #endif
 
+#if defined(ARMV8)
+#include <arm_neon.h>
+#elif defined(ARMV6) && defined(__ARM_ACLE) && (__ARM_FEATURE_SIMD32 || __ARM_FEATURE_SAT)
+#include <arm_acle.h>
+#endif
 
 
 #define BUFFER_SIZE 28672
@@ -219,21 +224,30 @@ static void MidiPlugin_MusicPlayer(void *udata, Uint8 *stream, int len)
 
                     for (pos = 0; pos < curlen; pos += 4)
                     {
-                        #if defined(ARMV6)
-                            register Uint32 srcval1, srcval2;
-                            register Uint32 dstval;
+                        #if defined(ARMV8)
+                            int16x4_t srcval1, srcval2;
+                            uint32x2_t dstval;
+
+                            srcval1 = vreinterpret_s16_u32(vld1_dup_u32((Uint32 *) &(src_buf1[pos])));
+                            srcval2 = vreinterpret_s16_u32(vld1_dup_u32((Uint32 *) &(src_buf2[pos])));
+                            dstval = vreinterpret_u32_s16(vqadd_s16(srcval1, srcval2));
+                            vst1_lane_u32((Uint32 *) &(mp_buf[pos]), dstval, 0);
+                        #elif defined(ARMV6)
+                            Uint32 srcval1, srcval2;
+                            Uint32 dstval;
 
                             srcval1 = *((Uint32 *) &(src_buf1[pos]));
                             srcval2 = *((Uint32 *) &(src_buf2[pos]));
 
-                            asm("qadd16 %[dvalue], %[svalue1], %[svalue2]"
-                                : [dvalue] "=r" (dstval)
-                                : [svalue1] "r" (srcval1), [svalue2] "r" (srcval2)
-                            );
+                        #if defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
+                            dstval = __qadd16(srcval1, srcval2);
+                        #else
+                            asm ( "qadd16 %[dvalue], %[svalue1], %[svalue2]" : [dvalue] "=r" (dstval) : [svalue1] "r" (srcval1), [svalue2] "r" (srcval2) );
+                        #endif
 
                             *((Uint32 *) &(mp_buf[pos])) = dstval;
                         #else
-                            register Sint32 val;
+                            Sint32 val;
 
                             val = ((Sint32) *((Sint16 *) &(src_buf1[pos]))) + ((Sint32) *((Sint16 *) &(src_buf2[pos])));
                             if (val >= 32768) val = 32767;
@@ -263,23 +277,43 @@ static void MidiPlugin_MusicPlayer(void *udata, Uint8 *stream, int len)
                     if (SEQ_LEN(2) < curlen) curlen = SEQ_LEN(2);
                     for (pos = 0; pos < curlen; pos += 4)
                     {
-                        #if defined(ARMV6)
-                            register Uint32 srcval1, srcval2, srcval3;
-                            register Sint32 val1, val2;
+                        #if defined(ARMV8)
+                            int16x4_t srcval1, srcval2, srcval2;
+                            int32x4_t tmpval;
+                            uint32x2_t dstval;
+
+                            srcval1 = vreinterpret_s16_u32(vld1_dup_u32((Uint32 *) &(src_buf1[pos])));
+                            srcval2 = vreinterpret_s16_u32(vld1_dup_u32((Uint32 *) &(src_buf2[pos])));
+                            srcval3 = vreinterpret_s16_u32(vld1_dup_u32((Uint32 *) &(src_buf3[pos])));
+                            tmpval = vaddl_s16(srcval1, srcval2);
+                            tmpval = vaddw_s16(tmpval, srcval3);
+                            dstval = vreinterpret_u32_s16(vqmovn_s32(tmpval));
+                            vst1_lane_u32((Uint32 *) &(mp_buf[pos]), dstval, 0);
+                        #elif defined(ARMV6)
+                            Uint32 srcval1, srcval2, srcval3;
+                            Sint32 val1, val2;
 
                             srcval1 = *((Uint32 *) &(src_buf1[pos]));
                             srcval2 = *((Uint32 *) &(src_buf2[pos]));
                             srcval3 = *((Uint32 *) &(src_buf3[pos]));
 
                             val1 = ((Sint32)(Sint16)srcval1) + ((Sint32)(Sint16)srcval2) + ((Sint32)(Sint16)srcval3);
-                            asm("ssat %[value], #16, %[value]" : [value] "+r" (val1));
+                        #if defined(__ARM_ACLE) && __ARM_FEATURE_SAT
+                            val1 = __ssat(val1, 16);
+                        #else
+                            asm ( "ssat %[result], #16, %[value]" : [result] "=r" (val1) : [value] "r" (val1) : "cc" );
+                        #endif
 
                             val2 = ((Sint32)(Sint16)(srcval1 >> 16)) + ((Sint32)(Sint16)(srcval2 >> 16)) + ((Sint32)(Sint16)(srcval3 >> 16));
-                            asm("ssat %[value], #16, %[value]" : [value] "+r" (val2));
+                        #if defined(__ARM_ACLE) && __ARM_FEATURE_SAT
+                            val2 = __ssat(val2, 16);
+                        #else
+                            asm ( "ssat %[result], #16, %[value]" : [result] "=r" (val2) : [value] "r" (val2) : "cc" );
+                        #endif
 
                             *((Uint32 *) &(mp_buf[pos])) = (val1 & 0xffff) | (val2 << 16);
                         #else
-                            register Sint32 val;
+                            Sint32 val;
 
                             val = ((Sint32) *((Sint16 *) &(src_buf1[pos]))) + ((Sint32) *((Sint16 *) &(src_buf2[pos]))) + ((Sint32) *((Sint16 *) &(src_buf3[pos])));
                             if (val >= 32768) val = 32767;
@@ -322,11 +356,23 @@ static void MidiPlugin_MusicPlayer(void *udata, Uint8 *stream, int len)
         {
             for (; len != 0; len -= 4)
             {
-                #if defined(ARMV6)
-                    register Uint32 srcval;
+                #if defined(ARMV8)
+                    uint16x4_t srcval1, srcval2;
+                    uint32x2_t dstval;
+
+                    srcval1 = vreinterpret_u16_u32(vld1_dup_u32((Uint32 *) stream));
+                    srcval2 = vdup_n_u16(0x8000);
+                    dstval = vreinterpret_u32_u16(vadd_u16(srcval1, srcval2));
+                    vst1_lane_u32((Uint32 *) stream, dstval, 0);
+                #elif defined(ARMV6)
+                    Uint32 srcval;
 
                     srcval = *((Uint32 *) stream);
-                    asm("uadd16 %[value1], %[value1], %[value2]" : [value1] "+r" (srcval) : [value2] "r" (0x80008000));
+                #if defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
+                    srcval = __uadd16(srcval, 0x80008000);
+                #else
+                    asm ( "uadd16 %[dvalue], %[value1], %[value2]" : [dvalue] "=r" (srcval) : [value1] "r" (srcval), [value2] "r" (0x80008000) : "cc" );
+                #endif
                     *((uint32_t *) stream) = srcval;
                 #else
                     *((Uint16 *) stream) = (((Sint32) *((Sint16 *) stream)) + 32768);
@@ -349,8 +395,8 @@ static void MidiPlugin_MusicPlayer(void *udata, Uint8 *stream, int len)
                 case AUDIO_S8:
                     for (; len != 0; len -= 2)
                     {
-                        #if defined(ARMV6)
-                            register Uint32 srcval;
+                        #if defined(ARMV6) || defined(ARMV8)
+                            Uint32 srcval;
 
                             srcval = *((Uint32 *) src_buf);
                             *((Uint16 *) &(stream[0])) = ((Uint8)(srcval >> 8)) | ( ((Uint32)(Uint8)(srcval >> 24)) << 8 );
@@ -365,8 +411,8 @@ static void MidiPlugin_MusicPlayer(void *udata, Uint8 *stream, int len)
                 case AUDIO_U8:
                     for (; len != 0; len -= 2)
                     {
-                        #if defined(ARMV6)
-                            register Uint32 srcval;
+                        #if defined(ARMV6) || defined(ARMV8)
+                            Uint32 srcval;
 
                             srcval = *((Uint32 *) src_buf);
                             *((Uint16 *) &(stream[0])) = ((Uint8)((srcval + 0x8000) >> 8)) | ( ((Uint32)(Uint8)((srcval + 0x80000000) >> 24)) << 8 );
@@ -387,11 +433,23 @@ static void MidiPlugin_MusicPlayer(void *udata, Uint8 *stream, int len)
                 case AUDIO_S16LSB:
                     for (; len != 0; len -= 2)
                     {
-                        #if defined(ARMV6)
-                            register Uint32 srcval;
+                        #if defined(ARMV8)
+                            int16x4_t srcval;
+                            int32x2_t tmpval;
+
+                            srcval = vreinterpret_s16_u32(vld1_dup_u32((Uint32 *) src_buf));
+                            tmpval = vpaddl_s16(srcval1);
+                            srcval = vreinterpret_s16_s32(vshr_n_s32(tmpval, 1));
+                            vst1_lane_s16((Sint16 *) stream, srcval, 0);
+                        #elif defined(ARMV6)
+                            Uint32 srcval;
 
                             srcval = *((Uint32 *) src_buf);
-                            asm("shadd16 %[value1], %[value1], %[value2]" : [value1] "+r" (srcval) : [value2] "r" (srcval >> 16));
+                        #if defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
+                            srcval = __shadd16(srcval, srcval >> 16);
+                        #else
+                            asm ( "shadd16 %[dvalue], %[value1], %[value2]" : [dvalue] "=r" (srcval) : [value1] "r" (srcval), [value2] "r" (srcval >> 16) );
+                        #endif
                             *((Sint16 *) stream) = srcval;
                         #else
                             *((Sint16 *) stream) = (((Sint32) src_buf[0]) + ((Sint32) src_buf[1])) >> 1;
@@ -403,8 +461,8 @@ static void MidiPlugin_MusicPlayer(void *udata, Uint8 *stream, int len)
                 case AUDIO_U16LSB:
                     for (; len != 0; len -= 2)
                     {
-                        #if defined(ARMV6)
-                            register Uint32 srcval;
+                        #if defined(ARMV6) || defined(ARMV8)
+                            Uint32 srcval;
 
                             srcval = *((Uint32 *) src_buf);
                             *((Uint16 *) stream) = (((Sint32)(Sint16)srcval) + ((Sint32)(Sint16)(srcval >> 16)) + 65536) >> 1;
@@ -418,8 +476,8 @@ static void MidiPlugin_MusicPlayer(void *udata, Uint8 *stream, int len)
                 case AUDIO_S8:
                     for (; len != 0; len --)
                     {
-                        #if defined(ARMV6)
-                            register Uint32 srcval;
+                        #if defined(ARMV6) || defined(ARMV8)
+                            Uint32 srcval;
 
                             srcval = *((Uint32 *) src_buf);
                             *((Sint8 *) stream) = (((Sint32)(Sint16)srcval) + ((Sint32)(Sint16)(srcval >> 16))) >> 9;
@@ -433,8 +491,8 @@ static void MidiPlugin_MusicPlayer(void *udata, Uint8 *stream, int len)
                 case AUDIO_U8:
                     for (; len != 0; len --)
                     {
-                        #if defined(ARMV6)
-                            register Uint32 srcval;
+                        #if defined(ARMV6) || defined(ARMV8)
+                            Uint32 srcval;
 
                             srcval = *((Uint32 *) src_buf);
                             *stream = (((int32_t)(int16_t)srcval) + ((int32_t)(int16_t)(srcval >> 16)) + 65536) >> 9;

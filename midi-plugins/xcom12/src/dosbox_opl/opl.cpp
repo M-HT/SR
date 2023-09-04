@@ -33,17 +33,17 @@
 #include "opl.h"
 
 #if ( \
-    defined(__ARM_ARCH_6__) || \
-    defined(__ARM_ARCH_6J__) || \
-    defined(__ARM_ARCH_6K__) || \
-    defined(__ARM_ARCH_6Z__) || \
-    defined(__ARM_ARCH_6ZK__) || \
-    defined(__ARM_ARCH_6T2__) || \
-    defined(__ARM_ARCH_7__) || \
-    defined(__ARM_ARCH_7A__) || \
-    defined(__ARM_ARCH_7R__) || \
-    defined(__ARM_ARCH_7M__) || \
-    defined(__ARM_ARCH_7S__) || \
+    defined(__aarch64__) || \
+    defined(_M_ARM64) || \
+    defined(_M_ARM64EC) \
+)
+    #define ARMV8 1
+#else
+    #undef ARMV8
+#endif
+
+#if (!defined(ARMV8)) && ( \
+    (defined(__ARM_ARCH) && (__ARM_ARCH >= 6)) || \
     (defined(_M_ARM) && (_M_ARM >= 6)) || \
     (defined(__TARGET_ARCH_ARM) && (__TARGET_ARCH_ARM >= 6)) || \
     (defined(__TARGET_ARCH_THUMB) && (__TARGET_ARCH_THUMB >= 3)) \
@@ -51,6 +51,12 @@
     #define ARMV6 1
 #else
     #undef ARMV6
+#endif
+
+#if defined(ARMV8)
+#include <arm_neon.h>
+#elif defined(ARMV6) && defined(__ARM_ACLE) && __ARM_FEATURE_SAT
+#include <arm_acle.h>
 #endif
 
 static fltype recipsamp;	// inverse of sampling rate
@@ -1482,9 +1488,16 @@ void adlib_getsample(Bit16s* sndptr, Bits numsamples) {
 		// convert to 16bit samples
 		for (i=0;i<endsamples;i++) {
 			//clipit16(outbufl[i],sndptr++);
-			#if defined(ARMV6)
-				register Bit32u val = 2*outbufl[i];
-				asm("ssat %[value], #16, %[value]" : [value] "+r" (val));
+			#if defined(ARMV8)
+				vst1_lane_s32((Bit32s*)sndptr, vreinterpret_s32_s16(vqmovn_s32(vshlq_n_s32(vld1q_dup_s32(&(outbufl[i])), 1))), 0);
+				sndptr += 2;
+			#elif defined(ARMV6)
+				Bit32u val = 2*outbufl[i];
+			#if defined(__ARM_ACLE) && __ARM_FEATURE_SAT
+				val = __ssat(val, 16);
+			#else
+				asm ( "ssat %[result], #16, %[value]" : [result] "=r" (val) : [value] "r" (val) : "cc" );
+			#endif
 				*((Bit32u*)sndptr) = (val & 0xffff) | (val << 16);
 				sndptr += 2;
 			#else

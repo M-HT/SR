@@ -24,7 +24,7 @@
 #include "hqx-platform.h"
 
 #if defined(X86SSE2) || defined(X64SSE2)
-#include <xmmintrin.h>
+#include <emmintrin.h>
 #elif defined(ARMV6) && defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
 #include <arm_acle.h>
 #endif
@@ -41,20 +41,20 @@
 static inline uint32_t yuv_diff(uint32_t yuv1, uint32_t yuv2)
 {
 #if defined(X86SSE2) || defined(X64SSE2)
-    // using mmx registers is faster than using sse registers, but emms instruction must be used before using x87 instructions
-    __m64 value1, value2, tmp1, tmp2;
+    // using mmx registers might be faster than using sse registers, but mmx instructions are deprecated and shouldn't be used in new code
+    __m128i value1, value2, tmp1, tmp2;
 
-    value1 = _mm_cvtsi32_si64(yuv1);        // value1 = yuv1
-    value2 = _mm_cvtsi32_si64(yuv2);        // value2 = yuv2
+    value1 = _mm_cvtsi32_si128(yuv1);       // value1 = yuv1
+    value2 = _mm_cvtsi32_si128(yuv2);       // value2 = yuv2
     tmp1 = value1;                          // tmp1 = yuv1
-    tmp2 = _mm_cvtsi32_si64(0x300706);      // tmp2 = 0x300706
-    tmp1 = _mm_max_pu8(tmp1, value2);       // tmp1 = max(yuv1, yuv2)
-    value2 = _mm_min_pu8(value2, value1);   // value2 = min(yuv1, yuv2)
-    tmp1 = _mm_sub_pi8(tmp1, value2);       // tmp1 = abs(yuv1 - yuv2)
-    tmp1 = _mm_max_pu8(tmp1, tmp2);         // tmp1 = max(0x300706, abs(yuv1 - yuv2))
-    tmp1 = _mm_sub_pi8(tmp1, tmp2);         // tmp1 = max(0x300706, abs(yuv1 - yuv2)) - 0x300706
+    tmp2 = _mm_cvtsi32_si128(0x300706);     // tmp2 = 0x300706
+    tmp1 = _mm_max_epu8(tmp1, value2);      // tmp1 = max(yuv1, yuv2)
+    value2 = _mm_min_epu8(value2, value1);  // value2 = min(yuv1, yuv2)
+    tmp1 = _mm_sub_epi8(tmp1, value2);      // tmp1 = abs(yuv1 - yuv2)
+    tmp1 = _mm_max_epu8(tmp1, tmp2);        // tmp1 = max(0x300706, abs(yuv1 - yuv2))
+    tmp1 = _mm_sub_epi8(tmp1, tmp2);        // tmp1 = max(0x300706, abs(yuv1 - yuv2)) - 0x300706
 
-    return _mm_cvtsi64_si32(tmp1);
+    return _mm_cvtsi128_si32(tmp1);
 #elif defined(ARMV6)
 #if defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
     uint8x4_t tmp1, tmp2, dist;
@@ -187,11 +187,6 @@ void calculate_pattern(const uint32_t *yuvsrc1, const uint32_t *yuvsrc2, const u
 
         *dst = pattern;
     }
-
-#if defined(X86SSE2) || defined(X64SSE2)
-    // since yuv_diff uses mmx registers, emms instruction must be called before returning
-    _mm_empty();
-#endif
 }
 #endif
 

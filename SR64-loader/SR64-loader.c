@@ -71,14 +71,16 @@ static int str_startswith(const char *str, const char *start)
     return 1;
 }
 
-static uint64_t str_readuint(const char *str)
+static uint64_t str_readuint(const char *str, int *read_length)
 {
     uint64_t value;
+    int len;
 
-    for (value = 0; *str >= '0' && *str <= '9'; str++)
+    for (value = 0, len = 0; str[len] >= '0' && str[len] <= '9'; len++)
     {
-        value = value * 10 + (*str - '0');
+        value = value * 10 + (str[len] - '0');
     }
+    if (read_length != 0) *read_length = len;
     return value;
 }
 
@@ -188,12 +190,12 @@ static int sys_prctl(int option, unsigned long arg2, unsigned long arg3, unsigne
 
 // print functions
 
-#if 0
 static void pr_print(const char *text)
 {
     sys_write(1, text, str_length(text));
 }
 
+#if 0
 static void pr_printhex(uint64_t num)
 {
     static const char hexchars[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
@@ -322,7 +324,7 @@ static void read_default_hugepagesize(void)
                 ofs1 += 13;
                 while (buf[ofs1] == ' ') ofs1++;
 
-                default_huge_page_size_kb = str_readuint(&(buf[ofs1]));
+                default_huge_page_size_kb = str_readuint(&(buf[ofs1]), 0);
 
                 // don't read anymore data
                 len2 = 0;
@@ -380,7 +382,7 @@ static void read_hugepagesize_set(void)
 
             if (!str_startswith(entry->d_name, "hugepages-")) continue;
 
-            huge_page_size_kb = str_readuint(&(entry->d_name[10]));
+            huge_page_size_kb = str_readuint(&(entry->d_name[10]), 0);
             if (huge_page_size_kb == 0) continue;
 
             huge_page_size_shift = 0;
@@ -438,6 +440,46 @@ static __attribute__ ((noinline)) void read_page_sizes(void)
 
     read_default_hugepagesize();
     read_hugepagesize_set();
+}
+
+static __attribute__ ((noinline)) void read_kernel_version(void)
+{
+    int fd;
+    char buf[32];
+    int len1, len2;
+    uint64_t version, major;
+
+    fd = sys_openat(AT_FDCWD, "/proc/sys/kernel/osrelease", O_RDONLY);
+    if (fd < 0) return;
+
+    len1 = 0;
+    len2 = 1;
+    while (len2)
+    {
+        len2 = sys_read(fd, &(buf[len1]), sizeof(buf) - len1);
+        if (len2 < 0) break; // error
+
+        len1 += len2;
+        if (len1 != sizeof(buf) && len2) continue; // buffer not full and not end of file
+
+        buf[31] = 0;
+
+        version = str_readuint(buf, &len2);
+        if (version == 0) break;
+
+        while (buf[len2] != 0 && (buf[len2] < '0' || buf[len2] > '9')) len2++;
+
+        major = str_readuint(&(buf[len2]), &len2);
+
+        if ((version < 4) || ((version == 4) && (major < 19)))
+        {
+            pr_print("The kernel version is old.\nThe loader may not work correctly.\nRecommended kernel version is 5.0 or higher.");
+        }
+
+        break;
+    }
+
+    sys_close(fd);
 }
 
 
@@ -1161,6 +1203,7 @@ void _start2(void *func, uint64_t *stack)
     fini_func = func;
     read_stack(stack);
     read_page_sizes();
+    read_kernel_version();
     reserve_memory_space();
     load_elf_executable();
     prepare_stack32();

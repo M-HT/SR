@@ -1,7 +1,7 @@
 ;part of static recompiler -- do not edit
 
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2023 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -39,6 +39,10 @@ macro DIV_64 divisor
     call x86_div_64 $, \divisor
 endm
 
+macro DIV_64_ZE divisor
+    call x86_div_64 $, \divisor
+endm
+
 macro DIV_32 divisor
     call x86_div_32 $, \divisor
 endm
@@ -52,6 +56,10 @@ macro IDIV_64_64 div
 endm
 
 macro IDIV_64 divisor
+    call x86_idiv_64 $, \divisor
+endm
+
+macro IDIV_64_SE divisor
     call x86_idiv_64 $, \divisor
 endm
 

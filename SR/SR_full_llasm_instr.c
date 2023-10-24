@@ -1402,6 +1402,218 @@ return (0x6996 >> v) & 1;
 #undef ADDRESULT
 }
 
+static int SR_check_extended_value(unsigned int Entry, uint_fast32_t ofs, int signed_extension)
+{
+    output_data *prev_output;
+    ud_t ud_prev;
+    ud_operand_t ud_op_prev;
+    int prev_inst_ok;
+
+    prev_output = section_output_list_FindEntryEqualOrLower(Entry, ofs - 1);
+    if (prev_output == NULL) return 0;
+
+    ud_init(&ud_prev);
+    ud_set_mode(&ud_prev, 32);
+    ud_set_syntax(&ud_prev, UD_SYN_INTEL);
+
+    ud_set_input_buffer(&ud_prev, &(section[Entry].adr[prev_output->ofs]), prev_output->len + 1);
+    ud_set_pc(&ud_prev, section[Entry].start + prev_output->ofs);
+
+    prev_inst_ok = 0;
+    if ((prev_output->len + 1) == ud_disassemble(&ud_prev))
+    {
+        prev_inst_ok = 1;
+    }
+
+    while (prev_inst_ok)
+    {
+        switch(signed_extension)
+        {
+            case 0:
+                if (((ud_prev.mnemonic == UD_Ixor) ||
+                     (ud_prev.mnemonic == UD_Isub)
+                    ) &&
+                    (ud_prev.operand[0].type == UD_OP_REG) &&
+                    (ud_prev.operand[1].type == UD_OP_REG) &&
+                    (ud_prev.operand[0].base == UD_R_EDX) &&
+                    (ud_prev.operand[1].base == UD_R_EDX)
+                   )
+                {
+                    // xor edx, edx -> edx is zero extended from eax
+                    return 1;
+                }
+                break;
+            case 1:
+                if (ud_prev.mnemonic == UD_Icdq)
+                {
+                    // cdq -> edx is sign extended from eax
+                    return 1;
+                }
+                if ((ud_prev.mnemonic == UD_Isar) &&
+                    (ud_prev.operand[0].type == UD_OP_REG) &&
+                    (ud_prev.operand[0].base == UD_R_EDX) &&
+                    (ud_prev.operand[1].type == UD_OP_IMM) &&
+                    ((SR_disassemble_get_value(&(ud_prev.operand[1]), ZERO_EXTEND) & 0x1f) == 31)
+                   )
+                {
+                    // sar edx, 31 -> edx is possibly sign extended from eax
+                    signed_extension = 2;
+                }
+                break;
+            case 2:
+                signed_extension = 3;
+                // fallthrough
+            case 3:
+                if ((ud_prev.mnemonic == UD_Imov) &&
+                    (ud_prev.operand[0].type == UD_OP_REG) &&
+                    (ud_prev.operand[1].type == UD_OP_REG) &&
+                    (((ud_prev.operand[0].base == UD_R_EAX) && (ud_prev.operand[1].base == UD_R_EDX)) ||
+                     ((ud_prev.operand[0].base == UD_R_EDX) && (ud_prev.operand[1].base == UD_R_EAX))
+                    )
+                   )
+                {
+                    // mov eax, edx / mov edx, eax -> edx is sign extended from eax
+                    return 1;
+                }
+                if ((ud_prev.mnemonic == UD_Imov) &&
+                    (ud_prev.operand[0].type == UD_OP_REG) &&
+                    ((ud_prev.operand[0].base == UD_R_EDX) || (ud_prev.operand[0].base == UD_R_EAX))
+                   )
+                {
+                    // mov edx, ... / mov eax, ... -> edx is possibly sign extended from eax
+                    ud_op_prev = ud_prev.operand[1];
+                    signed_extension = (ud_prev.operand[0].base == UD_R_EDX) ? 4 : 6;
+                }
+                break;
+            case 4:
+                signed_extension = 5;
+                // fallthrough
+            case 5:
+                if ((ud_prev.mnemonic == UD_Imov) &&
+                    (ud_prev.operand[0].type == UD_OP_REG) &&
+                    (ud_prev.operand[0].base == UD_R_EAX) &&
+                    (ud_prev.operand[1].type == ud_op_prev.type) &&
+                    (ud_prev.operand[1].size == ud_op_prev.size) &&
+                    (ud_prev.operand[1].base == ud_op_prev.base) &&
+                    (ud_prev.operand[1].index == ud_op_prev.index) &&
+                    (ud_prev.operand[1].scale == ud_op_prev.scale) &&
+                    (ud_prev.operand[1].offset == ud_op_prev.offset) &&
+                    (SR_disassemble_get_value(&(ud_prev.operand[1]), ZERO_EXTEND) == SR_disassemble_get_value(&ud_op_prev, ZERO_EXTEND))
+                   )
+                {
+                    // mov eax, ... -> edx is sign extended from eax
+                    return 1;
+                }
+                break;
+            case 6:
+                signed_extension = 7;
+                // fallthrough
+            case 7:
+                if ((ud_prev.mnemonic == UD_Imov) &&
+                    (ud_prev.operand[0].type == UD_OP_REG) &&
+                    (ud_prev.operand[0].base == UD_R_EDX) &&
+                    (ud_prev.operand[1].type == ud_op_prev.type) &&
+                    (ud_prev.operand[1].size == ud_op_prev.size) &&
+                    (ud_prev.operand[1].base == ud_op_prev.base) &&
+                    (ud_prev.operand[1].index == ud_op_prev.index) &&
+                    (ud_prev.operand[1].scale == ud_op_prev.scale) &&
+                    (ud_prev.operand[1].offset == ud_op_prev.offset) &&
+                    (SR_disassemble_get_value(&(ud_prev.operand[1]), ZERO_EXTEND) == SR_disassemble_get_value(&ud_op_prev, ZERO_EXTEND))
+                   )
+                {
+                    // mov edx, ... -> edx is sign extended from eax
+                    return 1;
+                }
+                break;
+            default:
+                break;
+        }
+
+        if (prev_output->has_label)
+        {
+            // start of block
+            prev_inst_ok = 0;
+        }
+        else  if ((signed_extension != 2) && (signed_extension != 4) && (signed_extension != 6))
+        {
+            if ((ud_prev.mnemonic == UD_Imov) ||
+                (ud_prev.mnemonic == UD_Ilea) ||
+                (ud_prev.mnemonic == UD_Imovsx) ||
+                (ud_prev.mnemonic == UD_Imovzx) ||
+                (ud_prev.mnemonic == UD_Iadd) ||
+                (ud_prev.mnemonic == UD_Iadc) ||
+                (ud_prev.mnemonic == UD_Isub) ||
+                (ud_prev.mnemonic == UD_Isbb) ||
+                (ud_prev.mnemonic == UD_Iand) ||
+                (ud_prev.mnemonic == UD_Ior) ||
+                (ud_prev.mnemonic == UD_Ixor) ||
+                (ud_prev.mnemonic == UD_Ishl) ||
+                (ud_prev.mnemonic == UD_Ishr) ||
+                (ud_prev.mnemonic == UD_Isar) ||
+                (ud_prev.mnemonic == UD_Iinc) ||
+                (ud_prev.mnemonic == UD_Idec) ||
+                (ud_prev.mnemonic == UD_Ipop) ||
+                ((ud_prev.mnemonic == UD_Iimul) && (ud_prev.operand[1].type != UD_NONE))
+               )
+            {
+                if (ud_prev.operand[0].type == UD_OP_REG)
+                {
+                    if ((ud_prev.operand[0].base == UD_R_EDX) ||
+                        (ud_prev.operand[0].base == UD_R_DX) ||
+                        (ud_prev.operand[0].base == UD_R_DL) ||
+                        (ud_prev.operand[0].base == UD_R_DH)
+                       )
+                    {
+                        prev_inst_ok = 0;
+                    }
+                    if ((signed_extension != 0) &&
+                        ((ud_prev.operand[0].base == UD_R_EAX) ||
+                         (ud_prev.operand[0].base == UD_R_AX) ||
+                         (ud_prev.operand[0].base == UD_R_AL) ||
+                         (ud_prev.operand[0].base == UD_R_AH)
+                        )
+                       )
+                    {
+                        prev_inst_ok = 0;
+                    }
+                }
+            }
+            else if ((ud_prev.mnemonic != UD_Icmp) &&
+                     (ud_prev.mnemonic != UD_Itest) &&
+                     (ud_prev.mnemonic != UD_Ipush) &&
+                     (ud_prev.mnemonic != UD_Ifst) &&
+                     (ud_prev.mnemonic != UD_Ifstp) &&
+                     (ud_prev.mnemonic != UD_Ifist) &&
+                     (ud_prev.mnemonic != UD_Ifistp) &&
+                     (ud_prev.mnemonic != UD_Ifld) &&
+                     (ud_prev.mnemonic != UD_Ifldcw)
+                    )
+            {
+                prev_inst_ok = 0;
+            }
+        }
+
+        if (prev_inst_ok)
+        {
+            prev_inst_ok = 0;
+
+            prev_output = section_output_list_FindEntryEqualOrLower(Entry, prev_output->ofs - 1);
+            if (prev_output != NULL)
+            {
+                ud_set_input_buffer(&ud_prev, &(section[Entry].adr[prev_output->ofs]), prev_output->len + 1);
+                ud_set_pc(&ud_prev, section[Entry].start + prev_output->ofs);
+
+                if ((prev_output->len + 1) == ud_disassemble(&ud_prev))
+                {
+                    prev_inst_ok = 1;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
 #include "SR_full_llasm_instr_helper.h"
 
 int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, uint_fast32_t flags_to_write, uint_fast32_t *pflags_write, uint_fast32_t *pflags_read, int *plast_instruction)
@@ -2819,12 +3031,20 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
         case UD_Idiv:
             {
                 /* CF,OF,SF,ZF,AF,PF undefined */
+                int zero_extended;
+
+                zero_extended = 0;
 
                 if (ud_obj.operand[0].type == UD_OP_REG)
                 {
                     if (ud_obj.operand[0].base >= UD_R_EAX && ud_obj.operand[0].base <= UD_R_EDI)
                     {
-                        OUTPUT_PARAMSTRING("DIV_64 %s\n", X86REGSTR(ud_obj.operand[0].base));
+                        if (output->has_label == 0)
+                        {
+                            zero_extended = SR_check_extended_value(Entry, cur_ofs, 0);
+                        }
+
+                        OUTPUT_PARAMSTRING("%s %s\n", ((zero_extended) ? "DIV_64_ZE" : "DIV_64"), X86REGSTR(ud_obj.operand[0].base));
                     }
                     else if (ud_obj.operand[0].base >= UD_R_AX && ud_obj.operand[0].base <= UD_R_DI)
                     {
@@ -2851,7 +3071,12 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
 
                         SR_disassemble_read_mem_word(cOutput, &memadr, LR_TMP3);
 
-                        OUTPUT_STRING("DIV_64 tmp3\n");
+                        if (output->has_label == 0)
+                        {
+                            zero_extended = SR_check_extended_value(Entry, cur_ofs, 0);
+                        }
+
+                        OUTPUT_PARAMSTRING("%s tmp3\n", ((zero_extended) ? "DIV_64_ZE" : "DIV_64"));
                     }
                     else if (ud_obj.operand[0].size == 16)
                     {
@@ -2909,12 +3134,20 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
         case UD_Iidiv:
             {
                 /* CF,OF,SF,ZF,AF,PF undefined */
+                int sign_extended;
+
+                sign_extended = 0;
 
                 if (ud_obj.operand[0].type == UD_OP_REG)
                 {
                     if (ud_obj.operand[0].base >= UD_R_EAX && ud_obj.operand[0].base <= UD_R_EDI)
                     {
-                        OUTPUT_PARAMSTRING("IDIV_64 %s\n", X86REGSTR(ud_obj.operand[0].base));
+                        if (output->has_label == 0)
+                        {
+                            sign_extended = SR_check_extended_value(Entry, cur_ofs, 1);
+                        }
+
+                        OUTPUT_PARAMSTRING("%s %s\n", ((sign_extended) ? "IDIV_64_SE" : "IDIV_64"), X86REGSTR(ud_obj.operand[0].base));
                     }
                     else if (ud_obj.operand[0].base >= UD_R_AX && ud_obj.operand[0].base <= UD_R_DI)
                     {
@@ -2930,7 +3163,12 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
 
                         SR_disassemble_read_mem_word(cOutput, &memadr, LR_TMP3);
 
-                        OUTPUT_STRING("IDIV_64 tmp3\n");
+                        if (output->has_label == 0)
+                        {
+                            sign_extended = SR_check_extended_value(Entry, cur_ofs, 1);
+                        }
+
+                        OUTPUT_PARAMSTRING("%s tmp3\n", ((sign_extended) ? "IDIV_64_SE" : "IDIV_64"));
                     }
                     else if (ud_obj.operand[0].size == 16)
                     {

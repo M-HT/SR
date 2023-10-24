@@ -93,6 +93,7 @@ if device == 'pc-linux':
                           LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'm', 'dl', 'GL']
                          )
     if llasm_version:
+        llasm_params = "-inline-idiv"
         llvm_params = '-mtriple=i686-unknown-linux-gnu'
         env.Append(ENV = {'PATH' : os.environ['PATH']})
 elif device == 'pc64-linux':
@@ -108,7 +109,7 @@ elif device == 'pc64-linux':
                           LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'm', 'dl', 'GL'],
                           ENV          = {'PATH' : os.environ['PATH']}
                          )
-    llasm_params = '-m64'
+    llasm_params = '-m64 -inline-idiv'
     llvm_params = '-mtriple=x86_64-unknown-linux-gnu'
 elif device == 'arm-linux':
     if sdl == 2:
@@ -138,7 +139,7 @@ elif device == 'arm64-linux':
                           LIBS         = ['SDL_mixer', 'SDL', 'pthread', 'm', 'dl', 'GL'],
                           ENV          = {'PATH' : os.environ['PATH']}
                          )
-    llasm_params = '-m64'
+    llasm_params = '-m64 -inline-idiv'
     llvm_params = '-mtriple=arm64-unknown-linux-gnu'
 elif device == 'pc-windows':
     if sdl == 2:

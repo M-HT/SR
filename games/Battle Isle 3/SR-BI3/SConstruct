@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2019-2021 Roman Pauer
+#  Copyright (C) 2019-2023 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -65,7 +65,7 @@ if device == 'pc-linux':
                       LIBS         = ['dl', 'quicktime', 'kernel32', 'winmm', 'user32', 'gdi32']
                      )
     if llasm_version:
-        llasm_params = '-pic'
+        llasm_params = '-pic -inline-idiv'
         llvm_params = '-mtriple=i686-unknown-linux-gnu -relocation-model=pic'
         env.Append(CCFLAGS = ' -fpic')
         env.Append(LINKFLAGS = ' -pic')

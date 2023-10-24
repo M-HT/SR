@@ -75,6 +75,7 @@ struct instruction_struct {
     bool[string][] params2;
     string variable_params;
     bool[string] variable_params2;
+    bool inlined_instr;
 }
 
 struct param_struct {
@@ -114,7 +115,7 @@ enum RegisterState { Empty, Read, Write }
 
 string input_filename, output_filename, input_directory, return_procedure, dispatcher_procedure;
 string[] include_directories;
-bool output_preprocessed_file, input_reading_proc, input_reading_dataseg, position_independent_code, old_bitcode, no_tail_calls, pointer_size_64;
+bool output_preprocessed_file, input_reading_proc, input_reading_dataseg, position_independent_code, old_bitcode, no_tail_calls, pointer_size_64, inline_idiv_instr;
 uint global_optimization_level, procedure_optimization_level;
 
 int file_input_level;
@@ -191,6 +192,10 @@ string[] instructions_base_list = [
     "ctlz reg, reg",
     "bswap reg, reg"
 ];
+string[] instructions_idiv_list = [
+    "DIV_64_ZE reg/const",
+    "IDIV_64_SE reg/const"
+];
 
 bool[string] keywords_list, registers_list, temp_regs_list;
 string[string] register_numbers_str;
@@ -226,6 +231,74 @@ string[] str_split_strip(string str, dchar delim)
     return res;
 }
 
+void add_instruction_to_list(string instruction, bool inlined_instr)
+{
+    long position = instruction.indexOf(' ');
+    string instruction_name, variable_param;
+    string[] params;
+
+    if (position >= 0)
+    {
+        uint position2 = cast(uint)position;
+        instruction_name = instruction[0..position2];
+        instruction = instruction[position2+1..$].strip();
+
+        position = instruction.indexOf('[');
+        if (position >= 0)
+        {
+            position2 = cast(uint)position;
+            variable_param = instruction[position2+1..$].strip();
+            instruction = instruction[0..position2].strip();
+        }
+        else
+        {
+            variable_param = "";
+        }
+
+        params = str_split_strip(instruction, ',');
+
+        if (variable_param != "")
+        {
+            variable_param = variable_param[0..variable_param.length-1].strip();
+        }
+    }
+    else
+    {
+        instruction_name = instruction;
+        params.length = 0;
+        variable_param = "";
+    }
+
+    instruction_struct newinstruction;
+    newinstruction.name = instruction_name.idup;
+    newinstruction.params = params;
+    newinstruction.variable_params = variable_param.idup;
+    newinstruction.inlined_instr = inlined_instr;
+
+    newinstruction.params2.length = newinstruction.params.length;
+    for (int i = 0; i < newinstruction.params.length; i++)
+    {
+        auto params2 = str_split_strip(newinstruction.params[i], '/');
+        foreach (param; params2)
+        {
+            newinstruction.params2[i][param] = true;
+        }
+        newinstruction.params2[i] = newinstruction.params2[i].rehash;
+    }
+
+    if (variable_param != "")
+    {
+        auto variable_params2 = str_split_strip(variable_param, '/');
+        foreach (param; variable_params2)
+        {
+            newinstruction.variable_params2[param] = true;
+        }
+        newinstruction.variable_params2 = newinstruction.variable_params2.rehash;
+    }
+
+    instructions_list[instruction_name] = newinstruction;
+}
+
 void initialize()
 {
     foreach(register; registers_base_list)
@@ -256,69 +329,14 @@ void initialize()
 
     foreach(instruction; instructions_base_list)
     {
-        long position = instruction.indexOf(' ');
-        string instruction_name, variable_param;
-        string[] params;
-
-        if (position >= 0)
+        add_instruction_to_list(instruction, false);
+    }
+    if (inline_idiv_instr)
+    {
+        foreach(instruction; instructions_idiv_list)
         {
-            uint position2 = cast(uint)position;
-            instruction_name = instruction[0..position2];
-            instruction = instruction[position2+1..$].strip();
-
-            position = instruction.indexOf('[');
-            if (position >= 0)
-            {
-                position2 = cast(uint)position;
-                variable_param = instruction[position2+1..$].strip();
-                instruction = instruction[0..position2].strip();
-            }
-            else
-            {
-                variable_param = "";
-            }
-
-            params = str_split_strip(instruction, ',');
-
-            if (variable_param != "")
-            {
-                variable_param = variable_param[0..variable_param.length-1].strip();
-            }
+            add_instruction_to_list(instruction, true);
         }
-        else
-        {
-            instruction_name = instruction;
-            params.length = 0;
-            variable_param = "";
-        }
-
-        instruction_struct newinstruction;
-        newinstruction.name = instruction_name.idup;
-        newinstruction.params = params;
-        newinstruction.variable_params = variable_param.idup;
-
-        newinstruction.params2.length = newinstruction.params.length;
-        for (int i = 0; i < newinstruction.params.length; i++)
-        {
-            auto params2 = str_split_strip(newinstruction.params[i], '/');
-            foreach (param; params2)
-            {
-                newinstruction.params2[i][param] = true;
-            }
-            newinstruction.params2[i] = newinstruction.params2[i].rehash;
-        }
-
-        if (variable_param != "")
-        {
-            auto variable_params2 = str_split_strip(variable_param, '/');
-            foreach (param; variable_params2)
-            {
-                newinstruction.variable_params2[param] = true;
-            }
-            newinstruction.variable_params2 = newinstruction.variable_params2.rehash;
-        }
-
-        instructions_list[instruction_name] = newinstruction;
     }
     instructions_list = instructions_list.rehash;
 
@@ -1850,6 +1868,11 @@ bool process_proc_body(string proc_name)
             case "bswap": // bswap reg, reg
                 proc_instr_info[linenum].write_reg[0] = paramvals[0].value;
                 break;
+            case "DIV_64_ZE": // DIV_64_ZE reg/const
+            case "IDIV_64_SE": // IDIV_64_SE reg/const
+                proc_instr_info[linenum].write_reg[0] = "eax";
+                proc_instr_info[linenum].write_reg[1] = "edx";
+                break;
             default:
                 write_error2("Unhandled instruction: " ~ current_line.orig);
                 return false;
@@ -2404,6 +2427,26 @@ bool process_proc_body(string proc_name)
                     store_temporary_register_to_reg(dst, paramvals[0].value, last_reg_write[0]);
                 }
                 break;
+            case "DIV_64_ZE": // DIV_64_ZE reg/const
+            case "IDIV_64_SE": // IDIV_64_SE reg/const
+                {
+                    param_struct parameax;
+                    parameax.type = "reg";
+                    parameax.value = "eax";
+                    string src1 = get_parameter_read_value(parameax);
+                    string src2 = get_parameter_read_value(paramvals[0]);
+                    string dst1 = get_new_temporary_register();
+                    string dst2 = get_new_temporary_register();
+
+                    string prefix = (current_line.word == "DIV_64_ZE")?"u":"s";
+
+                    add_output_line(dst1 ~ " = " ~ prefix ~ "div i32 " ~ src1 ~ ", " ~ src2);
+                    add_output_line(dst2 ~ " = " ~ prefix ~ "rem i32 " ~ src1 ~ ", " ~ src2);
+
+                    store_temporary_register_to_reg(dst1, "eax", last_reg_write[0]);
+                    store_temporary_register_to_reg(dst2, "edx", last_reg_write[1]);
+                }
+                break;
             default:
                 write_error2("Unhandled instruction: " ~ current_line.orig);
                 return false;
@@ -2454,6 +2497,7 @@ void write_usage()
     stderr.writeln("  -pic            generate position independent code");
     stderr.writeln("  -m64            set generated pointer size to 64 bits");
     stderr.writeln("  -no-tail-calls  disable generating tail calls");
+    stderr.writeln("  -inline-idiv    allow inlining integer division instructions");
 }
 
 public int main(string[] args)
@@ -2469,6 +2513,7 @@ public int main(string[] args)
     old_bitcode = false;
     no_tail_calls = false;
     pointer_size_64 = false;
+    inline_idiv_instr = false;
     for (int i = 1; i < args.length; i++)
     {
         switch(args[i])
@@ -2514,6 +2559,9 @@ public int main(string[] args)
                 break;
             case "-m64":
                 pointer_size_64 = true;
+                break;
+            case "-inline-idiv":
+                inline_idiv_instr = true;
                 break;
             default:
                 if (input_filename == "")
@@ -2610,7 +2658,7 @@ public int main(string[] args)
                 return 8;
             }
 
-            if (current_line.param1 in keywords_list || current_line.param1 in instructions_list)
+            if (current_line.param1 in keywords_list || (current_line.param1 in instructions_list && !instructions_list[current_line.param1].inlined_instr))
             {
                 write_error("Macro name equals keyword/instruction: " ~ current_line.param1);
                 return 9;
@@ -2665,7 +2713,10 @@ public int main(string[] args)
                 newmacro.lines[newmacro.lines.length - 1] = current_line.orig.idup;
             }
 
-            macro_list[newmacro.name] = newmacro;
+            if ((!(newmacro.name in instructions_list)) || (newmacro.params.length != instructions_list[newmacro.name].params.length))
+            {
+                macro_list[newmacro.name] = newmacro;
+            }
 
             continue;
         }

@@ -309,8 +309,8 @@ static void Conv_find(win32_find_data *buffer, struct stat *filestat, const char
     buffer->dwReserved1 = 0;
 
     // file name
-    strncpy(buffer->cFileName, filename, 260);
-    buffer->cFileName[259] = 0;
+    strncpy(buffer->cFileName, filename, MAX_PATH - 1);
+    buffer->cFileName[MAX_PATH - 1] = 0;
 
     buffer->cAlternateFileName[0] = 0;
 }

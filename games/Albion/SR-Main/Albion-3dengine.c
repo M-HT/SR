@@ -458,8 +458,8 @@ extern PTR32(uint8_t) d3_param_dword_13FFC0;
 // d3_sub_1CE04
 extern PTR32(void) g_dword_14FFF0[1];
 // d3_sub_22BC1
-extern uint16_t g_word_151254[1];
-extern uint16_t g_word_151374[1];
+extern uint16_t g_word_151254[144];
+extern uint16_t g_word_151374[168];
 // d3_sub_1CD21
 extern uint16_t g_word_1511C2;
 extern uint8_t g_byte_151173[1];
@@ -471,7 +471,7 @@ extern uint8_t g_byte_159C71[1];
 extern uint16_t g_word_159C75[1];
 // d3_sub_1CC6A
 extern uint16_t g_word_1511C4;
-extern uint8_t g_word_1501D4[1]; // ??? struct
+extern uint8_t g_word_1501D4[4000]; // ??? struct
 // sm1_subproc
 extern int32_t d3_sm_dword_143D08_fp8; // sm1_subproc parameter
 extern int32_t d3_sm_dword_143CFC_fp8; // sm1_subproc parameter

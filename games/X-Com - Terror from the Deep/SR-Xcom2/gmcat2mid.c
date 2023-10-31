@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -570,7 +570,7 @@ static uint8_t *midicat2mid(enum _midi_device_ device, uint8_t *gmcat, unsigned 
     // read subsequences
     for (loop = 0; loop < num_subsequences; loop++)
     {
-        register unsigned int subsequence_len;
+        unsigned int subsequence_len;
 
         subsequence_len = GETU16FLE(gmcat);
         subsequences[loop].data = gmcat+4;
@@ -585,7 +585,7 @@ static uint8_t *midicat2mid(enum _midi_device_ device, uint8_t *gmcat, unsigned 
     // read tracks
     for (loop = 0; loop < num_tracks; loop++)
     {
-        register unsigned int track_len;
+        unsigned int track_len;
 
         tracks[loop].channel = gmcat[0];
         gmcat++;

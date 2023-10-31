@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -442,7 +442,7 @@ static uint32_t DecodeHuffmanTree8(BitStream *bitstream, Tree8 *Tree)
 
 	while ( !bitstream->Empty && (Tree->Nodes[CurNodeNum] & 0x80000000) != 0 )
 	{
-		register uint32_t Bit;
+		uint32_t Bit;
 
 		CurNodeNum = (Tree->Nodes[CurNodeNum] & 0x7fffffff);
 
@@ -573,7 +573,7 @@ static uint32_t DecodeHuffmanTree16(BitStream *bitstream, Tree16 *Tree)
 
 	while (!bitstream->Empty && (Tree->Nodes[CurNodeNum] & 0x80000000) != 0)
 	{
-		register uint32_t Bit;
+		uint32_t Bit;
 
 		CurNodeNum = (Tree->Nodes[CurNodeNum] & 0x7fffffff);
 

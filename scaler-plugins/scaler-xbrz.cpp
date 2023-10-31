@@ -44,10 +44,12 @@ __attribute__ ((visibility ("default")))
 int initialize_scaler_plugin(scaler_plugin_functions *functions)
 {
     uint32_t src[8*8], dst[8*2*8*2];
+    int index;
 
     if (functions == NULL) return -2;
 
     // one-time buffer creation
+    for (index = 0; index < 8*8; index++) src[index] = 0;
     xbrz::scale(2, src, dst, 8, 8, xbrz::ColorFormat::RGB);
 
     functions->scale = &scale;

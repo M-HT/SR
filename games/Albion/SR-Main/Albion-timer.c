@@ -113,7 +113,7 @@ int Game_TimerThread(void *data)
         SDL_Delay(1);
 
         {
-            register uint32_t Ticks, Diff;
+            uint32_t Ticks, Diff;
 
             Ticks = SDL_GetTicks();
             Diff = (TickCounter)?17:16;

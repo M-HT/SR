@@ -146,7 +146,7 @@ int Game_TimerThread(void *data)
         }
 
         {
-            register uint32_t Ticks, Diff;
+            uint32_t Ticks, Diff;
 
             Ticks = SDL_GetTicks();
             Game_SDLTicks = Ticks;

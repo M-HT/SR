@@ -103,7 +103,7 @@ void Game_FloatProcSin3(int32_t *ValuePtr)
 //	ValuePtr[0] = (int32_t) ( (uint32_t) *((uint16_t *) &(ValuePtr[8]))) ;
 //	ValuePtr[5] = (int32_t) ( sin( yt1 / ( (double) ValuePtr[0] ) ) * ( *((double *) (&(ValuePtr[1]))) ) );
     {
-        register uint8_t *a;
+        uint8_t *a;
 
         a = VALUES->ptr1 + 18;
         VALUES->result1 = (double) ( (int32_t) ( ((uint32_t) a[0]) | ( ((uint32_t) a[1]) << 8 ) | ( ((uint32_t) a[2]) << 16 ) | ( ((uint32_t) a[3]) << 24 ) ) );
@@ -157,7 +157,7 @@ void Game_FloatProcSin4(int32_t *ValuePtr)
 //	ValuePtr[0] = (int32_t) ( (uint32_t) *((uint16_t *) &(ValuePtr[9]))) ;
 //	ValuePtr[5] = (int32_t) ( sin( yt1 / ( (double) ValuePtr[0] ) ) * ( *((double *) (&(ValuePtr[1]))) ) );
     {
-        register uint8_t *a;
+        uint8_t *a;
 
         a = VALUES->ptr1 + 18;
         VALUES->result1 = (double) ( (int32_t) ( ((uint32_t) a[0]) | ( ((uint32_t) a[1]) << 8 ) | ( ((uint32_t) a[2]) << 16 ) | ( ((uint32_t) a[3]) << 24 ) ) );

@@ -404,6 +404,10 @@ uint32_t IDirectDraw_Release_c(struct IDirectDraw_c *lpThis)
     if (lpThis->RefCount == 0)
     {
 #if SDL_VERSION_ATLEAST(2,0,0)
+        if (lpThis->Window != NULL)
+        {
+            SDL_HideWindow(lpThis->Window);
+        }
         if (lpThis->Texture[0] != NULL)
         {
             SDL_DestroyTexture(lpThis->Texture[2]);
@@ -831,7 +835,7 @@ uint32_t IDirectDraw_SetDisplayMode_c(struct IDirectDraw_c *lpThis, uint32_t dwW
         return DDERR_UNSUPPORTEDMODE;
     }
 
-    lpThis->Window = SDL_CreateWindow("Septerra Core", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, (Display_Width != 0)?Display_Width:dwWidth, (Display_Height != 0)?Display_Height:dwHeight, ((Display_Resizable && (Display_Mode == 0))?SDL_WINDOW_RESIZABLE:0) | ((Display_Mode == 1)?SDL_WINDOW_FULLSCREEN_DESKTOP:0) | ((Display_Mode == 2)?SDL_WINDOW_FULLSCREEN:0));
+    lpThis->Window = SDL_CreateWindow("Septerra Core", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, (Display_Width != 0)?Display_Width:dwWidth, (Display_Height != 0)?Display_Height:dwHeight, ((Display_Resizable && (Display_Mode == 0))?SDL_WINDOW_RESIZABLE:0) | ((Display_Mode == 1)?SDL_WINDOW_FULLSCREEN_DESKTOP:0) | ((Display_Mode == 2)?SDL_WINDOW_FULLSCREEN:0) | SDL_WINDOW_HIDDEN);
     if (lpThis->Window == NULL)
     {
 #ifdef DEBUG_DDRAW
@@ -850,6 +854,8 @@ uint32_t IDirectDraw_SetDisplayMode_c(struct IDirectDraw_c *lpThis, uint32_t dwW
 #endif
         return DDERR_UNSUPPORTEDMODE;
     }
+
+    SDL_ShowWindow(lpThis->Window);
 
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, (Display_ScalingQuality)?"linear":"nearest");
 

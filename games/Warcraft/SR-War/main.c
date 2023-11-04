@@ -118,7 +118,7 @@ static void Game_Display_Create(void)
 #ifdef USE_SDL2
     if (Display_Fullscreen && Display_FSType)
     {
-        Game_Window = SDL_CreateWindow("SDL Warcraft", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_INPUT_GRABBED);
+        Game_Window = SDL_CreateWindow("SDL Warcraft", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_INPUT_GRABBED | SDL_WINDOW_HIDDEN);
     }
     else
     {
@@ -133,6 +133,8 @@ static void Game_Display_Create(void)
             flags = (Display_MouseLocked)?SDL_WINDOW_INPUT_GRABBED:0;
         }
 
+        flags |= SDL_WINDOW_HIDDEN;
+
         Game_Window = SDL_CreateWindow("SDL Warcraft", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Display_Width, Display_Height, flags);
     }
 
@@ -141,6 +143,8 @@ static void Game_Display_Create(void)
         Game_Renderer = SDL_CreateRenderer(Game_Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | (Scaler_ScaleTexture ? SDL_RENDERER_TARGETTEXTURE : 0));
         if (Game_Renderer != NULL)
         {
+            SDL_ShowWindow(Game_Window);
+
             if (Display_Fullscreen && Display_FSType)
             {
                 int w, h;
@@ -718,6 +722,8 @@ static void Game_Display_Destroy(int post)
     SDL_ShowCursor(SDL_DISABLE);
 
 #ifdef USE_SDL2
+    SDL_HideWindow(Game_Window);
+
     SDL_SetRelativeMouseMode(SDL_FALSE);
 
     if (Game_ScaledTextureData != NULL)
@@ -1539,6 +1545,18 @@ static void Game_Event_Loop(void)
                         break;
                     //case SDL_WINDOWEVENT_CLOSE:
                     // todo: ?
+                    case SDL_WINDOWEVENT_RESIZED:
+                        if (Display_Fullscreen && Display_FSType && Game_Renderer != NULL)
+                        {
+                            SDL_Rect viewport;
+
+                            viewport.x = Picture_Position_UL_X;
+                            viewport.y = Picture_Position_UL_Y;
+                            viewport.w = Picture_Width;
+                            viewport.h = Picture_Height;
+                            SDL_RenderSetViewport(Game_Renderer, &viewport);
+                        }
+                        break;
                 }
 
                 break;

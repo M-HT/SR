@@ -68,7 +68,7 @@ if device == 'pc-linux':
                       LIBS         = ['SDL2', 'pthread', 'm', 'mpg123', 'quicktime']
                      )
     if llasm_version:
-        llasm_params = "-inline-idiv"
+        llasm_params = '-inline-idiv -inline-float'
         llvm_params = '-mtriple=i686-unknown-linux-gnu'
         env.Append(ENV = {'PATH' : os.environ['PATH']})
 elif device == 'pc64-linux':
@@ -79,7 +79,7 @@ elif device == 'pc64-linux':
                       LIBS         = ['SDL2', 'pthread', 'm', 'mpg123', 'quicktime'],
                       ENV          = {'PATH' : os.environ['PATH']}
                      )
-    llasm_params = '-m64 -inline-idiv'
+    llasm_params = '-m64 -inline-idiv -inline-float'
     llvm_params = '-mtriple=x86_64-unknown-linux-gnu'
 elif device == 'arm-linux':
     env = Environment(CCFLAGS      = '-O3 -Wall',
@@ -89,6 +89,7 @@ elif device == 'arm-linux':
                       LIBS         = ['SDL2', 'pthread', 'm', 'mpg123', 'quicktime'],
                       ENV          = {'PATH' : os.environ['PATH']}
                      )
+    llasm_params = '-inline-float'
 elif device == 'arm64-linux':
     env = Environment(CCFLAGS      = '-x c++ -O3 -Wall',
                       CPPPATH      = ['/usr/include/SDL2', '/usr/local/include/SDL2'],
@@ -97,7 +98,7 @@ elif device == 'arm64-linux':
                       LIBS         = ['SDL2', 'pthread', 'm', 'mpg123', 'quicktime'],
                       ENV          = {'PATH' : os.environ['PATH']}
                      )
-    llasm_params = '-m64 -inline-idiv'
+    llasm_params = '-m64 -inline-idiv -inline-float'
     llvm_params = '-mtriple=arm64-unknown-linux-gnu'
 elif device == 'pandora':
     compiler_path = os.environ['PNDSDK'] + '/'
@@ -113,6 +114,7 @@ elif device == 'pandora':
                       LIBS         = ['SDL', 'ts', 'pthread', 'm', 'dl', 'rt', 'z', 'mpg123', 'quicktime'],
                       ENV          = {'PATH' : compiler_path + 'bin:' + os.environ['PATH']}
                      )
+    llasm_params = '-inline-float'
     llvm_params = '-mtriple=armv7a-unknown-linux-eabi -mcpu=cortex-a8'
 
 def get_compiler_version(compiler_path, env_path):

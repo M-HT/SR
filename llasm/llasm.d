@@ -84,9 +84,12 @@ struct param_struct {
 }
 
 struct proc_instr_struct {
-    bool is_valid, is_inside_if, func_has_return_value, if_contains_call;
-    string[2] write_reg;
-    bool[2] last_reg_write;
+    bool is_valid, is_inside_if, func_has_return_value, if_contains_call, if_changes_st_top;
+    int float_stack_top;
+    string[3] write_reg;
+    int[2] write_float_reg;
+    bool[3] last_reg_write;
+    bool[2] last_float_reg_write;
     param_struct[] params;
 }
 
@@ -115,7 +118,7 @@ enum RegisterState { Empty, Read, Write }
 
 string input_filename, output_filename, input_directory, return_procedure, dispatcher_procedure;
 string[] include_directories;
-bool output_preprocessed_file, input_reading_proc, input_reading_dataseg, position_independent_code, old_bitcode, no_tail_calls, pointer_size_64, inline_idiv_instr;
+bool output_preprocessed_file, input_reading_proc, input_reading_dataseg, position_independent_code, old_bitcode, no_tail_calls, pointer_size_64, inline_idiv_instr, inline_float_instr, inline_float2_instr;
 uint global_optimization_level, procedure_optimization_level;
 
 int file_input_level;
@@ -140,13 +143,15 @@ func_struct[string] func_list;
 proc_struct[string] proc_list;
 string[] local_proc_names;
 
-bool used_ctlz_intrinsics, used_bswap_intrinsics, create_ctor_function;
+bool used_ctlz_intrinsics, used_bswap_intrinsics, used_sqrt_intrinsics, used_sin_intrinsics, used_cos_intrinsics, used_log_intrinsics, used_log10_intrinsics, used_fabs_intrinsics, used_round_intrinsics, used_pow_intrinsics, used_log2_intrinsics, create_ctor_function;
 
 int num_output_lines;
 string[] output_lines;
 
-immutable int num_regs = 9;
-string[] registers_base_list = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", "eflags", "tmpadr", "tmpcnd", "tmp0", "tmp1", "tmp2", "tmp3", "tmp4", "tmp5", "tmp6", "tmp7", "tmp8", "tmp9", "tmp10", "tmp11", "tmp12", "tmp13", "tmp14", "tmp15", "tmp16", "tmp17", "tmp18", "tmp19"];
+immutable int num_regs = 12;
+immutable int num_regs_valid = 9;
+immutable int num_float_regs = 8;
+string[] registers_base_list = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", "eflags", "st_top", "st_sw_cond", "st_cw", "tmpadr", "tmpcnd", "tmp0", "tmp1", "tmp2", "tmp3", "tmp4", "tmp5", "tmp6", "tmp7", "tmp8", "tmp9", "tmp10", "tmp11", "tmp12", "tmp13", "tmp14", "tmp15", "tmp16", "tmp17", "tmp18", "tmp19"];
 string[] keywords_base_list = ["proc", "extern", "define", "macro", "func", "funcv", "include", "endp", "endm", "datasegment", "dlabel", "dalign", "db", "dinclude", "daddr", "dskip", "endd"];
 string[] instructions_base_list = [
     "mov reg, reg/const/procaddr/externaddr",
@@ -196,12 +201,82 @@ string[] instructions_idiv_list = [
     "DIV_64_ZE reg/const",
     "IDIV_64_SE reg/const"
 ];
+string[] instructions_float_list = [
+    "FLDCW_UINT16 reg/const",
+    "FNSTCW_VOID",
+    "FNSTSW_VOID",
+    "FCHS_VOID",
+    "FXCH_ST const",
+    "FILD_INT32 reg/const",
+    "FLD_FLOAT reg/const",
+    "FLD_ST const",
+    "FLD1_VOID",
+    "FLDLG2_VOID",
+    "FLDLN2_VOID",
+    "FLDZ_VOID",
+    "FST_FLOAT",
+    "FST_ST const",
+    "FSTP_FLOAT",
+    "FSTP_ST const",
+    "FIADD_INT32 reg/const",
+    "FADD_FLOAT reg/const",
+    "FADD_ST const",
+    "FADD_TO_ST const",
+    "FADDP_ST const",
+    "FISUB_INT32 reg/const",
+    "FISUBR_INT32 reg/const",
+    "FSUB_FLOAT reg/const",
+    "FSUB_ST const",
+    "FSUB_TO_ST const",
+    "FSUBP_ST const",
+    "FSUBR_FLOAT reg/const",
+    "FSUBR_ST const",
+    "FSUBRP_ST const",
+    "FIMUL_INT32 reg/const",
+    "FMUL_FLOAT reg/const",
+    "FMUL_ST const",
+    "FMUL_TO_ST const",
+    "FMULP_ST const",
+    "FDIV_FLOAT reg/const",
+    "FDIV_ST const",
+    "FDIV_TO_ST const",
+    "FDIVP_ST const",
+    "FDIVR_FLOAT reg/const",
+    "FDIVR_ST const",
+    "FDIVRP_ST const",
+    "FIDIV_INT32 reg/const",
+    "FIDIVR_INT32 reg/const",
+    "FCOM_FLOAT reg/const",
+    "FCOM_ST const",
+    "FCOMP_FLOAT reg/const",
+    "FCOMP_ST const",
+    "FCOMPP_VOID",
+    "FUCOM_ST const",
+    "FUCOMP_ST const",
+    "FUCOMPP_VOID",
+    "FSQRT_VOID",
+    "FABS_VOID"
+];
+string[] instructions_float2_list = [
+    "FMOD_VOID",
+    "FMODR_VOID",
+    "FSIN_VOID",
+    "FCOS_VOID",
+    "FLOG_VOID",
+    "FLOG10_VOID",
+    "FROUND_VOID",
+    "FPOW_VOID",
+    "FPOWR_VOID",
+    "FYL2X_VOID"
+];
 
 bool[string] keywords_list, registers_list, temp_regs_list;
 string[string] register_numbers_str;
 instruction_struct[string] instructions_list;
 RegisterState[num_regs] register_state;
+RegisterState[num_float_regs] float_reg_state;
 string[string] current_temporary_register;
+string[int] current_temporary_float_register;
 
 string[] str_split_strip(string str, dchar delim)
 {
@@ -305,6 +380,10 @@ void initialize()
     {
         registers_list[register] = true;
     }
+    for (int i = num_regs_valid; i < num_regs; i++)
+    {
+        registers_list[registers_base_list[i]] = false;
+    }
     registers_list = registers_list.rehash;
 
     for (int i = 0; i < num_regs; i++)
@@ -338,10 +417,33 @@ void initialize()
             add_instruction_to_list(instruction, true);
         }
     }
+    if (inline_float_instr)
+    {
+        foreach(instruction; instructions_float_list)
+        {
+            add_instruction_to_list(instruction, true);
+        }
+    }
+    if (inline_float2_instr)
+    {
+        foreach(instruction; instructions_float2_list)
+        {
+            add_instruction_to_list(instruction, true);
+        }
+    }
     instructions_list = instructions_list.rehash;
 
     used_ctlz_intrinsics = false;
     used_bswap_intrinsics = false;
+    used_sqrt_intrinsics = false;
+    used_sin_intrinsics = false;
+    used_cos_intrinsics = false;
+    used_log_intrinsics = false;
+    used_log10_intrinsics = false;
+    used_fabs_intrinsics = false;
+    used_round_intrinsics = false;
+    used_pow_intrinsics = false;
+    used_log2_intrinsics = false;
     create_ctor_function = false;
 }
 
@@ -631,7 +733,7 @@ bool check_instruction_pass1(ref input_line_struct instr_line)
         {
             if (instruction.params[i] == "reg")
             {
-                if (params[i] !in registers_list)
+                if ((params[i] !in registers_list) || (!registers_list[params[i]]))
                 {
                     write_error("Wrong instruction parameter: " ~ instr_line.word ~ ": " ~ to!string(i));
                     return false;
@@ -639,13 +741,44 @@ bool check_instruction_pass1(ref input_line_struct instr_line)
             }
         }
 
-        if (instr_line.word == "ctlz")
+        switch (instr_line.word)
         {
-            used_ctlz_intrinsics = true;
-        }
-        if (instr_line.word == "bswap")
-        {
-            used_bswap_intrinsics = true;
+            case "ctlz":
+                used_ctlz_intrinsics = true;
+                break;
+            case "bswap":
+                used_bswap_intrinsics = true;
+                break;
+            case "FSQRT_VOID":
+                used_sqrt_intrinsics = true;
+                break;
+            case "FSIN_VOID":
+                used_sin_intrinsics = true;
+                break;
+            case "FCOS_VOID":
+                used_cos_intrinsics = true;
+                break;
+            case "FLOG_VOID":
+                used_log_intrinsics = true;
+                break;
+            case "FLOG10_VOID":
+                used_log10_intrinsics = true;
+                break;
+            case "FABS_VOID":
+                used_fabs_intrinsics = true;
+                break;
+            case "FROUND_VOID":
+                used_round_intrinsics = true;
+                break;
+            case "FPOW_VOID":
+            case "FPOWR_VOID":
+                used_pow_intrinsics = true;
+                break;
+            case "FYL2X_VOID":
+                used_log2_intrinsics = true;
+                break;
+            default:
+                break;
         }
     }
     else
@@ -1418,6 +1551,212 @@ void store_temporary_register_to_reg(string temp_reg, string reg, bool last_reg_
     }
 }
 
+string get_float_reg_addr(string top, int index)
+{
+    string addr;
+
+    if (index == 0)
+    {
+        addr = get_new_temporary_register();
+
+        add_output_line(addr ~ " = getelementptr " ~ get_load_type("%_cpu") ~ " %cpu, i32 0, i32 12, i32 " ~ top);
+    }
+    else
+    {
+        string tmp1 = get_new_temporary_register();
+        string tmp2 = get_new_temporary_register();
+        addr = get_new_temporary_register();
+
+        add_output_line(tmp1 ~ " = add i32 " ~ top ~ ", " ~ to!string(index));
+        add_output_line(tmp2 ~ " = and i32 " ~ tmp1 ~ ", 7");
+        add_output_line(addr ~ " = getelementptr " ~ get_load_type("%_cpu") ~ " %cpu, i32 0, i32 12, i32 " ~ tmp2);
+    }
+
+    return addr;
+}
+
+string get_float_reg_value(string top, int index, int float_stack_top)
+{
+    string reg;
+
+    if (procedure_optimization_level >= 1)
+    {
+        int stack_index = (index + float_stack_top) & 7;
+
+        if (float_reg_state[stack_index] == RegisterState.Empty)
+        {
+            float_reg_state[stack_index] = RegisterState.Read;
+
+            string addr = get_float_reg_addr(top, index);
+            reg = get_new_temporary_register();
+            add_output_line(reg ~ " = load " ~ get_load_type("double") ~ " " ~ addr ~ ", align 4");
+
+            if (procedure_optimization_level >= 2)
+            {
+                current_temporary_float_register[stack_index] = reg.idup;
+            }
+            else
+            {
+                add_output_line("store double " ~ reg ~ ", double* %st" ~ to!string(stack_index) ~ ", align 8");
+            }
+        }
+        else
+        {
+            if (procedure_optimization_level >= 2)
+            {
+                reg = current_temporary_float_register[stack_index].idup;
+            }
+            else
+            {
+                reg = get_new_temporary_register();
+                add_output_line(reg ~ " = load " ~ get_load_type("double") ~ " %st" ~ to!string(stack_index) ~ ", align 8");
+            }
+        }
+    }
+    else
+    {
+        string addr = get_float_reg_addr(top, index);
+        reg = get_new_temporary_register();
+
+        add_output_line(reg ~ " = load " ~ get_load_type("double") ~ " " ~ addr ~ ", align 4");
+    }
+
+    return reg;
+}
+
+void store_temporary_register_to_float_reg(string temp_reg, string top, int index, int float_stack_top, bool last_float_reg_write)
+{
+    if (procedure_optimization_level >= 1)
+    {
+        int stack_index = (index + float_stack_top) & 7;
+
+        float_reg_state[stack_index] = RegisterState.Write;
+        if (procedure_optimization_level >= 2)
+        {
+            current_temporary_float_register[stack_index] = temp_reg.idup;
+        }
+        else
+        {
+            add_output_line("store double " ~ temp_reg ~ ", double* %st" ~ to!string(stack_index) ~ ", align 8");
+        }
+
+        if (last_float_reg_write)
+        {
+            float_reg_state[stack_index] = RegisterState.Read;
+
+            string addr = get_float_reg_addr(top, index);
+
+            add_output_line("store double " ~ temp_reg ~ ", double* " ~ addr ~ ", align 4");
+        }
+    }
+    else
+    {
+        string addr = get_float_reg_addr(top, index);
+
+        add_output_line("store double " ~ temp_reg ~ ", double* " ~ addr ~ ", align 4");
+    }
+}
+
+void increase_float_stack_top(string top, int value, bool last_reg_write, int float_stack_top)
+{
+    if (procedure_optimization_level >= 1)
+    {
+        for (int i = 1; i <= value; i++)
+        {
+            float_reg_state[(float_stack_top + i - 1) & 7] = RegisterState.Empty;
+        }
+    }
+
+    string tmp = get_new_temporary_register();
+    string dst = get_new_temporary_register();
+
+    add_output_line(tmp ~ " = add i32 " ~ top ~ ", " ~ to!string(value));
+    add_output_line(dst ~ " = and i32 " ~ tmp ~ ", 7");
+    store_temporary_register_to_reg(dst, "st_top", last_reg_write);
+}
+
+void binary_float_instr(string instr, int paramtype, bool reverse_param, bool reverse_result, bool pop, param_struct paramvals0, bool last_reg_write0, bool last_reg_write1, int float_stack_top, bool last_float_reg_write0)
+{
+    string top = get_parameter_read_value(param_struct("reg", "st_top"));
+    string src1 = get_float_reg_value(top, 0, float_stack_top);
+
+    string src2, isrc;
+    int index;
+    switch (paramtype)
+    {
+        case 1: // INT32 reg/const
+            index = 0;
+            isrc = get_parameter_read_value(paramvals0);
+            src2 = get_new_temporary_register();
+            add_output_line(src2 ~ " = sitofp i32 " ~ isrc ~ " to double");
+            break;
+        case 2: // FLOAT reg/const
+            index = 0;
+            isrc = get_parameter_read_value(paramvals0);
+            string tmp = get_new_temporary_register();
+            src2 = get_new_temporary_register();
+            add_output_line(tmp ~ " = bitcast i32 " ~ isrc ~ " to float");
+            add_output_line(src2 ~ " = fpext float " ~ tmp ~ " to double");
+            break;
+        default:
+            index = paramvals0.ivalue;
+            src2 = get_float_reg_value(top, index, float_stack_top);
+            break;
+    }
+
+    string dst = get_new_temporary_register();
+
+    add_output_line(dst ~ " = " ~ instr ~ " double " ~ (reverse_param ? src2 : src1) ~ ", " ~ (reverse_param ? src1 : src2));
+
+    store_temporary_register_to_float_reg(dst, top, (reverse_result ? index : 0), float_stack_top, last_float_reg_write0);
+
+    if (pop)
+    {
+        increase_float_stack_top(top, 1, last_reg_write1, float_stack_top);
+    }
+
+    store_temporary_register_to_reg("0", "st_sw_cond", last_reg_write0);
+}
+
+void compare_float_instr(int paramtype, int pop, param_struct paramvals0, bool last_reg_write0, bool last_reg_write1, int float_stack_top)
+{
+    string top = get_parameter_read_value(param_struct("reg", "st_top"));
+    string src1 = get_float_reg_value(top, 0, float_stack_top);
+
+    string src2, isrc;
+    switch (paramtype)
+    {
+        case 2: // FLOAT reg/const
+            isrc = get_parameter_read_value(paramvals0);
+            string tmp1 = get_new_temporary_register();
+            src2 = get_new_temporary_register();
+            add_output_line(tmp1 ~ " = bitcast i32 " ~ isrc ~ " to float");
+            add_output_line(src2 ~ " = fpext float " ~ tmp1 ~ " to double");
+            break;
+        default:
+            int index = paramvals0.ivalue;
+            src2 = get_float_reg_value(top, index, float_stack_top);
+            break;
+    }
+
+    string tmp2 = get_new_temporary_register();
+    string tmp3 = get_new_temporary_register();
+    string tmp4 = get_new_temporary_register();
+    string dst = get_new_temporary_register();
+
+    add_output_line(tmp2 ~ " = fcmp olt double " ~ src1 ~ ", " ~ src2);
+    add_output_line(tmp3 ~ " = fcmp oeq double " ~ src1 ~ ", " ~ src2);
+    add_output_line(tmp4 ~ " = select i1 " ~ tmp3 ~ ", i32 " ~ to!string(0x4000) ~ ", i32 0");
+    add_output_line(dst ~ " = select i1 " ~ tmp2 ~ ", i32 " ~ to!string(0x0100) ~ ", i32 " ~ tmp4);
+
+    store_temporary_register_to_reg(dst, "st_sw_cond", last_reg_write0);
+
+    if (pop > 0)
+    {
+        increase_float_stack_top(top, pop, last_reg_write1, float_stack_top);
+    }
+}
+
 void writeback_register(int regnum)
 {
     string reg;
@@ -1450,17 +1789,58 @@ void writeback_registers()
     }
 }
 
+void writeback_float_register(int stack_index, string top, int float_stack_top)
+{
+    string reg;
+
+    if (procedure_optimization_level >= 2)
+    {
+        reg = current_temporary_float_register[stack_index].idup;
+    }
+    else
+    {
+        reg = get_new_temporary_register();
+        add_output_line(reg ~ " = load " ~ get_load_type("double") ~ " %st" ~ to!string(stack_index) ~ ", align 8");
+    }
+
+    string addr = get_float_reg_addr(top, (stack_index + 8 - float_stack_top) & 7);
+
+    add_output_line("store double " ~ reg ~ ", double* " ~ addr ~ ", align 4");
+
+    float_reg_state[stack_index] = RegisterState.Read;
+}
+
+void writeback_float_registers(int float_stack_top)
+{
+    string top = "";
+
+    for (int i = 0; i < num_float_regs; i++)
+    {
+        if (float_reg_state[i] == RegisterState.Write)
+        {
+            if (top == "")
+            {
+                top = get_parameter_read_value(param_struct("reg", "st_top"));
+            }
+            writeback_float_register(i, top, float_stack_top);
+        }
+    }
+}
+
 bool process_proc_body(string proc_name)
 {
 // todo: optimize access to x86 regs
     current_proc = proc_name;
     auto curproc = proc_list[proc_name];
     bool is_inside_if = false;
-    bool is_static_if, static_if_result;
+    bool is_static_if, static_if_result, if_contains_call;
+    int current_float_stack_top, if_float_stack_top;
     string endif_label;
     proc_instr_struct[] proc_instr_info;
     RegisterState[num_regs] if_reg_state;
+    RegisterState[num_float_regs] if_float_reg_state;
     bool[string] used_reg_list;
+    bool[int] used_float_reg_list;
 
     if (curproc.lines.length == 0)
     {
@@ -1475,6 +1855,8 @@ bool process_proc_body(string proc_name)
 /* ****************************************************************** */
 /* analyze / check pass */
 
+    current_float_stack_top = 0;
+
     for (int linenum = 0; linenum < curproc.lines.length; linenum++)
     {
         current_line = curproc.lines[linenum];
@@ -1484,10 +1866,18 @@ bool process_proc_body(string proc_name)
         proc_instr_info[linenum].is_inside_if = false;
         proc_instr_info[linenum].func_has_return_value = false;
         proc_instr_info[linenum].if_contains_call = false;
+        proc_instr_info[linenum].if_changes_st_top = false;
+        proc_instr_info[linenum].float_stack_top = current_float_stack_top;
         proc_instr_info[linenum].write_reg[0] = "";
         proc_instr_info[linenum].write_reg[1] = "";
+        proc_instr_info[linenum].write_reg[2] = "";
+        proc_instr_info[linenum].write_float_reg[0] = -1;
+        proc_instr_info[linenum].write_float_reg[1] = -1;
         proc_instr_info[linenum].last_reg_write[0] = false;
         proc_instr_info[linenum].last_reg_write[1] = false;
+        proc_instr_info[linenum].last_reg_write[2] = false;
+        proc_instr_info[linenum].last_float_reg_write[0] = false;
+        proc_instr_info[linenum].last_float_reg_write[1] = false;
         proc_instr_info[linenum].params.length = 0;
 
         string[] params;
@@ -1754,9 +2144,10 @@ bool process_proc_body(string proc_name)
                 if (proc_instr_info[linenum].func_has_return_value)
                 {
                     proc_instr_info[linenum].write_reg[0] = "tmp0";
-
-                    // update list of used registers in procedure
-                    used_reg_list["tmp0"] = true;
+                }
+                if (is_inside_if)
+                {
+                    if_contains_call = true;
                 }
                 break;
             case "imul": // imul reg, reg, reg, reg/const
@@ -1775,6 +2166,8 @@ bool process_proc_body(string proc_name)
 
                     is_inside_if = true;
                     is_static_if = false;
+                    if_contains_call = false;
+                    if_float_stack_top = current_float_stack_top;
 
                     if (procedure_optimization_level >= 1)
                     {
@@ -1855,10 +2248,17 @@ bool process_proc_body(string proc_name)
 
                     is_inside_if = false;
                     proc_instr_info[linenum].is_inside_if = false;
+                    proc_instr_info[linenum].if_contains_call = if_contains_call;
+                    proc_instr_info[linenum].if_changes_st_top = (current_float_stack_top != if_float_stack_top);
 
                     if (is_static_if)
                     {
                         proc_instr_info[linenum].is_valid = false;
+
+                        if (!static_if_result)
+                        {
+                            current_float_stack_top = if_float_stack_top;
+                        }
                     }
                 }
                 break;
@@ -1873,9 +2273,204 @@ bool process_proc_body(string proc_name)
                 proc_instr_info[linenum].write_reg[0] = "eax";
                 proc_instr_info[linenum].write_reg[1] = "edx";
                 break;
+            case "FLDCW_UINT16": // FLDCW_UINT16 reg/const
+                proc_instr_info[linenum].write_reg[0] = "st_cw";
+                break;
+            case "FNSTCW_VOID":
+                proc_instr_info[linenum].write_reg[0] = "tmp0";
+                // update list of used registers in procedure
+                used_reg_list["st_cw"] = true;
+                break;
+            case "FNSTSW_VOID":
+                proc_instr_info[linenum].write_reg[0] = "tmp0";
+                // update list of used registers in procedure
+                used_reg_list["st_sw_cond"] = true;
+                used_reg_list["st_top"] = true;
+                break;
+            case "FCHS_VOID":
+            case "FIADD_INT32": // FIADD_INT32 reg/const
+            case "FADD_FLOAT": // FADD_FLOAT reg/const
+            case "FISUB_INT32": // FISUB_INT32 reg/const
+            case "FISUBR_INT32": // FISUBR_INT32 reg/const
+            case "FSUB_FLOAT": // FSUB_FLOAT reg/const
+            case "FSUBR_FLOAT": // FSUBR_FLOAT reg/const
+            case "FIMUL_INT32": // FIMUL_INT32 reg/const
+            case "FMUL_FLOAT": // FMUL_FLOAT reg/const
+            case "FDIV_FLOAT": // FDIV_FLOAT reg/const
+            case "FDIVR_FLOAT": // FDIVR_FLOAT reg/const
+            case "FIDIV_INT32": // FIDIV_INT32 reg/const
+            case "FIDIVR_INT32": // FIDIVR_INT32 reg/const
+            case "FSQRT_VOID":
+            case "FSIN_VOID":
+            case "FCOS_VOID":
+            case "FLOG_VOID":
+            case "FLOG10_VOID":
+            case "FABS_VOID":
+            case "FROUND_VOID":
+                proc_instr_info[linenum].write_reg[0] = "st_sw_cond";
+                proc_instr_info[linenum].write_float_reg[0] = current_float_stack_top;
+                // update list of used registers in procedure
+                used_reg_list["st_top"] = true;
+                break;
+            case "FXCH_ST": // FXCH_ST const
+                proc_instr_info[linenum].write_reg[0] = "st_sw_cond";
+                proc_instr_info[linenum].write_float_reg[0] = current_float_stack_top;
+                proc_instr_info[linenum].write_float_reg[1] = (current_float_stack_top + paramvals[0].ivalue) & 7;
+                // update list of used registers in procedure
+                used_reg_list["st_top"] = true;
+                break;
+            case "FST_ST": // FST_ST const
+            case "FADD_TO_ST": // FADD_TO_ST const
+            case "FSUB_TO_ST": // FSUB_TO_ST const
+            case "FMUL_TO_ST": // FMUL_TO_ST const
+            case "FDIV_TO_ST": // FDIV_TO_ST const
+                proc_instr_info[linenum].write_reg[0] = "st_sw_cond";
+                proc_instr_info[linenum].write_float_reg[0] = (current_float_stack_top + paramvals[0].ivalue) & 7;
+                // update list of used registers in procedure
+                used_reg_list["st_top"] = true;
+                used_float_reg_list[current_float_stack_top] = true;
+                break;
+            case "FADD_ST": // FADD_ST const
+            case "FSUB_ST": // FSUB_ST const
+            case "FSUBR_ST": // FSUBR_ST const
+            case "FMUL_ST": // FMUL_ST const
+            case "FDIV_ST": // FDIV_ST const
+            case "FDIVR_ST": // FDIVR_ST const
+                proc_instr_info[linenum].write_reg[0] = "st_sw_cond";
+                proc_instr_info[linenum].write_float_reg[0] = current_float_stack_top;
+                // update list of used registers in procedure
+                used_reg_list["st_top"] = true;
+                used_float_reg_list[(current_float_stack_top + paramvals[0].ivalue) & 7] = true;
+                break;
+            case "FCOM_FLOAT": // FCOM_FLOAT reg/const
+                proc_instr_info[linenum].write_reg[0] = "st_sw_cond";
+                // update list of used registers in procedure
+                used_reg_list["st_top"] = true;
+                used_float_reg_list[current_float_stack_top] = true;
+                break;
+            case "FCOM_ST": // FCOM_ST const
+            case "FUCOM_ST": // FUCOM_ST const
+                proc_instr_info[linenum].write_reg[0] = "st_sw_cond";
+                // update list of used registers in procedure
+                used_reg_list["st_top"] = true;
+                used_float_reg_list[current_float_stack_top] = true;
+                used_float_reg_list[(current_float_stack_top + paramvals[0].ivalue) & 7] = true;
+                break;
+            case "FILD_INT32": // FILD_INT32 reg/const
+            case "FLD_FLOAT": // FLD_FLOAT reg/const
+            case "FLD1_VOID":
+            case "FLDLG2_VOID":
+            case "FLDLN2_VOID":
+            case "FLDZ_VOID":
+                proc_instr_info[linenum].write_reg[0] = "st_sw_cond";
+                proc_instr_info[linenum].write_reg[1] = "st_top";
+                current_float_stack_top = (current_float_stack_top + 7) & 7;
+                proc_instr_info[linenum].write_float_reg[0] = current_float_stack_top;
+                break;
+            case "FLD_ST": // FLD_ST const
+                proc_instr_info[linenum].write_reg[0] = "st_sw_cond";
+                proc_instr_info[linenum].write_reg[1] = "st_top";
+                // update list of used registers in procedure
+                used_float_reg_list[(current_float_stack_top + paramvals[0].ivalue) & 7] = true;
+
+                current_float_stack_top = (current_float_stack_top + 7) & 7;
+                proc_instr_info[linenum].write_float_reg[0] = current_float_stack_top;
+                break;
+            case "FSTP_ST": // FSTP_ST const
+            case "FADDP_ST": // FADDP_ST const
+            case "FSUBP_ST": // FSUBP_ST const
+            case "FSUBRP_ST": // FSUBRP_ST const
+            case "FMULP_ST": // FMULP_ST const
+            case "FDIVP_ST": // FDIVP_ST const
+            case "FDIVRP_ST": // FDIVRP_ST const
+                proc_instr_info[linenum].write_reg[0] = "st_sw_cond";
+                proc_instr_info[linenum].write_reg[1] = "st_top";
+                proc_instr_info[linenum].write_float_reg[0] = (current_float_stack_top + paramvals[0].ivalue) & 7;
+                // update list of used registers in procedure
+                used_float_reg_list[current_float_stack_top] = true;
+
+                current_float_stack_top = (current_float_stack_top + 1) & 7;
+                break;
+            case "FCOMP_FLOAT": // FCOMP_FLOAT reg/const
+                proc_instr_info[linenum].write_reg[0] = "st_sw_cond";
+                proc_instr_info[linenum].write_reg[1] = "st_top";
+                // update list of used registers in procedure
+                used_float_reg_list[current_float_stack_top] = true;
+
+                current_float_stack_top = (current_float_stack_top + 1) & 7;
+                break;
+            case "FCOMP_ST": // FCOMP_ST const
+            case "FUCOMP_ST": // FUCOMP_ST const
+                proc_instr_info[linenum].write_reg[0] = "st_sw_cond";
+                proc_instr_info[linenum].write_reg[1] = "st_top";
+                // update list of used registers in procedure
+                used_float_reg_list[current_float_stack_top] = true;
+                used_float_reg_list[(current_float_stack_top + paramvals[0].ivalue) & 7] = true;
+
+                current_float_stack_top = (current_float_stack_top + 1) & 7;
+                break;
+            case "FMOD_VOID":
+            case "FMODR_VOID":
+            case "FPOW_VOID":
+            case "FPOWR_VOID":
+            case "FYL2X_VOID":
+                proc_instr_info[linenum].write_reg[0] = "st_sw_cond";
+                proc_instr_info[linenum].write_reg[1] = "st_top";
+                proc_instr_info[linenum].write_float_reg[0] = (current_float_stack_top + 1) & 7;
+                // update list of used registers in procedure
+                used_float_reg_list[current_float_stack_top] = true;
+
+                current_float_stack_top = (current_float_stack_top + 1) & 7;
+                break;
+            case "FCOMPP_VOID":
+            case "FUCOMPP_VOID":
+                proc_instr_info[linenum].write_reg[0] = "st_sw_cond";
+                proc_instr_info[linenum].write_reg[1] = "st_top";
+                // update list of used registers in procedure
+                used_float_reg_list[current_float_stack_top] = true;
+                used_float_reg_list[(current_float_stack_top + 1) & 7] = true;
+
+                current_float_stack_top = (current_float_stack_top + 2) & 7;
+                break;
+            case "FST_FLOAT":
+            case "FSTP_FLOAT":
+                proc_instr_info[linenum].write_reg[0] = "st_sw_cond";
+                proc_instr_info[linenum].write_reg[2] = "tmp0";
+                // update list of used registers in procedure
+                used_reg_list["st_top"] = true;
+                used_float_reg_list[current_float_stack_top] = true;
+
+                if (current_line.word == "FSTP_FLOAT")
+                {
+                    proc_instr_info[linenum].write_reg[1] = "st_top";
+                    current_float_stack_top = (current_float_stack_top + 1) & 7;
+                }
+                break;
             default:
                 write_error2("Unhandled instruction: " ~ current_line.orig);
                 return false;
+        }
+
+        // update list of used registers in procedure
+        for (int i = 0; i <= 2; i++)
+        {
+            string reg = proc_instr_info[linenum].write_reg[i];
+
+            if (reg != "")
+            {
+                used_reg_list[reg] = true;
+            }
+        }
+
+        // update list of used float registers in procedure
+        for (int i = 0; i <= 1; i++)
+        {
+            int reg = proc_instr_info[linenum].write_float_reg[i];
+
+            if (reg >= 0)
+            {
+                used_float_reg_list[reg] = true;
+            }
         }
     }
 
@@ -1890,12 +2485,17 @@ bool process_proc_body(string proc_name)
 
     if (procedure_optimization_level >= 1)
     {
-        bool if_contains_call;
+        bool if_changes_st_top;
         bool[string] last_reg_write;
+        bool[num_float_regs] last_float_reg_write;
 
         foreach (reg; registers_base_list)
         {
             last_reg_write[reg] = true;
+        }
+        for (int i = 0; i < num_float_regs; i++)
+        {
+            last_float_reg_write[i] = true;
         }
 
         for (int linenum = cast(int)(curproc.lines.length) - 1; linenum >= 0; linenum--)
@@ -1906,14 +2506,11 @@ bool process_proc_body(string proc_name)
 
             if (is_inside_if)
             {
-                if (instr_word == "call")
-                {
-                    if_contains_call = true;
-                }
-                else if (instr_word == "ifz" || instr_word == "ifnz")
+                if (instr_word == "ifz" || instr_word == "ifnz")
                 {
                     is_inside_if = false;
                     proc_instr_info[linenum].if_contains_call = if_contains_call;
+                    proc_instr_info[linenum].if_changes_st_top = if_changes_st_top;
                 }
             }
             else
@@ -1921,11 +2518,12 @@ bool process_proc_body(string proc_name)
                 if (instr_word == "endif")
                 {
                     is_inside_if = true;
-                    if_contains_call = false;
+                    if_contains_call = proc_instr_info[linenum].if_contains_call;
+                    if_changes_st_top = proc_instr_info[linenum].if_changes_st_top;
                 }
             }
 
-            for (int i = 0; i <= 1; i++)
+            for (int i = 0; i <= 2; i++)
             {
                 string reg = proc_instr_info[linenum].write_reg[i];
 
@@ -1942,12 +2540,36 @@ bool process_proc_body(string proc_name)
                     last_reg_write[reg] = false;
                 }
             }
+            for (int i = 0; i <= 1; i++)
+            {
+                int stack_index = proc_instr_info[linenum].write_float_reg[i];
+
+                if (stack_index >= 0)
+                {
+                    if (last_float_reg_write[stack_index])
+                    {
+                        if (!proc_instr_info[linenum].is_inside_if)
+                        {
+                            proc_instr_info[linenum].last_float_reg_write[i] = true;
+                        }
+                    }
+
+                    last_float_reg_write[stack_index] = false;
+                }
+            }
 
             if (instr_word == "call" || ((instr_word == "ifz" || instr_word == "ifnz") && proc_instr_info[linenum].if_contains_call))
             {
                 foreach (reg; registers_base_list)
                 {
                     last_reg_write[reg] = true;
+                }
+            }
+            if (instr_word == "call" || ((instr_word == "ifz" || instr_word == "ifnz") && (proc_instr_info[linenum].if_contains_call || proc_instr_info[linenum].if_changes_st_top)))
+            {
+                for (int i = 0; i < num_float_regs; i++)
+                {
+                    last_float_reg_write[i] = true;
                 }
             }
         }
@@ -1959,7 +2581,8 @@ bool process_proc_body(string proc_name)
     temporary_register_index = 0;
     label_index = 0;
     current_temporary_register = (string[string]).init; // clear list
-    if (current_temporary_register.length != 0)
+    current_temporary_float_register = (string[int]).init; // clear list
+    if (current_temporary_register.length != 0 || current_temporary_float_register.length != 0)
     {
         write_error2("Error clearing current_temporary_register");
         return false;
@@ -1973,6 +2596,15 @@ bool process_proc_body(string proc_name)
             if (procedure_optimization_level == 1 && registers_base_list[i] in used_reg_list)
             {
                 add_output_line("%" ~ registers_base_list[i] ~ " = alloca i32, align 4");
+            }
+        }
+
+        for (int i = 0; i < num_float_regs; i++)
+        {
+            float_reg_state[i] = RegisterState.Empty;
+            if (procedure_optimization_level == 1 && i in used_float_reg_list)
+            {
+                add_output_line("%st" ~ to!string(i) ~ " = alloca double, align 8");
             }
         }
     }
@@ -1996,7 +2628,9 @@ bool process_proc_body(string proc_name)
         if (!proc_instr_info[linenum].is_valid) continue;
 
         param_struct[] paramvals = proc_instr_info[linenum].params;
-        bool[2] last_reg_write = proc_instr_info[linenum].last_reg_write;
+        bool[3] last_reg_write = proc_instr_info[linenum].last_reg_write;
+        bool[2] last_float_reg_write = proc_instr_info[linenum].last_float_reg_write;
+        current_float_stack_top = proc_instr_info[linenum].float_stack_top;
 
 
         switch (current_line.word)
@@ -2162,6 +2796,7 @@ bool process_proc_body(string proc_name)
                     if (procedure_optimization_level >= 1)
                     {
                         writeback_registers();
+                        writeback_float_registers(current_float_stack_top);
                     }
 
                     if (no_tail_calls)
@@ -2192,6 +2827,7 @@ bool process_proc_body(string proc_name)
                     if (procedure_optimization_level >= 1)
                     {
                         writeback_registers();
+                        writeback_float_registers(current_float_stack_top);
                     }
 
                     string condreg = get_parameter_read_value(paramvals[0]);
@@ -2261,6 +2897,7 @@ bool process_proc_body(string proc_name)
                     if (procedure_optimization_level >= 1)
                     {
                         writeback_registers();
+                        writeback_float_registers(current_float_stack_top);
                     }
 
                     auto func = func_list[current_line.param1];
@@ -2303,6 +2940,12 @@ bool process_proc_body(string proc_name)
                         }
                         // todo: vycistit vsetko, alebo iba x86 registre ?
                         current_temporary_register = (string[string]).init; // clear list
+
+                        for (int i = 0; i < num_float_regs; i++)
+                        {
+                            float_reg_state[i] = RegisterState.Empty;
+                        }
+                        current_temporary_float_register = (string[int]).init; // clear list
                     }
 
                     if (func.has_return_value)
@@ -2353,6 +2996,10 @@ bool process_proc_body(string proc_name)
                         {
                             writeback_registers();
                         }
+                        if (proc_instr_info[linenum].if_contains_call || proc_instr_info[linenum].if_changes_st_top)
+                        {
+                            writeback_float_registers(current_float_stack_top);
+                        }
                     }
 
                     string condreg = get_parameter_read_value(paramvals[0]);
@@ -2365,6 +3012,7 @@ bool process_proc_body(string proc_name)
                     if (procedure_optimization_level >= 1)
                     {
                         if_reg_state = register_state.dup;
+                        if_float_reg_state = float_reg_state.dup;
                     }
 
                     add_output_line(cond ~ " = icmp " ~ condtype ~ " i32 " ~ condreg ~ ", 0");
@@ -2395,7 +3043,44 @@ bool process_proc_body(string proc_name)
                                 }
                                 register_state[i] = RegisterState.Write;
                             }
+                        }
 
+                        if (proc_instr_info[linenum].if_contains_call || proc_instr_info[linenum].if_changes_st_top)
+                        {
+                            writeback_float_registers(current_float_stack_top);
+
+                            for (int i = 0; i < num_float_regs; i++)
+                            {
+                                float_reg_state[i] = RegisterState.Empty;
+                            }
+                            current_temporary_float_register = (string[int]).init; // clear list
+                        }
+                        else
+                        {
+                            string top = "";
+
+                            for (int i = 0; i < num_float_regs; i++)
+                            {
+                                if (float_reg_state[i] == if_float_reg_state[i]) continue;
+
+                                if (float_reg_state[i] == RegisterState.Write)
+                                {
+                                    if (top == "")
+                                    {
+                                        top = get_parameter_read_value(param_struct("reg", "st_top"));
+                                    }
+                                    writeback_float_register(i, top, current_float_stack_top);
+                                }
+
+                                if (float_reg_state[i] != if_float_reg_state[i])
+                                {
+                                    float_reg_state[i] = RegisterState.Empty;
+                                }
+                            }
+                        }
+
+                        for (int i = 0; i < num_regs; i++)
+                        {
                             if (register_state[i] != if_reg_state[i])
                             {
                                 register_state[i] = RegisterState.Empty;
@@ -2430,10 +3115,7 @@ bool process_proc_body(string proc_name)
             case "DIV_64_ZE": // DIV_64_ZE reg/const
             case "IDIV_64_SE": // IDIV_64_SE reg/const
                 {
-                    param_struct parameax;
-                    parameax.type = "reg";
-                    parameax.value = "eax";
-                    string src1 = get_parameter_read_value(parameax);
+                    string src1 = get_parameter_read_value(param_struct("reg", "eax"));
                     string src2 = get_parameter_read_value(paramvals[0]);
                     string dst1 = get_new_temporary_register();
                     string dst2 = get_new_temporary_register();
@@ -2445,6 +3127,339 @@ bool process_proc_body(string proc_name)
 
                     store_temporary_register_to_reg(dst1, "eax", last_reg_write[0]);
                     store_temporary_register_to_reg(dst2, "edx", last_reg_write[1]);
+                }
+                break;
+            case "FLDCW_UINT16": // FLDCW_UINT16 reg/const
+                {
+                    string src = get_parameter_read_value(paramvals[0]);
+                    string dst = get_new_temporary_register();
+
+                    add_output_line(dst ~ " = and i32 " ~ src ~ ", " ~ to!string(0xffff));
+
+                    store_temporary_register_to_reg(dst, "st_cw", last_reg_write[0]);
+                }
+                break;
+            case "FNSTCW_VOID":
+                {
+                    string src = get_parameter_read_value(param_struct("reg", "st_cw"));
+
+                    store_temporary_register_to_reg(src, "tmp0", last_reg_write[0]);
+                }
+                break;
+            case "FNSTSW_VOID":
+                {
+                    string src1 = get_parameter_read_value(param_struct("reg", "st_top"));
+                    string src2 = get_parameter_read_value(param_struct("reg", "st_sw_cond"));
+                    string dst1 = get_new_temporary_register();
+                    string dst2 = get_new_temporary_register();
+
+                    add_output_line(dst1 ~ " = shl i32 " ~ src1 ~ ", 11");
+                    add_output_line(dst2 ~ " = add i32 " ~ src2 ~ ", " ~ dst1);
+
+                    store_temporary_register_to_reg(dst2, "tmp0", last_reg_write[0]);
+                }
+                break;
+            case "FCHS_VOID":
+                {
+                    string top = get_parameter_read_value(param_struct("reg", "st_top"));
+                    string src = get_float_reg_value(top, 0, current_float_stack_top);
+                    string dst = get_new_temporary_register();
+
+                    add_output_line(dst ~ " = fneg double " ~ src);
+
+                    store_temporary_register_to_float_reg(dst, top, 0, current_float_stack_top, last_float_reg_write[0]);
+                    store_temporary_register_to_reg("0", "st_sw_cond", last_reg_write[0]);
+                }
+                break;
+            case "FXCH_ST": // FXCH_ST const
+                {
+                    string top = get_parameter_read_value(param_struct("reg", "st_top"));
+                    int index = paramvals[0].ivalue;
+                    string src1 = get_float_reg_value(top, 0, current_float_stack_top);
+                    string src2 = get_float_reg_value(top, index, current_float_stack_top);
+
+                    store_temporary_register_to_float_reg(src1, top, index, current_float_stack_top, last_float_reg_write[1]);
+                    store_temporary_register_to_float_reg(src2, top, 0, current_float_stack_top, last_float_reg_write[0]);
+                    store_temporary_register_to_reg("0", "st_sw_cond", last_reg_write[0]);
+                }
+                break;
+            case "FILD_INT32": // FILD_INT32 reg/const
+            case "FLD_FLOAT": // FLD_FLOAT reg/const
+            case "FLD_ST": // FLD_ST const
+            case "FLD1_VOID":
+            case "FLDLG2_VOID":
+            case "FLDLN2_VOID":
+            case "FLDZ_VOID":
+                {
+                    string top1 = get_parameter_read_value(param_struct("reg", "st_top"));
+
+                    string src, dst;
+                    switch (current_line.word)
+                    {
+                        case "FILD_INT32": // FILD_INT32 reg/const
+                            src = get_parameter_read_value(paramvals[0]);
+                            dst = get_new_temporary_register();
+                            add_output_line(dst ~ " = sitofp i32 " ~ src ~ " to double");
+                            break;
+                        case "FLD_FLOAT": // FLD_FLOAT reg/const
+                            src = get_parameter_read_value(paramvals[0]);
+                            string tmp1 = get_new_temporary_register();
+                            dst = get_new_temporary_register();
+                            add_output_line(tmp1 ~ " = bitcast i32 " ~ src ~ " to float");
+                            add_output_line(dst ~ " = fpext float " ~ tmp1 ~ " to double");
+                            break;
+                        case "FLD_ST": // FLD_ST const
+                            int index = paramvals[0].ivalue;
+                            dst = get_float_reg_value(top1, index, current_float_stack_top);
+                            break;
+                        case "FLD1_VOID":
+                            dst = "1.0";
+                            break;
+                        case "FLDLG2_VOID":
+                            dst = "0.30102999566398119521";
+                            break;
+                        case "FLDLN2_VOID":
+                            dst = "0.69314718055994530942";
+                            break;
+                        case "FLDZ_VOID":
+                            dst = "0.0";
+                            break;
+                        default:
+                            assert(0);
+                    }
+
+                    string tmp2 = get_new_temporary_register();
+                    string top2 = get_new_temporary_register();
+
+                    add_output_line(tmp2 ~ " = add i32 " ~ top1 ~ ", 7");
+                    add_output_line(top2 ~ " = and i32 " ~ tmp2 ~ ", 7");
+
+                    store_temporary_register_to_float_reg(dst, top2, 0, (current_float_stack_top + 7) & 7, last_float_reg_write[0]);
+                    store_temporary_register_to_reg(top2, "st_top", last_reg_write[1]);
+                    store_temporary_register_to_reg("0", "st_sw_cond", last_reg_write[0]);
+                }
+                break;
+            case "FST_FLOAT":
+            case "FST_ST": // FST_ST const
+            case "FSTP_FLOAT":
+            case "FSTP_ST": // FSTP_ST const
+                {
+                    string top = get_parameter_read_value(param_struct("reg", "st_top"));
+
+                    if (current_line.word == "FST_ST" || current_line.word == "FSTP_ST")
+                    {
+                        int index = paramvals[0].ivalue;
+                        if (index != 0)
+                        {
+                            string src = get_float_reg_value(top, 0, current_float_stack_top);
+                            store_temporary_register_to_float_reg(src, top, index, current_float_stack_top, last_float_reg_write[0]);
+                        }
+                    }
+                    else
+                    {
+                        string src = get_float_reg_value(top, 0, current_float_stack_top);
+                        string tmp = get_new_temporary_register();
+                        string dst = get_new_temporary_register();
+
+                        add_output_line(tmp ~ " = fptrunc double " ~ src ~ " to float");
+                        add_output_line(dst ~ " = bitcast float " ~ tmp ~ " to i32");
+                        store_temporary_register_to_reg(dst, "tmp0", last_reg_write[2]);
+                    }
+
+                    if (current_line.word == "FSTP_FLOAT" || current_line.word == "FSTP_ST")
+                    {
+                        increase_float_stack_top(top, 1, last_reg_write[1], current_float_stack_top);
+                    }
+
+                    store_temporary_register_to_reg("0", "st_sw_cond", last_reg_write[0]);
+                }
+                break;
+            case "FIADD_INT32": // FIADD_INT32 reg/const
+                binary_float_instr("fadd", 1, false, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FADD_FLOAT": // FADD_FLOAT reg/const
+                binary_float_instr("fadd", 2, false, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FADD_ST": // FADD_ST const
+                binary_float_instr("fadd", 0, false, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FADD_TO_ST": // FADD_TO_ST const
+                binary_float_instr("fadd", 0, true, true, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FADDP_ST": // FADDP_ST const
+                binary_float_instr("fadd", 0, true, true, true, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FISUB_INT32": // FISUB_INT32 reg/const
+                binary_float_instr("fsub", 1, false, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FISUBR_INT32": // FISUBR_INT32 reg/const
+                binary_float_instr("fsub", 1, true, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FSUB_FLOAT": // FSUB_FLOAT reg/const
+                binary_float_instr("fsub", 2, false, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FSUB_ST": // FSUB_ST const
+                binary_float_instr("fsub", 0, false, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FSUB_TO_ST": // FSUB_TO_ST const
+                binary_float_instr("fsub", 0, true, true, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FSUBP_ST": // FSUBP_ST const
+                binary_float_instr("fsub", 0, true, true, true, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FSUBR_FLOAT": // FSUBR_FLOAT reg/const
+                binary_float_instr("fsub", 2, true, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FSUBR_ST": // FSUBR_ST const
+                binary_float_instr("fsub", 0, true, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FSUBRP_ST": // FSUBRP_ST const
+                binary_float_instr("fsub", 0, false, true, true, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FIMUL_INT32": // FIMUL_INT32 reg/const
+                binary_float_instr("fmul", 1, false, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FMUL_FLOAT": // FMUL_FLOAT reg/const
+                binary_float_instr("fmul", 2, false, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FMUL_ST": // FMUL_ST const
+                binary_float_instr("fmul", 0, false, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FMUL_TO_ST": // FMUL_TO_ST const
+                binary_float_instr("fmul", 0, true, true, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FMULP_ST": // FMULP_ST const
+                binary_float_instr("fmul", 0, true, true, true, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FDIV_FLOAT": // FDIV_FLOAT reg/const
+                binary_float_instr("fdiv", 2, false, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FDIV_ST": // FDIV_ST const
+                binary_float_instr("fdiv", 0, false, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FDIV_TO_ST": // FDIV_TO_ST const
+                binary_float_instr("fdiv", 0, true, true, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FDIVP_ST": // FDIVP_ST const
+                binary_float_instr("fdiv", 0, true, true, true, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FDIVR_FLOAT": // FDIVR_FLOAT reg/const
+                binary_float_instr("fdiv", 2, true, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FDIVR_ST": // FDIVR_ST const
+                binary_float_instr("fdiv", 0, true, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FDIVRP_ST": // FDIVRP_ST const
+                binary_float_instr("fdiv", 0, false, true, true, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FIDIV_INT32": // FIDIV_INT32 reg/const
+                binary_float_instr("fdiv", 1, false, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FIDIVR_INT32": // FIDIVR_INT32 reg/const
+                binary_float_instr("fdiv", 1, true, false, false, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FCOM_FLOAT": // FCOM_FLOAT reg/const
+                compare_float_instr(2, 0, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top);
+                break;
+            case "FCOM_ST": // FCOM_ST const
+            case "FUCOM_ST": // FUCOM_ST const
+                compare_float_instr(0, 0, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top);
+                break;
+            case "FCOMP_FLOAT": // FCOMP_FLOAT reg/const
+                compare_float_instr(2, 1, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top);
+                break;
+            case "FCOMP_ST": // FCOMP_ST const
+            case "FUCOMP_ST": // FUCOMP_ST const
+                compare_float_instr(0, 1, paramvals[0], last_reg_write[0], last_reg_write[1], current_float_stack_top);
+                break;
+            case "FCOMPP_VOID":
+            case "FUCOMPP_VOID":
+                compare_float_instr(0, 2, param_struct("const", "1", 1), last_reg_write[0], last_reg_write[1], current_float_stack_top);
+                break;
+            case "FMOD_VOID":
+                binary_float_instr("frem", 0, false, true, true, param_struct("const", "1", 1), last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FMODR_VOID":
+                binary_float_instr("frem", 0, true, true, true, param_struct("const", "1", 1), last_reg_write[0], last_reg_write[1], current_float_stack_top, last_float_reg_write[0]);
+                break;
+            case "FSQRT_VOID":
+            case "FSIN_VOID":
+            case "FCOS_VOID":
+            case "FLOG_VOID":
+            case "FLOG10_VOID":
+            case "FABS_VOID":
+            case "FROUND_VOID":
+                {
+                    string top = get_parameter_read_value(param_struct("reg", "st_top"));
+                    string src = get_float_reg_value(top, 0, current_float_stack_top);
+                    string dst = get_new_temporary_register();
+
+                    string instr;
+                    switch (current_line.word)
+                    {
+                        case "FSQRT_VOID":
+                            instr = "sqrt";
+                            break;
+                        case "FSIN_VOID":
+                            instr = "sin";
+                            break;
+                        case "FCOS_VOID":
+                            instr = "cos";
+                            break;
+                        case "FLOG_VOID":
+                            instr = "log";
+                            break;
+                        case "FLOG10_VOID":
+                            instr = "log10";
+                            break;
+                        case "FABS_VOID":
+                            instr = "fabs";
+                            break;
+                        case "FROUND_VOID":
+                            instr = "round";
+                            break;
+                        default:
+                            assert(0);
+                    }
+
+                    add_output_line(dst ~ " = call double @llvm." ~ instr ~ ".f64(double " ~ src ~ ")");
+
+                    store_temporary_register_to_float_reg(dst, top, 0, current_float_stack_top, last_float_reg_write[0]);
+                    store_temporary_register_to_reg("0", "st_sw_cond", last_reg_write[0]);
+                }
+                break;
+            case "FPOW_VOID":
+            case "FPOWR_VOID":
+                {
+                    string top = get_parameter_read_value(param_struct("reg", "st_top"));
+                    string src1 = get_float_reg_value(top, 0, current_float_stack_top);
+                    string src2 = get_float_reg_value(top, 1, current_float_stack_top);
+                    string dst = get_new_temporary_register();
+
+                    bool reverse_params = (current_line.word == "FPOWR_VOID") ? true : false;
+                    add_output_line(dst ~ " = call double @llvm.pow.f64(double " ~ (reverse_params ? src2 : src1) ~ ", double " ~ (reverse_params ? src1 : src2) ~ ")");
+
+                    store_temporary_register_to_float_reg(dst, top, 1, current_float_stack_top, last_float_reg_write[0]);
+                    increase_float_stack_top(top, 1, last_reg_write[1], current_float_stack_top);
+                    store_temporary_register_to_reg("0", "st_sw_cond", last_reg_write[0]);
+                }
+                break;
+            case "FYL2X_VOID":
+                {
+                    string top = get_parameter_read_value(param_struct("reg", "st_top"));
+                    string src1 = get_float_reg_value(top, 0, current_float_stack_top);
+                    string tmp = get_new_temporary_register();
+
+                    add_output_line(tmp ~ " = call double @llvm.log2.f64(double " ~ src1 ~ ")");
+
+                    string src2 = get_float_reg_value(top, 1, current_float_stack_top);
+                    string dst = get_new_temporary_register();
+
+                    add_output_line(dst ~ " = fmul double " ~ src2 ~ ", " ~ tmp);
+
+                    store_temporary_register_to_float_reg(dst, top, 1, current_float_stack_top, last_float_reg_write[0]);
+                    increase_float_stack_top(top, 1, last_reg_write[1], current_float_stack_top);
+                    store_temporary_register_to_reg("0", "st_sw_cond", last_reg_write[0]);
                 }
                 break;
             default:
@@ -2498,6 +3513,8 @@ void write_usage()
     stderr.writeln("  -m64            set generated pointer size to 64 bits");
     stderr.writeln("  -no-tail-calls  disable generating tail calls");
     stderr.writeln("  -inline-idiv    allow inlining integer division instructions");
+    stderr.writeln("  -inline-float   allow inlining floating point instructions");
+    stderr.writeln("  -inline-float2  allow inlining floating point intrinsics/functions");
 }
 
 public int main(string[] args)
@@ -2514,6 +3531,8 @@ public int main(string[] args)
     no_tail_calls = false;
     pointer_size_64 = false;
     inline_idiv_instr = false;
+    inline_float_instr = false;
+    inline_float2_instr = false;
     for (int i = 1; i < args.length; i++)
     {
         switch(args[i])
@@ -2562,6 +3581,12 @@ public int main(string[] args)
                 break;
             case "-inline-idiv":
                 inline_idiv_instr = true;
+                break;
+            case "-inline-float":
+                inline_float_instr = true;
+                break;
+            case "-inline-float2":
+                inline_float2_instr = true;
                 break;
             default:
                 if (input_filename == "")
@@ -2713,7 +3738,7 @@ public int main(string[] args)
                 newmacro.lines[newmacro.lines.length - 1] = current_line.orig.idup;
             }
 
-            if ((!(newmacro.name in instructions_list)) || (newmacro.params.length != instructions_list[newmacro.name].params.length))
+            if ((newmacro.name !in instructions_list) || (newmacro.params.length != instructions_list[newmacro.name].params.length))
             {
                 macro_list[newmacro.name] = newmacro;
             }
@@ -3714,7 +4739,7 @@ public int main(string[] args)
         add_output_line("target datalayout = \"e-p:32:32-f64:32:64-n32\"");
     }
     add_output_line("");
-    add_output_line("%_cpu = type { i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }");
+    add_output_line("%_cpu = type { i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, [8 x double] }");
 
     add_output_line("");
     add_output_line("; data segments");
@@ -3862,6 +4887,42 @@ public int main(string[] args)
     if (used_bswap_intrinsics)
     {
         add_output_line("declare i32 @llvm.bswap.i32(i32)");
+    }
+    if (used_sqrt_intrinsics)
+    {
+        add_output_line("declare double @llvm.sqrt.f64(double)");
+    }
+    if (used_sin_intrinsics)
+    {
+        add_output_line("declare double @llvm.sin.f64(double)");
+    }
+    if (used_cos_intrinsics)
+    {
+        add_output_line("declare double @llvm.cos.f64(double)");
+    }
+    if (used_log_intrinsics)
+    {
+        add_output_line("declare double @llvm.log.f64(double)");
+    }
+    if (used_log10_intrinsics)
+    {
+        add_output_line("declare double @llvm.log10.f64(double)");
+    }
+    if (used_fabs_intrinsics)
+    {
+        add_output_line("declare double @llvm.fabs.f64(double)");
+    }
+    if (used_round_intrinsics)
+    {
+        add_output_line("declare double @llvm.round.f64(double)");
+    }
+    if (used_pow_intrinsics)
+    {
+        add_output_line("declare double @llvm.pow.f64(double, double)");
+    }
+    if (used_log2_intrinsics)
+    {
+        add_output_line("declare double @llvm.log2.f64(double)");
     }
 
     add_output_line("");

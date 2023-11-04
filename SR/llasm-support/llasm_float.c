@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019-2021 Roman Pauer
+ *  Copyright (C) 2019-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -141,7 +141,7 @@ const static double const_ln2 = M_LN2;
 #define ST1 ST(1)
 
 
-#define PUSH_REGS { { CLEAR_X87_FLAG(X87_C1); st_top = (st_top - 1) & 7; } }
+#define PUSH_REGS { { CLEAR_X87_FLAG(X87_C1); st_top = (st_top + 7) & 7; } }
 #define POP_REGS { st_top = (st_top + 1) & 7; CLEAR_X87_FLAG(X87_C1); }
 #define POP2_REGS { st_top = (st_top + 2) & 7; CLEAR_X87_FLAG(X87_C1); }
 
@@ -162,7 +162,7 @@ EXTERNC void x87_fadd_float(CPU, float_int num)
 
 EXTERNC void x87_fadd_double(CPU, uint32_t num_low, uint32_t num_high)
 {
-    register double_int num;
+    double_int num;
 
     num.low = num_low;
     num.high = num_high;
@@ -201,7 +201,7 @@ EXTERNC void x87_fcom_float(CPU, float_int num)
 
 EXTERNC void x87_fcom_double(CPU, uint32_t num_low, uint32_t num_high)
 {
-    register double_int num;
+    double_int num;
 
     num.low = num_low;
     num.high = num_high;
@@ -216,7 +216,7 @@ EXTERNC void x87_fcomp_float(CPU, float_int num)
 
 EXTERNC void x87_fcomp_double(CPU, uint32_t num_low, uint32_t num_high)
 {
-    register double_int num;
+    double_int num;
 
     num.low = num_low;
     num.high = num_high;
@@ -238,7 +238,7 @@ EXTERNC void x87_fdiv_float(CPU, float_int num)
 
 EXTERNC void x87_fdiv_double(CPU, uint32_t num_low, uint32_t num_high)
 {
-    register double_int num;
+    double_int num;
 
     num.low = num_low;
     num.high = num_high;
@@ -272,7 +272,7 @@ EXTERNC void x87_fdivr_float(CPU, float_int num)
 
 EXTERNC void x87_fdivr_double(CPU, uint32_t num_low, uint32_t num_high)
 {
-    register double_int num;
+    double_int num;
 
     num.low = num_low;
     num.high = num_high;
@@ -323,7 +323,7 @@ EXTERNC void x87_fild_int32(CPU, int32_t num)
 
 EXTERNC void x87_fild_int64(CPU, uint32_t num_low, uint32_t num_high)
 {
-    register int_int num;
+    int_int num;
 
     num.low = num_low;
     num.high = num_high;
@@ -340,8 +340,8 @@ EXTERNC void x87_fninit_void(CPU)
 
 EXTERNC int32_t x87_fistp_int32(CPU)
 {
-    register double dval, orig;
-    register int32_t ival;
+    double dval, orig;
+    int32_t ival;
 
     switch ((st_cw >> X87_RC_SHIFT) & 3)
     {
@@ -383,13 +383,13 @@ EXTERNC int32_t x87_fistp_int32(CPU)
 
 EXTERNC uint32_t x87_fistp_int64(CPU)
 {
-    register double orig, dval;
+    double orig, dval;
 #ifdef BIG_ENDIAN_BYTE_ORDER
-    register int_int uval;
-    register le_int *presult;
+    int_int uval;
+    le_int *presult;
     #define ival uval.i
 #else
-    register int64_t ival;
+    int64_t ival;
 #endif
 
     orig = ST0;
@@ -472,7 +472,7 @@ EXTERNC void x87_fld_float(CPU, float_int num)
 
 EXTERNC void x87_fld_double(CPU, uint32_t num_low, uint32_t num_high)
 {
-    register double_int *pst0;
+    double_int *pst0;
 
     PUSH_REGS;
     pst0 = (double_int *) &(ST0);
@@ -482,7 +482,7 @@ EXTERNC void x87_fld_double(CPU, uint32_t num_low, uint32_t num_high)
 
 EXTERNC void x87_fld_st(CPU, int num)
 {
-    register double newval;
+    double newval;
 
     newval = ST(num);
     PUSH_REGS;
@@ -526,7 +526,7 @@ EXTERNC void x87_fmul_float(CPU, float_int num)
 
 EXTERNC void x87_fmul_double(CPU, uint32_t num_low, uint32_t num_high)
 {
-    register double_int num;
+    double_int num;
 
     num.low = num_low;
     num.high = num_high;
@@ -565,7 +565,7 @@ EXTERNC void x87_fsqrt_void(CPU)
 
 EXTERNC int32_t x87_fst_float(CPU)
 {
-    register float_int ret;
+    float_int ret;
 
     CLEAR_X87_FLAGS;
     ret.f = ST0;
@@ -576,8 +576,8 @@ EXTERNC int32_t x87_fst_float(CPU)
 EXTERNC uint32_t x87_fst_double(CPU)
 {
 #ifdef BIG_ENDIAN_FLOAT_WORD_ORDER
-    register double_int *pst0;
-    register le_int *presult;
+    double_int *pst0;
+    le_int *presult;
 
     CLEAR_X87_FLAGS;
     pst0 = (double_int *)&(ST0);
@@ -588,7 +588,7 @@ EXTERNC uint32_t x87_fst_double(CPU)
 
     return (uint32_t)(uintptr_t)presult;
 #else
-    register void *presult;
+    void *presult;
 
     CLEAR_X87_FLAGS;
     presult = &(ST0);
@@ -605,7 +605,7 @@ EXTERNC void x87_fst_st(CPU, int num)
 
 EXTERNC int32_t x87_fstp_float(CPU)
 {
-    register float_int ret;
+    float_int ret;
 
     ret.f = ST0;
     POP_REGS;
@@ -615,8 +615,8 @@ EXTERNC int32_t x87_fstp_float(CPU)
 EXTERNC uint32_t x87_fstp_double(CPU)
 {
 #ifdef BIG_ENDIAN_FLOAT_WORD_ORDER
-    register double_int *pst0;
-    register le_int *presult;
+    double_int *pst0;
+    le_int *presult;
 
     pst0 = (double_int *)&(ST0);
     presult = (le_int *)&(st_result);
@@ -627,7 +627,7 @@ EXTERNC uint32_t x87_fstp_double(CPU)
     POP_REGS;
     return (uint32_t)(uintptr_t)presult;
 #else
-    register void *presult;
+    void *presult;
 
     presult = &(ST0);
     POP_REGS;
@@ -659,7 +659,7 @@ EXTERNC void x87_fsub_float(CPU, float_int num)
 
 EXTERNC void x87_fsub_double(CPU, uint32_t num_low, uint32_t num_high)
 {
-    register double_int num;
+    double_int num;
 
     num.low = num_low;
     num.high = num_high;
@@ -693,7 +693,7 @@ EXTERNC void x87_fsubr_float(CPU, float_int num)
 
 EXTERNC void x87_fsubr_double(CPU, uint32_t num_low, uint32_t num_high)
 {
-    register double_int num;
+    double_int num;
 
     num.low = num_low;
     num.high = num_high;
@@ -731,7 +731,7 @@ EXTERNC void x87_fucompp_void(CPU)
 
 EXTERNC void x87_fxch_st(CPU, int num)
 {
-    register double tmpst;
+    double tmpst;
 
     tmpst = ST0;
     ST0 = ST(num);
@@ -807,7 +807,7 @@ EXTERNC void x87_flog10_void(CPU)
 // return value = ST0
 EXTERNC void x87_floor_double(CPU, uint32_t num_low, uint32_t num_high)
 {
-    register double_int num;
+    double_int num;
 
     PUSH_REGS;
     num.low = num_low;
@@ -920,14 +920,14 @@ EXTERNC int32_t x87_ftol_int32(CPU)
 // truncate toward zero
 EXTERNC uint32_t x87_ftol_int64(CPU)
 {
-    register double orig;
+    double orig;
 
     orig = ST0;
     POP_REGS;
 
 #ifdef BIG_ENDIAN_BYTE_ORDER
-    register int_int ret;
-    register le_int *presult;
+    int_int ret;
+    le_int *presult;
 
     ret.i = ((orig < 9223372036854775808.0) && (orig > -9223372036854775808.0))?((int64_t) trunc(orig)):__INT64_C(0x8000000000000000);
 

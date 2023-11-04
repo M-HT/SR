@@ -65,7 +65,7 @@ if device == 'pc-linux':
                       LIBS         = ['dl', 'quicktime', 'kernel32', 'winmm', 'user32', 'gdi32']
                      )
     if llasm_version:
-        llasm_params = '-pic -inline-idiv'
+        llasm_params = '-pic -inline-idiv -inline-float'
         llvm_params = '-mtriple=i686-unknown-linux-gnu -relocation-model=pic'
         env.Append(CCFLAGS = ' -fpic')
         env.Append(LINKFLAGS = ' -pic')
@@ -78,7 +78,7 @@ elif device == 'arm-linux':
                       LIBS         = ['dl', 'quicktime', 'kernel32', 'winmm', 'user32', 'gdi32'],
                       ENV          = {'PATH' : os.environ['PATH']}
                      )
-    llasm_params = '-pic'
+    llasm_params = '-pic -inline-float'
     llvm_params = '-relocation-model=pic'
 elif device == 'pc-windows':
     env = Environment(CCFLAGS      = '-m32 -O2 -Wall',

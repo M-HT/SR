@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -178,12 +178,12 @@ static int open_video(const char *path, AVI_Video *video)
     video->video_duration = lqt_video_duration(video->qt, 0);
     video->video_frames = quicktime_video_length(video->qt, 0);
 
+    video->video_width = quicktime_video_width(video->qt, 0);
+    video->video_height = quicktime_video_height(video->qt, 0);
+    video->video_depth = quicktime_video_depth(video->qt, 0);
+
     if (video->play_video)
     {
-        video->video_width = quicktime_video_width(video->qt, 0);
-        video->video_height = quicktime_video_height(video->qt, 0);
-        video->video_depth = quicktime_video_depth(video->qt, 0);
-
         if (video->read_compressed_video)
         {
             video->colormodel = BC_BGR8888;

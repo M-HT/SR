@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -52,7 +52,7 @@ static LONG CALLBACK exception_handler(PEXCEPTION_POINTERS ExceptionInfo)
         return EXCEPTION_CONTINUE_SEARCH;
     }
 
-    fprintf(stderr, "vectored exception handler: 0x%x\n", ExceptionInfo->ExceptionRecord->ExceptionCode);
+    fprintf(stderr, "vectored exception handler: 0x%x\n", (unsigned int)ExceptionInfo->ExceptionRecord->ExceptionCode);
     TerminateProcess(GetCurrentProcess(), 0);
     return 0;
 }

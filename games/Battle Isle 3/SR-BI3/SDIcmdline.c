@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -23,73 +23,100 @@
  */
 
 #include "SDIcmdline.h"
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 
 int cmdline_ContainsOption(int option)
 {
-    const char *curptr;
-    char option_upper;
+    LPCWSTR cmdline, curptr;
+    LPWSTR *argv;
+    int argc, index;
+    WCHAR option_upper;
 
-    curptr = GetCommandLineA();
-    if (curptr == NULL) return 0;
+    cmdline = GetCommandLineW();
+    if (cmdline == NULL) return 0;
 
-    option_upper = (char)option;
-    if ((option_upper >= 'a') && (option_upper <= 'z'))
+    argv = CommandLineToArgvW(cmdline, &argc);
+    if (argv == NULL) return 0;
+
+    option_upper = (WCHAR)option;
+    if ((option_upper >= L'a') && (option_upper <= L'z'))
     {
         option_upper -= 0x20;
     }
 
-    while (1)
+    for (index = 1; index < argc; index++)
     {
-        while ((*curptr != 0) && (*curptr != '/') && (*curptr != '-'))
+        curptr = argv[index];
+
+        while (1)
         {
+            while ((*curptr != 0) && (*curptr != L'/') && (*curptr != L'-'))
+            {
+                curptr++;
+            }
+
+            if (*curptr == 0)
+            {
+                break;
+            }
+
             curptr++;
-        }
 
-        if (*curptr == 0)
-        {
-            return 0;
-        }
+            if ((*curptr == option_upper) ||
+                ((*curptr >= L'a') &&
+                 (*curptr <= L'z') &&
+                 ((*curptr - 0x20) == option_upper)
+                )
+               )
+            {
+                LocalFree(argv);
+                return 1;
+            }
+        };
+    }
 
-        curptr++;
-
-        if ((*curptr == option_upper) ||
-            ((*curptr >= 'a') &&
-             (*curptr <= 'z') &&
-             ((*curptr - 0x20) == option_upper)
-            )
-           )
-        {
-            return 1;
-        }
-    };
+    LocalFree(argv);
+    return 0;
 }
 
 void cmdline_ReadLanguageOption(uint32_t *language)
 {
-    const char *curptr;
+    LPCWSTR cmdline, curptr;
+    LPWSTR *argv;
+    int argc, index;
 
-    curptr = GetCommandLineA();
-    if (curptr == NULL) return;
+    cmdline = GetCommandLineW();
+    if (cmdline == NULL) return;
 
-    while (*curptr != 0)
+    argv = CommandLineToArgvW(cmdline, &argc);
+    if (argv == NULL) return;
+
+    for (index = 1; index < argc; index++)
     {
-        if ((*curptr == '/') || (*curptr == '-'))
-        {
-            curptr++;
+        curptr = argv[index];
 
-            if ((*curptr >= '0') && (*curptr <= '9'))
-            {
-                *language = *curptr - '0';
-                break;
-            }
-        }
-        else
+        while (*curptr != 0)
         {
-            curptr++;
-        }
-    };
+            if ((*curptr == L'/') || (*curptr == L'-'))
+            {
+                curptr++;
+
+                if ((*curptr >= L'0') && (*curptr <= L'9'))
+                {
+                    *language = *curptr - L'0';
+
+                    LocalFree(argv);
+                    return;
+                }
+            }
+            else
+            {
+                curptr++;
+            }
+        };
+    }
+
+    LocalFree(argv);
 }
 

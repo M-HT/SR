@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -176,7 +176,7 @@ static int get_environment_path(LPCWSTR lpName, const char **result)
 
     // allocate buffer for environment variable
     hHeap = GetProcessHeap();
-    lpBuffer = (LPWSTR) HeapAlloc(hHeap, 0, (dwLength + 1) * sizeof(WCHAR));
+    lpBuffer = (LPWSTR) HeapAlloc(hHeap, 0, (dwLength + 1 + 1) * sizeof(WCHAR)); // include space for adding backslash
     if (lpBuffer == NULL) goto error;
 
     // get environment variable
@@ -190,12 +190,14 @@ static int get_environment_path(LPCWSTR lpName, const char **result)
         dwLength--;
     }
 
+#if !defined(__WINE__)
     if ((dwLength == 2) && (lpBuffer[1] == L':'))
     {
         lpBuffer[2] = L'\\';
         lpBuffer[3] = 0;
         dwLength++;
     }
+#endif
 
     if (dwLength == 0)
     {
@@ -418,7 +420,7 @@ static int set_current_path(void)
     if (dwLength == 0) goto error;
 
     // remove filename in path
-    lpFilePart[1] = 0;
+    lpFilePart[0] = 0;
 
     // set current directory
     if (!SetCurrentDirectoryW(lpBuffer)) goto error;

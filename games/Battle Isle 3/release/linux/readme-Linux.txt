@@ -1,5 +1,5 @@
 Battle Isle 3 for Linux (x86)
-Version 1.0.2
+Version 1.0.3
 
 Original Battle Isle 3 is required for playing.
 (version from GOG.com can be used for playing)
@@ -7,9 +7,6 @@ Original Battle Isle 3 is required for playing.
 Libraries
 ---------
 The game requires Wine (https://www.winehq.org/) to run.
-
-The game also requires following 32-bit libraries: quicktime2
-On debian based distributions these libraries are in following packages: libquicktime2:i386
 
 
 Installation
@@ -57,11 +54,21 @@ Paths to games files can be set in the file BattleIsle3.sh.
 Misc
 ----
 
+The game uses following libraries for playing video:
+quicktime2 (http://libquicktime.sourceforge.net/)
+ffmpeg (https://www.ffmpeg.org/)
+
 Source code is available on GitHub: https://github.com/M-HT/SR
 
 
 Changes
 -------
+
+v1.0.3 (2023-11-13)
+* use bundled quicktime2 and ffmpeg libraries instead of system libraries
+* fix reading command line options in path to executable
+* minor bug fixes
+
 
 v1.0.2 (2023-05-25)
 * add option to change resolution

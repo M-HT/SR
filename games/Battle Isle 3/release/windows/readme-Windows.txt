@@ -1,5 +1,5 @@
 Battle Isle 3 for Windows (x86)
-Version 1.0.2
+Version 1.0.3
 
 Original Battle Isle 3 is required for playing.
 (version from GOG.com can be used for playing)
@@ -61,6 +61,11 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 
 Changes
 -------
+
+v1.0.3 (2023-11-13)
+* fix reading command line options in path to executable
+* minor bug fixes
+
 
 v1.0.2 (2023-05-25)
 * add option to change resolution

@@ -1,6 +1,7 @@
 #! /bin/sh
 cd "`echo $0 | sed 's/\/[^\/]*$//'`"
 export LD_LIBRARY_PATH="`pwd`"
+export LIBQUICKTIME_PLUGIN_DIR="`pwd`"
 export WINEPREFIX="`pwd`/wine"
 
 if [ -z "$WINEPREFIX" ]

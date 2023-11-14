@@ -48,5 +48,8 @@ then
     exit 1
 fi
 
+export LD_LIBRARY_PATH="`pwd`"
+export LIBQUICKTIME_PLUGIN_DIR="`pwd`"
+
 ./SR-Septerra
 sync

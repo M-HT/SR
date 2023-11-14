@@ -1,5 +1,5 @@
 Septerra Core for Linux (x86)
-Version 1.04.0.10
+Version 1.04.0.11
 
 Original Septerra Core version 1.04 is required for playing.
 (version from GOG.com can be used for playing)
@@ -19,8 +19,12 @@ Configuration is stored in the file Septerra.cfg.
 Misc
 ----
 
-The game requires following 32-bit libraries: SDL2, mpg123, quicktime2
-On debian based distributions these libraries are in following packages: libsdl2-2.0-0:i386 libmpg123-0:i386 libquicktime2:i386
+The game requires following 32-bit libraries: SDL2, mpg123
+On debian based distributions these libraries are in following packages: libsdl2-2.0-0:i386 libmpg123-0:i386
+
+The game uses following libraries for playing video:
+quicktime2 (http://libquicktime.sourceforge.net/)
+ffmpeg (https://www.ffmpeg.org/)
 
 Source code is available on GitHub: https://github.com/M-HT/SR
 
@@ -30,6 +34,10 @@ Setting CPU_SleepMode (in configuration file) to "reduced" can help. If not, the
 
 Changes
 -------
+v1.04.0.11 (2023-11-14)
+* use bundled quicktime2 and ffmpeg libraries instead of system libraries
+* minor bug fixes
+
 v1.04.0.10 (2023-05-23)
 * fix repositioning mouse cursor
 

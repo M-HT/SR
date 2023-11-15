@@ -277,7 +277,7 @@ static void MidiPlugin_MusicPlayer(void *udata, Uint8 *stream, int len)
                     for (pos = 0; pos < curlen; pos += 4)
                     {
                         #if defined(ARMV8)
-                            int16x4_t srcval1, srcval2, srcval2;
+                            int16x4_t srcval1, srcval2, srcval3;
                             int32x4_t tmpval;
                             uint32x2_t dstval;
 
@@ -437,7 +437,7 @@ static void MidiPlugin_MusicPlayer(void *udata, Uint8 *stream, int len)
                             int32x2_t tmpval;
 
                             srcval = vreinterpret_s16_u32(vld1_dup_u32((Uint32 *) src_buf));
-                            tmpval = vpaddl_s16(srcval1);
+                            tmpval = vpaddl_s16(srcval);
                             srcval = vreinterpret_s16_s32(vshr_n_s32(tmpval, 1));
                             vst1_lane_s16((Sint16 *) stream, srcval, 0);
                         #elif defined(ARMV6)

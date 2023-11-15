@@ -1,11 +1,12 @@
 Warcraft: Orcs & Humans for Linux (x64)
-Version 1.3.0
+Version 1.3.1
 
 Original DOS Warcraft CD version is required for playing.
 (version from GOG.com can be used for playing)
 
 Libraries
 ---------
+
 The game (SDL2 version) requires following 64-bit libraries: SDL2, SDL2_mixer
 On debian based distributions these libraries are in following packages: libsdl2-2.0-0 libsdl2-mixer-2.0-0
 
@@ -43,7 +44,8 @@ Example (Detailed instructions):
 
 
 Music
--------------
+-----
+
 The game's MIDI music can be played using one of following libraries:
 ALSA sequencer, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
 
@@ -89,6 +91,10 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 
 Changes
 -------
+
+v1.3.1 (2023-11-15)
+* fix aspect ratio in fullscreen
+* minor bug fixes
 
 v1.3.0 (2023-08-13)
 first Linux (x64) version

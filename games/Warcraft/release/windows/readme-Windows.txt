@@ -1,5 +1,5 @@
 Warcraft: Orcs & Humans for Windows (x86)
-Version 1.3.0
+Version 1.3.1
 
 Original DOS Warcraft CD version is required for playing.
 (version from GOG.com can be used for playing)
@@ -32,7 +32,8 @@ Example (Detailed instructions):
 
 
 Music
--------------
+-----
+
 The game's MIDI music can be played using one of following libraries:
 NativeWindows, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
 
@@ -74,6 +75,10 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 
 Changes
 -------
+
+v1.3.1 (2023-11-15)
+* fix aspect ratio in fullscreen
+* minor bug fixes
 
 v1.3.0 (2023-08-13)
 first Windows (x86) version

@@ -1,5 +1,5 @@
 X-COM: Terror from the Deep for Linux (arm-aarch64)
-Version 1.5.0
+Version 1.5.1
 
 Original DOS X-COM: Terror from the Deep is required for playing.
 (Gold version for Windows should also work)
@@ -8,6 +8,7 @@ The game should be patched to version 2.1.
 
 Libraries
 ---------
+
 The game (SDL2 version) requires following 64-bit libraries: SDL2, SDL2_mixer
 On debian based distributions these libraries are in following packages: libsdl2-2.0-0 libsdl2-mixer-2.0-0
 
@@ -48,6 +49,7 @@ Example (Detailed instructions):
 
 Music
 -----
+
 The game can play General MIDI music (Windows and DOS game versions) or Adlib/MT-32 music (DOS game version).
 The General MIDI music can be played using one of following libraries:
 ALSA sequencer, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
@@ -107,6 +109,11 @@ Nuked OPL3 emulator uses neon instructions.
 
 Changes
 -------
+
+v1.5.1 (2023-11-17)
+* fix aspect ratio in fullscreen
+* optimize floating point instructions
+* minor bug fixes
 
 v1.5.0 (2023-08-12)
 first Linux (arm-aarch64) version

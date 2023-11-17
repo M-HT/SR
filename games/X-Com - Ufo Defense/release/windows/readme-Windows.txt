@@ -1,5 +1,5 @@
 X-COM: UFO Defense for Windows (x86)
-Version 1.5.0
+Version 1.5.1
 
 Original DOS X-COM: UFO Defense version 1.4 is required for playing.
 (Gold version for Windows should also work)
@@ -34,6 +34,7 @@ Example (Detailed instructions):
 
 Music
 -----
+
 The game can play General MIDI music (Windows and DOS game versions) or Adlib/MT-32 music (DOS game version).
 The General MIDI music can be played using one of following libraries:
 NativeWindows, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
@@ -86,6 +87,10 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 
 Changes
 -------
+
+v1.5.1 (2023-11-17)
+* fix aspect ratio in fullscreen
+* minor bug fixes
 
 v1.5.0 (2023-08-12)
 first Windows (x86) version

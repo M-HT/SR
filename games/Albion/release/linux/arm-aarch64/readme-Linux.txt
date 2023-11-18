@@ -1,4 +1,4 @@
-Albion for Linux (armv7-gnueabihf)
+Albion for Linux (arm-aarch64)
 Version 1.7.4
 
 Original Albion version 1.38 is required for playing.
@@ -8,13 +8,13 @@ Original Albion version 1.38 is required for playing.
 Libraries
 ---------
 
-The game (SDL1 version) requires following 32-bit libraries: SDL, SDL_mixer, OpenGL
+The game (SDL1 version) requires following 64-bit libraries: SDL, SDL_mixer, OpenGL
 On debian based distributions these libraries are in following packages: libsdl1.2debian libsdl-mixer1.2 libgl1
 
-The game (SDL2 version) requires following 32-bit libraries: SDL2, SDL2_mixer
+The game (SDL2 version) requires following 64-bit libraries: SDL2, SDL2_mixer
 On debian based distributions these libraries are in following packages: libsdl2-2.0-0 libsdl2-mixer-2.0-0
 
-Following optional 32-bit library is needed only to create screenshots in PNG format (selectable in configuration file): zlib
+Following optional 64-bit library is needed only to create screenshots in PNG format (selectable in configuration file): zlib
 On debian based distributions this library is in following package: zlib1g
 
 Some midi plugins may require additional libraries.
@@ -135,22 +135,5 @@ v1.7.4 (2023-11-18)
 * minor bug fixes
 
 
-v1.7.3 (2023-03-26)
-* optimize HQX and xBRZ scalers for more speed
-* use more threads for advanced scaling (HQX and xBRZ)
-* use latest versions of libADLMIDI, WildMIDI, BASSMIDI libraries
-* add support for using Nuked OPL3 emulator in libADLMIDI
-* fix moving mouse cursor outside the game area in fullscreen
-* minor bug fixes
-
-
-v1.7.2 (2022-01-30)
-* ignore repeated keys when using SDL2
-* fix Shift+Key ascii codes
-* add support for inputing characters using Alt codes
-* screen redraw 60 times per second
-* minor bug fixes
-
-
-v1.7.1 (2021-05-21)
-first Linux (armv7-gnueabihf) version
+v1.7.3a (2023-05-21)
+* first Linux (arm-aarch64) version

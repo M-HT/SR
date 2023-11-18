@@ -1,5 +1,5 @@
 Albion for Linux (x86)
-Version 1.7.3
+Version 1.7.4
 
 Original Albion version 1.38 is required for playing.
 (English version preferred, but other languages should also work)
@@ -7,6 +7,7 @@ Original Albion version 1.38 is required for playing.
 
 Libraries
 ---------
+
 The game (SDL1 version) requires following 32-bit libraries: SDL, SDL_mixer, OpenGL
 On debian based distributions these libraries are in following packages: libsdl1.2debian:i386 libsdl-mixer1.2:i386 libgl1:i386
 
@@ -61,6 +62,7 @@ Example (Detailed instructions):
 
 Music
 -----
+
 The game's MIDI music can be played using one of following libraries:
 ALSA sequencer, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
 
@@ -84,6 +86,7 @@ in the configuration file.
 
 Enhanced 3D rendering
 ---------------------
+
 Enhanced 3D rendering renders the 3d part of the game in double (or more) resolution,
 instead of rendering it in the original resolution and then scaling it.
 Rendering in more than double resolution is only available in advanced scaling mode.
@@ -123,6 +126,12 @@ it sounds worse and can't play more than one MIDI stream simultaneously
 
 Changes
 -------
+
+v1.7.4 (2023-11-18)
+* fix aspect ratio in fullscreen
+* fix bug in original code
+* minor bug fixes
+
 
 v1.7.3 (2023-03-26)
 * optimize HQX and xBRZ scalers for more speed

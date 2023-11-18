@@ -1,5 +1,5 @@
 Albion for Windows (x86)
-Version 1.7.3
+Version 1.7.4
 
 Original Albion version 1.38 is required for playing.
 (English version preferred, but other languages should also work)
@@ -46,6 +46,7 @@ Example (Detailed instructions):
 
 Music
 -----
+
 The game's MIDI music can be played using one of following libraries:
 NativeWindows, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
 
@@ -68,6 +69,7 @@ in the configuration file.
 
 Enhanced 3D rendering
 ---------------------
+
 Enhanced 3D rendering renders the 3d part of the game in double (or more) resolution,
 instead of rendering it in the original resolution and then scaling it.
 Rendering in more than double resolution is only available in advanced scaling mode.
@@ -104,6 +106,12 @@ it can't play more than one MIDI stream simultaneously
 
 Changes
 -------
+
+v1.7.4 (2023-11-18)
+* fix aspect ratio in fullscreen
+* fix bug in original code
+* minor bug fixes
+
 
 v1.7.3 (2023-03-26)
 * optimize HQX and xBRZ scalers for more speed

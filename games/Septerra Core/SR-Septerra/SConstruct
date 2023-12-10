@@ -105,7 +105,7 @@ elif device == 'pandora':
     compiler_prefix = 'pandora-'
 
     env = Environment(CC           = compiler_prefix + 'gcc',
-                      CCFLAGS      = '-O3 -Wall -DPANDORA -pipe -march=armv7-a -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp',
+                      CCFLAGS      = '-O3 -Wall -DPANDORA -pipe -march=armv7-a -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp -mthumb-interwork',
                       CPPPATH      = [compiler_path + 'usr/include', compiler_path + 'usr/include/SDL'],
                       INCPREFIX    = '-I',
                       LIBPATH      = [compiler_path + 'usr/lib'],
@@ -115,7 +115,7 @@ elif device == 'pandora':
                       ENV          = {'PATH' : compiler_path + 'bin:' + os.environ['PATH']}
                      )
     llasm_params = '-inline-float'
-    llvm_params = '-mtriple=armv7a-unknown-linux-eabi -mcpu=cortex-a8'
+    llvm_params = '-mtriple=thumbv7a-unknown-linux-eabi -mcpu=cortex-a8 -float-abi=soft'
 
 def get_compiler_version(compiler_path, env_path):
     process = subprocess.Popen([compiler_path, '-dumpversion'], stdout=subprocess.PIPE, env={"PATH": env_path})

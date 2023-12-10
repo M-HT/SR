@@ -226,6 +226,7 @@ class ConfigFile:
             if game == "xcom1" or game == "xcom2":
                 self.AddEntry("Audio_OPL3_BankNumber", "0-77", "77")
 
+        if platform == "pc":
             self.AddEntry("Audio_OPL3_Emulator", "fast/precise", "precise" if platform == "pc" else "fast")
 
         if game == "albion":
@@ -244,7 +245,7 @@ class ConfigFile:
 
 
         # keys entries
-        if game == "albion":
+        if platform == "pc" and game == "albion":
             self.AddEntry("Keys_WSAD", "WSAD/ArrowKeys", "WSAD")
             self.AddEntry("Keys_ArrowKeys", "ArrowKeys/WSAD", "ArrowKeys")
 
@@ -553,7 +554,10 @@ class ConfigGUI:
                 description += "\nADLMIDI uses OPL3 emulator for playback."
 
             if "adlib-dosbox_opl" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
-                description += "\nAdlib music is played using 'compat' OPL emulator from DOSBox or Nuked OPL3 emulator.\n  (DOS game version)"
+                if self.CfgFile.HasEntry("Audio_OPL3_Emulator"):
+                    description += "\nAdlib music is played using 'compat' OPL emulator from DOSBox or Nuked OPL3 emulator.\n  (DOS game version)"
+                else:
+                    description += "\nAdlib music is played using 'compat' OPL emulator from DOSBox. (DOS game version)"
 
             if self.CfgFile.HasEntry("Audio_MT32_Roms_Path"):
                 description += "\nMT-32 music is played using MUNT emulator or ALSA sequencer. (DOS game version)"

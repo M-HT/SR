@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -52,8 +52,10 @@ int32_t sprintf2_c(char *str, const char *format, uint32_t *ap)
 
 int32_t sscanf2_c(const char *str, const char *format, uint32_t *ap)
 {
+#define MAX_VALUES 2
     int res, num, index;
-    uintptr_t values[2];
+    uintptr_t values[MAX_VALUES];
+    void *ptrvals[MAX_VALUES];
 
 #ifdef DEBUG_CLIB
     eprintf("sscanf: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s) - ", (uintptr_t) str, str, (uintptr_t) format, format);
@@ -67,8 +69,17 @@ int32_t sscanf2_c(const char *str, const char *format, uint32_t *ap)
             if (format[index] == '%')
             {
                 num++;
+                if (num > MAX_VALUES) break;
 
-                if (format[index + 1] != 's' && format[index + 1] != 'd')
+                if (format[index + 1] == 's')
+                {
+                    ptrvals[num - 1] = (void *)(uintptr_t)ap[num - 1];
+                }
+                else if (format[index + 1] == 'd')
+                {
+                    ptrvals[num - 1] = &(values[num - 1]);
+                }
+                else
                 {
                     eprintf("sscanf: unsupported format: %s\n", format);
                     exit(1);
@@ -80,10 +91,10 @@ int32_t sscanf2_c(const char *str, const char *format, uint32_t *ap)
     switch (num)
     {
         case 1:
-            res = sscanf(str, format, &(values[0]));
+            res = sscanf(str, format, ptrvals[0]);
             break;
         case 2:
-            res = sscanf(str, format, &(values[0]), &(values[1]));
+            res = sscanf(str, format, ptrvals[0], ptrvals[1]);
             break;
         default:
             eprintf("sscanf: unsupported format: %s\n", format);
@@ -92,7 +103,10 @@ int32_t sscanf2_c(const char *str, const char *format, uint32_t *ap)
 
     for (index = 0; index < res; index++)
     {
-        ap[index] = (uint32_t)values[index];
+        if (ptrvals[index] == &(values[index]))
+        {
+            *((uint32_t *)(uintptr_t)ap[index]) = (uint32_t)values[index];
+        }
     }
 
 #ifdef DEBUG_CLIB
@@ -100,6 +114,7 @@ int32_t sscanf2_c(const char *str, const char *format, uint32_t *ap)
 #endif
 
     return res;
+#undef MAX_VALUES
 }
 
 

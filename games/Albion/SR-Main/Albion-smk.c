@@ -823,8 +823,12 @@ static void eventloop_initialize(void)
 #endif
     {
         // clear screen
-        SDL_FillRect(Game_Screen, NULL, 0);
-        SDL_Flip(Game_Screen);
+        int clear_screen;
+        for (clear_screen = 3; clear_screen != 0; clear_screen--)
+        {
+            SDL_FillRect(Game_Screen, NULL, 0);
+            SDL_Flip(Game_Screen);
+        }
     }
 #endif
 

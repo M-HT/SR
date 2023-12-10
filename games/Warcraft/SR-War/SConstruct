@@ -183,7 +183,8 @@ elif device == 'pandora':
                       ASFLAGS      = ' -EL -march=armv7-a -mcpu=cortex-a8 -mfpu=vfpv3 -mfloat-abi=softfp -I arm/'
                      )
     if llasm_version:
-        llvm_params = '-mtriple=armv7a-unknown-linux-eabi -mcpu=cortex-a8'
+        llvm_params = '-mtriple=thumbv7a-unknown-linux-eabi -mcpu=cortex-a8 -float-abi=soft'
+        env.Append(CCFLAGS = ' -mthumb-interwork')
     # see arm/armconf.inc for explanation of these options (and others)
     env.Append(ASFLAGS = ' --defsym USE_R9=1 --defsym ALLOW_UNALIGNED_MEMORY_ACCESS=1')
 

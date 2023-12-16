@@ -583,12 +583,14 @@ static void *midi_thread_proc(void *arg)
     uint64_t base_time;
     int do_sleep, num_input_events, dst_port_exists;
     snd_seq_queue_status_t *queue_status;
+    snd_seq_port_info_t *port_info;
     const snd_seq_real_time_t *real_time;
     int64_t time_diff, base_diff;
     snd_seq_event_t event;
     snd_seq_event_t *input_event;
 
     snd_seq_queue_status_alloca(&queue_status);
+    snd_seq_port_info_alloca(&port_info);
 
     snd_seq_ev_clear(&event);
     event.queue = midi_queue;
@@ -627,52 +629,66 @@ static void *midi_thread_proc(void *arg)
                     if (!dst_port_exists)
                     {
                         snd_seq_addr_t addr;
+                        int resubscribe;
+
+                        resubscribe = 0;
                         if (snd_seq_parse_address(midi_seq, &addr, dst_address) == 0)
                         {
-                            if ((input_event->data.addr.client == addr.client) && (input_event->data.addr.port == addr.port))
+                            if ((input_event->data.addr.client == addr.client) && ((input_event->data.addr.port == addr.port) || (snd_seq_parse_address(NULL, &addr, dst_address) < 0)))
                             {
-                                // resubscribe to started port
-
-                                int was_playing;
-
-                                pthread_mutex_lock(&midi_mutex);
-
-                                was_playing = (midi_loaded && midi_playing);
-                                if (was_playing)
+                                if (snd_seq_get_any_port_info(midi_seq, input_event->data.addr.client, input_event->data.addr.port, port_info) == 0)
                                 {
-                                    pause_0();
+                                    if ((snd_seq_port_info_get_capability(port_info) & (SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE | SND_SEQ_PORT_CAP_NO_EXPORT)) == (SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE))
+                                    {
+                                        resubscribe = 1;
+                                    }
                                 }
-
-                                dst_client_id = addr.client;
-                                dst_port_id = addr.port;
-                                dst_port_exists = 1;
-
-                                snd_seq_connect_to(midi_seq, src_port_id, dst_client_id, dst_port_id);
-
-                                if (initial_sysex_events != NULL)
-                                {
-                                    send_initial_sysex_events(initial_sysex_events);
-                                }
-
-                                reset_playing();
-
-                                if (midi_loaded && (midi_current_event > 1) && !midi_eof)
-                                {
-                                    // play song from the beginning
-                                    current_event = midi_current_event;
-                                    events = (midi_event_info *) midi_events;
-                                    midi_current_event = 1;
-                                    midi_base_tick += events[current_event].tick;
-                                    midi_base_time += events[current_event].time;
-                                }
-
-                                if (was_playing)
-                                {
-                                    resume();
-                                }
-
-                                pthread_mutex_unlock(&midi_mutex);
                             }
+                        }
+
+                        if (resubscribe)
+                        {
+                            // resubscribe to started port
+
+                            int was_playing;
+
+                            pthread_mutex_lock(&midi_mutex);
+
+                            was_playing = (midi_loaded && midi_playing);
+                            if (was_playing)
+                            {
+                                pause_0();
+                            }
+
+                            dst_client_id = input_event->data.addr.client;
+                            dst_port_id = input_event->data.addr.port;
+                            dst_port_exists = 1;
+
+                            snd_seq_connect_to(midi_seq, src_port_id, dst_client_id, dst_port_id);
+
+                            if (initial_sysex_events != NULL)
+                            {
+                                send_initial_sysex_events(initial_sysex_events);
+                            }
+
+                            reset_playing();
+
+                            if (midi_loaded && (midi_current_event > 1) && !midi_eof)
+                            {
+                                // play song from the beginning
+                                current_event = midi_current_event;
+                                events = (midi_event_info *) midi_events;
+                                midi_current_event = 1;
+                                midi_base_tick += events[current_event].tick;
+                                midi_base_time += events[current_event].time;
+                            }
+
+                            if (was_playing)
+                            {
+                                resume();
+                            }
+
+                            pthread_mutex_unlock(&midi_mutex);
                         }
                     }
                     break;
@@ -1129,17 +1145,33 @@ static int find_dst_port(const char *midi_address, int midi_type)
 
         snd_seq_port_info_alloca(&pinfo);
 
-        if (snd_seq_get_any_port_info(midi_seq, dst_client_id, dst_port_id, pinfo) < 0) return -2;
+        if (snd_seq_get_any_port_info(midi_seq, dst_client_id, dst_port_id, pinfo) == 0)
+        {
+            if ((snd_seq_port_info_get_capability(pinfo) & (SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE | SND_SEQ_PORT_CAP_NO_EXPORT)) == (SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE))
+            {
+                dst_address = strdup(midi_address);
+                return 0;
+            }
+        }
 
-        if ((snd_seq_port_info_get_capability(pinfo) & (SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE | SND_SEQ_PORT_CAP_NO_EXPORT)) != (SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE))
+        if (snd_seq_parse_address(NULL, &addr, midi_address) < 0)
         {
-            return -3;
+            // if midi_address contains client name (i.e. not client:port numbers), then try other ports
+            snd_seq_port_info_set_client(pinfo, dst_client_id);
+            snd_seq_port_info_set_port(pinfo, -1);
+
+            while (snd_seq_query_next_port(midi_seq, pinfo) >= 0)
+            {
+                if ( (snd_seq_port_info_get_capability(pinfo) & (SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE | SND_SEQ_PORT_CAP_NO_EXPORT)) == (SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE) )
+                {
+                    dst_port_id = snd_seq_port_info_get_port(pinfo);
+                    dst_address = strdup(midi_address);
+                    return 0;
+                }
+            }
         }
-        else
-        {
-            dst_address = strdup(midi_address);
-            return 0;
-        }
+
+        return -3;
     }
     else
     {

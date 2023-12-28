@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2023 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -269,8 +269,8 @@ int32_t Registry_SetValueDword(const char *ValueName, uint32_t Value)
         if (OldValue == Value) return 1;
     }
 
-    snprintf(&(StringValue[0]), 20, "0x%x", (unsigned int) Value);
-    return SetValue(ValueName, &(StringValue[0]));
+    snprintf(StringValue, sizeof(StringValue), "0x%x", (unsigned int) Value);
+    return SetValue(ValueName, StringValue);
 #endif
 }
 

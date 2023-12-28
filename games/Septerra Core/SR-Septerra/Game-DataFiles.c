@@ -142,9 +142,9 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
     eprintf("OpenGameFiles - ");
 #endif
 
-    strcpy(&(SourcePath[0]), _SourcePath);
+    strcpy(SourcePath, _SourcePath);
     MessageProc = _MessageProc;
-    memset(&(DatabaseFiles[0]), 0, 255 * sizeof(DatabaseFileInfo));
+    memset(DatabaseFiles, 0, 255 * sizeof(DatabaseFileInfo));
     //dword_4F11A0 = 0;
 
     // get local directory from manifest file path
@@ -162,7 +162,7 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
     ManifestFILE = (FILE *)fopen_c(ManifestFilePath, "rt");
     if ( ManifestFILE == NULL )
     {
-        snprintf(ErrorString, 256, "Unable to open %s", ManifestFilePath);
+        snprintf(ErrorString, sizeof(ErrorString), "Unable to open %s", ManifestFilePath);
         ExitWithMessage(ErrorString, 101);
     }
 
@@ -187,18 +187,14 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
     }
 
     // get index file path
-    GetDataFilePath(&(ManifestFileBuffer[strlen(ManifestFileBuffer) + 1]), &(FilePath[0]));
+    GetDataFilePath(&(ManifestFileBuffer[strlen(ManifestFileBuffer) + 1]), FilePath);
 
     // open index file
-    IndexFILE = (FILE *)fopen_c(&(FilePath[0]), "rb");
+    IndexFILE = (FILE *)fopen_c(FilePath, "rb");
     if ( IndexFILE == NULL )
     {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpragmas"
-#pragma GCC diagnostic ignored "-Wunknown-warning-option"
-#pragma GCC diagnostic ignored "-Wformat-truncation"
-        snprintf(ErrorString, 256, "Unable to open %s", &(FilePath[0]));
-#pragma GCC diagnostic pop
+        volatile size_t ErrorSize = sizeof(ErrorString); // avoid compiler warning
+        snprintf(ErrorString, ErrorSize, "Unable to open %s", FilePath);
         ExitWithMessage(ErrorString, 101);
     }
     fseek(IndexFILE, 0, SEEK_END);
@@ -226,7 +222,7 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
         DatabaseFiles[NumberOfDatabaseFiles].Flags = 0;
 
         // get data file path
-        int DataFileRes = GetDataFilePath(FileName, &(FilePath[0]));
+        int DataFileRes = GetDataFilePath(FileName, FilePath);
         if ( DataFileRes == -1 )
         {
             DatabaseFiles[NumberOfDatabaseFiles].Flags |= 1;
@@ -238,9 +234,9 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
                 ExitWithMessage("Invalid Manifest File Data", 101);
             }
         }
-        strcpy(&(DatabaseFiles[NumberOfDatabaseFiles].Path[0]), &(FilePath[0]));
+        strcpy(DatabaseFiles[NumberOfDatabaseFiles].Path, FilePath);
 
-        DatabaseFiles[NumberOfDatabaseFiles].File = (FILE *)fopen_c(&(FilePath[0]), "rb");
+        DatabaseFiles[NumberOfDatabaseFiles].File = (FILE *)fopen_c(FilePath, "rb");
         for ( ; DatabaseFiles[NumberOfDatabaseFiles].File == NULL; )
         {
             if (DatabaseFiles[NumberOfDatabaseFiles].Flags & 1) break;
@@ -248,17 +244,13 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
             int fopenerrno = errno;
             if ((fopenerrno != ENOENT) && (fopenerrno != EACCES))
             {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpragmas"
-#pragma GCC diagnostic ignored "-Wunknown-warning-option"
-#pragma GCC diagnostic ignored "-Wformat-truncation"
-                snprintf(ErrorString, 256, "Unable to open %s\n(error %d: %s)", &(FilePath[0]), fopenerrno, strerror(fopenerrno));
-#pragma GCC diagnostic pop
+                volatile size_t ErrorSize = sizeof(ErrorString); // avoid compiler warning
+                snprintf(ErrorString, ErrorSize, "Unable to open %s\n(error %d: %s)", FilePath, fopenerrno, strerror(fopenerrno));
                 ExitWithMessage(ErrorString, 101);
             }
 
             RequestCDPresence();
-            DatabaseFiles[NumberOfDatabaseFiles].File = (FILE *)fopen_c(&(FilePath[0]), "rb");
+            DatabaseFiles[NumberOfDatabaseFiles].File = (FILE *)fopen_c(FilePath, "rb");
         }
 
         DatabaseFiles[NumberOfDatabaseFiles].Offset = 0;
@@ -386,7 +378,7 @@ int32_t RecordOpen(uint32_t RecordKey)
     {
         if ( !IsRecordTryOpen )
         {
-            snprintf(ErrorString, 256, "Attempt to open invalid database record %d (%s)", RecordKey, GetRecordName_asm(RecordKey));
+            snprintf(ErrorString, sizeof(ErrorString), "Attempt to open invalid database record %d (%s)", RecordKey, GetRecordName_asm(RecordKey));
             ExitWithMessage(ErrorString, 101);
         }
 
@@ -514,7 +506,7 @@ const char *RecordGetDataFilePathAndOffset(uint32_t RecordKey, uint32_t *Offset)
 #ifdef DEBUG_DATABASE
             eprintf("%s\n", DatabaseFiles[DatabaseNumber].Path);
 #endif
-            return &(DatabaseFiles[DatabaseNumber].Path[0]);
+            return DatabaseFiles[DatabaseNumber].Path;
         }
     }
 }
@@ -536,7 +528,7 @@ void RecordSeek(int32_t RecordHandle, int32_t Offset, int32_t Whence)
 #endif
     if ( Record->IndexNumber == -1 )
     {
-        snprintf(ErrorString, 256, "Attempt to seek in unopened RecordHandle %d", RecordHandle);
+        snprintf(ErrorString, sizeof(ErrorString), "Attempt to seek in unopened RecordHandle %d", RecordHandle);
         ExitWithMessage(ErrorString, 101);
     }
     Record->NewOffset = Offset;
@@ -573,7 +565,7 @@ uint32_t RecordRead(int32_t RecordHandle, uint8_t *ReadBuffer, uint32_t NumberOf
 
     if (Record->IndexNumber == -1)
     {
-        snprintf(ErrorString, 256, "Attempt to read in unopened RecordHandle %d", RecordHandle);
+        snprintf(ErrorString, sizeof(ErrorString), "Attempt to read in unopened RecordHandle %d", RecordHandle);
         ExitWithMessage(ErrorString, 101);
     }
 
@@ -616,14 +608,14 @@ uint32_t RecordRead(int32_t RecordHandle, uint8_t *ReadBuffer, uint32_t NumberOf
         {
             if (Index->CompressionType != 1)
             {
-                snprintf(ErrorString, 256, "Unsupported compression type in database %s\n record key %d", DatabaseFiles[DatabaseNumber].Name, Index->RecordKey);
+                snprintf(ErrorString, sizeof(ErrorString), "Unsupported compression type in database %s\n record key %d", DatabaseFiles[DatabaseNumber].Name, Index->RecordKey);
                 ExitWithMessage(ErrorString, 101);
             }
 
             result = LZO1X_DecompressRecord(DecompressionBuffer, 16384, Index->RecordSize, ReadBuffer, DataFILE);
             if (result < Index->UncompressedSize)
             {
-                snprintf(ErrorString, 256, "Error decompressing from database file %s", DatabaseFiles[DatabaseNumber].Name);
+                snprintf(ErrorString, sizeof(ErrorString), "Error decompressing from database file %s", DatabaseFiles[DatabaseNumber].Name);
                 ExitWithMessage(ErrorString, 101);
             }
 
@@ -643,7 +635,7 @@ uint32_t RecordRead(int32_t RecordHandle, uint8_t *ReadBuffer, uint32_t NumberOf
 
                 if ( !feof(DataFILE) ) break;
 
-                snprintf(ErrorString, 256, "Error reading database file %s", &(DatabaseFiles[DatabaseNumber].Path[0]));
+                snprintf(ErrorString, sizeof(ErrorString), "Error reading database file %s", DatabaseFiles[DatabaseNumber].Path);
                 MessageWithPossibleExit(ErrorString, 101);
             }
 
@@ -715,7 +707,7 @@ uint32_t RecordGetSize(int32_t RecordHandle)
 
     if ( Record->IndexNumber == -1 )
     {
-        snprintf(ErrorString, 256, "Attempt to get the size of unopened RecordHandle %d", RecordHandle);
+        snprintf(ErrorString, sizeof(ErrorString), "Attempt to get the size of unopened RecordHandle %d", RecordHandle);
         ExitWithMessage(ErrorString, 101);
     }
 

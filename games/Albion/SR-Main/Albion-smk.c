@@ -1300,21 +1300,18 @@ static void play_smk(const char *filename)
 
     if (f == NULL)
     {
-        snprintf(filepath, 260, "C:\\%s%s", Albion_CDPath, filename);
-
-        f = Game_fopen(filepath, "rb");
+        if (snprintf(filepath, sizeof(filepath), "C:\\%s%s", Albion_CDPath, filename) < (int)sizeof(filepath))
+        {
+            f = Game_fopen(filepath, "rb");
+        }
     }
 
     if (f == NULL)
     {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpragmas"
-#pragma GCC diagnostic ignored "-Wunknown-warning-option"
-#pragma GCC diagnostic ignored "-Wformat-truncation"
-        snprintf(filepath, 260, "C:\\%sVIDEO\\%s", Albion_CDPath, filename);
-#pragma GCC diagnostic pop
-
-        f = Game_fopen(filepath, "rb");
+        if (snprintf(filepath, sizeof(filepath), "C:\\%sVIDEO\\%s", Albion_CDPath, filename) < (int)sizeof(filepath))
+        {
+            f = Game_fopen(filepath, "rb");
+        }
     }
 
     if (f == NULL)

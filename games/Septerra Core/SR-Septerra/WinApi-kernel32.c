@@ -1137,7 +1137,7 @@ void *FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
             }
         }
 
-        snprintf(buf, 8192, "%s/%s", state->directory, direntry->d_name);
+        snprintf(buf, sizeof(buf), "%s/%s", state->directory, direntry->d_name);
 
         if (0 != stat(buf, &filestat))
         {
@@ -1231,7 +1231,7 @@ uint32_t FindNextFileA_c(void *hFindFile, void *lpFindFileData)
         return 0;
     }
 
-    snprintf(buf, 8192, "%s/%s", state->directory, direntry->d_name);
+    snprintf(buf, sizeof(buf), "%s/%s", state->directory, direntry->d_name);
 
     stat(buf, &filestat);
 

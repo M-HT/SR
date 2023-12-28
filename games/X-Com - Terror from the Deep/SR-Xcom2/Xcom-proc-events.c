@@ -1043,6 +1043,7 @@ void Game_ProcessKEvents()
                             scancode = 0x35;
                             ascii_code = '/';
 
+                            break;
                         case SDLK_KP_MULTIPLY:
                             scancode = 0x37;
                             ascii_code = '*';

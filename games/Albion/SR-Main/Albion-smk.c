@@ -915,6 +915,8 @@ static void eventloop_flip(void)
         SDL_UpdateTexture(SMK_Texture[SMK_CurrentTexture], NULL, SMK_TextureData, ((SMK_double_pixels)?640:320) * Display_Bitsperpixel / 8);
     }
 
+    SDL_RenderClear(Game_Renderer);
+
     if (Scaler_ScaleTexture)
     {
         SDL_SetRenderTarget(Game_Renderer, SMK_ScaledTexture[SMK_CurrentTexture]);

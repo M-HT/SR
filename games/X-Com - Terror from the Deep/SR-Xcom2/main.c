@@ -1585,6 +1585,9 @@ static void Game_Event_Loop(void)
     uint32_t AppInputFocus;
     uint32_t AppActive;
     int FlipActive, CreateAfterFlip, DestroyAfterFlip;
+#ifdef USE_SDL2
+    int ClearRenderer;
+#endif
 
 
     TimerThread = SDL_CreateThread(
@@ -1648,6 +1651,7 @@ static void Game_Event_Loop(void)
     AppMouseFocus = 1;
     AppInputFocus = 1;
     AppActive = 1;
+    ClearRenderer = 0;
 #else
     {
         uint32_t AppState;
@@ -1696,6 +1700,8 @@ static void Game_Event_Loop(void)
                     //case SDL_WINDOWEVENT_CLOSE:
                     // todo: ?
                     case SDL_WINDOWEVENT_RESIZED:
+                    case SDL_WINDOWEVENT_SIZE_CHANGED:
+                    case SDL_WINDOWEVENT_DISPLAY_CHANGED:
                         if (Display_Fullscreen && Display_FSType && Game_Renderer != NULL)
                         {
                             SDL_Rect viewport;
@@ -1705,6 +1711,7 @@ static void Game_Event_Loop(void)
                             viewport.w = Picture_Width;
                             viewport.h = Picture_Height;
                             SDL_RenderSetViewport(Game_Renderer, &viewport);
+                            ClearRenderer = 4;
                         }
                         break;
                 }
@@ -1968,6 +1975,12 @@ static void Game_Event_Loop(void)
                                 else
                                 {
                                     SDL_UpdateTexture(Game_Texture[Game_CurrentTexture], NULL, Game_TextureData, Render_Width * Display_Bitsperpixel / 8);
+                                }
+
+                                if (ClearRenderer)
+                                {
+                                    ClearRenderer--;
+                                    SDL_RenderClear(Game_Renderer);
                                 }
 
                                 if (Scaler_ScaleTexture)

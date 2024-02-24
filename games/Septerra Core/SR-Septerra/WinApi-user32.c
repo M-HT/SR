@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -450,10 +450,6 @@ static int find_event(SDL_Event *event, int remove, int wait)
 
                     nanosleep(&_tp, NULL);
 #endif
-
-                    can_sleep = 0;
-                    SDL_PumpEvents();
-                    continue;
                 }
             }
 

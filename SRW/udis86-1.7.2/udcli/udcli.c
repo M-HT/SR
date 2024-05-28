@@ -2,25 +2,25 @@
  *
  * Copyright (c) 2002-2013 Vivek Thampi
  * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
- *     * Redistributions of source code must retain the above copyright notice, 
+ *
+ *     * Redistributions of source code must retain the above copyright notice,
  *       this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright notice, 
- *       this list of conditions and the following disclaimer in the documentation 
+ *     * Redistributions in binary form must reproduce the above copyright notice,
+ *       this list of conditions and the following disclaimer in the documentation
  *       and/or other materials provided with the distribution.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR 
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <stdlib.h>
@@ -35,18 +35,20 @@
 #include <config.h>
 #endif
 
-#if defined(__APPLE__)
-# define FMT64 "ll" 
+#if defined(_MSC_VER) || defined(__BORLANDC__) || defined(_WIN32)
+# define FMT64 "I64"
+#elif defined(__APPLE__)
+# define FMT64 "ll"
 #elif defined(__amd64__) || defined(__x86_64__)
-# define FMT64 "l" 
+# define FMT64 "l"
 # else
-# define FMT64 "ll" 
+# define FMT64 "ll"
 #endif
 
 #if defined(__DJGPP__) || defined(_WIN32)
 # include <io.h>
 # include <fcntl.h>
-#endif 
+#endif
 
 #ifdef __DJGPP__
 # include <unistd.h>  /* for isatty() */
@@ -56,7 +58,7 @@
 #endif
 
 /* help string */
-static char help[] = 
+static char help[] =
 {
   "Usage: %s [-option[s]] file\n"
   "Options:\n"
@@ -76,7 +78,7 @@ static char help[] =
   "    -h       : Display this help message.\n"
   "    --version: Show version.\n"
   "\n"
-  "Udcli is a front-end to the Udis86 Disassembler Library.\n" 
+  "Udcli is a front-end to the Udis86 Disassembler Library.\n"
   "http://udis86.sourceforge.net/\n"
 };
 
@@ -108,7 +110,7 @@ int main(int argc, char **argv)
 #endif
 #if defined(__DJGPP) || defined(_WIN32)
   _setmode(_fileno(stdin), _O_BINARY);
-#endif  
+#endif
 
   fptr = stdin;
 
@@ -140,7 +142,7 @@ int main(int argc, char **argv)
 			s = *(++argv);
 			if (sscanf(s, "%"  FMT64 "u", &o_skip) == 0)
 				fprintf(stderr, "Invalid value given for -s.\n");
-		} else { 
+		} else {
 			fprintf(stderr, "No value given for -s.\n");
 			printf(help, prog_path);
 			exit(EXIT_FAILURE);
@@ -151,7 +153,7 @@ int main(int argc, char **argv)
 			s = *(++argv);
 			if (sscanf(s, "%" FMT64 "u", &o_count) == 0)
 				fprintf(stderr, "Invalid value given for -c.\n");
-		} else { 
+		} else {
 			fprintf(stderr, "No value given for -c.\n");
 			printf(help, prog_path);
 			exit(EXIT_FAILURE);
@@ -161,7 +163,7 @@ int main(int argc, char **argv)
 			s = *(++argv);
 			if (*s == 'i')
 				ud_set_vendor(&ud_obj, UD_VENDOR_INTEL);
-		} else { 
+		} else {
 			fprintf(stderr, "No value given for -v.\n");
 			printf(help, prog_path);
 			exit(EXIT_FAILURE);
@@ -173,7 +175,7 @@ int main(int argc, char **argv)
 			if (sscanf(s, "%" FMT64 "x", &pc) == 0)
 				fprintf(stderr, "Invalid value given for -o.\n");
 			ud_set_pc(&ud_obj, pc);
-		} else { 
+		} else {
 			fprintf(stderr, "No value given for -o.\n");
 			printf(help, prog_path);
 			exit(EXIT_FAILURE);
@@ -202,7 +204,7 @@ int main(int argc, char **argv)
 
   if (o_do_x)
 	ud_set_input_hook(&ud_obj, input_hook_x);
-  else	ud_set_input_hook(&ud_obj, input_hook_file);	
+  else	ud_set_input_hook(&ud_obj, input_hook_file);
 
   if (o_skip) {
 	o_count += o_skip;
@@ -224,12 +226,12 @@ int main(int argc, char **argv)
 				printf("%15s -", "");
 			printf("%-16s", hex2);
 		}
-	} 
+	}
 	else printf(" %-24s", ud_insn_asm(&ud_obj));
 
 	printf("\n");
   }
-  
+
   exit(EXIT_SUCCESS);
   return 0;
 }
@@ -255,7 +257,7 @@ int input_hook_x(ud_t* u)
   if (c > 0xFF)
 	fprintf(stderr, "Warning: Casting non-8-bit input (%x), to %x.\n", c, c & 0xFF);
   return (int) (c & 0xFF);
-}	
+}
 
 int input_hook_file(ud_t* u)
 {

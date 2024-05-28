@@ -14,7 +14,10 @@
 #include "../udis86.h"
 #include "../config.h"
 
-#if defined(__amd64__) || defined(__x86_64__)
+
+#if defined(_WIN32)
+#  define FMT "I64"
+#elif defined(__amd64__) || defined(__x86_64__)
 #  define FMT "l"
 #else
 #  define FMT "ll"
@@ -23,7 +26,7 @@
 #if defined(__DJGPP__) || defined(_WIN32)
 # include <io.h>
 # include <fcntl.h>
-#endif 
+#endif
 
 #ifdef __DJGPP__
 # include <unistd.h>  /* for isatty() */
@@ -33,7 +36,7 @@
 #endif
 
 /* help string */
-static char help[] = 
+static char help[] =
 {
   "Usage: %s [-option[s]] file\n"
   "Options:\n"
@@ -53,7 +56,7 @@ static char help[] =
   "    -h       : Display this help message.\n"
   "    --version: Show version.\n"
   "\n"
-  "Udcli is a front-end to the Udis86 Disassembler Library.\n" 
+  "Udcli is a front-end to the Udis86 Disassembler Library.\n"
   "http://udis86.sourceforge.net/\n"
 };
 
@@ -85,7 +88,7 @@ int main(int argc, char **argv)
 #endif
 #if defined(__DJGPP) || defined(_WIN32)
   _setmode(_fileno(stdin), _O_BINARY);
-#endif  
+#endif
 
   fptr = stdin;
 
@@ -114,7 +117,7 @@ int main(int argc, char **argv)
 			s = *(++argv);
 			if (sscanf(s, "%"  FMT "d", &o_skip) == 0)
 				fprintf(stderr, "Invalid value given for -s.\n");
-		} else { 
+		} else {
 			fprintf(stderr, "No value given for -s.\n");
 			printf(help, prog_path);
 			exit(EXIT_FAILURE);
@@ -125,7 +128,7 @@ int main(int argc, char **argv)
 			s = *(++argv);
 			if (sscanf(s, "%" FMT "d", &o_count) == 0)
 				fprintf(stderr, "Invalid value given for -c.\n");
-		} else { 
+		} else {
 			fprintf(stderr, "No value given for -c.\n");
 			printf(help, prog_path);
 			exit(EXIT_FAILURE);
@@ -135,7 +138,7 @@ int main(int argc, char **argv)
 			s = *(++argv);
 			if (*s == 'i')
 				ud_set_vendor(&ud_obj, UD_VENDOR_INTEL);
-		} else { 
+		} else {
 			fprintf(stderr, "No value given for -v.\n");
 			printf(help, prog_path);
 			exit(EXIT_FAILURE);
@@ -147,7 +150,7 @@ int main(int argc, char **argv)
 			if (sscanf(s, "%" FMT "x", &pc) == 0)
 				fprintf(stderr, "Invalid value given for -o.\n");
 			ud_set_pc(&ud_obj, pc);
-		} else { 
+		} else {
 			fprintf(stderr, "No value given for -o.\n");
 			printf(help, prog_path);
 			exit(EXIT_FAILURE);
@@ -176,7 +179,7 @@ int main(int argc, char **argv)
 
   if (o_do_x)
 	ud_set_input_hook(&ud_obj, input_hook_x);
-  else	ud_set_input_hook(&ud_obj, input_hook_file);	
+  else	ud_set_input_hook(&ud_obj, input_hook_file);
 
   if (o_skip) {
 	o_count += o_skip;
@@ -202,12 +205,12 @@ int main(int argc, char **argv)
 				printf("%15s -", "");
 			printf("%-16s", hex2);
 		}
-	} 
+	}
 	else printf(" %-24s", ud_insn_asm(&ud_obj));
 
 	printf("\n");
   }
-  
+
   exit(EXIT_SUCCESS);
   return 0;
 }
@@ -233,7 +236,7 @@ int input_hook_x(ud_t* u)
   if (c > 0xFF)
 	fprintf(stderr, "Warning: Casting non-8-bit input (%x), to %x.\n", c, c & 0xFF);
   return (int) (c & 0xFF);
-}	
+}
 
 int input_hook_file(ud_t* u)
 {

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -87,7 +87,7 @@ static void SR_apply_fixup_alias_init(alias_data *item, void *data)
     output_data *output;
     bound_data *bound;
 
-#define DATA ((uint_fast32_t) data)
+#define DATA ((uint_fast32_t)(uintptr_t) data)
 
     output = section_output_list_FindEntryEqual(DATA, item->ofs);
     if (output != NULL)
@@ -113,7 +113,7 @@ static void SR_apply_fixup_export_init(export_data *item, void *data)
     bound_data *bound;
 #endif
 
-#define DATA ((uint_fast32_t) data)
+#define DATA ((uint_fast32_t)(uintptr_t) data)
 
     output = section_output_list_FindEntryEqual(DATA, item->ofs);
     if (output != NULL)
@@ -137,7 +137,7 @@ static void SR_apply_fixup_data_init(fixup_data *item, void *data)
 {
     output_data *output;
 
-#define DATA ((uint_fast32_t) data)
+#define DATA ((uint_fast32_t)(uintptr_t) data)
 
     if (item->type == FT_NORMAL || item->type == FT_SELFREL || item->type == FT_IMAGEBASE)
     {
@@ -493,11 +493,11 @@ int SR_apply_fixup_info(void)
     for (EF.Entry = 0; EF.Entry < num_sections; EF.Entry++)
     {
 #if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_WINDOWS)
-        section_alias_list_ForEach(EF.Entry, &SR_apply_fixup_alias_init, (void *) EF.Entry);
+        section_alias_list_ForEach(EF.Entry, &SR_apply_fixup_alias_init, (void *)(uintptr_t) EF.Entry);
 #endif
 
-        section_export_list_ForEach(EF.Entry, &SR_apply_fixup_export_init, (void *) EF.Entry);
-        section_fixup_list_ForEach(EF.Entry, &SR_apply_fixup_data_init, (void *) EF.Entry);
+        section_export_list_ForEach(EF.Entry, &SR_apply_fixup_export_init, (void *)(uintptr_t) EF.Entry);
+        section_fixup_list_ForEach(EF.Entry, &SR_apply_fixup_data_init, (void *)(uintptr_t) EF.Entry);
     }
 
     if (list_invalid_code_fixups)

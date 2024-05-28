@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -304,7 +304,7 @@ static void SR_write_output_export(export_data *item, void *data)
 #define DATA ((Entry_FILE *) data)
 
 #if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_WINDOWS)
-    if (item->name != NULL)
+    if (item->name[0] != 0)
     {
         alias_data *alias;
 

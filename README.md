@@ -39,8 +39,6 @@ The projects consists of following subprojects (read the readme files in subproj
   * Game specific source code.
   * Together with the generated assembler versions of the executables, these files can be used to build Windows or Linux (x86 or arm) versions of the games.
   * Uses plugins to play (or play better) music.
-* **midi-libs**
-  * Libraries that are used by plugins in *midi-plugins* subproject to play MIDI music.
 * **midi-plugins**
   * Plugins used by the games to play MIDI (and other types) music.
 * **scaler-plugins**

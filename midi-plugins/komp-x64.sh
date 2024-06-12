@@ -5,12 +5,6 @@ gcc -shared -Wl,-soname,midi-adlmidi.so -o midi-adlmidi.so -fpic -fvisibility=hi
 gcc -shared -Wl,-soname,midi2-windows.so -o midi2-windows.so -fpic -fvisibility=hidden -m64 -O2 -Wall midi2-windows.c
 gcc -shared -Wl,-soname,midi2-alsa.so -o midi2-alsa.so -fpic -fvisibility=hidden -m64 -O2 -Wall midi2-alsa.c -lasound -lpthread
 
-cd albion
-
-gcc -shared -Wl,-soname,midiA-wildmidi.so -o midiA-wildmidi.so -fpic -fvisibility=hidden -m64 -O2 -Wall midiA-wildmidi.c -I`pwd`/.. -I`pwd`/include -lWildMidiA -L`pwd`/lib/x64 -lm
-
-cd ..
-
 cd xcom12
 
 CURDIR=`pwd`

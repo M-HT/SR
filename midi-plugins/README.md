@@ -18,10 +18,6 @@ To compile the plugins, run the compilation script for your platform.
 
 ## Game-specific plugins
 
-### Albion
-
-**midiA-wildmidi** plays MIDI (not General MIDI) background effects using WildMidiA library. WildMidiA is a modification of the [WildMidi](https://sourceforge.net/projects/wildmidi/ "WildMidi Midi Library and Player") library. The source is in the directory *wildmidiA-0.2.3.5svn* in *midi-libs* subproject.
-
 ### X-Com games (DOS versions)
 
 These plugins use small x86 emulator to run the music driver from the game. The x86 emulator is not a complete x86 emulator. It supports only 64kB of RAM and implements only enough x86 instructions to run the music drivers.

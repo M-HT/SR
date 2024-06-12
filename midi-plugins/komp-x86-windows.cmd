@@ -4,12 +4,6 @@ gcc -s -shared -o midi-bassmidi.dll -m32 -O2 -Wall midi-bassmidi.c midi.def -I./
 gcc -s -shared -o midi-adlmidi.dll -m32 -O2 -Wall midi-adlmidi.c midi.def -I./include -lADLMIDI -L./lib/x86
 gcc -s -shared -o midi2-windows.dll -m32 -O2 -Wall midi2-windows.c midi2.def -lwinmm
 
-cd albion
-
-gcc -s -shared -o midiA-wildmidi.dll -m32 -O2 -Wall midiA-wildmidi.c ../midi.def -I./.. -I./include -lWildMidiA -L./lib/x86 -lm
-
-cd ..
-
 cd xcom12
 
 gcc -c -m32 -O2 -Wall mpsmusic-driver.c -I./include -I../

@@ -4,12 +4,6 @@ $PNDSDK/bin/pandora-gcc -shared -Wl,-soname,midi-bassmidi.so -o midi-bassmidi.so
 $PNDSDK/bin/pandora-gcc -shared -Wl,-soname,midi-adlmidi.so -o midi-adlmidi.so -fpic -fvisibility=hidden -O2 -Wall midi-adlmidi.c -I`pwd`/include -lADLMIDI -lstdc++ -L`pwd`/lib/arm
 $PNDSDK/bin/pandora-gcc -shared -Wl,-soname,midi2-alsa.so -o midi2-alsa.so -fpic -fvisibility=hidden -O2 -Wall -D_XOPEN_SOURCE=700 -D_SVID_SOURCE -D_DEFAULT_SOURCE midi2-alsa.c -I$PNDSDK/usr/include -lasound -lpthread -L$PNDSDK/usr/lib
 
-cd albion
-
-$PNDSDK/bin/pandora-gcc -shared -Wl,-soname,midiA-wildmidi.so -o midiA-wildmidi.so -fpic -fvisibility=hidden -O2 -Wall midiA-wildmidi.c -I`pwd`/.. -I`pwd`/include -lWildMidiA -L`pwd`/lib/arm -lm
-
-cd ..
-
 cd xcom12
 
 CURDIR=`pwd`

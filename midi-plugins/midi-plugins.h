@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -42,8 +42,6 @@ typedef struct _midi_plugin_functions_ {
     int (*rewind_midi) (void *handle);
     int (*close_midi) (void *handle);
     void (*shutdown_plugin) (void);
-    void * (*A_create_wave_synthetizer) (void *wave_lib);
-    int (*A_destroy_wave_synthetizer) (void *p);
 } midi_plugin_functions;
 
 typedef int (*midi_plugin_initialize)(unsigned short int rate, midi_plugin_parameters const *parameters, midi_plugin_functions *functions);

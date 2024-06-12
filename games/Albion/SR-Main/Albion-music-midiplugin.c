@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -41,6 +41,7 @@
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Albion-music-midiplugin.h"
+#include "Albion-music-xmiplayer.h"
 #include "xmi2mid.h"
 #include "midi-plugins.h"
 
@@ -92,12 +93,14 @@ typedef struct _MP_midi_ {
 } MP_midi;
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
-    static HMODULE MP_handle[2];
+    static HMODULE MP_handle;
 #else
-    static void *MP_handle[2];
+    static void *MP_handle;
 #endif
 
-static midi_plugin_functions MP_functions[2];
+static midi_plugin_functions MP_functions;
+
+static struct _xmi_player *player = NULL;
 
 static void *temp_buf;
 static int length_multiplier;
@@ -535,7 +538,7 @@ static int MidiPlugin_ProcessData(void *data)
 
                 if (todo[index]) continue;
 
-                if ((MP_sequence[index].S != NULL) && (MP_sequence[index].midi != NULL))
+                if ((MP_sequence[index].S != NULL) && (MP_sequence[index].miditype || (MP_sequence[index].midi != NULL)))
                 {
                     int miditype;
 
@@ -560,42 +563,56 @@ static int MidiPlugin_ProcessData(void *data)
 
                                 write_buffer = MP_sequence[index].write_buffer & 1;
 
-                                if (miditype == 0)
+                                if (miditype)
                                 {
-                                    volume = ( MP_sequence[index].volume * Game_MusicMasterVolume * 517 ) >> 16; /* (volume * Game_MusicMasterVolume) / (127) */
+                                    volume = ( MP_sequence[index].volume * Game_SoundMasterVolume * 521 ) >> 16; /* (volume * Game_SoundMasterVolume * 128) / (127 * 127) */
+
+                                    if (volume != last_volume[1])
+                                    {
+                                        last_volume[1] = volume;
+                                        xmi_player_set_volume(player, volume);
+                                    }
+
+                                    xmi_player_get_data(player, MP_sequence[index].buffer[write_buffer], BUFFER_SIZE);
+                                    MP_sequence[index].bytes_left[write_buffer] = BUFFER_SIZE;
+
+                                    if (!xmi_player_is_playing(player))
+                                    {
+                                        MP_sequence[index].end_of_midi = 1;
+                                    }
                                 }
                                 else
                                 {
-                                    volume = ( MP_sequence[index].volume * Game_SoundMasterVolume * 517 ) >> 16; /* (volume * Game_SoundMasterVolume) / (127) */
-                                }
+                                    volume = ( MP_sequence[index].volume * Game_MusicMasterVolume * 517 ) >> 16; /* (volume * Game_MusicMasterVolume) / (127) */
 
-                                if (volume != last_volume[miditype])
-                                {
-                                    last_volume[miditype] = volume;
-                                    MP_functions[miditype].set_master_volume(volume);
-                                }
-
-                                MP_sequence[index].bytes_left[write_buffer] = MP_functions[miditype].get_data(MP_sequence[index].midi, (char *) MP_sequence[index].buffer[write_buffer], BUFFER_SIZE);
-                                if (MP_sequence[index].bytes_left[write_buffer] != BUFFER_SIZE)
-                                {
-                                    MP_functions[miditype].rewind_midi(MP_sequence[index].midi);
-
-                                    if (MP_sequence[index].loop_count != 0)
+                                    if (volume != last_volume[0])
                                     {
-                                        MP_sequence[index].loop_count--;
-                                        if (MP_sequence[index].loop_count == 0)
-                                        {
-                                            MP_sequence[index].loop_count = 1;
-                                            MP_sequence[index].end_of_midi = 1;
-                                        }
+                                        last_volume[0] = volume;
+                                        MP_functions.set_master_volume(volume);
                                     }
 
-                                    if (!MP_sequence[index].end_of_midi)
+                                    MP_sequence[index].bytes_left[write_buffer] = MP_functions.get_data(MP_sequence[index].midi, (char *) MP_sequence[index].buffer[write_buffer], BUFFER_SIZE);
+                                    if (MP_sequence[index].bytes_left[write_buffer] != BUFFER_SIZE)
                                     {
-                                        int size;
+                                        MP_functions.rewind_midi(MP_sequence[index].midi);
 
-                                        size = MP_functions[miditype].get_data(MP_sequence[index].midi, (char *) &(MP_sequence[index].buffer[write_buffer][MP_sequence[index].bytes_left[write_buffer]]), BUFFER_SIZE - MP_sequence[index].bytes_left[write_buffer]);
-                                        MP_sequence[index].bytes_left[write_buffer] += size;
+                                        if (MP_sequence[index].loop_count != 0)
+                                        {
+                                            MP_sequence[index].loop_count--;
+                                            if (MP_sequence[index].loop_count == 0)
+                                            {
+                                                MP_sequence[index].loop_count = 1;
+                                                MP_sequence[index].end_of_midi = 1;
+                                            }
+                                        }
+
+                                        if (!MP_sequence[index].end_of_midi)
+                                        {
+                                            int size;
+
+                                            size = MP_functions.get_data(MP_sequence[index].midi, (char *) &(MP_sequence[index].buffer[write_buffer][MP_sequence[index].bytes_left[write_buffer]]), BUFFER_SIZE - MP_sequence[index].bytes_left[write_buffer]);
+                                            MP_sequence[index].bytes_left[write_buffer] += size;
+                                        }
                                     }
                                 }
 
@@ -619,22 +636,36 @@ static int MidiPlugin_ProcessData(void *data)
 
                             write_buffer = MP_sequence[index].write_buffer & 1;
 
-                            if (miditype == 0)
+                            if (miditype)
                             {
-                                volume = ( MP_sequence[index].volume * Game_MusicMasterVolume * 517 ) >> 16; // (volume * Game_MusicMasterVolume) / (127)
+                                volume = ( MP_sequence[index].volume * Game_SoundMasterVolume * 521 ) >> 16; // (volume * Game_SoundMasterVolume * 128) / (127 * 127)
+
+                                if (volume != last_volume[1])
+                                {
+                                    last_volume[1] = volume;
+                                    xmi_player_set_volume(player, volume);
+                                }
+
+                                xmi_player_get_data(player, MP_sequence[index].buffer[write_buffer], BUFFER_SIZE);
+                                MP_sequence[index].bytes_left[write_buffer] = BUFFER_SIZE;
+
+                                if (!xmi_player_is_playing(player))
+                                {
+                                    MP_sequence[index].end_of_midi = 1;
+                                }
                             }
                             else
                             {
-                                volume = ( MP_sequence[index].volume * Game_SoundMasterVolume * 517 ) >> 16; // (volume * Game_SoundMasterVolume) / (127)
-                            }
+                                volume = ( MP_sequence[index].volume * Game_MusicMasterVolume * 517 ) >> 16; // (volume * Game_MusicMasterVolume) / (127)
 
-                            if (volume != last_volume[miditype])
-                            {
-                                last_volume[miditype] = volume;
-                                MP_functions[miditype].set_master_volume(volume);
-                            }
+                                if (volume != last_volume[0])
+                                {
+                                    last_volume[0] = volume;
+                                    MP_functions.set_master_volume(volume);
+                                }
 
-                            MP_sequence[index].bytes_left[write_buffer] = MP_functions[miditype].get_data(MP_sequence[index].midi, (char *) MP_sequence[index].buffer[write_buffer], BUFFER_SIZE);
+                                MP_sequence[index].bytes_left[write_buffer] = MP_functions.get_data(MP_sequence[index].midi, (char *) MP_sequence[index].buffer[write_buffer], BUFFER_SIZE);
+                            }
 
                             if (MP_sequence[index].read_buffer == MP_sequence[index].write_buffer)
                             {
@@ -682,21 +713,11 @@ int MidiPlugin_Startup(void)
     }
 
     fprintf(stderr, "%s: loading dynamic library: %s\n", "midi", plugin_name);
-    MP_handle[0] = LoadLibraryA(plugin_name);
+    MP_handle = LoadLibraryA(plugin_name);
 
-    if (MP_handle[0] == NULL)
+    if (MP_handle == NULL)
     {
         fprintf(stderr, "%s: load error: 0x%x\n", "midi", GetLastError());
-        return 2;
-    }
-
-    fprintf(stderr, "%s: loading dynamic library: %s\n", "midiA", ".\\midiA-wildmidi.dll");
-    MP_handle[1] = LoadLibraryA(".\\midiA-wildmidi.dll");
-
-    if (MP_handle[1] == NULL)
-    {
-        fprintf(stderr, "%s: load error: 0x%x\n", "midiA", GetLastError());
-        free_library(MP_handle[0]);
         return 2;
     }
 #else
@@ -713,32 +734,21 @@ int MidiPlugin_Startup(void)
     }
 
     fprintf(stderr, "%s: loading shared object: %s\n", "midi", plugin_name);
-    MP_handle[0] = dlopen(plugin_name, RTLD_LAZY);
+    MP_handle = dlopen(plugin_name, RTLD_LAZY);
 
-    if (MP_handle[0] == NULL)
+    if (MP_handle == NULL)
     {
         fprintf(stderr, "%s: load error: %s\n", "midi", dlerror());
         return 2;
     }
-
-    fprintf(stderr, "%s: loading shared object: %s\n", "midiA", "./midiA-wildmidi.so");
-    MP_handle[1] = dlopen("./midiA-wildmidi.so", RTLD_LAZY);
-
-    if (MP_handle[1] == NULL)
-    {
-        fprintf(stderr, "%s: load error: %s\n", "midiA", dlerror());
-        free_library(MP_handle[0]);
-        return 2;
-    }
 #endif
 
-    MP_initialize = (midi_plugin_initialize) get_proc_address(MP_handle[0], MIDI_PLUGIN_INITIALIZE);
+    MP_initialize = (midi_plugin_initialize) get_proc_address(MP_handle, MIDI_PLUGIN_INITIALIZE);
 
     if (MP_initialize == NULL)
     {
         fprintf(stderr, "%s: error: %s\n", "midi", "initialization function not available in plugin");
-        free_library(MP_handle[1]);
-        free_library(MP_handle[0]);
+        free_library(MP_handle);
         return 3;
     }
 
@@ -747,31 +757,10 @@ int MidiPlugin_Startup(void)
     MP_parameters.opl3_bank_number = 0; // 0 = AIL (Star Control 3, Albion, Empire 2, Sensible Soccer, Settlers 2, many others)
     MP_parameters.opl3_emulator = Game_OPL3Emulator;
 
-    if (MP_initialize(Game_AudioRate, &MP_parameters, &(MP_functions[0])))
+    if (MP_initialize(Game_AudioRate, &MP_parameters, &MP_functions))
     {
         fprintf(stderr, "%s: error: %s\n", "midi", "failed to initialize plugin");
-        free_library(MP_handle[1]);
-        free_library(MP_handle[0]);
-        return 4;
-    }
-
-    MP_initialize = (midi_plugin_initialize) get_proc_address(MP_handle[1], MIDI_PLUGIN_INITIALIZE);
-
-    if (MP_initialize == NULL)
-    {
-        fprintf(stderr, "%s: error: %s\n", "midiA", "initialization function not available in plugin");
-        MP_functions[0].shutdown_plugin();
-        free_library(MP_handle[1]);
-        free_library(MP_handle[0]);
-        return 3;
-    }
-
-    if (MP_initialize(Game_AudioRate, &MP_parameters, &(MP_functions[1])))
-    {
-        fprintf(stderr, "%s: error: %s\n", "midiA", "failed to initialize plugin");
-        MP_functions[0].shutdown_plugin();
-        free_library(MP_handle[1]);
-        free_library(MP_handle[0]);
+        free_library(MP_handle);
         return 4;
     }
 
@@ -846,10 +835,8 @@ int MidiPlugin_Startup(void)
         SDL_DestroySemaphore(MP_sequence[2].sem);
         SDL_DestroySemaphore(MP_sequence[1].sem);
         SDL_DestroySemaphore(MP_sequence[0].sem);
-        MP_functions[1].shutdown_plugin();
-        MP_functions[0].shutdown_plugin();
-        free_library(MP_handle[1]);
-        free_library(MP_handle[0]);
+        MP_functions.shutdown_plugin();
+        free_library(MP_handle);
         return 5;
     }
 
@@ -857,7 +844,6 @@ int MidiPlugin_Startup(void)
     Mix_HookMusic(&MidiPlugin_MusicPlayer, temp_buf);
 
     fprintf(stderr, "%s: OK\n", "midi");
-    fprintf(stderr, "%s: OK\n", "midiA");
 
     return 0;
 
@@ -892,9 +878,13 @@ void MidiPlugin_Shutdown(void)
     // close midi files
     for (index = 0; index <= 2; index++)
     {
-        if (MP_sequence[index].midi != NULL)
+        if (MP_sequence[index].miditype)
         {
-            MP_functions[MP_sequence[index].miditype].close_midi(MP_sequence[index].midi);
+            xmi_player_close(player);
+        }
+        else if (MP_sequence[index].midi != NULL)
+        {
+            MP_functions.close_midi(MP_sequence[index].midi);
             MP_sequence[index].midi = NULL;
         }
         SDL_DestroySemaphore(MP_sequence[index].sem);
@@ -907,17 +897,13 @@ void MidiPlugin_Shutdown(void)
         temp_buf = NULL;
     }
 
-    MP_functions[1].shutdown_plugin();
-    MP_functions[0].shutdown_plugin();
+    MP_functions.shutdown_plugin();
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
-    FreeLibrary(MP_handle[1]);
-    FreeLibrary(MP_handle[0]);
+    FreeLibrary(MP_handle);
 #else
-    dlclose(MP_handle[1]);
-    dlclose(MP_handle[0]);
+    dlclose(MP_handle);
 #endif
-    MP_handle[0] = NULL;
-    MP_handle[1] = NULL;
+    MP_handle = NULL;
 }
 
 
@@ -965,9 +951,13 @@ void MidiPlugin_AIL_release_sequence_handle(AIL_sequence *S)
 
     mp_sequence->status = MP_STOPPED;
     mp_sequence->end_of_midi = 0;
-    if (mp_sequence->midi != NULL)
+    if (mp_sequence->miditype)
     {
-        MP_functions[mp_sequence->miditype].close_midi(mp_sequence->midi);
+        xmi_player_close(player);
+    }
+    else if (mp_sequence->midi != NULL)
+    {
+        MP_functions.close_midi(mp_sequence->midi);
         mp_sequence->midi = NULL;
     }
     if (S->midi != NULL)
@@ -999,9 +989,13 @@ int32_t MidiPlugin_AIL_init_sequence(AIL_sequence *S, void *start, int32_t seque
 
     mp_sequence->status = MP_STOPPED;
     mp_sequence->end_of_midi = 0;
-    if (mp_sequence->midi != NULL)
+    if (mp_sequence->miditype)
     {
-        MP_functions[mp_sequence->miditype].close_midi(mp_sequence->midi);
+        xmi_player_close(player);
+    }
+    else if (mp_sequence->midi != NULL)
+    {
+        MP_functions.close_midi(mp_sequence->midi);
         mp_sequence->midi = NULL;
     }
     if (S->midi != NULL)
@@ -1015,9 +1009,16 @@ int32_t MidiPlugin_AIL_init_sequence(AIL_sequence *S, void *start, int32_t seque
     S->start = start;
     S->sequence_num = sequence_num;
 
-    S->midi = xmi2mid((uint8_t *) start, sequence_num, mp_sequence->miditype, &(S->midi_size));
+    if (mp_sequence->miditype)
+    {
+        xmi_player_open(player, (uint8_t *) start, sequence_num);
+    }
+    else
+    {
+        S->midi = xmi2mid((uint8_t *) start, sequence_num, &(S->midi_size));
 
-    mp_sequence->midi = MP_functions[mp_sequence->miditype].open_buffer(S->midi, S->midi_size);
+        mp_sequence->midi = MP_functions.open_buffer(S->midi, S->midi_size);
+    }
 
     SDL_SemPost(mp_sequence->sem);
 
@@ -1110,7 +1111,10 @@ void MidiPlugin_AIL_end_sequence(AIL_sequence *S)
 
     mp_sequence->status = MP_STOPPED;
 
-    MP_functions[mp_sequence->miditype].rewind_midi(mp_sequence->midi);
+    if (!mp_sequence->miditype)
+    {
+        MP_functions.rewind_midi(mp_sequence->midi);
+    }
 
     SDL_SemPost(mp_sequence->sem);
 }
@@ -1139,6 +1143,11 @@ void MidiPlugin_AIL_set_sequence_loop_count(AIL_sequence *S, int32_t loop_count)
     LockSem(mp_sequence->sem);
 
     mp_sequence->loop_count = loop_count;
+
+    if (mp_sequence->miditype)
+    {
+        xmi_player_set_loop_count(player, mp_sequence->loop_count - 1);
+    }
 
     SDL_SemPost(mp_sequence->sem);
 }
@@ -1205,20 +1214,25 @@ uint32_t MidiPlugin_AIL_sequence_status(AIL_sequence *S)
 void *MidiPlugin_AIL_create_wave_synthesizer2(void *dig, void *mdi, void *wave_lib, int32_t polyphony)
 {
     int index;
-    void *ret;
 
     for (index = 0; index <= 2; index++)
     {
         if (MP_sequence[index].miditype)
         {
             LockSem(MP_sequence[index].sem);
-            MP_sequence[index].status = MP_STOPPED;
-            MP_sequence[index].loop_count = 1;
-            MP_sequence[index].end_of_midi = 1;
+            if (player == NULL)
+            {
+                MP_sequence[index].status = MP_STOPPED;
+                MP_sequence[index].loop_count = 1;
+                MP_sequence[index].end_of_midi = 1;
+            }
         }
     }
 
-    ret = MP_functions[1].A_create_wave_synthetizer(wave_lib);
+    if (player == NULL)
+    {
+        player = xmi_player_create(Game_AudioRate, wave_lib);
+    }
 
     for (index = 0; index <= 2; index++)
     {
@@ -1228,7 +1242,7 @@ void *MidiPlugin_AIL_create_wave_synthesizer2(void *dig, void *mdi, void *wave_l
         }
     }
 
-    return ret;
+    return player;
 }
 
 void MidiPlugin_AIL_destroy_wave_synthesizer2(void *W)
@@ -1240,19 +1254,18 @@ void MidiPlugin_AIL_destroy_wave_synthesizer2(void *W)
         if (MP_sequence[index].miditype)
         {
             LockSem(MP_sequence[index].sem);
+            last_volume[1] = -1;
             MP_sequence[index].status = MP_STOPPED;
             MP_sequence[index].loop_count = 1;
             MP_sequence[index].end_of_midi = 1;
-
-            if (MP_sequence[index].midi != NULL)
-            {
-                MP_functions[1].close_midi(MP_sequence[index].midi);
-                MP_sequence[index].midi = NULL;
-            }
         }
     }
 
-    MP_functions[1].A_destroy_wave_synthetizer(W);
+    if (player != NULL)
+    {
+        xmi_player_destroy(player);
+        player = NULL;
+    }
 
     for (index = 0; index <= 2; index++)
     {

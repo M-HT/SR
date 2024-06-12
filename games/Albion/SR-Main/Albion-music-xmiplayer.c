@@ -1,0 +1,611 @@
+/**
+ *
+ *  Copyright (C) 2016-2024 Roman Pauer
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy of
+ *  this software and associated documentation files (the "Software"), to deal in
+ *  the Software without restriction, including without limitation the rights to
+ *  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ *  of the Software, and to permit persons to whom the Software is furnished to do
+ *  so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *
+ */
+
+#include "Game_defs.h"
+#include "Game_vars.h"
+#include "xmi2mid.h"
+#include "Albion-music-xmiplayer.h"
+#include <math.h>
+
+#if ( \
+    defined(__aarch64__) || \
+    defined(_M_ARM64) || \
+    defined(_M_ARM64EC) \
+)
+    #define ARMV8 1
+#else
+    #undef ARMV8
+#endif
+
+#if (!defined(ARMV8)) && ( \
+    (defined(__ARM_ARCH) && (__ARM_ARCH >= 6)) || \
+    (defined(_M_ARM) && (_M_ARM >= 6)) || \
+    (defined(__TARGET_ARCH_ARM) && (__TARGET_ARCH_ARM >= 6)) || \
+    (defined(__TARGET_ARCH_THUMB) && (__TARGET_ARCH_THUMB >= 3)) \
+)
+    #define ARMV6 1
+#else
+    #undef ARMV6
+#endif
+
+#if defined(ARMV8)
+#include <arm_neon.h>
+#elif defined(ARMV6) && defined(__ARM_ACLE) && __ARM_FEATURE_SAT
+#include <arm_acle.h>
+#endif
+
+
+#define DIG_F_16BITS_MASK        1
+#define DIG_F_STEREO_MASK        2
+
+#define DIG_PCM_SIGN             0x0001   // (obsolete)
+#define DIG_PCM_ORDER            0x0002
+
+typedef struct {                         // Wave library entry
+    int32_t   bank;                      // XMIDI bank, MIDI patch for sample
+    int32_t   patch;
+
+    int32_t   root_key;                  // Root MIDI note # for sample (or -1)
+
+    uint32_t  file_offset;               // Offset of wave data from start-of-file
+    uint32_t  size;                      // Size of wave sample in bytes
+
+    int32_t   format;                    // DIG_F format (8/16 bits, mono/stereo)
+    uint32_t  flags;                     // DIG_PCM_SIGN / DIG_PCM_ORDER (stereo)
+    int32_t   playback_rate;             // Playback rate in hertz
+} WAVE_ENTRY;
+
+typedef struct _midi_channel {
+    const WAVE_ENTRY *instrument;
+    int bank;
+    int program;
+    int channel_volume; // 0 - 127
+    int pan;            // 0 - 127
+    int note_volume;    // 0 - 127
+    int pitch_bend;     // -8192 - 8191
+    int32_t volume_left;
+    int32_t volume_right;
+    uint32_t time_left;
+    const uint8_t *sample_data;
+    uint32_t sample_length;
+    uint32_t format;
+    int32_t key;
+    int32_t rate;
+    uint64_t pos;
+    uint64_t pos_inc;
+} midi_channel;
+
+typedef struct _xmi_player {
+    int playing;
+    unsigned int rate;
+    unsigned int samples_per_tick;
+    unsigned int samples_left;
+    int volume;         // 0-128
+    int loop_count;
+    int pitch_bend_sensitivity;
+    const WAVE_ENTRY *wave_synthetizer;
+    const uint8_t *seq;
+    uint32_t seq_len;
+    uint32_t event_time;
+    const uint8_t *current_event;
+    midi_channel channels[16];
+} xmi_player;
+
+
+#define READ_VARLEN(res, buf) {                 \
+    unsigned int ___data;                       \
+    res = 0;                                    \
+    do {                                        \
+        ___data = *(buf);                       \
+        buf++;                                  \
+        res = (res << 7) | (___data & 0x7f);    \
+    } while (___data & 0x80);                   }
+
+
+static void update_channel_instrument(const WAVE_ENTRY *wave_synthetizer, midi_channel *channel)
+{
+    const WAVE_ENTRY *new_instrument;
+    int entry;
+
+    if (channel == NULL) return;
+
+    new_instrument = NULL;
+    if (wave_synthetizer != NULL)
+    {
+        for (entry = 0; entry < 512; entry++)
+        {
+            if (wave_synthetizer[entry].bank == -1) break;
+
+            if ((wave_synthetizer[entry].bank == channel->bank) && (wave_synthetizer[entry].patch == channel->program))
+            {
+                new_instrument = &(wave_synthetizer[entry]);
+                break;
+            }
+        }
+    }
+
+    if (new_instrument != channel->instrument)
+    {
+        channel->instrument = new_instrument;
+        channel->note_volume = 0;
+
+        if (new_instrument != NULL)
+        {
+            channel->sample_data = new_instrument->file_offset + (const uint8_t *)wave_synthetizer;
+            switch (new_instrument->format & 3)
+            {
+                case 0: // 8-bit, mono
+                    channel->sample_length = new_instrument->size;
+                    break;
+                case 1: // 16-bit, mono
+                case 2: // 8-bit, stereo
+                    channel->sample_length = new_instrument->size >> 1;
+                    break;
+                case 3: // 16-bit, stereo
+                    channel->sample_length = new_instrument->size >> 2;
+                    break;
+            }
+            channel->format = (new_instrument->format & 3) | ((new_instrument->flags & 1) << 2);
+            channel->key = new_instrument->root_key;
+            channel->rate = new_instrument->playback_rate;
+        }
+    }
+}
+
+static void update_channel_volume(midi_channel *channel)
+{
+    if (channel == NULL) return;
+
+    channel->volume_left = (channel->channel_volume * channel->note_volume * 521 * (128 - channel->pan)) >> 16; // (channel->channel_volume * channel->note_volume * 128 * (128 - channel->pan)) / (127 * 127)
+    channel->volume_right = (channel->channel_volume * channel->note_volume * 521 * channel->pan) >> 16; // (channel->channel_volume * channel->note_volume * 128 * channel->pan) / (127 * 127)
+}
+
+struct _xmi_player *xmi_player_create(unsigned int rate, const void *wave_synthetizer)
+{
+    xmi_player *player;
+    int ch;
+
+    player = (xmi_player *) calloc(1, sizeof(xmi_player));
+    if (player == NULL) return NULL;
+
+    player->rate = rate;
+    player->volume = 0;
+    player->samples_per_tick = rate / 120;
+    player->wave_synthetizer = (const WAVE_ENTRY *) wave_synthetizer;
+
+    for (ch = 0; ch < 16; ch++)
+    {
+        update_channel_instrument(player->wave_synthetizer, &(player->channels[ch]));
+    }
+
+    return player;
+}
+
+void xmi_player_destroy(struct _xmi_player *player)
+{
+    if (player == NULL) return;
+
+    free(player);
+}
+
+int xmi_player_open(struct _xmi_player *player, const uint8_t *xmi, int seq_num)
+{
+    int ch;
+
+    if (player == NULL) return 0;
+
+    xmi_player_close(player);
+
+    player->seq = xmi_find_sequence(xmi, seq_num, &player->seq_len);
+    if (player->seq == NULL) return 0;
+
+    player->playing = 1;
+    player->samples_left = 0;
+    player->loop_count = -1;
+    player->pitch_bend_sensitivity = 2;
+    player->event_time = 0;
+    player->current_event = player->seq;
+
+    for (ch = 0; ch < 16; ch++)
+    {
+        player->channels[ch].channel_volume = 100;
+        player->channels[ch].pan = 64;
+        player->channels[ch].note_volume = 0;
+        player->channels[ch].pitch_bend = 0;
+    }
+
+    return 1;
+}
+
+void xmi_player_close(struct _xmi_player *player)
+{
+    if (player == NULL) return;
+
+    player->playing = 0;
+    player->seq = NULL;
+}
+
+void xmi_player_set_volume(struct _xmi_player *player, int volume)
+{
+    if (player == NULL) return;
+
+    player->volume = volume;
+}
+
+void xmi_player_set_loop_count(struct _xmi_player *player, int loop_count)
+{
+    if (player == NULL) return;
+
+    player->loop_count = loop_count;
+}
+
+static inline int32_t S8toS16(uint8_t a)
+{
+    return (int16_t)((a << 8) | (a ^ 0x80));
+}
+
+static inline int32_t U8toS16(uint8_t a)
+{
+    return ((a << 8) | a) - 32768;
+}
+
+static inline int32_t clamp(int32_t value) {
+#if defined(ARMV8)
+    return vqmovns_s32(value);
+#elif defined(ARMV6) && defined(__ARM_ACLE) && __ARM_FEATURE_SAT
+    return __ssat(value, 16);
+#elif defined(ARMV6) && defined(__GNUC__)
+    asm ( "ssat %[result], #16, %[value]" : [result] "=r" (value) : [value] "r" (value) : "cc" );
+    return value;
+#else
+    return value < -32768 ? -32768 : ((value >= 32768 ? 32767 : value));
+#endif
+}
+
+void xmi_player_get_data(struct _xmi_player *player, void *buffer, uint32_t size)
+{
+    uint32_t count, event_time, pos1, pos2;
+    int ch, notes_playing;
+    const uint8_t *event_data;
+    unsigned int status, var_len, index;
+    midi_channel *channel;
+    int32_t accum_left, accum_right, left, right, frac;
+
+    if ((buffer == NULL) || (size == 0)) return;
+
+    memset(buffer, 0, size);
+
+    if ((player == NULL) || (!player->playing)) return;
+
+    size >>= 2;
+
+    while (size != 0)
+    {
+        if (player->samples_left == 0)
+        {
+            notes_playing = 0;
+            for (ch = 0; ch < 16; ch++)
+            {
+                if (player->channels[ch].note_volume != 0)
+                {
+                    player->channels[ch].time_left--;
+                    if (player->channels[ch].time_left == 0)
+                    {
+                        player->channels[ch].note_volume = 0;
+                    }
+                    else
+                    {
+                        notes_playing = 1;
+                    }
+                }
+            }
+
+            if ((player->current_event == NULL) && (!notes_playing))
+            {
+                player->playing = 0;
+                break;
+            }
+
+            while (player->current_event != NULL)
+            {
+                event_data = player->current_event;
+                event_time = 0;
+                while ((*event_data & 0x80) == 0)
+                {
+                    event_time += *event_data;
+                    event_data++;
+                }
+
+                if (event_time != player->event_time) break;
+
+                player->event_time = 0;
+
+                status = *event_data;
+                event_data++;
+
+                switch (status >> 4)
+                {
+                    case 0x08: // note off
+                        // shouldn't exist it xmi
+                        player->channels[status & 0x0f].note_volume = 0;
+                        player->current_event = event_data + 2;
+                        break;
+                    case 0x09: // note on
+                        channel = &(player->channels[status & 0x0f]);
+                        if (channel->instrument != NULL)
+                        {
+                            channel->pos = 0;
+
+                            if ((channel->key == event_data[0]) && (channel->pitch_bend == 0))
+                            {
+                                channel->pos_inc = (((int64_t)channel->rate) << 32) / player->rate;
+                            }
+                            else
+                            {
+                                static const double twelfth_root_two = 1.05946309434;
+                                double key_diff = (event_data[0] - channel->key) + (channel->pitch_bend * player->pitch_bend_sensitivity / 8192.0);
+                                double new_rate = pow(twelfth_root_two, key_diff) * channel->rate;
+                                channel->pos_inc = ((int64_t)(new_rate * 4294967296.0)) / player->rate;
+                            }
+
+                            channel->note_volume = event_data[1];
+                            update_channel_volume(channel);
+                        }
+                        event_data += 2;
+                        READ_VARLEN(var_len, event_data)
+                        channel->time_left = var_len;
+                        if (var_len == 0)
+                        {
+                            channel->note_volume = 0;
+                        }
+                        player->current_event = event_data;
+                        break;
+                    case 0x0a: // aftertouch
+                        // ignore event
+                        fprintf(stderr, "unhandled midi event: %.02x %.02x %.02x\n", status, event_data[0], event_data[1]);
+                        player->current_event = event_data + 2;
+                        break;
+                    case 0x0b: // controller
+                        switch (event_data[0])
+                        {
+                            case 0x01: // modulation wheel
+                                if (event_data[1] != 0)
+                                {
+                                    // ignore non-default value
+                                    fprintf(stderr, "unhandled midi event: %.02x %.02x %.02x\n", status, event_data[0], event_data[1]);
+                                }
+                                break;
+                            case 0x07: // volume
+                                channel = &(player->channels[status & 0x0f]);
+                                channel->channel_volume = event_data[1];
+                                update_channel_volume(channel);
+                                break;
+                            case 0x0a: // pan
+                                channel = &(player->channels[status & 0x0f]);
+                                channel->pan = event_data[1];
+                                update_channel_volume(channel);
+                                break;
+                            case 0x40: // sustain (damper) pedal
+                                if (event_data[1] != 0)
+                                {
+                                    // ignore non-default value
+                                    fprintf(stderr, "unhandled midi event: %.02x %.02x %.02x\n", status, event_data[0], event_data[1]);
+                                }
+                                break;
+                            case 0x72: // XMIDI patch bank select
+                                channel = &(player->channels[status & 0x0f]);
+                                channel->bank = event_data[1];
+                                update_channel_instrument(player->wave_synthetizer, channel);
+                                break;
+                            default:
+                                // ignore other controllers
+                                fprintf(stderr, "unhandled midi event: %.02x %.02x %.02x\n", status, event_data[0], event_data[1]);
+                                break;
+                        }
+                        player->current_event = event_data + 2;
+                        break;
+                    case 0x0c: // program change
+                        channel = &(player->channels[status & 0x0f]);
+                        channel->program = event_data[0];
+                        player->current_event = event_data + 1;
+                        update_channel_instrument(player->wave_synthetizer, channel);
+                        break;
+                    case 0x0d: // pressure
+                        // ignore event
+                        fprintf(stderr, "unhandled midi event: %.02x %.02x %.02x\n", status, event_data[0], 0);
+                        player->current_event = event_data + 1;
+                        break;
+                    case 0x0e: // pitch bend
+                        player->channels[status & 0x0f].pitch_bend = ((event_data[0] & 0x7f) | ((event_data[1] & 0x7f) << 7)) - 0x2000;
+                        player->current_event = event_data + 2;
+                        break;
+                    case 0x0f: // sysex / meta events
+                        if (status == 0xff) // meta events
+                        {
+                            if (event_data[0] == 0x2f) // end of track
+                            {
+                                player->current_event = NULL;
+                                break;
+                            }
+
+                            // ignore other meta events
+                            event_data++;
+                            READ_VARLEN(var_len, event_data)
+                            player->current_event = event_data + var_len;
+                            break;
+                        }
+
+                        READ_VARLEN(var_len, event_data)
+                        player->current_event = event_data + var_len;
+                        break;
+                    default:
+                        player->current_event = NULL;
+                        break;
+                }
+
+                if ((player->current_event != NULL) && (player->current_event >= player->seq + player->seq_len))
+                {
+                    player->current_event = NULL;
+                }
+            }
+
+            if ((player->current_event == NULL) && (player->loop_count != 0))
+            {
+                player->current_event = player->seq;
+                player->event_time = 0;
+                if (player->loop_count > 0) player->loop_count--;
+            }
+            else
+            {
+                player->event_time++;
+            }
+
+            player->samples_left = player->samples_per_tick;
+        }
+
+        count = player->samples_left;
+        if (count > size) count = size;
+
+        player->samples_left -= count;
+        size -= count;
+
+        for (index = 0; index < count; index++)
+        {
+            accum_left = accum_right = 0;
+            for (ch = 0; ch < 16; ch++)
+            {
+                channel = &(player->channels[ch]);
+                if (channel->note_volume == 0) continue;
+
+                pos1 = channel->pos >> 32;
+                frac = ((uint32_t)channel->pos) >> 16;
+                pos2 = pos1 + 1;
+                if (pos2 >= channel->sample_length) pos2 = pos1;
+
+                channel->pos += channel->pos_inc;
+                if ((channel->pos >> 32) >= channel->sample_length)
+                {
+                    channel->note_volume = 0;
+                }
+
+                switch (channel->format)
+                {
+                    case 0: // 8-bit, mono, unsigned
+                        //left = (U8toS16(((uint8_t *)channel->sample_data)[pos1]) * (int32_t)(0x10000 - frac)) >> 16;
+                        left = (
+                            U8toS16(((uint8_t *)channel->sample_data)[pos1]) * (0x10000 - frac) +
+                            U8toS16(((uint8_t *)channel->sample_data)[pos2]) * frac
+                            ) >> 16;
+                        accum_left += (left * channel->volume_left) >> (7 + 6);
+                        accum_right += (left * channel->volume_right) >> (7 + 6);
+                        break;
+                    case 1: // 16-bit, mono, unsigned
+                        left = (
+                            (((uint16_t *)channel->sample_data)[pos1] - 32768) * (0x10000 - frac) +
+                            (((uint16_t *)channel->sample_data)[pos2] - 32768) * frac
+                            ) >> 16;
+                        accum_left += (left * channel->volume_left) >> (7 + 6);
+                        accum_right += (left * channel->volume_right) >> (7 + 6);
+                        break;
+                    case 2: // 8-bit, stereo, unsigned
+                        left = (
+                            U8toS16(((uint8_t *)channel->sample_data)[2 * pos1]) * (0x10000 - frac) +
+                            U8toS16(((uint8_t *)channel->sample_data)[2 * pos2]) * frac
+                            ) >> 16;
+                        right = (
+                            U8toS16(((uint8_t *)channel->sample_data)[2 * pos1 + 1]) * (0x10000 - frac) +
+                            U8toS16(((uint8_t *)channel->sample_data)[2 * pos2 + 1]) * frac
+                            ) >> 16;
+                        accum_left += (left * channel->volume_left) >> (7 + 6);
+                        accum_right += (right * channel->volume_right) >> (7 + 6);
+                        break;
+                    case 3: // 16-bit, stereo, unsigned
+                        left = (
+                            (((uint16_t *)channel->sample_data)[2 * pos1] - 32768) * (0x10000 - frac) +
+                            (((uint16_t *)channel->sample_data)[2 * pos2] - 32768) * frac
+                            ) >> 16;
+                        right = (
+                            (((uint16_t *)channel->sample_data)[2 * pos1 + 1] - 32768) * (0x10000 - frac) +
+                            (((uint16_t *)channel->sample_data)[2 * pos2 + 1] - 32768) * frac
+                            ) >> 16;
+                        accum_left += (left * channel->volume_left) >> (7 + 6);
+                        accum_right += (right * channel->volume_right) >> (7 + 6);
+                        break;
+                    case 4: // 8-bit, mono, signed
+                        left = (
+                            S8toS16(((uint8_t *)channel->sample_data)[pos1]) * (0x10000 - frac) +
+                            S8toS16(((uint8_t *)channel->sample_data)[pos2]) * frac
+                            ) >> 16;
+                        accum_left += (left * channel->volume_left) >> (7 + 6);
+                        accum_right += (left * channel->volume_right) >> (7 + 6);
+                        break;
+                    case 5: // 16-bit, mono, signed
+                        left = (
+                            ((int16_t *)channel->sample_data)[pos1] * (0x10000 - frac) +
+                            ((int16_t *)channel->sample_data)[pos2] * frac
+                            ) >> 16;
+                        accum_left += (left * channel->volume_left) >> (7 + 6);
+                        accum_right += (left * channel->volume_right) >> (7 + 6);
+                        break;
+                    case 6: // 8-bit, stereo, signed
+                        left = (
+                            S8toS16(((uint8_t *)channel->sample_data)[2 * pos1]) * (0x10000 - frac) +
+                            S8toS16(((uint8_t *)channel->sample_data)[2 * pos2]) * frac
+                            ) >> 16;
+                        right = (
+                            S8toS16(((uint8_t *)channel->sample_data)[2 * pos1 + 1]) * (0x10000 - frac) +
+                            S8toS16(((uint8_t *)channel->sample_data)[2 * pos2 + 1]) * frac
+                            ) >> 16;
+                        accum_left += (left * channel->volume_left) >> (7 + 6);
+                        accum_right += (right * channel->volume_right) >> (7 + 6);
+                        break;
+                    case 7: // 16-bit, stereo, signed
+                        left = (
+                            ((int16_t *)channel->sample_data)[2 * pos1] * (0x10000 - frac) +
+                            ((int16_t *)channel->sample_data)[2 * pos2] * frac
+                            ) >> 16;
+                        right = (
+                            ((int16_t *)channel->sample_data)[2 * pos1 + 1] * (0x10000 - frac) +
+                            ((int16_t *)channel->sample_data)[2 * pos2 + 1] * frac
+                            ) >> 16;
+                        accum_left += (left * channel->volume_left) >> (7 + 6);
+                        accum_right += (right * channel->volume_right) >> (7 + 6);
+                        break;
+                }
+            }
+
+            ((int16_t *)buffer)[0] = clamp((accum_left * player->volume) >> 7);
+            ((int16_t *)buffer)[1] = clamp((accum_right * player->volume) >> 7);
+            buffer = &(((int16_t *)buffer)[2]);
+        }
+    }
+}
+
+int xmi_player_is_playing(struct _xmi_player *player)
+{
+    if (player == NULL) return 0;
+
+    return player->playing;
+}
+

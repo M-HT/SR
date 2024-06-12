@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -90,101 +90,23 @@ typedef struct _midi_event_
 {
     uint32_t time;
     int32_t length;
-    uint8_t *data;
+    const uint8_t *data;
 } midi_event;
 
-static unsigned int writeevents(uint8_t *buf, midi_event *events, int num_events, int max_valocity)
+
+const uint8_t *xmi_find_sequence(const uint8_t *xmi, int seq_num, uint32_t *seq_len)
 {
-    unsigned int size;
-    uint32_t last_time, delta_time;
+    int num_sequences;
+    uint32_t chunk_name, evnt_len;
 
-    size = 0;
-    last_time = 0;
-
-    while (num_events != 0)
-    {
-        int32_t evlen;
-
-        evlen = events->length;
-        if (evlen < 0) evlen = -evlen;
-        size+=evlen;
-        delta_time = events->time - last_time;
-        last_time = events->time;
-        if (buf != NULL)
-        {
-            int var_index, var_size;
-            uint8_t var_buf[5];
-
-            var_index = 4;
-            var_buf[4] = delta_time & 0x7f;
-            delta_time>>=7;
-            var_size = 1;
-            while (delta_time)
-            {
-                var_size++;
-                var_index--;
-                var_buf[var_index] = 0x80 | (delta_time & 0x7f);
-                delta_time>>=7;
-            } ;
-            size+=var_size;
-
-            while (var_size)
-            {
-                *buf = var_buf[var_index];
-                buf++;
-                var_index++;
-                var_size--;
-            } ;
-
-            memcpy(buf, events->data, evlen);
-            if (events->length < 0)
-            {
-                buf[0] &= 0x8F; // change note on to note off
-                buf[2] = 0;
-            }
-            if ((buf[0] == 0xFF) && (buf[1] == 0x51))
-            {
-                buf[3] = 0x07; // change tempo to 500000
-                buf[4] = 0xA1;
-                buf[5] = 0x20;
-            }
-            if (max_valocity && ((buf[0] & 0xF0) == 0x90))
-            {
-                buf[2] = 127; // change note on velocity to max value
-            }
-            buf+=evlen;
-        }
-        else
-        {
-            do
-            {
-                size++;
-                delta_time>>=7;
-            } while (delta_time) ;
-        }
-        num_events--;
-        events++;
-    };
-
-    return size;
-}
-
-
-uint8_t *xmi2mid(uint8_t *xmi, int seq_num, int max_valocity, unsigned int *midi_size)
-{
-    int num_sequences, max_events, max_noteoffs, num_events, num_noteoffs, end, noteoff_index;
-    unsigned int status, events_size;
-    uint32_t chunk_name, evnt_len, last_time, interval;
-    uint8_t *end_chunk, *event_data, *midi;
-    midi_event *events, *note_offs, *cur_event;
-
+    if (xmi == NULL) return NULL;
 
     READU32BE(chunk_name, xmi);
 
     num_sequences = 1;
     if (chunk_name == BE_STR_FORM)
     {
-        uint8_t *form_start;
+        const uint8_t *form_start;
         uint32_t form_len, info_len;
 
         READU32BE(form_len, xmi);
@@ -249,9 +171,99 @@ uint8_t *xmi2mid(uint8_t *xmi, int seq_num, int max_valocity, unsigned int *midi
 
     READU32BE(evnt_len, xmi);
 
-    end_chunk = xmi + evnt_len;
-    max_events = ((evnt_len + 1) / 2) + 1;   // shortest event length is 2
-    max_noteoffs = ((evnt_len + 2) / 3) + 1; // note on event length is 3
+    if (seq_len != NULL) *seq_len = evnt_len;
+
+    return xmi;
+}
+
+static unsigned int writeevents(uint8_t *buf, midi_event *events, int num_events)
+{
+    unsigned int size;
+    uint32_t last_time, delta_time;
+
+    size = 0;
+    last_time = 0;
+
+    while (num_events != 0)
+    {
+        int32_t evlen;
+
+        evlen = events->length;
+        if (evlen < 0) evlen = -evlen;
+        size+=evlen;
+        delta_time = events->time - last_time;
+        last_time = events->time;
+        if (buf != NULL)
+        {
+            int var_index, var_size;
+            uint8_t var_buf[5];
+
+            var_index = 4;
+            var_buf[4] = delta_time & 0x7f;
+            delta_time>>=7;
+            var_size = 1;
+            while (delta_time)
+            {
+                var_size++;
+                var_index--;
+                var_buf[var_index] = 0x80 | (delta_time & 0x7f);
+                delta_time>>=7;
+            } ;
+            size+=var_size;
+
+            while (var_size)
+            {
+                *buf = var_buf[var_index];
+                buf++;
+                var_index++;
+                var_size--;
+            } ;
+
+            memcpy(buf, events->data, evlen);
+            if (events->length < 0)
+            {
+                buf[0] &= 0x8F; // change note on to note off
+                buf[2] = 0;
+            }
+            if ((buf[0] == 0xFF) && (buf[1] == 0x51))
+            {
+                buf[3] = 0x07; // change tempo to 500000
+                buf[4] = 0xA1;
+                buf[5] = 0x20;
+            }
+            buf+=evlen;
+        }
+        else
+        {
+            do
+            {
+                size++;
+                delta_time>>=7;
+            } while (delta_time) ;
+        }
+        num_events--;
+        events++;
+    };
+
+    return size;
+}
+
+uint8_t *xmi2mid(const uint8_t *xmi, int seq_num, unsigned int *midi_size)
+{
+    int max_events, max_noteoffs, num_events, num_noteoffs, end, noteoff_index;
+    unsigned int status, events_size;
+    uint32_t seq_len, last_time, interval;
+    const uint8_t *end_chunk, *event_data;
+    uint8_t *midi;
+    midi_event *events, *note_offs, *cur_event;
+
+
+    xmi = xmi_find_sequence(xmi, seq_num, &seq_len);
+    if (xmi == NULL) return NULL;
+
+    end_chunk = xmi + seq_len;
+    max_events = ((seq_len + 1) / 2) + 1;   // shortest event length is 2
+    max_noteoffs = ((seq_len + 2) / 3) + 1; // note on event length is 3
 
     events = (midi_event *) malloc( (max_events + 2*max_noteoffs) * sizeof(midi_event));
     if (events == NULL) return NULL;
@@ -416,7 +428,7 @@ uint8_t *xmi2mid(uint8_t *xmi, int seq_num, int max_valocity, unsigned int *midi
     cur_event->data = NULL;
 
     // get midi events size
-    events_size = writeevents(NULL, events, num_events, max_valocity);
+    events_size = writeevents(NULL, events, num_events);
 
     midi = (uint8_t *) malloc(14 + 8 + events_size);
 
@@ -464,7 +476,7 @@ uint8_t *xmi2mid(uint8_t *xmi, int seq_num, int max_valocity, unsigned int *midi
     midi[21] = events_size & 0xff;
 
     // write midi events
-    writeevents(&(midi[14 + 8]), events, num_events, max_valocity);
+    writeevents(&(midi[14 + 8]), events, num_events);
 
     free(events);
 

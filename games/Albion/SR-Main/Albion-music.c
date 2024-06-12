@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -39,8 +39,37 @@
 #include "Albion-music.h"
 #include "Albion-music-midiplugin.h"
 #include "Albion-music-midiplugin2.h"
+#include "Albion-music-xmiplayer.h"
 #include "Albion-AIL.h"
 #include "xmi2mid.h"
+
+#if ( \
+    defined(__aarch64__) || \
+    defined(_M_ARM64) || \
+    defined(_M_ARM64EC) \
+)
+    #define ARMV8 1
+#else
+    #undef ARMV8
+#endif
+
+#if (!defined(ARMV8)) && ( \
+    (defined(__ARM_ARCH) && (__ARM_ARCH >= 6)) || \
+    (defined(_M_ARM) && (_M_ARM >= 6)) || \
+    (defined(__TARGET_ARCH_ARM) && (__TARGET_ARCH_ARM >= 6)) || \
+    (defined(__TARGET_ARCH_THUMB) && (__TARGET_ARCH_THUMB >= 3)) \
+)
+    #define ARMV6 1
+#else
+    #undef ARMV6
+#endif
+
+#if defined(ARMV8)
+#include <arm_neon.h>
+#elif defined(ARMV6) && defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
+#include <arm_acle.h>
+#endif
+
 
 #define STATUS_STOPPED 0
 #define STATUS_PLAYING 1
@@ -56,8 +85,12 @@
     #define RW_SEEK_END	2
 #endif
 
-static AIL_sequence* Game_MainSequence = NULL;      /* main sequence - priority sequence */
+static AIL_sequence* Game_Sequence[3] = { NULL, NULL, NULL };
 static AIL_sequence* Game_ActiveSequence = NULL;    /* active sequence - sequence being played */
+
+static struct _xmi_player *player = NULL;
+static SDL_sem *sem1 = NULL;
+static int last_volume1;
 
 extern int32_t AIL_preference[];
 
@@ -100,11 +133,16 @@ static void release_all(AIL_sequence *S)
 
 }
 
+static inline void LockSem(SDL_sem *sem)
+{
+    while (SDL_SemWait(sem));
+}
+
 static int ActivateSequence(AIL_sequence *S)
 {
     if (Game_ActiveSequence != NULL)
     {
-        if (Game_MainSequence != S)
+        if (Game_Sequence[0] != S)
         {
             if (Game_ActiveSequence->status != STATUS_STOPPED)
             {
@@ -118,10 +156,270 @@ static int ActivateSequence(AIL_sequence *S)
     return 1;
 }
 
+static void MusicPostMix(void *udata, Uint8 *stream, int len)
+{
+    int count, volume, index;
+    int16_t temp_buf[2*256];
+
+    LockSem(sem1);
+
+    if ((Game_Sequence[1] == NULL) || (Game_Sequence[1]->status != STATUS_PLAYING))
+    {
+        SDL_SemPost(sem1);
+        return;
+    }
+
+    volume = ( Game_Sequence[1]->volume * Game_SoundMasterVolume * 521 ) >> 16; // (volume * Game_SoundMasterVolume * 128) / (127 * 127)
+
+    if (volume != last_volume1)
+    {
+        last_volume1 = volume;
+        xmi_player_set_volume(player, volume);
+    }
+
+    if (Game_AudioChannels == 2)
+    {
+        len >>= 1;
+    }
+    if ((Game_AudioFormat == AUDIO_S16LSB) || (Game_AudioFormat == AUDIO_U16LSB))
+    {
+        len >>= 1;
+    }
+
+    while (len)
+    {
+        count = len;
+        if (count > 256) count = 256;
+        len -= count;
+
+        xmi_player_get_data(player, temp_buf, 2 * 256 * sizeof(int16_t));
+
+        if (Game_AudioChannels == 2)
+        {
+            switch (Game_AudioFormat)
+            {
+                case AUDIO_S16LSB:
+                    for (index = 0; index < count; index++)
+                    {
+                        #if defined(ARMV8)
+                            int16x4_t srcval1, srcval2;
+                            uint32x2_t dstval;
+
+                            srcval1 = vreinterpret_s16_u32(vld1_dup_u32((uint32_t *)&(temp_buf[2 * index])));
+                            srcval2 = vreinterpret_s16_u32(vld1_dup_u32((uint32_t *)stream));
+                            dstval = vreinterpret_u32_s16(vqadd_s16(srcval1, srcval2));
+                            vst1_lane_u32((uint32_t *)stream, dstval, 0);
+                        #elif defined(ARMV6)
+                            uint32_t srcval1, srcval2;
+                            uint32_t dstval;
+
+                            srcval1 = ((uint32_t *)temp_buf)[index];
+                            srcval2 = *(uint32_t *)stream;
+
+                        #if defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
+                            dstval = __qadd16(srcval1, srcval2);
+                        #else
+                            asm ( "qadd16 %[dvalue], %[svalue1], %[svalue2]" : [dvalue] "=r" (dstval) : [svalue1] "r" (srcval1), [svalue2] "r" (srcval2) );
+                        #endif
+
+                            *(uint32_t *)stream = dstval;
+                        #else
+                            int32_t val;
+
+                            val = temp_buf[2 * index] + ((int16_t *)stream)[0];
+                            if (val >= 32768) val = 32767;
+                            else if (val < -32768) val = -32768;
+                            ((int16_t *)stream)[0] = val;
+
+                            val = temp_buf[2 * index + 1] + ((int16_t *)stream)[1];
+                            if (val >= 32768) val = 32767;
+                            else if (val < -32768) val = -32768;
+                            ((int16_t *)stream)[1] = val;
+                        #endif
+                        stream += 4;
+                    }
+                    break;
+                case AUDIO_U16LSB:
+                    for (index = 0; index < count; index++)
+                    {
+                        #if defined(ARMV8)
+                            int16x4_t srcval1, srcval2, xorval;
+                            uint32x2_t dstval;
+
+                            srcval1 = vreinterpret_s16_u32(vld1_dup_u32((uint32_t *)&(temp_buf[2 * index])));
+                            srcval2 = vreinterpret_s16_u32(vld1_dup_u32((uint32_t *)stream));
+                            xorval = vdup_n_s16(0x8000);
+                            srcval2 = veor_s16(srcval2, xorval);
+                            dstval = vreinterpret_u32_s16(vqadd_s16(srcval1, srcval2));
+                            dstval = veor_u32(dstval, vreinterpret_u32_s16(xorval));
+                            vst1_lane_u32((uint32_t *)stream, dstval, 0);
+                        #elif defined(ARMV6)
+                            uint32_t srcval1, srcval2;
+                            uint32_t dstval;
+
+                            srcval1 = ((uint32_t *)temp_buf)[index];
+                            srcval2 = *(uint32_t *)stream ^ 0x80008000UL;
+
+                        #if defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
+                            dstval = __qadd16(srcval1, srcval2);
+                        #else
+                            asm ( "qadd16 %[dvalue], %[svalue1], %[svalue2]" : [dvalue] "=r" (dstval) : [svalue1] "r" (srcval1), [svalue2] "r" (srcval2) );
+                        #endif
+
+                            *(uint32_t *)stream = dstval ^ 0x80008000UL;
+                        #else
+                            int32_t val;
+
+                            val = temp_buf[2 * index] + ((uint16_t *)stream)[0];
+                            if (val >= 65536) val = 65535;
+                            else if (val < 0) val = 0;
+                            ((uint16_t *)stream)[0] = val;
+
+                            val = temp_buf[2 * index + 1] + ((uint16_t *)stream)[1];
+                            if (val >= 65536) val = 65535;
+                            else if (val < 0) val = 0;
+                            ((uint16_t *)stream)[1] = val;
+                        #endif
+                        stream += 4;
+                    }
+                    break;
+                case AUDIO_S8:
+                    for (index = 0; index < count * 2; index++)
+                    {
+                        int32_t val;
+
+                        val = (temp_buf[index] >> 8) + *(int8_t *)stream;
+                        if (val >= 128) val = 127;
+                        else if (val < -128) val = -128;
+                        *(int8_t *)stream = val;
+
+                        stream++;
+                    }
+                    break;
+                case AUDIO_U8:
+                    for (index = 0; index < count * 2; index++)
+                    {
+                        int32_t val;
+
+                        val = (temp_buf[index] >> 8) + *(uint8_t *)stream;
+                        if (val >= 256) val = 255;
+                        else if (val < 0) val = 0;
+                        *(uint8_t *)stream = val;
+
+                        stream++;
+                    }
+                    break;
+            }
+        }
+        else
+        {
+            switch (Game_AudioFormat)
+            {
+                case AUDIO_S16LSB:
+                    for (index = 0; index < count; index++)
+                    {
+                        #if defined(ARMV6)
+                            uint32_t srcval1, srcval2;
+                            uint32_t tmpval, dstval;
+
+                            srcval1 = ((uint32_t *)temp_buf)[index];
+                            srcval2 = *(uint16_t *)stream;
+
+                        #if defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
+                            tmpval = __shsax(srcval1, srcval1);
+                            dstval = __qadd16(tmpval, srcval2);
+                        #else
+                            asm ( "shsax %[dvalue], %[svalue1], %[svalue1]" : [dvalue] "=r" (tmpval) : [svalue1] "r" (srcval1) );
+                            asm ( "qadd16 %[dvalue], %[svalue1], %[svalue2]" : [dvalue] "=r" (dstval) : [svalue1] "r" (tmpval), [svalue2] "r" (srcval2) );
+                        #endif
+
+                            *(uint16_t *)stream = dstval;
+                        #else
+                            int32_t val;
+
+                            val = ((temp_buf[2 * index] + temp_buf[2 * index + 1]) >> 1) + *(int16_t *)stream;
+                            if (val >= 32768) val = 32767;
+                            else if (val < -32768) val = -32768;
+                            *(int16_t *)stream = val;
+                        #endif
+                        stream += 2;
+                    }
+                    break;
+                case AUDIO_U16LSB:
+                    for (index = 0; index < count; index++)
+                    {
+                        #if defined(ARMV6)
+                            uint32_t srcval1, srcval2;
+                            uint32_t tmpval, dstval;
+
+                            srcval1 = ((uint32_t *)temp_buf)[index];
+                            srcval2 = *(uint16_t *)stream ^ 0x8000;
+
+                        #if defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
+                            tmpval = __shsax(srcval1, srcval1);
+                            dstval = __qadd16(tmpval, srcval2);
+                        #else
+                            asm ( "shsax %[dvalue], %[svalue1], %[svalue1]" : [dvalue] "=r" (tmpval) : [svalue1] "r" (srcval1) );
+                            asm ( "qadd16 %[dvalue], %[svalue1], %[svalue2]" : [dvalue] "=r" (dstval) : [svalue1] "r" (tmpval), [svalue2] "r" (srcval2) );
+                        #endif
+
+                            *(uint16_t *)stream = dstval ^ 0x8000;
+                        #else
+                            int32_t val;
+
+                            val = ((temp_buf[2 * index] + temp_buf[2 * index + 1]) >> 1) + *(uint16_t *)stream;
+                            if (val >= 65536) val = 65535;
+                            else if (val < 0) val = 0;
+                            *(uint16_t *)stream = val;
+                        #endif
+                        stream += 2;
+                    }
+                    break;
+                case AUDIO_S8:
+                    for (index = 0; index < count; index++)
+                    {
+                        int32_t val;
+
+                        val = ((temp_buf[2 * index] + temp_buf[2 * index + 1]) >> 9) + *(int8_t *)stream;
+                        if (val >= 128) val = 127;
+                        else if (val < -128) val = -128;
+                        *(int8_t *)stream = val;
+
+                        stream++;
+                    }
+                    break;
+                case AUDIO_U8:
+                    for (index = 0; index < count; index++)
+                    {
+                        int32_t val;
+
+                        val = ((temp_buf[2 * index] + temp_buf[2 * index + 1]) >> 9) + *(uint8_t *)stream;
+                        if (val >= 256) val = 255;
+                        else if (val < 0) val = 0;
+                        *(uint8_t *)stream = val;
+
+                        stream++;
+                    }
+                    break;
+            }
+        }
+
+
+        if (!xmi_player_is_playing(player))
+        {
+            Game_Sequence[1]->status = STATUS_STOPPED;
+            break;
+        }
+    }
+
+    SDL_SemPost(sem1);
+}
+
 
 AIL_sequence *Game_AIL_allocate_sequence_handle(void *mdi)
 {
     AIL_sequence *ret;
+    int index;
 
 #define ORIG_SEQUENCE_SIZE 2092
 #define SEQUENCE_SIZE ( (sizeof(AIL_sequence) > ORIG_SEQUENCE_SIZE)?(sizeof(AIL_sequence)):(ORIG_SEQUENCE_SIZE) )
@@ -149,9 +447,21 @@ AIL_sequence *Game_AIL_allocate_sequence_handle(void *mdi)
         }
         else
         {
-            if (Game_MainSequence == NULL)
+            for (index = 0; index <= 2; index++)
             {
-                Game_MainSequence = ret;
+                if (Game_Sequence[index] == NULL)
+                {
+                    Game_Sequence[index] = ret;
+                    break;
+                }
+            }
+
+            if (Game_Sequence[1] == ret)
+            {
+                if (sem1 == NULL)
+                {
+                    sem1 = SDL_CreateSemaphore(1);
+                }
             }
         }
     }
@@ -164,6 +474,8 @@ AIL_sequence *Game_AIL_allocate_sequence_handle(void *mdi)
 
 void Game_AIL_release_sequence_handle(AIL_sequence *S)
 {
+    int index;
+
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_release_sequence_handle: 0x%" PRIxPTR "\n", (uintptr_t) S);
 #endif
@@ -181,9 +493,24 @@ void Game_AIL_release_sequence_handle(AIL_sequence *S)
         return;
     }
 
-    if (Game_MainSequence == S)
+    for (index = 0; index <= 2; index++)
     {
-        Game_MainSequence = NULL;
+        if (Game_Sequence[index] == S)
+        {
+            if (index == 1)
+            {
+                LockSem(sem1);
+                xmi_player_close(player);
+                Mix_SetPostMix(NULL, NULL);
+                Game_Sequence[index] = NULL;
+                SDL_SemPost(sem1);
+            }
+            else
+            {
+                Game_Sequence[index] = NULL;
+            }
+            break;
+        }
     }
 
     release_all(S);
@@ -214,6 +541,12 @@ int32_t Game_AIL_init_sequence(AIL_sequence *S, void *start, int32_t sequence_nu
         }
     }
 
+    if (Game_Sequence[1] == S)
+    {
+        LockSem(sem1);
+        xmi_player_close(player);
+    }
+
     release_all(S);
 
     S->volume = AIL_preference[MDI_DEFAULT_VOLUME];
@@ -221,7 +554,15 @@ int32_t Game_AIL_init_sequence(AIL_sequence *S, void *start, int32_t sequence_nu
     S->start = start;
     S->sequence_num = sequence_num;
 
-    S->midi = xmi2mid((uint8_t *) start, sequence_num, 0, &(S->midi_size));
+    if (Game_Sequence[1] == S)
+    {
+        xmi_player_open(player, (uint8_t *) start, sequence_num);
+        SDL_SemPost(sem1);
+    }
+    else
+    {
+        S->midi = xmi2mid((uint8_t *) start, sequence_num, &(S->midi_size));
+    }
 
     return 1;
 }
@@ -254,7 +595,12 @@ void Game_AIL_start_sequence(AIL_sequence *S)
         }
     }
 
-    if (Game_ActiveSequence != S)
+    if (Game_Sequence[1] == S)
+    {
+        S->status = STATUS_PLAYING;
+        return;
+    }
+    else if (Game_ActiveSequence != S)
     {
         if ( !ActivateSequence(S) )
         {
@@ -362,7 +708,7 @@ void Game_AIL_resume_sequence(AIL_sequence *S)
         }
         else
         {
-            if ( ActivateSequence(S) )
+            if ( (Game_Sequence[1] != S) && ActivateSequence(S) )
             {
                 Game_AIL_start_sequence(S);
             }
@@ -380,7 +726,7 @@ void Game_AIL_resume_sequence(AIL_sequence *S)
         }
         else
         {
-            if ( ActivateSequence(S) )
+            if ( (Game_Sequence[1] != S) && ActivateSequence(S) )
             {
                 Game_AIL_start_sequence(S);
             }
@@ -394,7 +740,7 @@ void Game_AIL_resume_sequence(AIL_sequence *S)
     {
         if (Game_ActiveSequence != S)
         {
-            if ( ActivateSequence(S) )
+            if ( (Game_Sequence[1] != S) && ActivateSequence(S) )
             {
                 Game_AIL_start_sequence(S);
             }
@@ -479,6 +825,13 @@ void Game_AIL_set_sequence_loop_count(AIL_sequence *S, int32_t loop_count)
         }
         return;
     }
+
+    if (Game_Sequence[1] == S)
+    {
+        LockSem(sem1);
+        xmi_player_set_loop_count(player, loop_count - 1);
+        SDL_SemPost(sem1);
+    }
 }
 
 #define SEQ_FREE          0x0001    // Sequence is available for allocation
@@ -514,7 +867,7 @@ uint32_t Game_AIL_sequence_status(AIL_sequence *S)
         case STATUS_STOPPED:
             return SEQ_DONE;
         case STATUS_PLAYING:
-            if ( Mix_PlayingMusic() )
+            if ( (Game_ActiveSequence != S) || Mix_PlayingMusic() )
             {
                 return SEQ_PLAYING;
             }
@@ -560,6 +913,19 @@ void *Game_AIL_create_wave_synthesizer(void *dig, void *mdi, void *wave_lib, int
                 *(void**)ret = MidiPlugin2_AIL_create_wave_synthesizer2(dig, mdi, wave_lib, polyphony);
             }
         }
+        else
+        {
+            LockSem(sem1);
+
+            last_volume1 = -1;
+            if (player == NULL)
+            {
+                player = xmi_player_create(Game_AudioRate, wave_lib);
+                Mix_SetPostMix(MusicPostMix, NULL);
+            }
+
+            SDL_SemPost(sem1);
+        }
     }
 
     return ret;
@@ -585,6 +951,19 @@ void Game_AIL_destroy_wave_synthesizer(void *W)
             {
                 MidiPlugin2_AIL_destroy_wave_synthesizer2(*(void**)W);
             }
+        }
+        else
+        {
+            LockSem(sem1);
+
+            if (player != NULL)
+            {
+                xmi_player_destroy(player);
+                player = NULL;
+                Mix_SetPostMix(NULL, NULL);
+            }
+
+            SDL_SemPost(sem1);
         }
 
         //free(W);

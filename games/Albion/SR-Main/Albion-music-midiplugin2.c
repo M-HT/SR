@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -41,22 +41,23 @@
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Albion-music-midiplugin2.h"
+#include "Albion-music-xmiplayer.h"
 #include "xmi2mid.h"
 #include "midi-plugins.h"
 #include "midi-plugins2.h"
 
 #if ( \
-    defined(__ARM_ARCH_6__) || \
-    defined(__ARM_ARCH_6J__) || \
-    defined(__ARM_ARCH_6K__) || \
-    defined(__ARM_ARCH_6Z__) || \
-    defined(__ARM_ARCH_6ZK__) || \
-    defined(__ARM_ARCH_6T2__) || \
-    defined(__ARM_ARCH_7__) || \
-    defined(__ARM_ARCH_7A__) || \
-    defined(__ARM_ARCH_7R__) || \
-    defined(__ARM_ARCH_7M__) || \
-    defined(__ARM_ARCH_7S__) || \
+    defined(__aarch64__) || \
+    defined(_M_ARM64) || \
+    defined(_M_ARM64EC) \
+)
+    #define ARMV8 1
+#else
+    #undef ARMV8
+#endif
+
+#if (!defined(ARMV8)) && ( \
+    (defined(__ARM_ARCH) && (__ARM_ARCH >= 6)) || \
     (defined(_M_ARM) && (_M_ARM >= 6)) || \
     (defined(__TARGET_ARCH_ARM) && (__TARGET_ARCH_ARM >= 6)) || \
     (defined(__TARGET_ARCH_THUMB) && (__TARGET_ARCH_THUMB >= 3)) \
@@ -66,6 +67,11 @@
     #undef ARMV6
 #endif
 
+#if defined(ARMV8)
+#include <arm_neon.h>
+#elif defined(ARMV6) && defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
+#include <arm_acle.h>
+#endif
 
 
 #define BUFFER_SIZE 28672
@@ -88,13 +94,14 @@ typedef struct _MP_midi_ {
 } MP_midi;
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
-    static HMODULE MP_handle, MP2_handle;
+    static HMODULE MP2_handle;
 #else
-    static void *MP_handle, *MP2_handle;
+    static void *MP2_handle;
 #endif
 
-static midi_plugin_functions MP_functions;
 static midi_plugin2_functions MP2_functions;
+
+static struct _xmi_player *player = NULL;
 
 static void *temp_buf;
 static int length_multiplier;
@@ -215,11 +222,23 @@ static void MidiPlugin2_MusicPlayer(void *udata, Uint8 *stream, int len)
         {
             for (; len != 0; len -= 4)
             {
-                #if defined(ARMV6)
-                    register Uint32 srcval;
+                #if defined(ARMV8)
+                    uint16x4_t srcval1, srcval2;
+                    uint32x2_t dstval;
+
+                    srcval1 = vreinterpret_u16_u32(vld1_dup_u32((Uint32 *) stream));
+                    srcval2 = vdup_n_u16(0x8000);
+                    dstval = vreinterpret_u32_u16(vadd_u16(srcval1, srcval2));
+                    vst1_lane_u32((Uint32 *) stream, dstval, 0);
+                #elif defined(ARMV6)
+                    Uint32 srcval;
 
                     srcval = *((Uint32 *) stream);
-                    asm("uadd16 %[value1], %[value1], %[value2]" : [value1] "+r" (srcval) : [value2] "r" (0x80008000));
+                #if defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
+                    srcval = __uadd16(srcval, 0x80008000);
+                #else
+                    asm ( "uadd16 %[dvalue], %[value1], %[value2]" : [dvalue] "=r" (srcval) : [value1] "r" (srcval), [value2] "r" (0x80008000) : "cc" );
+                #endif
                     *((uint32_t *) stream) = srcval;
                 #else
                     *((Uint16 *) stream) = (((Sint32) *((Sint16 *) stream)) + 32768);
@@ -242,8 +261,8 @@ static void MidiPlugin2_MusicPlayer(void *udata, Uint8 *stream, int len)
                 case AUDIO_S8:
                     for (; len != 0; len -= 2)
                     {
-                        #if defined(ARMV6)
-                            register Uint32 srcval;
+                        #if defined(ARMV6) || defined(ARMV8)
+                            Uint32 srcval;
 
                             srcval = *((Uint32 *) src_buf);
                             *((Uint16 *) &(stream[0])) = ((Uint8)(srcval >> 8)) | ( ((Uint32)(Uint8)(srcval >> 24)) << 8 );
@@ -258,8 +277,8 @@ static void MidiPlugin2_MusicPlayer(void *udata, Uint8 *stream, int len)
                 case AUDIO_U8:
                     for (; len != 0; len -= 2)
                     {
-                        #if defined(ARMV6)
-                            register Uint32 srcval;
+                        #if defined(ARMV6) || defined(ARMV8)
+                            Uint32 srcval;
 
                             srcval = *((Uint32 *) src_buf);
                             *((Uint16 *) &(stream[0])) = ((Uint8)((srcval + 0x8000) >> 8)) | ( ((Uint32)(Uint8)((srcval + 0x80000000) >> 24)) << 8 );
@@ -280,11 +299,23 @@ static void MidiPlugin2_MusicPlayer(void *udata, Uint8 *stream, int len)
                 case AUDIO_S16LSB:
                     for (; len != 0; len -= 2)
                     {
-                        #if defined(ARMV6)
-                            register Uint32 srcval;
+                        #if defined(ARMV8)
+                            int16x4_t srcval;
+                            int32x2_t tmpval;
+
+                            srcval = vreinterpret_s16_u32(vld1_dup_u32((Uint32 *) src_buf));
+                            tmpval = vpaddl_s16(srcval);
+                            srcval = vreinterpret_s16_s32(vshr_n_s32(tmpval, 1));
+                            vst1_lane_s16((Sint16 *) stream, srcval, 0);
+                        #elif defined(ARMV6)
+                            Uint32 srcval;
 
                             srcval = *((Uint32 *) src_buf);
-                            asm("shadd16 %[value1], %[value1], %[value2]" : [value1] "+r" (srcval) : [value2] "r" (srcval >> 16));
+                        #if defined(__ARM_ACLE) && __ARM_FEATURE_SIMD32
+                            srcval = __shadd16(srcval, srcval >> 16);
+                        #else
+                            asm ( "shadd16 %[dvalue], %[value1], %[value2]" : [dvalue] "=r" (srcval) : [value1] "r" (srcval), [value2] "r" (srcval >> 16) );
+                        #endif
                             *((Sint16 *) stream) = srcval;
                         #else
                             *((Sint16 *) stream) = (((Sint32) src_buf[0]) + ((Sint32) src_buf[1])) >> 1;
@@ -296,8 +327,8 @@ static void MidiPlugin2_MusicPlayer(void *udata, Uint8 *stream, int len)
                 case AUDIO_U16LSB:
                     for (; len != 0; len -= 2)
                     {
-                        #if defined(ARMV6)
-                            register Uint32 srcval;
+                        #if defined(ARMV6) || defined(ARMV8)
+                            Uint32 srcval;
 
                             srcval = *((Uint32 *) src_buf);
                             *((Uint16 *) stream) = (((Sint32)(Sint16)srcval) + ((Sint32)(Sint16)(srcval >> 16)) + 65536) >> 1;
@@ -311,8 +342,8 @@ static void MidiPlugin2_MusicPlayer(void *udata, Uint8 *stream, int len)
                 case AUDIO_S8:
                     for (; len != 0; len --)
                     {
-                        #if defined(ARMV6)
-                            register Uint32 srcval;
+                        #if defined(ARMV6) || defined(ARMV8)
+                            Uint32 srcval;
 
                             srcval = *((Uint32 *) src_buf);
                             *((Sint8 *) stream) = (((Sint32)(Sint16)srcval) + ((Sint32)(Sint16)(srcval >> 16))) >> 9;
@@ -326,8 +357,8 @@ static void MidiPlugin2_MusicPlayer(void *udata, Uint8 *stream, int len)
                 case AUDIO_U8:
                     for (; len != 0; len --)
                     {
-                        #if defined(ARMV6)
-                            register Uint32 srcval;
+                        #if defined(ARMV6) || defined(ARMV8)
+                            Uint32 srcval;
 
                             srcval = *((Uint32 *) src_buf);
                             *stream = (((int32_t)(int16_t)srcval) + ((int32_t)(int16_t)(srcval >> 16)) + 65536) >> 9;
@@ -352,7 +383,7 @@ static int MidiPlugin2_ProcessData(void *data)
     {
         if (SDL_SemWait(MP_sequence[1].sem) == 0)
         {
-            if ((MP_sequence[1].S != NULL) && (MP_sequence[1].midi != NULL))
+            if (MP_sequence[1].S != NULL)
             {
                 if (MP_sequence[1].status == MP_PLAYING)
                 {
@@ -373,36 +404,20 @@ static int MidiPlugin2_ProcessData(void *data)
 
                             write_buffer = MP_sequence[1].write_buffer & 1;
 
-                            volume = ( MP_sequence[1].volume * Game_SoundMasterVolume * 517 ) >> 16; /* (volume * Game_SoundMasterVolume) / (127) */
+                            volume = ( MP_sequence[1].volume * Game_SoundMasterVolume * 521 ) >> 16; /* (volume * Game_SoundMasterVolume * 128) / (127 * 127) */
 
                             if (volume != last_volume1)
                             {
                                 last_volume1 = volume;
-                                MP_functions.set_master_volume(volume);
+                                xmi_player_set_volume(player, volume);
                             }
 
-                            MP_sequence[1].bytes_left[write_buffer] = MP_functions.get_data(MP_sequence[1].midi, (char *) MP_sequence[1].buffer[write_buffer], BUFFER_SIZE);
-                            if (MP_sequence[1].bytes_left[write_buffer] != BUFFER_SIZE)
+                            xmi_player_get_data(player, MP_sequence[1].buffer[write_buffer], BUFFER_SIZE);
+                            MP_sequence[1].bytes_left[write_buffer] = BUFFER_SIZE;
+
+                            if (!xmi_player_is_playing(player))
                             {
-                                MP_functions.rewind_midi(MP_sequence[1].midi);
-
-                                if (MP_sequence[1].loop_count != 0)
-                                {
-                                    MP_sequence[1].loop_count--;
-                                    if (MP_sequence[1].loop_count == 0)
-                                    {
-                                        MP_sequence[1].loop_count = 1;
-                                        MP_sequence[1].end_of_midi = 1;
-                                    }
-                                }
-
-                                if (!MP_sequence[1].end_of_midi)
-                                {
-                                    int size;
-
-                                    size = MP_functions.get_data(MP_sequence[1].midi, (char *) &(MP_sequence[1].buffer[write_buffer][MP_sequence[1].bytes_left[write_buffer]]), BUFFER_SIZE - MP_sequence[1].bytes_left[write_buffer]);
-                                    MP_sequence[1].bytes_left[write_buffer] += size;
-                                }
+                                MP_sequence[1].end_of_midi = 1;
                             }
 
                             if (MP_sequence[1].read_buffer == MP_sequence[1].write_buffer)
@@ -425,15 +440,21 @@ static int MidiPlugin2_ProcessData(void *data)
 
                         write_buffer = MP_sequence[1].write_buffer & 1;
 
-                        volume = ( MP_sequence[1].volume * Game_SoundMasterVolume * 517 ) >> 16; // (volume * Game_SoundMasterVolume) / (127)
+                        volume = ( MP_sequence[1].volume * Game_SoundMasterVolume * 521 ) >> 16; // (volume * Game_SoundMasterVolume * 128) / (127 * 127)
 
                         if (volume != last_volume1)
                         {
                             last_volume1 = volume;
-                            MP_functions.set_master_volume(volume);
+                            xmi_player_set_volume(player, volume);
                         }
 
-                        MP_sequence[1].bytes_left[write_buffer] = MP_functions.get_data(MP_sequence[1].midi, (char *) MP_sequence[1].buffer[write_buffer], BUFFER_SIZE);
+                        xmi_player_get_data(player, MP_sequence[1].buffer[write_buffer], BUFFER_SIZE);
+                        MP_sequence[1].bytes_left[write_buffer] = BUFFER_SIZE;
+
+                        if (!xmi_player_is_playing(player))
+                        {
+                            MP_sequence[1].end_of_midi = 1;
+                        }
 
                         if (MP_sequence[1].read_buffer == MP_sequence[1].write_buffer)
                         {
@@ -459,9 +480,7 @@ static int MidiPlugin2_ProcessData(void *data)
 int MidiPlugin2_Startup(void)
 {
     const char *plugin_name;
-    midi_plugin_initialize MP_initialize;
     midi_plugin2_initialize MP2_initialize;
-    midi_plugin_parameters MP_parameters;
     midi_plugin2_parameters MP2_parameters;
     int index;
 
@@ -487,16 +506,6 @@ int MidiPlugin2_Startup(void)
         fprintf(stderr, "%s: load error: 0x%x\n", "midi2", GetLastError());
         return 2;
     }
-
-    fprintf(stderr, "%s: loading dynamic library: %s\n", "midiA", ".\\midiA-wildmidi.dll");
-    MP_handle = LoadLibraryA(".\\midiA-wildmidi.dll");
-
-    if (MP_handle == NULL)
-    {
-        fprintf(stderr, "%s: load error: 0x%x\n", "midiA", GetLastError());
-        free_library(MP2_handle);
-        return 2;
-    }
 #else
     #define free_library dlclose
     #define get_proc_address dlsym
@@ -517,16 +526,6 @@ int MidiPlugin2_Startup(void)
         fprintf(stderr, "%s: load error: %s\n", "midi2", dlerror());
         return 2;
     }
-
-    fprintf(stderr, "%s: loading shared object: %s\n", "midiA", "./midiA-wildmidi.so");
-    MP_handle = dlopen("./midiA-wildmidi.so", RTLD_LAZY);
-
-    if (MP_handle == NULL)
-    {
-        fprintf(stderr, "%s: load error: %s\n", "midiA", dlerror());
-        free_library(MP2_handle);
-        return 2;
-    }
 #endif
 
     MP2_initialize = (midi_plugin2_initialize) get_proc_address(MP2_handle, MIDI_PLUGIN2_INITIALIZE);
@@ -534,7 +533,6 @@ int MidiPlugin2_Startup(void)
     if (MP2_initialize == NULL)
     {
         fprintf(stderr, "%s: error: %s\n", "midi2", "initialization function not available in plugin");
-        free_library(MP_handle);
         free_library(MP2_handle);
         return 3;
     }
@@ -545,29 +543,6 @@ int MidiPlugin2_Startup(void)
     if (MP2_initialize(&MP2_parameters, &MP2_functions))
     {
         fprintf(stderr, "%s: error: %s\n", "midi2", "failed to initialize plugin");
-        free_library(MP_handle);
-        free_library(MP2_handle);
-        return 4;
-    }
-
-    MP_initialize = (midi_plugin_initialize) get_proc_address(MP_handle, MIDI_PLUGIN_INITIALIZE);
-
-    if (MP_initialize == NULL)
-    {
-        fprintf(stderr, "%s: error: %s\n", "midiA", "initialization function not available in plugin");
-        MP2_functions.shutdown_plugin();
-        free_library(MP_handle);
-        free_library(MP2_handle);
-        return 3;
-    }
-
-    memset(&MP_parameters, 0, sizeof(MP_parameters));
-
-    if (MP_initialize(Game_AudioRate, &MP_parameters, &MP_functions))
-    {
-        fprintf(stderr, "%s: error: %s\n", "midiA", "failed to initialize plugin");
-        MP2_functions.shutdown_plugin();
-        free_library(MP_handle);
         free_library(MP2_handle);
         return 4;
     }
@@ -643,9 +618,7 @@ int MidiPlugin2_Startup(void)
         SDL_DestroySemaphore(MP_sequence[2].sem);
         SDL_DestroySemaphore(MP_sequence[1].sem);
         SDL_DestroySemaphore(MP_sequence[0].sem);
-        MP_functions.shutdown_plugin();
         MP2_functions.shutdown_plugin();
-        free_library(MP_handle);
         free_library(MP2_handle);
         return 5;
     }
@@ -654,7 +627,6 @@ int MidiPlugin2_Startup(void)
     Mix_HookMusic(&MidiPlugin2_MusicPlayer, temp_buf);
 
     fprintf(stderr, "%s: OK\n", "midi2");
-    fprintf(stderr, "%s: OK\n", "midiA");
 
     return 0;
 
@@ -693,11 +665,7 @@ void MidiPlugin2_Shutdown(void)
     {
         if (MP_sequence[index].miditype)
         {
-            if (MP_sequence[index].midi != NULL)
-            {
-                MP_functions.close_midi(MP_sequence[index].midi);
-                MP_sequence[index].midi = NULL;
-            }
+            xmi_player_close(player);
         }
         SDL_DestroySemaphore(MP_sequence[index].sem);
     }
@@ -709,16 +677,12 @@ void MidiPlugin2_Shutdown(void)
         temp_buf = NULL;
     }
 
-    MP_functions.shutdown_plugin();
     MP2_functions.shutdown_plugin();
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
-    FreeLibrary(MP_handle);
     FreeLibrary(MP2_handle);
 #else
-    dlclose(MP_handle);
     dlclose(MP2_handle);
 #endif
-    MP_handle = NULL;
     MP2_handle = NULL;
 }
 
@@ -769,11 +733,7 @@ void MidiPlugin2_AIL_release_sequence_handle(AIL_sequence *S)
     mp_sequence->end_of_midi = 0;
     if (mp_sequence->miditype)
     {
-        if (mp_sequence->midi != NULL)
-        {
-            MP_functions.close_midi(mp_sequence->midi);
-            mp_sequence->midi = NULL;
-        }
+        xmi_player_close(player);
     }
     else
     {
@@ -814,11 +774,7 @@ int32_t MidiPlugin2_AIL_init_sequence(AIL_sequence *S, void *start, int32_t sequ
     mp_sequence->end_of_midi = 0;
     if (mp_sequence->miditype)
     {
-        if (mp_sequence->midi != NULL)
-        {
-            MP_functions.close_midi(mp_sequence->midi);
-            mp_sequence->midi = NULL;
-        }
+        xmi_player_close(player);
     }
     else
     {
@@ -838,11 +794,13 @@ int32_t MidiPlugin2_AIL_init_sequence(AIL_sequence *S, void *start, int32_t sequ
     S->start = start;
     S->sequence_num = sequence_num;
 
-    S->midi = xmi2mid((uint8_t *) start, sequence_num, mp_sequence->miditype, &(S->midi_size));
-
     if (mp_sequence->miditype)
     {
-        mp_sequence->midi = MP_functions.open_buffer(S->midi, S->midi_size);
+        xmi_player_open(player, (uint8_t *) start, sequence_num);
+    }
+    else
+    {
+        S->midi = xmi2mid((uint8_t *) start, sequence_num, &(S->midi_size));
     }
 
     SDL_SemPost(mp_sequence->sem);
@@ -1051,8 +1009,6 @@ void MidiPlugin2_AIL_end_sequence(AIL_sequence *S)
     if (mp_sequence->miditype)
     {
         mp_sequence->status = MP_STOPPED;
-
-        MP_functions.rewind_midi(mp_sequence->midi);
     }
     else
     {
@@ -1101,7 +1057,11 @@ void MidiPlugin2_AIL_set_sequence_loop_count(AIL_sequence *S, int32_t loop_count
 
     mp_sequence->loop_count = loop_count;
 
-    if (!mp_sequence->miditype)
+    if (mp_sequence->miditype)
+    {
+        xmi_player_set_loop_count(player, mp_sequence->loop_count - 1);
+    }
+    else
     {
         if ((ActiveSequence == mp_sequence) &&
             (mp_sequence->status != MP_STOPPED))
@@ -1170,18 +1130,19 @@ uint32_t MidiPlugin2_AIL_sequence_status(AIL_sequence *S)
 
 void *MidiPlugin2_AIL_create_wave_synthesizer2(void *dig, void *mdi, void *wave_lib, int32_t polyphony)
 {
-    void *ret;
-
     LockSem(MP_sequence[1].sem);
-    MP_sequence[1].status = MP_STOPPED;
-    MP_sequence[1].loop_count = 1;
-    MP_sequence[1].end_of_midi = 1;
+    last_volume1 = -1;
+    if (player == NULL)
+    {
+        MP_sequence[1].status = MP_STOPPED;
+        MP_sequence[1].loop_count = 1;
+        MP_sequence[1].end_of_midi = 1;
 
-    ret = MP_functions.A_create_wave_synthetizer(wave_lib);
-
+        player = xmi_player_create(Game_AudioRate, wave_lib);
+    }
     SDL_SemPost(MP_sequence[1].sem);
 
-    return ret;
+    return player;
 }
 
 void MidiPlugin2_AIL_destroy_wave_synthesizer2(void *W)
@@ -1191,13 +1152,11 @@ void MidiPlugin2_AIL_destroy_wave_synthesizer2(void *W)
     MP_sequence[1].loop_count = 1;
     MP_sequence[1].end_of_midi = 1;
 
-    if (MP_sequence[1].midi != NULL)
+    if (player != NULL)
     {
-        MP_functions.close_midi(MP_sequence[1].midi);
-        MP_sequence[1].midi = NULL;
+        xmi_player_destroy(player);
+        player = NULL;
     }
-
-    MP_functions.A_destroy_wave_synthetizer(W);
 
     SDL_SemPost(MP_sequence[1].sem);
 }

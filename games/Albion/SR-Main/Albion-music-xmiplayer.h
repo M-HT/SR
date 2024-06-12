@@ -22,10 +22,19 @@
  *
  */
 
-#if !defined(_XMI2MID_H_INCLUDED_)
-#define _XMI2MID_H_INCLUDED_
+#if !defined(_ALBION_MUSIC_XMIPLAYER_H_INCLUDED_)
+#define _ALBION_MUSIC_XMIPLAYER_H_INCLUDED_
 
-const uint8_t *xmi_find_sequence(const uint8_t *xmi, int seq_num, uint32_t *seq_len);
-uint8_t *xmi2mid(const uint8_t *xmi, int seq_num, unsigned int *midi_size);
+struct _xmi_player;
 
-#endif /* _XMI2MID_H_INCLUDED_ */
+struct _xmi_player *xmi_player_create(unsigned int rate, const void *wave_synthetizer);
+void xmi_player_destroy(struct _xmi_player *player);
+int xmi_player_open(struct _xmi_player *player, const uint8_t *xmi, int seq_num);
+void xmi_player_close(struct _xmi_player *player);
+void xmi_player_set_volume(struct _xmi_player *player, int volume);
+void xmi_player_set_loop_count(struct _xmi_player *player, int loop_count);
+void xmi_player_get_data(struct _xmi_player *player, void *buffer, uint32_t size);
+int xmi_player_is_playing(struct _xmi_player *player);
+
+#endif /* _ALBION_MUSIC_XMIPLAYER_H_INCLUDED_ */
+

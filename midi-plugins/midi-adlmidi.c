@@ -35,11 +35,29 @@ static unsigned char adl_volume = 127;
 
 
 
+static void send_master_volume_sysex(void)
+{
+    uint8_t sysex[8];
+
+    sysex[0] = 0xf0;
+    sysex[1] = 0x7f;
+    sysex[2] = 0x7f;
+    sysex[3] = 0x04;
+    sysex[4] = 0x01;
+    sysex[5] = 0x00;
+    sysex[6] = adl_volume;
+    sysex[7] = 0xf7;
+
+    adl_rt_systemExclusive(adl_handle, sysex, 8);
+}
+
 static int set_master_volume(unsigned char master_volume) // master_volume = 0 - 127
 {
     if (master_volume > 127) master_volume = 127;
 
     adl_volume = master_volume;
+
+    send_master_volume_sysex();
 
     return 0;
 }
@@ -51,6 +69,8 @@ static void *open_file(char const *midifile)
 
     if (adl_openFile(adl_handle, midifile)) return NULL;
 
+    send_master_volume_sysex();
+
     return (void *) 1;
 }
 
@@ -61,6 +81,8 @@ static void *open_buffer(void const *midibuffer, long int size)
     if (adl_handle == NULL) return NULL;
 
     if (adl_openData(adl_handle, midibuffer, size)) return NULL;
+
+    send_master_volume_sysex();
 
     return (void *) 1;
 }
@@ -76,21 +98,6 @@ static long int get_data(void *handle, void *buffer, long int size)
     if (adl_handle == NULL) return -5;
 
     num_samples = adl_play(adl_handle, size / 2, (short *) buffer);
-
-    if ((num_samples != 0) && (adl_volume != 127))
-    {
-        int index, vol;
-        short *buf;
-
-        buf = (short *) buffer;
-        vol = ((adl_volume * 65536) + 63) / 127;
-
-        for (index = 0; index < num_samples; index++)
-        {
-            //buf[index] = (buf[index] * adl_volume) / 127;
-            buf[index] = (buf[index] * vol) >> 16;
-        }
-    }
 
     return 2 * num_samples;
 }

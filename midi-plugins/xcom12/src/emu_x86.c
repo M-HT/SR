@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -137,7 +137,8 @@ static uint8_t *memory;
 #if (DRIVER==ADLIB)
 static uint_fast32_t sample_rate, num_samples_add, num_samples_left;
 #elif (DRIVER==ROLAND)
-static uint_fast32_t sample_rate, num_samples_left, position_add, current_position, samples_mul;
+static uint_fast32_t sample_rate, num_samples_left;
+static uint_fast64_t position_add, current_position, samples_mul;
 static int16_t tmpbuf[2*(400+1)];
 #endif
 
@@ -1815,7 +1816,7 @@ static void SetTimerFrequency(uint16_t frequency)
 }
 
 
-int emu_x86_initialize(unsigned short int rate, char const *drivers_cat, char const *mt32_roms, int opl3_emulator)
+int emu_x86_initialize(unsigned int rate, char const *drivers_cat, char const *mt32_roms, int opl3_emulator)
 {
     FILE *f;
     uint32_t num_files, file_offset, file_len;
@@ -1926,14 +1927,14 @@ int emu_x86_initialize(unsigned short int rate, char const *drivers_cat, char co
     SetTimerFrequency(70);
 
     sample_rate = rate;
-    num_samples_add = (sample_rate << 16) / 70;
+    num_samples_add = (sample_rate << 10) / 70;
     num_samples_left = 0;
 #elif (DRIVER==ROLAND)
     SetTimerFrequency(80);
 
     sample_rate = rate;
-    position_add = (32000 << 16) / sample_rate;
-    samples_mul = (sample_rate << 16) / 32000;
+    position_add = (((uint64_t)32000) << 32) / sample_rate;
+    samples_mul = (((uint64_t)sample_rate) << 32) / 32000;
 #endif
 
     return 1;
@@ -1967,11 +1968,11 @@ int emu_x86_playsequence(void const *sequence, int size)
 
     if (32000 > sample_rate)
     {
-        current_position = (((32000 - sample_rate) << 16) / 32000) + (1 << 16);
+        current_position = ((((uint64_t)(32000 - sample_rate)) << 32) / 32000) + (((uint64_t)1) << 32);
     }
     else
     {
-        current_position = (1 << 16);
+        current_position = (((uint64_t)1) << 32);
     }
 
     if (sample_rate != 32000)
@@ -1996,14 +1997,14 @@ int emu_x86_getdata(void *buffer, int size)
     {
         int samples_left, samples_toread;
 
-        samples_left = num_samples_left >> 16;
+        samples_left = num_samples_left >> 10;
         if (samples_left == 0)
         {
             if (!IsSequencePlaying()) break;
             ProcessSequence();
 
             num_samples_left += num_samples_add;
-            samples_left = num_samples_left >> 16;
+            samples_left = num_samples_left >> 10;
         }
 
         samples_toread = (numsamples <= samples_left)?numsamples:samples_left;
@@ -2014,7 +2015,7 @@ int emu_x86_getdata(void *buffer, int size)
         samples_read += samples_toread;
         numsamples -= samples_toread;
 
-        num_samples_left -= samples_toread << 16;
+        num_samples_left -= samples_toread << 10;
     }
 #elif (DRIVER==ROLAND)
     if (sample_rate == 32000)
@@ -2048,7 +2049,7 @@ int emu_x86_getdata(void *buffer, int size)
         {
             int position, samples_toread;
 
-            position = current_position >> 16;
+            position = current_position >> 32;
             if (position >= 400)
             {
                 if (!IsSequencePlaying()) break;
@@ -2059,11 +2060,11 @@ int emu_x86_getdata(void *buffer, int size)
 
                 emu_mt32_getsamples(&(tmpbuf[2]), 400);
 
-                current_position -= (400 << 16);
-                position = current_position >> 16;
+                current_position -= (((uint64_t)400) << 32);
+                position = current_position >> 32;
             }
 
-            samples_toread = ((399 - position) * samples_mul) >> 16;
+            samples_toread = ((399 - position) * samples_mul) >> 32;
             if (numsamples < samples_toread) samples_toread = numsamples;
 
             samples_read += samples_toread;
@@ -2071,19 +2072,19 @@ int emu_x86_getdata(void *buffer, int size)
 
             for (; samples_toread != 0; samples_toread--)
             {
-                buf[0] = tmpbuf[2*position] + (((tmpbuf[2*(position + 1)] - tmpbuf[2*position]) * (current_position & 0xffff)) >> 16);
-                buf[1] = tmpbuf[2*position+1] + (((tmpbuf[2*(position + 1)+1] - tmpbuf[2*position+1]) * (current_position & 0xffff)) >> 16);
+                buf[0] = tmpbuf[2*position] + (((tmpbuf[2*(position + 1)] - tmpbuf[2*position]) * ((int32_t)(((uint32_t)current_position) >> 16))) >> 16);
+                buf[1] = tmpbuf[2*position+1] + (((tmpbuf[2*(position + 1)+1] - tmpbuf[2*position+1]) * ((int32_t)(((uint32_t)current_position) >> 16))) >> 16);
 
                 buf += 2;
 
                 current_position += position_add;
-                position = current_position >> 16;
+                position = current_position >> 32;
             }
 
             while ((numsamples != 0) && (position < 400))
             {
-                buf[0] = tmpbuf[2*position] + (((tmpbuf[2*(position + 1)] - tmpbuf[2*position]) * (current_position & 0xffff)) >> 16);
-                buf[1] = tmpbuf[2*position+1] + (((tmpbuf[2*(position + 1)+1] - tmpbuf[2*position+1]) * (current_position & 0xffff)) >> 16);
+                buf[0] = tmpbuf[2*position] + (((tmpbuf[2*(position + 1)] - tmpbuf[2*position]) * ((int32_t)(((uint32_t)current_position) >> 16))) >> 16);
+                buf[1] = tmpbuf[2*position+1] + (((tmpbuf[2*(position + 1)+1] - tmpbuf[2*position+1]) * ((int32_t)(((uint32_t)current_position) >> 16))) >> 16);
 
                 buf += 2;
 
@@ -2091,7 +2092,7 @@ int emu_x86_getdata(void *buffer, int size)
                 numsamples--;
 
                 current_position += position_add;
-                position = current_position >> 16;
+                position = current_position >> 32;
             }
         }
     }

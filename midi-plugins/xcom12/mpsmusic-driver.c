@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -128,7 +128,7 @@ static long int get_data(void *handle, void *buffer, long int size)
     if (handle == NULL) return -2;
     if (buffer == NULL) return -3;
     if (size < 0) return -4;
-    if (size == 0) return 0;
+    if (size < 4) return 0;
 
     return emu_x86_getdata(buffer, size);
 }
@@ -169,20 +169,25 @@ int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const
     char const *drivers_cat;
     char const *mt32_roms;
     int opl3_emulator;
-
-    if ((rate < 11000) || (rate > 48000)) return -2;
-    if (functions == NULL) return -3;
+    unsigned int sampling_rate;
 
     drivers_cat = NULL;
     mt32_roms = NULL;
     opl3_emulator = 0;
+    sampling_rate = rate;
     if (parameters != NULL)
     {
         drivers_cat = check_file(parameters->drivers_cat_path);
         mt32_roms = parameters->mt32_roms_path;
         opl3_emulator = parameters->opl3_emulator;
+        if (sampling_rate == 0)
+        {
+            sampling_rate = parameters->sampling_rate;
+        }
     }
 
+    if ((sampling_rate < 11000) || (sampling_rate > 0x1fffff)) return -2;
+    if (functions == NULL) return -3;
     if (drivers_cat == NULL) return -4;
 
     functions->set_master_volume = &set_master_volume;
@@ -193,7 +198,7 @@ int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const
     functions->close_midi = &close_midi;
     functions->shutdown_plugin = &shutdown_plugin;
 
-    if (!emu_x86_initialize(rate, drivers_cat, mt32_roms, opl3_emulator))
+    if (!emu_x86_initialize(sampling_rate, drivers_cat, mt32_roms, opl3_emulator))
     {
         return -1;
     }

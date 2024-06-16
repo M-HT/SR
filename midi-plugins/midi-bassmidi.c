@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -40,6 +40,7 @@
 #include "bassmidi.h"
 
 static HSOUNDFONT soundfont_handle = 0;
+static int resampling_quality = 0;
 
 
 static int file_exists(char const *filename)
@@ -83,17 +84,39 @@ static int set_master_volume(unsigned char master_volume) // master_volume = 0 -
 
 static void *open_file(char const *midifile)
 {
+    HSTREAM stream;
+
     if (midifile == NULL) return NULL;
 
-    return (void *)(uintptr_t) BASS_MIDI_StreamCreateFile(0, midifile, 0, 0, BASS_STREAM_DECODE, 0);
+    stream = BASS_MIDI_StreamCreateFile(0, midifile, 0, 0, BASS_STREAM_DECODE, 0);
+    if (stream != 0)
+    {
+        if (resampling_quality > 0)
+        {
+            BASS_ChannelSetAttribute(stream, BASS_ATTRIB_MIDI_SRC, 1);
+        }
+    }
+
+    return (void *)(uintptr_t) stream;
 }
 
 static void *open_buffer(void const *midibuffer, long int size)
 {
+    HSTREAM stream;
+
     if (midibuffer == NULL) return NULL;
     if (size <= 0) return NULL;
 
-    return (void *)(uintptr_t) BASS_MIDI_StreamCreateFile(1, midibuffer, 0, size, BASS_STREAM_DECODE, 0);
+    stream = BASS_MIDI_StreamCreateFile(1, midibuffer, 0, size, BASS_STREAM_DECODE, 0);
+    if (stream != 0)
+    {
+        if (resampling_quality > 0)
+        {
+            BASS_ChannelSetAttribute(stream, BASS_ATTRIB_MIDI_SRC, 1);
+        }
+    }
+
+    return (void *)(uintptr_t) stream;
 }
 
 static long int get_data(void *handle, void *buffer, long int size)
@@ -101,7 +124,7 @@ static long int get_data(void *handle, void *buffer, long int size)
     if (handle == NULL) return -2;
     if (buffer == NULL) return -3;
     if (size < 0) return -4;
-    if (size == 0) return 0;
+    if (size < 4) return 0;
 
     return BASS_ChannelGetData((HSTREAM)(uintptr_t)handle, buffer, size);
 }
@@ -152,15 +175,29 @@ int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const
     char const *soundfont_sf2;
     char *soundfont_name;
     BASS_MIDI_FONT fonts[1];
-
-    if ((rate < 11000) || (rate > 48000)) return -2;
-    if (functions == NULL) return -3;
+    unsigned int sampling_rate;
 
     soundfont_sf2 = NULL;
     soundfont_name = NULL;
+    resampling_quality = 0;
+    sampling_rate = rate;
     if (parameters != NULL)
     {
         soundfont_sf2 = parameters->soundfont_path;
+        resampling_quality = parameters->resampling_quality;
+        if (sampling_rate == 0)
+        {
+            sampling_rate = parameters->sampling_rate;
+        }
+    }
+
+    if ((sampling_rate < 11000) || (sampling_rate > 384000)) return -2;
+    if (functions == NULL) return -3;
+
+    if (sampling_rate == 384000)
+    {
+        // bassmidi crashes at 384000, so I'm using a lower frequency - the difference is negligible
+        sampling_rate = 383999;
     }
 
     if (soundfont_sf2 != NULL)
@@ -239,7 +276,7 @@ int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const
     functions->close_midi = &close_midi;
     functions->shutdown_plugin = &shutdown_plugin;
 
-    if (!BASS_Init(0, rate, 0, 0, NULL))
+    if (!BASS_Init(0, sampling_rate, 0, 0, NULL))
     {
         if (soundfont_name != NULL) free(soundfont_name);
         return -1;

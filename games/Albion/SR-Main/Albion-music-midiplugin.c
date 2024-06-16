@@ -756,8 +756,10 @@ int MidiPlugin_Startup(void)
     MP_parameters.soundfont_path = Game_SoundFontPath;
     MP_parameters.opl3_bank_number = 0; // 0 = AIL (Star Control 3, Albion, Empire 2, Sensible Soccer, Settlers 2, many others)
     MP_parameters.opl3_emulator = Game_OPL3Emulator;
+    MP_parameters.resampling_quality = 0;
+    MP_parameters.sampling_rate = Game_AudioRate;
 
-    if (MP_initialize(Game_AudioRate, &MP_parameters, &MP_functions))
+    if (MP_initialize(0, &MP_parameters, &MP_functions))
     {
         fprintf(stderr, "%s: error: %s\n", "midi", "failed to initialize plugin");
         free_library(MP_handle);

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -72,7 +72,7 @@ static long int get_data(void *handle, void *buffer, long int size)
     if (handle == NULL) return -2;
     if (buffer == NULL) return -3;
     if (size < 0) return -4;
-    if (size == 0) return 0;
+    if (size < 4) return 0;
     if (adl_handle == NULL) return -5;
 
     num_samples = adl_play(adl_handle, size / 2, (short *) buffer);
@@ -128,8 +128,22 @@ __attribute__ ((visibility ("default")))
 int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const *parameters, midi_plugin_functions *functions)
 {
     int bank_number, emulator;
+    unsigned int sampling_rate;
 
-    if ((rate < 11000) || (rate > 65000)) return -2;
+    bank_number = 0;
+    emulator = 0;
+    sampling_rate = rate;
+    if (parameters != NULL)
+    {
+        bank_number = parameters->opl3_bank_number;
+        emulator = parameters->opl3_emulator;
+        if (sampling_rate == 0)
+        {
+            sampling_rate = parameters->sampling_rate;
+        }
+    }
+
+    if ((sampling_rate < 11000) || (sampling_rate > 0x1fffff)) return -2;
     if (functions == NULL) return -3;
 
     functions->set_master_volume = &set_master_volume;
@@ -140,7 +154,7 @@ int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const
     functions->close_midi = &close_midi;
     functions->shutdown_plugin = &shutdown_plugin;
 
-    adl_handle = adl_init(rate);
+    adl_handle = adl_init(sampling_rate);
     if (adl_handle == NULL) return -1;
 
 
@@ -153,14 +167,6 @@ int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const
     }
 
     adl_setVolumeRangeModel(adl_handle, ADLMIDI_VolumeModel_Generic);
-
-    bank_number = 0;
-    emulator = 0;
-    if (parameters != NULL)
-    {
-        bank_number = parameters->opl3_bank_number;
-        emulator = parameters->opl3_emulator;
-    }
 
 #if ADLMIDI_VERSION_ATLEAST(1,3,2)
     if (emulator)

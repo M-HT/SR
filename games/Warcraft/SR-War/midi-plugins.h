@@ -32,6 +32,8 @@ typedef struct _midi_plugin_parameters_ {
     char const *mt32_roms_path;
     int opl3_bank_number;
     int opl3_emulator;
+    int resampling_quality;
+    unsigned int sampling_rate;
 } midi_plugin_parameters;
 
 typedef struct _midi_plugin_functions_ {

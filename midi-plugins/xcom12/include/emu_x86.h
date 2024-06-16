@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-int emu_x86_initialize(unsigned short int rate, char const *drivers_cat, char const *mt32_roms, int opl3_emulator);
+int emu_x86_initialize(unsigned int rate, char const *drivers_cat, char const *mt32_roms, int opl3_emulator);
 int emu_x86_setvolume(unsigned char volume);
 int emu_x86_playsequence(void const *sequence, int size);
 int emu_x86_getdata(void *buffer, int size);

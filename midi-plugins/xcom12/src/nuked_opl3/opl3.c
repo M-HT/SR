@@ -1206,9 +1206,6 @@ static void OPL3_ProcessSlot(opl3_slot *slot)
     OPL3_SlotGenerate(slot);
 }
 
-#ifdef DISABLE_UNUSED_FUNCTIONS
-static
-#endif
 inline void OPL3_Generate4Ch(opl3_chip *chip, int16_t *buf4)
 {
     opl3_channel *channel;

@@ -28,6 +28,9 @@
 #include <malloc.h>
 #include <memory.h>
 #include <strings.h>
+#ifdef USE_SPEEXDSP_RESAMPLER
+#include <speex/speex_resampler.h>
+#endif
 
 #define ADLIB 1
 #define ROLAND 2
@@ -134,12 +137,25 @@ static struct {
 
 static uint8_t *memory;
 
+#ifdef USE_SPEEXDSP_RESAMPLER
+static SpeexResamplerState *resampler = NULL;
+static uint_fast64_t resample_step;
+static int resample_num_samples;
+#if (DRIVER==ADLIB)
+static int16_t resample_samples[2*728];
+#elif (DRIVER==ROLAND)
+static int16_t resample_samples[2*416];
+#endif
+#endif
+
 #if (DRIVER==ADLIB)
 static uint_fast32_t sample_rate, num_samples_add, num_samples_left;
 #elif (DRIVER==ROLAND)
 static uint_fast32_t sample_rate, num_samples_left;
 static uint_fast64_t position_add, current_position, samples_mul;
-static int16_t tmpbuf[2*(400+1)];
+#ifndef USE_SPEEXDSP_RESAMPLER
+static int16_t resample_samples[2*(400+1)];
+#endif
 #endif
 
 static int initialize(void)
@@ -1816,7 +1832,7 @@ static void SetTimerFrequency(uint16_t frequency)
 }
 
 
-int emu_x86_initialize(unsigned int rate, char const *drivers_cat, char const *mt32_roms, int opl3_emulator)
+int emu_x86_initialize(unsigned int rate, char const *drivers_cat, char const *mt32_roms, int opl3_emulator, int resampling_quality)
 {
     FILE *f;
     uint32_t num_files, file_offset, file_len;
@@ -1910,9 +1926,47 @@ int emu_x86_initialize(unsigned int rate, char const *drivers_cat, char const *m
     if (x86.int66_offset == 0) goto emu_x86_initialize_error_2;
 
 #if (DRIVER==ADLIB)
+#ifdef USE_SPEEXDSP_RESAMPLER
+    if ((resampling_quality > 0) && (rate != 49716))
+    {
+        int err;
+
+        resampler = speex_resampler_init(2, 49716, rate, SPEEX_RESAMPLER_QUALITY_DESKTOP, &err);
+        if ((resampler == NULL) || (err != RESAMPLER_ERR_SUCCESS))
+        {
+            resampler = NULL;
+        }
+        else
+        {
+            resample_step = ((((uint64_t)49716) << 32) / rate);
+        }
+    }
+    else resampler = NULL;
+
+    if (resampler != NULL) emu_opl2_init(49716, opl3_emulator);
+    else
+#endif
     emu_opl2_init(rate, opl3_emulator);
 #elif (DRIVER==ROLAND)
     if (emu_mt32_init(32000, mt32_roms)) goto emu_x86_initialize_error_2;
+
+#ifdef USE_SPEEXDSP_RESAMPLER
+    if ((resampling_quality > 0) && (rate != 32000))
+    {
+        int err;
+
+        resampler = speex_resampler_init(2, 32000, rate, SPEEX_RESAMPLER_QUALITY_DESKTOP, &err);
+        if ((resampler == NULL) || (err != RESAMPLER_ERR_SUCCESS))
+        {
+            resampler = NULL;
+        }
+        else
+        {
+            resample_step = ((((uint64_t)32000) << 32) / rate);
+        }
+    }
+    else resampler = NULL;
+#endif
 #endif
 
     InitMusic();
@@ -1926,6 +1980,10 @@ int emu_x86_initialize(unsigned int rate, char const *drivers_cat, char const *m
 #if (DRIVER==ADLIB)
     SetTimerFrequency(70);
 
+#ifdef USE_SPEEXDSP_RESAMPLER
+    if (resampler != NULL) sample_rate = 49716;
+    else
+#endif
     sample_rate = rate;
     num_samples_add = (sample_rate << 10) / 70;
     num_samples_left = 0;
@@ -1961,6 +2019,9 @@ int emu_x86_playsequence(void const *sequence, int size)
 
     if (size <= 0) return 0;
     retval = PlaySequenceBuffer(sequence, size);
+#ifdef USE_SPEEXDSP_RESAMPLER
+    resample_num_samples = 0;
+#endif
 #if (DRIVER==ADLIB)
     num_samples_left = num_samples_add;
 #elif (DRIVER==ROLAND)
@@ -1977,7 +2038,7 @@ int emu_x86_playsequence(void const *sequence, int size)
 
     if (sample_rate != 32000)
     {
-        emu_mt32_getsamples(&(tmpbuf[2]), 400);
+        emu_mt32_getsamples(&(resample_samples[2]), 400);
     }
 #endif
     return retval;
@@ -1993,6 +2054,62 @@ int emu_x86_getdata(void *buffer, int size)
     buf = (int16_t *)buffer;
 
 #if (DRIVER==ADLIB)
+#ifdef USE_SPEEXDSP_RESAMPLER
+    if (resampler != NULL)
+    {
+        while (numsamples != 0)
+        {
+            int samples_left, samples_toread;
+            spx_uint32_t in_len, out_len;
+            int err;
+            unsigned int index;
+
+            samples_left = num_samples_left >> 10;
+            if (samples_left == 0)
+            {
+                if (!IsSequencePlaying()) break;
+                ProcessSequence();
+
+                num_samples_left += num_samples_add;
+                samples_left = num_samples_left >> 10;
+            }
+
+            samples_toread = (((numsamples + 1) * resample_step) >> 32) + 8;
+            if (samples_toread & 7) samples_toread += 8 - (samples_toread & 7);
+            if (samples_toread > 728) samples_toread = 728;
+
+            samples_toread -= resample_num_samples;
+            if (samples_toread > samples_left) samples_toread = samples_left;
+
+            emu_opl2_getsamples(&(resample_samples[2 * resample_num_samples]), samples_toread);
+
+            resample_num_samples += samples_toread;
+            num_samples_left -= samples_toread << 10;
+
+            in_len = resample_num_samples;
+            out_len = numsamples;
+
+            err = speex_resampler_process_interleaved_int(resampler, resample_samples, &in_len, buf, &out_len);
+            if (err != RESAMPLER_ERR_SUCCESS) break;
+
+            buf += 2 * out_len;
+            samples_read += out_len;
+            numsamples -= out_len;
+
+            if (in_len)
+            {
+                for (index = 0; in_len + index < resample_num_samples; index++)
+                {
+                    resample_samples[2 * index] = resample_samples[2 * (in_len + index)];
+                    resample_samples[2 * index + 1] = resample_samples[2 * (in_len + index) + 1];
+                }
+
+                resample_num_samples -= in_len;
+            }
+        }
+    }
+    else
+#endif
     while (numsamples != 0)
     {
         int samples_left, samples_toread;
@@ -2018,6 +2135,60 @@ int emu_x86_getdata(void *buffer, int size)
         num_samples_left -= samples_toread << 10;
     }
 #elif (DRIVER==ROLAND)
+#ifdef USE_SPEEXDSP_RESAMPLER
+    if (resampler != NULL)
+    {
+        while (numsamples != 0)
+        {
+            int samples_toread;
+            spx_uint32_t in_len, out_len;
+            int err;
+            unsigned int index;
+
+            if (num_samples_left == 0)
+            {
+                if (!IsSequencePlaying()) break;
+                ProcessSequence();
+
+                num_samples_left = 400;
+            }
+
+            samples_toread = (((numsamples + 1) * resample_step) >> 32) + 8;
+            if (samples_toread & 7) samples_toread += 8 - (samples_toread & 7);
+            if (samples_toread > 416) samples_toread = 416;
+
+            samples_toread -= resample_num_samples;
+            if (samples_toread > num_samples_left) samples_toread = num_samples_left;
+
+            emu_mt32_getsamples(&(resample_samples[2 * resample_num_samples]), samples_toread);
+
+            resample_num_samples += samples_toread;
+            num_samples_left -= samples_toread;
+
+            in_len = resample_num_samples;
+            out_len = numsamples;
+
+            err = speex_resampler_process_interleaved_int(resampler, resample_samples, &in_len, buf, &out_len);
+            if (err != RESAMPLER_ERR_SUCCESS) break;
+
+            buf += 2 * out_len;
+            samples_read += out_len;
+            numsamples -= out_len;
+
+            if (in_len)
+            {
+                for (index = 0; in_len + index < resample_num_samples; index++)
+                {
+                    resample_samples[2 * index] = resample_samples[2 * (in_len + index)];
+                    resample_samples[2 * index + 1] = resample_samples[2 * (in_len + index) + 1];
+                }
+
+                resample_num_samples -= in_len;
+            }
+        }
+    }
+    else
+#endif
     if (sample_rate == 32000)
     {
         while (numsamples != 0)
@@ -2055,10 +2226,10 @@ int emu_x86_getdata(void *buffer, int size)
                 if (!IsSequencePlaying()) break;
                 ProcessSequence();
 
-                tmpbuf[0] = tmpbuf[2*400];
-                tmpbuf[1] = tmpbuf[2*400+1];
+                resample_samples[0] = resample_samples[2*400];
+                resample_samples[1] = resample_samples[2*400+1];
 
-                emu_mt32_getsamples(&(tmpbuf[2]), 400);
+                emu_mt32_getsamples(&(resample_samples[2]), 400);
 
                 current_position -= (((uint64_t)400) << 32);
                 position = current_position >> 32;
@@ -2072,8 +2243,8 @@ int emu_x86_getdata(void *buffer, int size)
 
             for (; samples_toread != 0; samples_toread--)
             {
-                buf[0] = tmpbuf[2*position] + (((tmpbuf[2*(position + 1)] - tmpbuf[2*position]) * ((int32_t)(((uint32_t)current_position) >> 16))) >> 16);
-                buf[1] = tmpbuf[2*position+1] + (((tmpbuf[2*(position + 1)+1] - tmpbuf[2*position+1]) * ((int32_t)(((uint32_t)current_position) >> 16))) >> 16);
+                buf[0] = resample_samples[2*position] + (((resample_samples[2*(position + 1)] - resample_samples[2*position]) * ((int32_t)(((uint32_t)current_position) >> 16))) >> 16);
+                buf[1] = resample_samples[2*position+1] + (((resample_samples[2*(position + 1)+1] - resample_samples[2*position+1]) * ((int32_t)(((uint32_t)current_position) >> 16))) >> 16);
 
                 buf += 2;
 
@@ -2083,8 +2254,8 @@ int emu_x86_getdata(void *buffer, int size)
 
             while ((numsamples != 0) && (position < 400))
             {
-                buf[0] = tmpbuf[2*position] + (((tmpbuf[2*(position + 1)] - tmpbuf[2*position]) * ((int32_t)(((uint32_t)current_position) >> 16))) >> 16);
-                buf[1] = tmpbuf[2*position+1] + (((tmpbuf[2*(position + 1)+1] - tmpbuf[2*position+1]) * ((int32_t)(((uint32_t)current_position) >> 16))) >> 16);
+                buf[0] = resample_samples[2*position] + (((resample_samples[2*(position + 1)] - resample_samples[2*position]) * ((int32_t)(((uint32_t)current_position) >> 16))) >> 16);
+                buf[1] = resample_samples[2*position+1] + (((resample_samples[2*(position + 1)+1] - resample_samples[2*position+1]) * ((int32_t)(((uint32_t)current_position) >> 16))) >> 16);
 
                 buf += 2;
 
@@ -2104,6 +2275,9 @@ int emu_x86_getdata(void *buffer, int size)
 int emu_x86_rewindsequence(void)
 {
     RewindSequence();
+#ifdef USE_SPEEXDSP_RESAMPLER
+    resample_num_samples = 0;
+#endif
     return 1;
 }
 
@@ -2119,6 +2293,13 @@ void emu_x86_shutdown(void)
     free(memory);
     memory = NULL;
     x86.int66_offset = 0;
+#ifdef USE_SPEEXDSP_RESAMPLER
+    if (resampler != NULL)
+    {
+        speex_resampler_destroy(resampler);
+        resampler = NULL;
+    }
+#endif
 #if (DRIVER==ROLAND)
     emu_mt32_shutdown();
 #endif

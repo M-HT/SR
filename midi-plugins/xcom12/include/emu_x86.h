@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-int emu_x86_initialize(unsigned int rate, char const *drivers_cat, char const *mt32_roms, int opl3_emulator);
+int emu_x86_initialize(unsigned int rate, char const *drivers_cat, char const *mt32_roms, int opl3_emulator, int resampling_quality);
 int emu_x86_setvolume(unsigned char volume);
 int emu_x86_playsequence(void const *sequence, int size);
 int emu_x86_getdata(void *buffer, int size);

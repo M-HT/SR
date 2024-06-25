@@ -23,8 +23,12 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include "midi-plugins.h"
 #include "adlmidi.h"
+#ifdef USE_SPEEXDSP_RESAMPLER
+#include <speex/speex_resampler.h>
+#endif
 
 
 #define ADLMIDI_VERSION_ATLEAST(major,minor,patchlevel) defined(ADLMIDI_VERSION_MAJOR) && (ADLMIDI_VERSION_MAJOR > (major) || (ADLMIDI_VERSION_MAJOR == (major) && (ADLMIDI_VERSION_MINOR > (minor) || (ADLMIDI_VERSION_MINOR == (minor) && ADLMIDI_VERSION_PATCHLEVEL >= (patchlevel)))))
@@ -32,6 +36,12 @@
 
 static struct ADL_MIDIPlayer *adl_handle = NULL;
 static unsigned char adl_volume = 127;
+#ifdef USE_SPEEXDSP_RESAMPLER
+static SpeexResamplerState *resampler = NULL;
+static uint64_t resample_step;
+static int resample_num_samples;
+static int16_t resample_samples[2*1024];
+#endif
 
 
 
@@ -71,6 +81,10 @@ static void *open_file(char const *midifile)
 
     send_master_volume_sysex();
 
+#ifdef USE_SPEEXDSP_RESAMPLER
+    resample_num_samples = 0;
+#endif
+
     return (void *) 1;
 }
 
@@ -84,22 +98,65 @@ static void *open_buffer(void const *midibuffer, long int size)
 
     send_master_volume_sysex();
 
+#ifdef USE_SPEEXDSP_RESAMPLER
+    resample_num_samples = 0;
+#endif
+
     return (void *) 1;
 }
 
 static long int get_data(void *handle, void *buffer, long int size)
 {
-    int num_samples;
-
     if (handle == NULL) return -2;
     if (buffer == NULL) return -3;
     if (size < 0) return -4;
     if (size < 4) return 0;
     if (adl_handle == NULL) return -5;
 
-    num_samples = adl_play(adl_handle, size / 2, (short *) buffer);
+#ifdef USE_SPEEXDSP_RESAMPLER
+    if (resampler != NULL)
+    {
+        long int num_to_write, num_to_read, num_read;
+        unsigned int index;
 
-    return 2 * num_samples;
+        num_to_write = size >> 2;
+
+        while (num_to_write > 0)
+        {
+            spx_uint32_t in_len, out_len;
+            int err;
+
+            num_to_read = (((num_to_write + 1) * resample_step) >> 32) + 8;
+            if (num_to_read & 7) num_to_read += 8 - (num_to_read & 7);
+            if (num_to_read > 1024) num_to_read = 1024;
+            num_read = adl_play(adl_handle, (num_to_read - resample_num_samples) << 1, &(resample_samples[2 * resample_num_samples])) >> 1;
+            resample_num_samples += num_read;
+
+            if (resample_num_samples == 0) break;
+
+            in_len = resample_num_samples;
+            out_len = num_to_write;
+
+            err = speex_resampler_process_interleaved_int(resampler, resample_samples, &in_len, (spx_int16_t *)buffer, &out_len);
+            if ((err != RESAMPLER_ERR_SUCCESS) || (out_len == 0)) break;
+
+            buffer = (void *)((out_len << 2) + (uintptr_t)buffer);
+            num_to_write -= out_len;
+
+            for (index = 0; in_len + index < resample_num_samples; index++)
+            {
+                resample_samples[2 * index] = resample_samples[2 * (in_len + index)];
+                resample_samples[2 * index + 1] = resample_samples[2 * (in_len + index) + 1];
+            }
+
+            resample_num_samples -= in_len;
+        }
+
+        return ((size >> 2) - num_to_write) << 2;
+    }
+#endif
+
+    return adl_play(adl_handle, size >> 1, (short *) buffer) << 1;
 }
 
 static int rewind_midi(void *handle)
@@ -108,6 +165,10 @@ static int rewind_midi(void *handle)
     if (adl_handle == NULL) return -3;
 
     adl_positionRewind(adl_handle);
+
+#ifdef USE_SPEEXDSP_RESAMPLER
+    resample_num_samples = 0;
+#endif
 
     return 0;
 }
@@ -129,21 +190,31 @@ static void shutdown_plugin(void)
         adl_close(adl_handle);
         adl_handle = NULL;
     }
+#ifdef USE_SPEEXDSP_RESAMPLER
+    if (resampler != NULL)
+    {
+        speex_resampler_destroy(resampler);
+        resampler = NULL;
+    }
+#endif
 }
 
 __attribute__ ((visibility ("default")))
 int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const *parameters, midi_plugin_functions *functions)
 {
     int bank_number, emulator;
+    int resampling_quality;
     unsigned int sampling_rate;
 
     bank_number = 0;
     emulator = 0;
+    resampling_quality = 0;
     sampling_rate = rate;
     if (parameters != NULL)
     {
         bank_number = parameters->opl3_bank_number;
         emulator = parameters->opl3_emulator;
+        resampling_quality = parameters->resampling_quality;
         if (sampling_rate == 0)
         {
             sampling_rate = parameters->sampling_rate;
@@ -161,15 +232,47 @@ int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const
     functions->close_midi = &close_midi;
     functions->shutdown_plugin = &shutdown_plugin;
 
+    if (resampling_quality > 0)
+    {
+        if (strstr(adl_linkedLibraryVersion(), "(HQ)") != NULL)
+        {
+            // libADLMIDI is compiled with high quality resampler
+            resampling_quality = 0;
+        }
+    }
+
+#ifdef USE_SPEEXDSP_RESAMPLER
+    if ((resampling_quality > 0) && (sampling_rate != 49716))
+    {
+        int err;
+
+        resampler = speex_resampler_init(2, 49716, sampling_rate, SPEEX_RESAMPLER_QUALITY_DESKTOP, &err);
+        if ((resampler == NULL) || (err != RESAMPLER_ERR_SUCCESS))
+        {
+            resampler = NULL;
+        }
+        else
+        {
+            resample_step = ((((uint64_t)49716) << 32) / sampling_rate);
+        }
+    }
+    else resampler = NULL;
+
+    if (resampler != NULL) adl_handle = adl_init(49716);
+    else
+#endif
     adl_handle = adl_init(sampling_rate);
-    if (adl_handle == NULL) return -1;
+    if (adl_handle == NULL)
+    {
+        shutdown_plugin();
+        return -1;
+    }
 
 
     // set number of emulated chips
     if (adl_setNumChips(adl_handle, 1))
     {
-        adl_close(adl_handle);
-        adl_handle = NULL;
+        shutdown_plugin();
         return -1;
     }
 
@@ -188,8 +291,7 @@ int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const
 
     if (adl_setBank(adl_handle, bank_number))
     {
-        adl_close(adl_handle);
-        adl_handle = NULL;
+        shutdown_plugin();
         return -1;
     }
 

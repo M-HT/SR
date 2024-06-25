@@ -4,6 +4,10 @@ Plugins used by the games to play MIDI (and other types) music.
 
 To compile the plugins, run the compilation script for your platform.
 
+Optionally, [SpeexDSP](https://gitlab.xiph.org/xiph/speexdsp "Speex audio processing library") library can be used for higher quality resampling (when it's enabled and when other higher quality resampling isn't used).
+
+To compile the plugins with SpeexDSP support either run the compilation script with argument `USE_SPEEXDSP` or define non-empty environment variable `USE_SPEEXDSP`.
+
 ## General plugins
 
 **midi-wildmidi** plays General MIDI music using [WildMIDI](https://github.com/Mindwerks/wildmidi "WildMIDI: A Software Synthesizer") library. WildMIDI uses GUS sound patches to play MIDI music.

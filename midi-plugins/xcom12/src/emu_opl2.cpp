@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -31,6 +31,7 @@ extern void adlib_write(uintptr_t idx, uint8_t val);
 extern void adlib_getsample(int16_t* sndptr, intptr_t numsamples);
 
 
+static unsigned int rate;
 static unsigned int adlib_address;
 static int adlib_emulator;
 static opl3_chip chip;
@@ -39,6 +40,7 @@ extern "C" {
 
 void emu_opl2_init(unsigned int samplerate, int emulator)
 {
+    rate = samplerate;
     adlib_address = 0;
     adlib_emulator = emulator;
     if (emulator)
@@ -83,7 +85,27 @@ void emu_opl2_getsamples(int16_t *samples, int numsamples)
 {
     if (adlib_emulator)
     {
-        OPL3_GenerateStream(&chip, samples, numsamples);
+        if (rate == 49716)
+        {
+            if (numsamples > 0)
+            {
+                int16_t buf[4];
+
+                for (numsamples--; numsamples != 0; numsamples--)
+                {
+                    OPL3_Generate4Ch(&chip, samples);
+                    samples += 2;
+                }
+
+                OPL3_Generate4Ch(&chip, buf);
+                samples[0] = buf[0];
+                samples[1] = buf[1];
+            }
+        }
+        else
+        {
+            OPL3_GenerateStream(&chip, samples, numsamples);
+        }
     }
     else
     {

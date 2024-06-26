@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021-2023 Roman Pauer
+ *  Copyright (C) 2021-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -48,6 +48,9 @@ GAME_CONFIG_STORAGE int Audio_OPL3BankNumber;           /* OPL3 bank number (0-7
 GAME_CONFIG_STORAGE int Audio_OPL3Emulator;             /* OPL3 emulator
                                                            0: fast - DOSBox
                                                            1: precise - Nuked OPL3 */
+GAME_CONFIG_STORAGE int Audio_MidiResamplingQuality;    /* MIDI resampling quality
+                                                           0: normal quality
+                                                           1: higher quality */
 
 GAME_CONFIG_STORAGE int Display_Width;
 GAME_CONFIG_STORAGE int Display_Height;

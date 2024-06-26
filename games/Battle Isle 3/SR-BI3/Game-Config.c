@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021-2023 Roman Pauer
+ *  Copyright (C) 2021-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -71,6 +71,7 @@ void ReadConfiguration(void)
     Audio_MidiDevice = NULL;
     Audio_OPL3BankNumber = 59;
     Audio_OPL3Emulator = 1;
+    Audio_MidiResamplingQuality = 0;
 
     Display_Width = 0;
     Display_Height = 0;
@@ -232,6 +233,15 @@ void ReadConfiguration(void)
                 else if ( strcasecmp(param, "precise") == 0 ) // param equals "precise"
                 {
                     Audio_OPL3Emulator = 1;
+                }
+            }
+            else if ( strcasecmp(str, "MidiResamplingQuality") == 0 ) // str equals "MidiResamplingQuality"
+            {
+                num_int = 0;
+                sscanf(param, "%i", &num_int);
+                if (num_int >= 0)
+                {
+                    Audio_MidiResamplingQuality = num_int;
                 }
             }
 

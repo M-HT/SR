@@ -206,6 +206,7 @@ static int MP_Startup(void)
     midi_plugin_parameters MP_parameters;
     WAVEFORMATEX waveFormat;
     MMRESULT res;
+    unsigned int rate;
 
     if (MP_handle != NULL) return 0;
 
@@ -263,12 +264,27 @@ static int MP_Startup(void)
         return 3;
     }
 
+    rate = 44100;
+    if (Audio_MidiResamplingQuality > 0)
+    {
+        WAVEOUTCAPS caps;
+
+        res = waveOutGetDevCaps(WAVE_MAPPER, &caps, sizeof(WAVEOUTCAPS));
+        if (MMSYSERR_NOERROR == res)
+        {
+            if (caps.dwFormats & WAVE_FORMAT_96S16)
+            {
+                rate = 96000;
+            }
+        }
+    }
+
     memset(&MP_parameters, 0, sizeof(MP_parameters));
     MP_parameters.soundfont_path = Audio_SoundFontPath;
     MP_parameters.opl3_bank_number = Audio_OPL3BankNumber;
     MP_parameters.opl3_emulator = Audio_OPL3Emulator;
-    MP_parameters.resampling_quality = 0;
-    MP_parameters.sampling_rate = 44100;
+    MP_parameters.resampling_quality = Audio_MidiResamplingQuality;
+    MP_parameters.sampling_rate = rate;
 
     if (MP_initialize(0, &MP_parameters, &MP_functions))
     {
@@ -285,8 +301,8 @@ static int MP_Startup(void)
     // initialize waveout
     waveFormat.wFormatTag = WAVE_FORMAT_PCM;
     waveFormat.nChannels = 2;
-    waveFormat.nSamplesPerSec = 44100;
-    waveFormat.nAvgBytesPerSec = 4 * 44100;
+    waveFormat.nSamplesPerSec = rate;
+    waveFormat.nAvgBytesPerSec = 4 * rate;
     waveFormat.nBlockAlign = 4;
     waveFormat.wBitsPerSample = 16;
     waveFormat.cbSize = 0;

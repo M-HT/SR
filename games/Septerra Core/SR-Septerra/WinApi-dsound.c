@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -108,7 +108,7 @@ struct IDirectSoundBuffer_c {
     uint8_t channels;
     uint8_t silence;
     int32_t attenuation, pan;
-    unsigned int left_volume, right_volume;
+    unsigned int left_volume, right_volume, conv_format;
     union {
         struct {
             struct IDirectSoundBuffer_c *first;
@@ -251,7 +251,9 @@ static void remove_from_list(struct IDirectSoundBuffer_c *PrimaryBuffer, struct 
 static void fill_audio(void *udata, Uint8 *stream, int len)
 {
     struct IDirectSoundBuffer_c *PrimaryBuffer, *buffer1, *current, *next;
-    int num_playing, remaining1, remaining2, num_samples, remaining_samples;
+    int num_playing, remaining1, remaining2, num_samples, remaining_samples, left_volume, right_volume;
+    unsigned int conv_method, freq_diff_shift;
+    int16_t *cur_src;
     int32_t *cur_dst;
 
     PrimaryBuffer = (struct IDirectSoundBuffer_c *)udata;
@@ -329,6 +331,7 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
         // do full processing
     }
 
+    freq_diff_shift = 0; // silence warning
 
     num_samples = len >> PrimaryBuffer->sample_size_shift;
     // clear accumulator data
@@ -337,175 +340,105 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
     current = PrimaryBuffer->first;
     do {
         next = current->next;
+
+        if (current->freq == PrimaryBuffer->freq)
+        {
+            conv_method = 0;
+        }
+        else if ((current->freq == 2 * PrimaryBuffer->freq) && (current->channels == 1))
+        {
+            // use mono buffer with double frequency as stereo channel at normal frequency
+            conv_method = 1;
+        }
+        else if (current->freq > PrimaryBuffer->freq)
+        {
+            conv_method = 2;
+            freq_diff_shift = 1;
+            while (current->freq > (PrimaryBuffer->freq << freq_diff_shift))
+            {
+                freq_diff_shift++;
+            }
+        }
+        else
+        {
+            conv_method = 3;
+            freq_diff_shift = 1;
+            while ((current->freq << freq_diff_shift) < PrimaryBuffer->freq)
+            {
+                freq_diff_shift++;
+            }
+        }
+
+        left_volume = (PrimaryBuffer->left_volume == 0x10000)?current->left_volume:((PrimaryBuffer->left_volume * current->left_volume) >> 16);
+        right_volume = (PrimaryBuffer->right_volume == 0x10000)?current->right_volume:((PrimaryBuffer->right_volume * current->right_volume) >> 16);
+
+        cur_src = PrimaryBuffer->conv_data;
+        cur_dst = PrimaryBuffer->accum_data;
+
         //remaining1 = calc_remaining(current, num_samples << current->sample_size_shift, &remaining2);
         remaining1 = calc_remaining(current, current->size, &remaining2);
 
-        cur_dst = PrimaryBuffer->accum_data;
         remaining_samples = num_samples;
 
         while ((remaining_samples != 0) && (remaining1 != 0))
         {
-            int16_t *cur_src;
-            int cur_num, freq_diff_shift;
-            int left_volume, right_volume;
+            int cur_num;
 
-            if (current->freq == PrimaryBuffer->freq)
+            switch (conv_method)
             {
-                if (remaining1 >= (remaining_samples << current->sample_size_shift))
+            case 0: // same frequency
+            case 1: // mono buffer with double frequency as stereo channel at normal frequency
+                if (remaining1 >= (remaining_samples << (current->sample_size_shift + conv_method)))
                 {
-                    remaining1 = (remaining_samples << current->sample_size_shift);
+                    remaining1 = (remaining_samples << (current->sample_size_shift + conv_method));
                     remaining2 = 0;
                 }
 
-                cur_num = remaining1 >> current->sample_size_shift;
+                cur_num = remaining1 >> (current->sample_size_shift + conv_method);
 
-                if ((current->channels == 2) && (current->format == AUDIO_S16SYS))
+                switch (current->conv_format + conv_method)
                 {
+                case 0: // U8 mono
+                    conv_u8_mono((uint8_t *) &(current->data[current->read_offset]), cur_src, cur_num);
+                    break;
+                case 1: // U8 stereo
+                    conv_u8_stereo((uint8_t *) &(current->data[current->read_offset]), cur_src, cur_num);
+                    break;
+                case 2: // S8 mono
+                    conv_s8_mono((int8_t *) &(current->data[current->read_offset]), cur_src, cur_num);
+                    break;
+                case 3: // S8 stereo
+                    conv_s8_stereo((int8_t *) &(current->data[current->read_offset]), cur_src, cur_num);
+                    break;
+                case 4: // U16 (native endian) mono
+                    conv_u16_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
+                    break;
+                case 5: // U16 (native endian) stereo
+                    conv_u16_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
+                    break;
+                case 6: // S16 (native endian) mono
+                    conv_s16_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
+                    break;
+                case 7: // S16 (native endian) stereo
+                    //conv_s16_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
                     cur_src = (int16_t *) &(current->data[current->read_offset]);
-                }
-                else
-                {
-                    cur_src = PrimaryBuffer->conv_data;
-
-                    switch (current->format)
-                    {
-                    case AUDIO_U8:
-                        if (current->channels == 1)
-                            conv_u8_mono((uint8_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        else
-                            conv_u8_stereo((uint8_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        break;
-                    case AUDIO_S8:
-                        if (current->channels == 1)
-                            conv_s8_mono((int8_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        else
-                            conv_s8_stereo((int8_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        break;
-                    case AUDIO_U16LSB:
-                        #if AUDIO_U16LSB == AUDIO_U16SYS
-                            if (current->channels == 1)
-                                conv_u16_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                            else
-                                conv_u16_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        #else
-                            if (current->channels == 1)
-                                conv_u16swap_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                            else
-                                conv_u16swap_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        #endif
-                        break;
-                    case AUDIO_S16LSB:
-                        #if AUDIO_S16LSB == AUDIO_S16SYS
-                            if (current->channels == 1)
-                                conv_s16_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                            else
-                                conv_s16_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        #else
-                            if (current->channels == 1)
-                                conv_s16swap_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                            else
-                                conv_s16swap_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        #endif
-                        break;
-                    case AUDIO_U16MSB:
-                        #if AUDIO_U16MSB == AUDIO_U16SYS
-                            if (current->channels == 1)
-                                conv_u16_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                            else
-                                conv_u16_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        #else
-                            if (current->channels == 1)
-                                conv_u16swap_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                            else
-                                conv_u16swap_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        #endif
-                        break;
-                    case AUDIO_S16MSB:
-                        #if AUDIO_S16MSB == AUDIO_S16SYS
-                            if (current->channels == 1)
-                                conv_s16_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                            else
-                                conv_s16_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        #else
-                            if (current->channels == 1)
-                                conv_s16swap_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                            else
-                                conv_s16swap_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        #endif
-                        break;
-                    }
-
-                }
-            }
-            else if ((current->freq == 2 * PrimaryBuffer->freq) && (current->channels == 1))
-            {
-                // use mono buffer with double frequency as stereo channel at normal frequency
-
-                if (remaining1 >= (remaining_samples << (current->sample_size_shift + 1)))
-                {
-                    remaining1 = (remaining_samples << (current->sample_size_shift + 1));
-                    remaining2 = 0;
+                    break;
+                case 8: // U16 (swap endian) mono
+                    conv_u16swap_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
+                    break;
+                case 9: // U16 (swap endian) stereo
+                    conv_u16swap_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
+                    break;
+                case 10: // S16 (swap endian) mono
+                    conv_s16swap_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
+                    break;
+                case 11: // S16 (swap endian) stereo
+                    conv_s16swap_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
+                    break;
                 }
 
-                cur_num = remaining1 >> (current->sample_size_shift + 1);
-
-                if (current->format == AUDIO_S16SYS)
-                {
-                    cur_src = (int16_t *) &(current->data[current->read_offset]);
-                }
-                else
-                {
-                    cur_src = PrimaryBuffer->conv_data;
-
-                    switch (current->format)
-                    {
-                    case AUDIO_U8:
-                        conv_u8_stereo((uint8_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        break;
-                    case AUDIO_S8:
-                        conv_s8_stereo((int8_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        break;
-                    case AUDIO_U16LSB:
-                        #if AUDIO_U16LSB == AUDIO_U16SYS
-                            conv_u16_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        #else
-                            conv_u16swap_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        #endif
-                        break;
-                    case AUDIO_S16LSB:
-                        #if AUDIO_S16LSB == AUDIO_S16SYS
-                            conv_s16_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        #else
-                            conv_s16swap_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        #endif
-                        break;
-                    case AUDIO_U16MSB:
-                        #if AUDIO_U16MSB == AUDIO_U16SYS
-                            conv_u16_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        #else
-                            conv_u16swap_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        #endif
-                        break;
-                    case AUDIO_S16MSB:
-                        #if AUDIO_S16MSB == AUDIO_S16SYS
-                            conv_s16_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        #else
-                            conv_s16swap_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
-                        #endif
-                        break;
-                    }
-
-                }
-            }
-            else if (current->freq > PrimaryBuffer->freq)
-            {
-                freq_diff_shift = 1;
-                while (current->freq > (PrimaryBuffer->freq << freq_diff_shift))
-                {
-                    freq_diff_shift++;
-                }
-
-
+                break;
+            case 2: // downsampling (integer ratio)
                 if (remaining1 >= (remaining_samples << (current->sample_size_shift + freq_diff_shift)))
                 {
                     remaining1 = remaining_samples << (current->sample_size_shift + freq_diff_shift);
@@ -514,86 +447,48 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 
                 cur_num = remaining1 >> (current->sample_size_shift + freq_diff_shift);
 
-                cur_src = PrimaryBuffer->conv_data;
-
-                switch (current->format)
+                switch (current->conv_format)
                 {
-                case AUDIO_U8:
-                    if (current->channels == 1)
-                        downrate_u8_mono((uint8_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                    else
-                        downrate_u8_stereo((uint8_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
+                case 0: // U8 mono
+                    downrate_u8_mono((uint8_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
                     break;
-                case AUDIO_S8:
-                    if (current->channels == 1)
-                        downrate_s8_mono((int8_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                    else
-                        downrate_s8_stereo((int8_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
+                case 1: // U8 stereo
+                    downrate_u8_stereo((uint8_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
                     break;
-                case AUDIO_U16LSB:
-                    #if AUDIO_U16LSB == AUDIO_U16SYS
-                        if (current->channels == 1)
-                            downrate_u16_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                        else
-                            downrate_u16_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                    #else
-                        if (current->channels == 1)
-                            downrate_u16swap_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                        else
-                            downrate_u16swap_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                    #endif
+                case 2: // S8 mono
+                    downrate_s8_mono((int8_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
                     break;
-                case AUDIO_S16LSB:
-                    #if AUDIO_S16LSB == AUDIO_S16SYS
-                        if (current->channels == 1)
-                            downrate_s16_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                        else
-                            downrate_s16_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                    #else
-                        if (current->channels == 1)
-                            downrate_s16swap_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                        else
-                            downrate_s16swap_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                    #endif
+                case 3: // S8 stereo
+                    downrate_s8_stereo((int8_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
                     break;
-                case AUDIO_U16MSB:
-                    #if AUDIO_U16MSB == AUDIO_U16SYS
-                        if (current->channels == 1)
-                            downrate_u16_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                        else
-                            downrate_u16_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                    #else
-                        if (current->channels == 1)
-                            downrate_u16swap_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                        else
-                            downrate_u16swap_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                    #endif
+                case 4: // U16 (native endian) mono
+                    downrate_u16_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
                     break;
-                case AUDIO_S16MSB:
-                    #if AUDIO_S16MSB == AUDIO_S16SYS
-                        if (current->channels == 1)
-                            downrate_s16_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                        else
-                            downrate_s16_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                    #else
-                        if (current->channels == 1)
-                            downrate_s16swap_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                        else
-                            downrate_s16swap_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
-                    #endif
+                case 5: // U16 (native endian) stereo
+                    downrate_u16_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
+                    break;
+                case 6: // S16 (native endian) mono
+                    downrate_s16_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
+                    break;
+                case 7: // S16 (native endian) stereo
+                    downrate_s16_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
+                    break;
+                case 8: // U16 (swap endian) mono
+                    downrate_u16swap_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
+                    break;
+                case 9: // U16 (swap endian) stereo
+                    downrate_u16swap_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
+                    break;
+                case 10: // S16 (swap endian) mono
+                    downrate_s16swap_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
+                    break;
+                case 11: // S16 (swap endian) stereo
+                    downrate_s16swap_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift);
                     break;
                 }
 
-            }
-            else
-            {
-                freq_diff_shift = 1;
-                while ((current->freq << freq_diff_shift) < PrimaryBuffer->freq)
-                {
-                    freq_diff_shift++;
-                }
-
-
+                break;
+            case 3: // upsampling (integer ratio)
                 if (remaining1 >= ((remaining_samples << current->sample_size_shift) >> freq_diff_shift))
                 {
                     remaining1 = (remaining_samples << current->sample_size_shift) >> freq_diff_shift;
@@ -602,76 +497,47 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 
                 cur_num = (remaining1 >> current->sample_size_shift) << freq_diff_shift;
 
-                cur_src = PrimaryBuffer->conv_data;
-
-                switch (current->format)
+                switch (current->conv_format)
                 {
-                case AUDIO_U8:
-                    if (current->channels == 1)
-                        uprate_u8_mono((uint8_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                    else
-                        uprate_u8_stereo((uint8_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
+                case 0: // U8 mono
+                    uprate_u8_mono((uint8_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
                     break;
-                case AUDIO_S8:
-                    if (current->channels == 1)
-                        uprate_s8_mono((int8_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                    else
-                        uprate_s8_stereo((int8_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
+                case 1: // U8 stereo
+                    uprate_u8_stereo((uint8_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
                     break;
-                case AUDIO_U16LSB:
-                    #if AUDIO_U16LSB == AUDIO_U16SYS
-                        if (current->channels == 1)
-                            uprate_u16_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                        else
-                            uprate_u16_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                    #else
-                        if (current->channels == 1)
-                            uprate_u16swap_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                        else
-                            uprate_u16swap_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                    #endif
+                case 2: // S8 mono
+                    uprate_s8_mono((int8_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
                     break;
-                case AUDIO_S16LSB:
-                    #if AUDIO_S16LSB == AUDIO_S16SYS
-                        if (current->channels == 1)
-                            uprate_s16_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                        else
-                            uprate_s16_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                    #else
-                        if (current->channels == 1)
-                            uprate_s16swap_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                        else
-                            uprate_s16swap_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                    #endif
+                case 3: // S8 stereo
+                    uprate_s8_stereo((int8_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
                     break;
-                case AUDIO_U16MSB:
-                    #if AUDIO_U16MSB == AUDIO_U16SYS
-                        if (current->channels == 1)
-                            uprate_u16_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                        else
-                            uprate_u16_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                    #else
-                        if (current->channels == 1)
-                            uprate_u16swap_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                        else
-                            uprate_u16swap_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                    #endif
+                case 4: // U16 (native endian) mono
+                    uprate_u16_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
                     break;
-                case AUDIO_S16MSB:
-                    #if AUDIO_S16MSB == AUDIO_S16SYS
-                        if (current->channels == 1)
-                            uprate_s16_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                        else
-                            uprate_s16_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                    #else
-                        if (current->channels == 1)
-                            uprate_s16swap_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                        else
-                            uprate_s16swap_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
-                    #endif
+                case 5: // U16 (native endian) stereo
+                    uprate_u16_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
+                    break;
+                case 6: // S16 (native endian) mono
+                    uprate_s16_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
+                    break;
+                case 7: // S16 (native endian) stereo
+                    uprate_s16_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
+                    break;
+                case 8: // U16 (swap endian) mono
+                    uprate_u16swap_mono((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
+                    break;
+                case 9: // U16 (swap endian) stereo
+                    uprate_u16swap_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
+                    break;
+                case 10: // S16 (swap endian) mono
+                    uprate_s16swap_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
+                    break;
+                case 11: // S16 (swap endian) stereo
+                    uprate_s16swap_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
                     break;
                 }
 
+                break;
             }
 
             current->read_offset += remaining1;
@@ -689,13 +555,39 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
             }
 
             // add converted data to accumulator data
-            left_volume = (PrimaryBuffer->left_volume == 0x10000)?current->left_volume:((PrimaryBuffer->left_volume * current->left_volume) >> 16);
-            right_volume = (PrimaryBuffer->right_volume == 0x10000)?current->right_volume:((PrimaryBuffer->right_volume * current->right_volume) >> 16);
-
             remaining_samples -= cur_num;
 
             if ((left_volume == 0x10000) && (right_volume == 0x10000))
             {
+#if defined(ARMV8)
+                for (; cur_num != 0; cur_num--)
+                {
+                    int16x4_t srcval1;
+                    int32x4_t srcval2;
+                    uint64x2_t dstval;
+                    srcval1 = vreinterpret_s16_u32(vld1_dup_u32((uint32_t *)cur_src));
+                    cur_src += 2;
+                    srcval2 = vreinterpretq_s32_u64(vld1q_dup_u64((uint64_t *)cur_dst));
+                    dstval = vreinterpretq_u64_s32(vaddw_s16(srcval2, srcval1));
+                    vst1q_lane_u64((uint64_t *)cur_dst, dstval, 0);
+                    cur_dst += 2;
+                }
+#elif defined(ARMV6)
+                for (; cur_num != 0; cur_num--)
+                {
+                    uint32_t srcval;
+                    int32_t dstval1, dstval2;
+                    srcval = *(uint32_t *)cur_src;
+                    cur_src += 2;
+                    dstval1 = cur_dst[0];
+                    dstval2 = cur_dst[1];
+                    asm ( "sxtah %[result], %[value1], %[value2]" : [result] "=r" (dstval1) : [value1] "r" (dstval1), [value2] "r" (srcval) :  );
+                    asm ( "sxtah %[result], %[value1], %[value2], ror #16" : [result] "=r" (dstval2) : [value1] "r" (dstval2), [value2] "r" (srcval) :  );
+                    cur_dst[0] = dstval1;
+                    cur_dst[1] = dstval2;
+                    cur_dst += 2;
+                }
+#else
                 for (; cur_num != 0; cur_num--)
                 {
                     cur_dst[0] += cur_src[0];
@@ -703,9 +595,52 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
                     cur_dst += 2;
                     cur_src += 2;
                 }
+#endif
             }
             else
             {
+#if defined(ARMV8)
+                int32x4_t lr_volume;
+
+                lr_volume = vmovq_n_s32(left_volume);
+                vsetq_lane_s32(right_volume, lr_volume, 1);
+
+                for (; cur_num != 0; cur_num--)
+                {
+                    int16x4_t srcval1;
+                    int32x4_t srcval2, tmpval1, tmpval2;
+                    uint64x2_t dstval;
+
+                    srcval1 = vreinterpret_s16_u32(vld1_dup_u32((uint32_t *)cur_src));
+                    cur_src += 2;
+                    srcval2 = vreinterpretq_s32_u64(vld1q_dup_u64((uint64_t *)cur_dst));
+                    tmpval1 = vshll_n_s16(srcval1, 15);
+                    tmpval2 = vqrdmulhq_s32(lr_volume, tmpval1);
+                    dstval = vreinterpretq_u64_s32(vaddq_s32(srcval2, tmpval2));
+                    vst1q_lane_u64((uint64_t *)cur_dst, dstval, 0);
+                    cur_dst += 2;
+                }
+#elif defined(ARMV6)
+                for (; cur_num != 0; cur_num--)
+                {
+                    uint32_t srcval;
+                    int32_t dstval1, dstval2;
+                    srcval = *(uint32_t *)cur_src;
+                    cur_src += 2;
+                    dstval1 = cur_dst[0];
+                    dstval2 = cur_dst[1];
+#if defined(__ARM_ACLE) && __ARM_FEATURE_DSP
+                    dstval1 = __smlawb(left_volume, srcval, dstval1);
+                    dstval2 = __smlawt(right_volume, srcval, dstval2);
+#else
+                    asm ( "smlawb %[result], %[value1], %[value2], %[value3]" : [result] "=r" (dstval1) : [value1] "r" (left_volume), [value2] "r" (srcval), [value3] "r" (dstval1) : "cc" );
+                    asm ( "smlawt %[result], %[value1], %[value2], %[value3]" : [result] "=r" (dstval2) : [value1] "r" (right_volume), [value2] "r" (srcval), [value3] "r" (dstval2) : "cc" );
+#endif
+                    cur_dst[0] = dstval1;
+                    cur_dst[1] = dstval2;
+                    cur_dst += 2;
+                }
+#else
                 for (; cur_num != 0; cur_num--)
                 {
                     cur_dst[0] += (left_volume * (int)cur_src[0]) >> 16;
@@ -713,6 +648,7 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
                     cur_dst += 2;
                     cur_src += 2;
                 }
+#endif
             }
 
             remaining1 = remaining2;
@@ -723,71 +659,43 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
     } while (current != PrimaryBuffer->first);
 
 
-    switch (PrimaryBuffer->format)
+    switch (PrimaryBuffer->conv_format)
     {
-    case AUDIO_U8:
-        if (PrimaryBuffer->channels == 1)
-            accum_2_u8_mono(PrimaryBuffer->accum_data, (uint8_t *)stream, num_samples);
-        else
-            accum_2_u8_stereo(PrimaryBuffer->accum_data, (uint8_t *)stream, num_samples);
+    case 0: // U8 mono
+        accum_2_u8_mono(PrimaryBuffer->accum_data, (uint8_t *)stream, num_samples);
         break;
-    case AUDIO_S8:
-        if (PrimaryBuffer->channels == 1)
-            accum_2_s8_mono(PrimaryBuffer->accum_data, (int8_t *)stream, num_samples);
-        else
-            accum_2_s8_stereo(PrimaryBuffer->accum_data, (int8_t *)stream, num_samples);
+    case 1: // U8 stereo
+        accum_2_u8_stereo(PrimaryBuffer->accum_data, (uint8_t *)stream, num_samples);
         break;
-    case AUDIO_U16LSB:
-        #if AUDIO_U16LSB == AUDIO_U16SYS
-            if (PrimaryBuffer->channels == 1)
-                accum_2_u16_mono(PrimaryBuffer->accum_data, (uint16_t *)stream, num_samples);
-            else
-                accum_2_u16_stereo(PrimaryBuffer->accum_data, (uint16_t *)stream, num_samples);
-        #else
-            if (PrimaryBuffer->channels == 1)
-                accum_2_u16swap_mono(PrimaryBuffer->accum_data, (uint16_t *)stream, num_samples);
-            else
-                accum_2_u16swap_stereo(PrimaryBuffer->accum_data, (uint16_t *)stream, num_samples);
-        #endif
+    case 2: // S8 mono
+        accum_2_s8_mono(PrimaryBuffer->accum_data, (int8_t *)stream, num_samples);
         break;
-    case AUDIO_S16LSB:
-        #if AUDIO_S16LSB == AUDIO_S16SYS
-            if (PrimaryBuffer->channels == 1)
-                accum_2_s16_mono(PrimaryBuffer->accum_data, (int16_t *)stream, num_samples);
-            else
-                accum_2_s16_stereo(PrimaryBuffer->accum_data, (int16_t *)stream, num_samples);
-        #else
-            if (PrimaryBuffer->channels == 1)
-                accum_2_s16swap_mono(PrimaryBuffer->accum_data, (int16_t *)stream, num_samples);
-            else
-                accum_2_s16swap_stereo(PrimaryBuffer->accum_data, (int16_t *)stream, num_samples);
-        #endif
+    case 3: // S8 stereo
+        accum_2_s8_stereo(PrimaryBuffer->accum_data, (int8_t *)stream, num_samples);
         break;
-    case AUDIO_U16MSB:
-        #if AUDIO_U16MSB == AUDIO_U16SYS
-            if (PrimaryBuffer->channels == 1)
-                accum_2_u16_mono(PrimaryBuffer->accum_data, (uint16_t *)stream, num_samples);
-            else
-                accum_2_u16_stereo(PrimaryBuffer->accum_data, (uint16_t *)stream, num_samples);
-        #else
-            if (PrimaryBuffer->channels == 1)
-                accum_2_u16swap_mono(PrimaryBuffer->accum_data, (uint16_t *)stream, num_samples);
-            else
-                accum_2_u16swap_stereo(PrimaryBuffer->accum_data, (uint16_t *)stream, num_samples);
-        #endif
+    case 4: // U16 (native endian) mono
+        accum_2_u16_mono(PrimaryBuffer->accum_data, (uint16_t *)stream, num_samples);
         break;
-    case AUDIO_S16MSB:
-        #if AUDIO_S16MSB == AUDIO_S16SYS
-            if (PrimaryBuffer->channels == 1)
-                accum_2_s16_mono(PrimaryBuffer->accum_data, (int16_t *)stream, num_samples);
-            else
-                accum_2_s16_stereo(PrimaryBuffer->accum_data, (int16_t *)stream, num_samples);
-        #else
-            if (PrimaryBuffer->channels == 1)
-                accum_2_s16swap_mono(PrimaryBuffer->accum_data, (int16_t *)stream, num_samples);
-            else
-                accum_2_s16swap_stereo(PrimaryBuffer->accum_data, (int16_t *)stream, num_samples);
-        #endif
+    case 5: // U16 (native endian) stereo
+        accum_2_u16_stereo(PrimaryBuffer->accum_data, (uint16_t *)stream, num_samples);
+        break;
+    case 6: // S16 (native endian) mono
+        accum_2_s16_mono(PrimaryBuffer->accum_data, (int16_t *)stream, num_samples);
+        break;
+    case 7: // S16 (native endian) stereo
+        accum_2_s16_stereo(PrimaryBuffer->accum_data, (int16_t *)stream, num_samples);
+        break;
+    case 8: // U16 (swap endian) mono
+        accum_2_u16swap_mono(PrimaryBuffer->accum_data, (uint16_t *)stream, num_samples);
+        break;
+    case 9: // U16 (swap endian) stereo
+        accum_2_u16swap_stereo(PrimaryBuffer->accum_data, (uint16_t *)stream, num_samples);
+        break;
+    case 10: // S16 (swap endian) mono
+        accum_2_s16swap_mono(PrimaryBuffer->accum_data, (int16_t *)stream, num_samples);
+        break;
+    case 11: // S16 (swap endian) stereo
+        accum_2_s16swap_stereo(PrimaryBuffer->accum_data, (int16_t *)stream, num_samples);
         break;
     }
 }
@@ -897,6 +805,61 @@ uint32_t IDirectSound_Release_c(struct IDirectSound_c *lpThis)
     return lpThis->RefCount;
 }
 
+static void RecalculateConvFormat(struct IDirectSoundBuffer_c *lpThis)
+{
+    switch (lpThis->format)
+    {
+    case AUDIO_U8:
+        lpThis->conv_format = 0;
+        break;
+    case AUDIO_S8:
+        lpThis->conv_format = 2;
+        break;
+    case AUDIO_U16LSB:
+        #if AUDIO_U16LSB == AUDIO_U16SYS
+            lpThis->conv_format = 4;
+        #else
+            lpThis->conv_format = 8;
+        #endif
+        break;
+    case AUDIO_S16LSB:
+        #if AUDIO_S16LSB == AUDIO_S16SYS
+            lpThis->conv_format = 6;
+        #else
+            lpThis->conv_format = 10;
+        #endif
+        break;
+    case AUDIO_U16MSB:
+        #if AUDIO_U16MSB == AUDIO_U16SYS
+            lpThis->conv_format = 4;
+        #else
+            lpThis->conv_format = 8;
+        #endif
+        break;
+    case AUDIO_S16MSB:
+        #if AUDIO_S16MSB == AUDIO_S16SYS
+            lpThis->conv_format = 6;
+        #else
+            lpThis->conv_format = 10;
+        #endif
+        break;
+    default:
+        lpThis->conv_format = 14;
+        break;
+    }
+
+    lpThis->sample_size_shift = 0;
+    if (lpThis->channels == 2)
+    {
+        lpThis->sample_size_shift++;
+        lpThis->conv_format++;
+    }
+    if ((lpThis->format != AUDIO_U8) && (lpThis->format != AUDIO_S8))
+    {
+        lpThis->sample_size_shift++;
+    }
+}
+
 uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const struct _dsbufferdesc * pcDSBufferDesc, PTR32(struct IDirectSoundBuffer_c)* ppDSBuffer, void * pUnkOuter)
 {
     struct IDirectSoundBuffer_c *lpDSB_c;
@@ -946,7 +909,6 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
         lpDSB_c->primary = 1;
         lpDSB_c->status = SDL_AUDIO_STOPPED;
         lpDSB_c->looping = 1;
-        lpDSB_c->sample_size_shift = 0;
 
         lpDSB_c->first = NULL;
         lpDSB_c->num_channels = 0;
@@ -1002,15 +964,6 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
             }
         }
 
-        if (obtained.channels == 2)
-        {
-            lpDSB_c->sample_size_shift++;
-        }
-        if ((obtained.format != AUDIO_U8) && (obtained.format != AUDIO_S8))
-        {
-            lpDSB_c->sample_size_shift++;
-        }
-
         lpDSB_c->freq = obtained.freq;
         lpDSB_c->format = obtained.format;
         lpDSB_c->channels = obtained.channels;
@@ -1019,6 +972,8 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
         lpDSB_c->pan = 0;
         lpDSB_c->left_volume = 0x10000;
         lpDSB_c->right_volume = 0x10000;
+
+        RecalculateConvFormat(lpDSB_c);
 
         lpDSB_c->conv_data = (int16_t *) malloc(obtained.samples * 2 * sizeof(int16_t));
         lpDSB_c->accum_data = (int32_t *) malloc(obtained.samples * 2 * sizeof(int32_t));
@@ -1096,15 +1051,6 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
         lpDSB_c->primary = 0;
         lpDSB_c->status = SDL_AUDIO_STOPPED;
         lpDSB_c->looping = 0;
-        lpDSB_c->sample_size_shift = 0;
-        if (lpwfxFormat->wBitsPerSample == 16)
-        {
-            lpDSB_c->sample_size_shift++;
-        }
-        if (lpwfxFormat->nChannels == 2)
-        {
-            lpDSB_c->sample_size_shift++;
-        }
 
         lpDSB_c->freq = lpwfxFormat->nSamplesPerSec;
         lpDSB_c->format = (lpwfxFormat->wBitsPerSample == 16)?AUDIO_S16LSB:AUDIO_U8;
@@ -1117,6 +1063,8 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
 
         lpDSB_c->next = NULL;
         lpDSB_c->prev = NULL;
+
+        RecalculateConvFormat(lpDSB_c);
 
         lpDSB_c->data = (uint8_t *)malloc(pcDSBufferDesc->dwBufferBytes + 4); // allocate 4 more bytes to allow reading past the end of buffer
         if (lpDSB_c->data == NULL)
@@ -1731,20 +1679,12 @@ uint32_t IDirectSoundBuffer_SetFormat_c(struct IDirectSoundBuffer_c *lpThis, con
         }
     }
 
-    lpThis->sample_size_shift = 0;
-    if (obtained.channels == 2)
-    {
-        lpThis->sample_size_shift++;
-    }
-    if ((obtained.format != AUDIO_U8) && (obtained.format != AUDIO_S8))
-    {
-        lpThis->sample_size_shift++;
-    }
-
     lpThis->freq = obtained.freq;
     lpThis->format = obtained.format;
     lpThis->channels = obtained.channels;
     lpThis->silence = obtained.silence;
+
+    RecalculateConvFormat(lpThis);
 
     lpThis->conv_data = (int16_t *) malloc(obtained.samples * 2 * sizeof(int16_t));
     lpThis->accum_data = (int32_t *) malloc(obtained.samples * 2 * sizeof(int32_t));

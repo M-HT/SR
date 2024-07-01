@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,6 +22,79 @@
  *
  */
 
+#if ( \
+    defined(__aarch64__) || \
+    defined(_M_ARM64) || \
+    defined(_M_ARM64EC) \
+)
+    #define ARMV8 1
+#else
+    #undef ARMV8
+#endif
+
+#if (!defined(ARMV8)) && ( \
+    (defined(__ARM_ARCH) && (__ARM_ARCH >= 6)) || \
+    (defined(_M_ARM) && (_M_ARM >= 6)) || \
+    (defined(__TARGET_ARCH_ARM) && (__TARGET_ARCH_ARM >= 6)) || \
+    (defined(__TARGET_ARCH_THUMB) && (__TARGET_ARCH_THUMB >= 3)) \
+)
+    #define ARMV6 1
+#else
+    #undef ARMV6
+#endif
+
+#if defined(ARMV8)
+#include <arm_neon.h>
+#elif defined(ARMV6) && defined(__ARM_ACLE)
+#include <arm_acle.h>
+#endif
+
+
+#if defined(ARMV6) && !defined(SDL_Swap16)
+#   if defined(__ARM_ACLE)
+#       define SDL_Swap16(x) __revsh(x)
+#   else
+#       define SDL_Swap16(x) arm_swap16(x)
+static inline int32_t arm_swap16(int16_t x)
+{
+    int32_t res;
+    asm ( "revsh %[result], %[value]" : [result] "=r" (res) : [value] "r" (x) :  );
+    return res;
+}
+#   endif
+#endif
+
+#if defined(ARMV8)
+#define accum_2_mono(dstvalue) \
+for (; num_samples != 0; num_samples--) \
+{ \
+    int32_t val1, val2; \
+    int16_t value; \
+    val1 = src[0]; \
+    val2 = src[1]; \
+    src += 2; \
+    value = vqmovns_s32((val1 + val2) >> 1); \
+    *dst = dstvalue; \
+    dst++; \
+}
+#elif defined(ARMV6)
+#   if defined(__ARM_ACLE) && __ARM_FEATURE_SAT
+#       define ARM_SSAT(dst,src) dst = __ssat(src, 16);
+#   else
+#       define ARM_SSAT(dst,src) asm ( "ssat %[result], #16, %[value]" : [result] "=r" (dst) : [value] "r" (src) : "cc" );
+#   endif
+#define accum_2_mono(dstvalue) \
+for (; num_samples != 0; num_samples--) \
+{ \
+    int32_t val1, val2, value; \
+    val1 = src[0]; \
+    val2 = src[1]; \
+    src += 2; \
+    ARM_SSAT(value,(val1 + val2) >> 1) \
+    *dst = dstvalue; \
+    dst++; \
+}
+#else
 #define accum_2_mono(dstvalue) \
 for (; num_samples != 0; num_samples--) \
 { \
@@ -33,6 +106,7 @@ for (; num_samples != 0; num_samples--) \
     *dst = dstvalue; \
     dst++; \
 }
+#endif
 
 static void accum_2_s8_mono(int32_t *src, int8_t *dst, int num_samples)
 {
@@ -65,6 +139,38 @@ static void accum_2_u16swap_mono(int32_t *src, uint16_t *dst, int num_samples)
 }
 
 
+#if defined(ARMV8)
+for (; num_samples != 0; num_samples--) \
+{ \
+    int32x4_t val1; \
+    int16x4_t val2; \
+    int16_t value, value2;
+    val1 = vreinterpret_s32_u64(vld1q_dup_u64((uint64_t *)src)); \
+    src += 2; \
+    val2 = vqmovn_s32(val1); \
+    value = vget_lane_s16(val2, 0); \
+    value2 = vget_lane_s16(val2, 1); \
+    dst[0] = dstvalue; \
+    value = value2; \
+    dst[1] = dstvalue; \
+    dst += 2; \
+}
+#elif defined(ARMV6)
+#define accum_2_stereo(dstvalue) \
+for (; num_samples != 0; num_samples--) \
+{ \
+    int32_t val1, val2, value, value2; \
+    val1 = src[0]; \
+    val2 = src[1]; \
+    src += 2; \
+    ARM_SSAT(value,val1) \
+    ARM_SSAT(value2,val2) \
+    dst[0] = dstvalue; \
+    value = value2; \
+    dst[1] = dstvalue; \
+    dst += 2; \
+}
+#else
 #define accum_2_stereo(dstvalue) \
 for (num_samples *= 2; num_samples != 0; num_samples--) \
 { \
@@ -76,6 +182,7 @@ for (num_samples *= 2; num_samples != 0; num_samples--) \
     *dst = dstvalue; \
     dst++; \
 }
+#endif
 
 static void accum_2_s8_stereo(int32_t *src, int8_t *dst, int num_samples)
 {
@@ -148,11 +255,13 @@ static void conv_u16swap_mono(uint16_t *src, int16_t *dst, int num_samples)
 
 
 #define conv_stereo(srcvalue) \
-for (num_samples *= 2; num_samples != 0; num_samples--) \
+for (; num_samples != 0; num_samples--) \
 { \
-    *dst = srcvalue; \
+    dst[0] = srcvalue; \
     src++; \
-    dst++; \
+    dst[1] = srcvalue; \
+    src++; \
+    dst += 2; \
 }
 
 static void conv_s8_stereo(int8_t *src, int16_t *dst, int num_samples)
@@ -165,10 +274,10 @@ static void conv_u8_stereo(uint8_t *src, int16_t *dst, int num_samples)
     conv_stereo(((*src) << 8) - 0x8000)
 }
 
-static void conv_s16_stereo(int16_t *src, int16_t *dst, int num_samples)
-{
-    conv_stereo(*src)
-}
+//static void conv_s16_stereo(int16_t *src, int16_t *dst, int num_samples)
+//{
+//    conv_stereo(*src)
+//}
 
 static void conv_u16_stereo(uint16_t *src, int16_t *dst, int num_samples)
 {

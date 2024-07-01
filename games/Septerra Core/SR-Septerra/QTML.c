@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -1337,15 +1337,18 @@ static void check_movie_audio(Movie movie)
     movie->audio_channels = quicktime_track_channels(movie->qt, 0);
     movie->audio_sample_rate = quicktime_sample_rate(movie->qt, 0);
 
-    if (movie->audio_sample_rate > 48000) return;
-    if ((movie->audio_channels != 1) &&
-        (movie->audio_channels != 2)
+    if (movie->audio_sample_rate > 384000) return;
 #if SDL_VERSION_ATLEAST(2,0,0)
-        &&
+    if ((movie->audio_channels < 1) ||
+        (movie->audio_channels > 8)
+       ) return;
+#else
+    if ((movie->audio_channels != 1) &&
+        (movie->audio_channels != 2) &&
         (movie->audio_channels != 4) &&
         (movie->audio_channels != 6)
-#endif
        ) return;
+#endif
 
     switch (lqt_get_sample_format(movie->qt, 0))
     {

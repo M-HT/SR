@@ -417,7 +417,8 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
                     conv_u16_stereo((uint16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
                     break;
                 case 6: // S16 (native endian) mono
-                    conv_s16_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
+                    //conv_s16_mono((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
+                    cur_src = (int16_t *) &(current->data[current->read_offset]);
                     break;
                 case 7: // S16 (native endian) stereo
                     //conv_s16_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num);
@@ -443,6 +444,10 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
                 {
                     remaining1 = remaining_samples << (current->sample_size_shift + freq_diff_shift);
                     remaining2 = 0;
+                }
+                else if ((current->read_offset + remaining1) != current->size)
+                {
+                    remaining1 = (remaining1 >> (current->sample_size_shift + freq_diff_shift)) << (current->sample_size_shift + freq_diff_shift);
                 }
 
                 cur_num = remaining1 >> (current->sample_size_shift + freq_diff_shift);
@@ -559,96 +564,172 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 
             if ((left_volume == 0x10000) && (right_volume == 0x10000))
             {
+                if ((current->conv_format & 1) || (conv_method == 1))
+                {
+                    // stereo
 #if defined(ARMV8)
-                for (; cur_num != 0; cur_num--)
-                {
-                    int16x4_t srcval1;
-                    int32x4_t srcval2;
-                    uint64x2_t dstval;
-                    srcval1 = vreinterpret_s16_u32(vld1_dup_u32((uint32_t *)cur_src));
-                    cur_src += 2;
-                    srcval2 = vreinterpretq_s32_u64(vld1q_dup_u64((uint64_t *)cur_dst));
-                    dstval = vreinterpretq_u64_s32(vaddw_s16(srcval2, srcval1));
-                    vst1q_lane_u64((uint64_t *)cur_dst, dstval, 0);
-                    cur_dst += 2;
-                }
+                    for (; cur_num != 0; cur_num--)
+                    {
+                        int16x4_t srcval1;
+                        int32x4_t srcval2;
+                        uint64x2_t dstval;
+                        srcval1 = vreinterpret_s16_u32(vld1_dup_u32((uint32_t *)cur_src));
+                        cur_src += 2;
+                        srcval2 = vreinterpretq_s32_u64(vld1q_dup_u64((uint64_t *)cur_dst));
+                        dstval = vreinterpretq_u64_s32(vaddw_s16(srcval2, srcval1));
+                        vst1q_lane_u64((uint64_t *)cur_dst, dstval, 0);
+                        cur_dst += 2;
+                    }
 #elif defined(ARMV6)
-                for (; cur_num != 0; cur_num--)
-                {
-                    uint32_t srcval;
-                    int32_t dstval1, dstval2;
-                    srcval = *(uint32_t *)cur_src;
-                    cur_src += 2;
-                    dstval1 = cur_dst[0];
-                    dstval2 = cur_dst[1];
-                    asm ( "sxtah %[result], %[value1], %[value2]" : [result] "=r" (dstval1) : [value1] "r" (dstval1), [value2] "r" (srcval) :  );
-                    asm ( "sxtah %[result], %[value1], %[value2], ror #16" : [result] "=r" (dstval2) : [value1] "r" (dstval2), [value2] "r" (srcval) :  );
-                    cur_dst[0] = dstval1;
-                    cur_dst[1] = dstval2;
-                    cur_dst += 2;
-                }
+                    for (; cur_num != 0; cur_num--)
+                    {
+                        uint32_t srcval;
+                        int32_t dstval1, dstval2;
+                        srcval = *(uint32_t *)cur_src;
+                        cur_src += 2;
+                        dstval1 = cur_dst[0];
+                        dstval2 = cur_dst[1];
+                        asm ( "sxtah %[result], %[value1], %[value2]" : [result] "=r" (dstval1) : [value1] "r" (dstval1), [value2] "r" (srcval) :  );
+                        asm ( "sxtah %[result], %[value1], %[value2], ror #16" : [result] "=r" (dstval2) : [value1] "r" (dstval2), [value2] "r" (srcval) :  );
+                        cur_dst[0] = dstval1;
+                        cur_dst[1] = dstval2;
+                        cur_dst += 2;
+                    }
 #else
-                for (; cur_num != 0; cur_num--)
-                {
-                    cur_dst[0] += cur_src[0];
-                    cur_dst[1] += cur_src[1];
-                    cur_dst += 2;
-                    cur_src += 2;
-                }
+                    for (; cur_num != 0; cur_num--)
+                    {
+                        cur_dst[0] += cur_src[0];
+                        cur_dst[1] += cur_src[1];
+                        cur_dst += 2;
+                        cur_src += 2;
+                    }
 #endif
+                }
+                else
+                {
+                    // mono
+                    for (; cur_num != 0; cur_num--)
+                    {
+                        int32_t srcval;
+                        srcval = *cur_src;
+                        cur_src++;
+                        cur_dst[0] += srcval;
+                        cur_dst[1] += srcval;
+                        cur_dst += 2;
+                    }
+                }
             }
             else
             {
+                if ((current->conv_format & 1) || (conv_method == 1))
+                {
+                    // stereo
 #if defined(ARMV8)
-                int32x4_t lr_volume;
+                    int32x4_t lr_volume;
 
-                lr_volume = vmovq_n_s32(left_volume);
-                vsetq_lane_s32(right_volume, lr_volume, 1);
+                    lr_volume = vmovq_n_s32(left_volume);
+                    vsetq_lane_s32(right_volume, lr_volume, 1);
 
-                for (; cur_num != 0; cur_num--)
-                {
-                    int16x4_t srcval1;
-                    int32x4_t srcval2, tmpval1, tmpval2;
-                    uint64x2_t dstval;
+                    for (; cur_num != 0; cur_num--)
+                    {
+                        int16x4_t srcval1;
+                        int32x4_t srcval2, tmpval1, tmpval2;
+                        uint64x2_t dstval;
 
-                    srcval1 = vreinterpret_s16_u32(vld1_dup_u32((uint32_t *)cur_src));
-                    cur_src += 2;
-                    srcval2 = vreinterpretq_s32_u64(vld1q_dup_u64((uint64_t *)cur_dst));
-                    tmpval1 = vshll_n_s16(srcval1, 15);
-                    tmpval2 = vqrdmulhq_s32(lr_volume, tmpval1);
-                    dstval = vreinterpretq_u64_s32(vaddq_s32(srcval2, tmpval2));
-                    vst1q_lane_u64((uint64_t *)cur_dst, dstval, 0);
-                    cur_dst += 2;
-                }
+                        srcval1 = vreinterpret_s16_u32(vld1_dup_u32((uint32_t *)cur_src));
+                        cur_src += 2;
+                        srcval2 = vreinterpretq_s32_u64(vld1q_dup_u64((uint64_t *)cur_dst));
+                        tmpval1 = vshll_n_s16(srcval1, 15);
+                        tmpval2 = vqrdmulhq_s32(lr_volume, tmpval1);
+                        dstval = vreinterpretq_u64_s32(vaddq_s32(srcval2, tmpval2));
+                        vst1q_lane_u64((uint64_t *)cur_dst, dstval, 0);
+                        cur_dst += 2;
+                    }
 #elif defined(ARMV6)
-                for (; cur_num != 0; cur_num--)
-                {
-                    uint32_t srcval;
-                    int32_t dstval1, dstval2;
-                    srcval = *(uint32_t *)cur_src;
-                    cur_src += 2;
-                    dstval1 = cur_dst[0];
-                    dstval2 = cur_dst[1];
+                    for (; cur_num != 0; cur_num--)
+                    {
+                        uint32_t srcval;
+                        int32_t dstval1, dstval2;
+                        srcval = *(uint32_t *)cur_src;
+                        cur_src += 2;
+                        dstval1 = cur_dst[0];
+                        dstval2 = cur_dst[1];
 #if defined(__ARM_ACLE) && __ARM_FEATURE_DSP
-                    dstval1 = __smlawb(left_volume, srcval, dstval1);
-                    dstval2 = __smlawt(right_volume, srcval, dstval2);
+                        dstval1 = __smlawb(left_volume, srcval, dstval1);
+                        dstval2 = __smlawt(right_volume, srcval, dstval2);
 #else
-                    asm ( "smlawb %[result], %[value1], %[value2], %[value3]" : [result] "=r" (dstval1) : [value1] "r" (left_volume), [value2] "r" (srcval), [value3] "r" (dstval1) : "cc" );
-                    asm ( "smlawt %[result], %[value1], %[value2], %[value3]" : [result] "=r" (dstval2) : [value1] "r" (right_volume), [value2] "r" (srcval), [value3] "r" (dstval2) : "cc" );
+                        asm ( "smlawb %[result], %[value1], %[value2], %[value3]" : [result] "=r" (dstval1) : [value1] "r" (left_volume), [value2] "r" (srcval), [value3] "r" (dstval1) : "cc" );
+                        asm ( "smlawt %[result], %[value1], %[value2], %[value3]" : [result] "=r" (dstval2) : [value1] "r" (right_volume), [value2] "r" (srcval), [value3] "r" (dstval2) : "cc" );
 #endif
-                    cur_dst[0] = dstval1;
-                    cur_dst[1] = dstval2;
-                    cur_dst += 2;
-                }
+                        cur_dst[0] = dstval1;
+                        cur_dst[1] = dstval2;
+                        cur_dst += 2;
+                    }
 #else
-                for (; cur_num != 0; cur_num--)
+                    for (; cur_num != 0; cur_num--)
+                    {
+                        cur_dst[0] += (left_volume * (int)cur_src[0]) >> 16;
+                        cur_dst[1] += (right_volume * (int)cur_src[1]) >> 16;
+                        cur_dst += 2;
+                        cur_src += 2;
+                    }
+#endif
+                }
+                else
                 {
-                    cur_dst[0] += (left_volume * (int)cur_src[0]) >> 16;
-                    cur_dst[1] += (right_volume * (int)cur_src[1]) >> 16;
-                    cur_dst += 2;
-                    cur_src += 2;
-                }
+                    // mono
+#if defined(ARMV8)
+                    int32x4_t lr_volume;
+
+                    lr_volume = vmovq_n_s32(left_volume);
+                    vsetq_lane_s32(right_volume, lr_volume, 1);
+
+                    for (; cur_num != 0; cur_num--)
+                    {
+                        int16x4_t srcval1;
+                        int32x4_t srcval2, tmpval1, tmpval2;
+                        uint64x2_t dstval;
+
+                        srcval1 = vld1_dup_s16(cur_src);
+                        cur_src++;
+                        srcval2 = vreinterpretq_s32_u64(vld1q_dup_u64((uint64_t *)cur_dst));
+                        tmpval1 = vshll_n_s16(srcval1, 15);
+                        tmpval2 = vqrdmulhq_s32(lr_volume, tmpval1);
+                        dstval = vreinterpretq_u64_s32(vaddq_s32(srcval2, tmpval2));
+                        vst1q_lane_u64((uint64_t *)cur_dst, dstval, 0);
+                        cur_dst += 2;
+                    }
+#elif defined(ARMV6)
+                    for (; cur_num != 0; cur_num--)
+                    {
+                        int32_t srcval, dstval1, dstval2;
+                        srcval = *cur_src;
+                        cur_src++;
+                        dstval1 = cur_dst[0];
+                        dstval2 = cur_dst[1];
+#if defined(__ARM_ACLE) && __ARM_FEATURE_DSP
+                        dstval1 = __smlawb(left_volume, srcval, dstval1);
+                        dstval2 = __smlawb(right_volume, srcval, dstval2);
+#else
+                        asm ( "smlawb %[result], %[value1], %[value2], %[value3]" : [result] "=r" (dstval1) : [value1] "r" (left_volume), [value2] "r" (srcval), [value3] "r" (dstval1) : "cc" );
+                        asm ( "smlawb %[result], %[value1], %[value2], %[value3]" : [result] "=r" (dstval2) : [value1] "r" (right_volume), [value2] "r" (srcval), [value3] "r" (dstval2) : "cc" );
 #endif
+                        cur_dst[0] = dstval1;
+                        cur_dst[1] = dstval2;
+                        cur_dst += 2;
+                    }
+#else
+                    for (; cur_num != 0; cur_num--)
+                    {
+                        int32_t srcval;
+                        srcval = *cur_src;
+                        cur_src++;
+                        cur_dst[0] += (left_volume * srcval) >> 16;
+                        cur_dst[1] += (right_volume * srcval) >> 16;
+                        cur_dst += 2;
+                    }
+#endif
+                }
             }
 
             remaining1 = remaining2;
@@ -916,7 +997,7 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
         desired.freq = 44100;
         desired.format = AUDIO_S16LSB;
         desired.channels = 2;
-        desired.samples = (Audio_BufferSize)?Audio_BufferSize:1024;
+        desired.samples = (Audio_BufferSize) ? (((Audio_BufferSize + 127) >> 7) << 7) : 1024;
         desired.callback = &fill_audio;
         desired.userdata = lpDSB_c;
 
@@ -1602,7 +1683,7 @@ uint32_t IDirectSoundBuffer_SetFormat_c(struct IDirectSoundBuffer_c *lpThis, con
         return DS_OK;
     }
 
-    desired.samples = (Audio_BufferSize)?Audio_BufferSize:(256 * (pcfxFormat->nSamplesPerSec / 11025));
+    desired.samples = (Audio_BufferSize) ? (((Audio_BufferSize + 127) >> 7) << 7) : (256 * (pcfxFormat->nSamplesPerSec / 11025));
     desired.callback = &fill_audio;
     desired.userdata = lpThis;
 

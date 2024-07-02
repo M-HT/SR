@@ -218,9 +218,9 @@ static void accum_2_u16swap_stereo(int32_t *src, uint16_t *dst, int num_samples)
 #define conv_mono(srcvalue) \
 for (; num_samples != 0; num_samples--) \
 { \
-    dst[0] = dst[1] = srcvalue; \
+    *dst = srcvalue; \
     src++; \
-    dst += 2; \
+    dst++; \
 }
 
 static void conv_s8_mono(int8_t *src, int16_t *dst, int num_samples)
@@ -233,10 +233,10 @@ static void conv_u8_mono(uint8_t *src, int16_t *dst, int num_samples)
     conv_mono(((*src) << 8) - 0x8000)
 }
 
-static void conv_s16_mono(int16_t *src, int16_t *dst, int num_samples)
-{
-    conv_mono(*src)
-}
+//static void conv_s16_mono(int16_t *src, int16_t *dst, int num_samples)
+//{
+//    conv_mono(*src)
+//}
 
 static void conv_u16_mono(uint16_t *src, int16_t *dst, int num_samples)
 {
@@ -298,9 +298,9 @@ static void conv_u16swap_stereo(uint16_t *src, int16_t *dst, int num_samples)
 #define downrate_mono(srcvalue) \
 for (; num_samples != 0; num_samples--) \
 { \
-    dst[0] = dst[1] = srcvalue; \
+    *dst = srcvalue; \
     src += (1 << freq_diff_shift); \
-    dst += 2; \
+    dst++; \
 }
 
 static void downrate_s8_mono(int8_t *src, int16_t *dst, int num_samples, int freq_diff_shift)
@@ -387,8 +387,8 @@ prev_value = *last_sample; \
 next_value = srcvalue; \
 for (; num_samples != 0; num_samples--) \
 { \
-    dst[0] = dst[1] = ((position * next_value) + ((0x100 - position) * prev_value)) >> 8; \
-    dst += 2; \
+    *dst = ((position * next_value) + ((0x100 - position) * prev_value)) >> 8; \
+    dst++; \
  \
     position += diff; \
  \

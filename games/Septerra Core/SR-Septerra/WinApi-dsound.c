@@ -125,6 +125,9 @@ struct IDirectSoundBuffer_c {
             uint8_t *data;
             uint32_t size, read_offset, write_offset;
             int16_t last_conv_sample[2];
+            int resample_freq;
+            int16_t *resample_buffer;
+            int32_t resample_step, resample_position, resample_remaining;
         };
     };
 };
@@ -238,6 +241,8 @@ static void remove_from_list(struct IDirectSoundBuffer_c *PrimaryBuffer, struct 
         buf->write_offset = 0;
         buf->last_conv_sample[0] = 0;
         buf->last_conv_sample[1] = 0;
+        buf->resample_position = 0;
+        buf->resample_remaining = 0;
     }
     else
     {
@@ -358,6 +363,10 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
             {
                 freq_diff_shift++;
             }
+            if (current->freq != (PrimaryBuffer->freq << freq_diff_shift))
+            {
+                conv_method = 4;
+            }
         }
         else
         {
@@ -366,6 +375,37 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
             while ((current->freq << freq_diff_shift) < PrimaryBuffer->freq)
             {
                 freq_diff_shift++;
+            }
+            if ((current->freq << freq_diff_shift) != PrimaryBuffer->freq)
+            {
+                conv_method = 4;
+            }
+        }
+
+        if (conv_method == 4)
+        {
+            if (current->resample_freq != PrimaryBuffer->freq)
+            {
+                void *old_buffer;
+
+                current->resample_step = (((int64_t)current->freq) << 16) / PrimaryBuffer->freq;
+
+                old_buffer = current->resample_buffer;
+                current->resample_buffer = (int16_t *)realloc(old_buffer, (((num_samples * (int64_t)current->resample_step) >> 16) + 4 + (current->resample_step >> 16)) * 2 * sizeof(int16_t));
+                if (current->resample_buffer == NULL)
+                {
+                    if (old_buffer != NULL)
+                    {
+                        free(old_buffer);
+                    }
+
+                    current->resample_freq = 0;
+
+                    remove_from_list(PrimaryBuffer, current, 1);
+                    continue;
+                }
+
+                current->resample_freq = PrimaryBuffer->freq;
             }
         }
 
@@ -540,6 +580,103 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
                 case 11: // S16 (swap endian) stereo
                     uprate_s16swap_stereo((int16_t *) &(current->data[current->read_offset]), cur_src, cur_num, freq_diff_shift, &(current->last_conv_sample[0]));
                     break;
+                }
+
+                break;
+            case 4: // resampling (non-integer ratio)
+                int needed_samples, src_pos;
+                needed_samples = ((remaining_samples * (int64_t)current->resample_step + current->resample_position) >> 16) + 2 + (current->resample_step >> 16);
+
+                if (remaining1 >= (needed_samples - current->resample_remaining) << current->sample_size_shift)
+                {
+                    remaining1 = (needed_samples - current->resample_remaining) << current->sample_size_shift;
+                    remaining2 = 0;
+                }
+
+                switch (current->conv_format)
+                {
+                case 0: // U8 mono
+                    conv_u8_mono((uint8_t *) &(current->data[current->read_offset]), current->resample_buffer + current->resample_remaining, remaining1 >> current->sample_size_shift);
+                    break;
+                case 1: // U8 stereo
+                    conv_u8_stereo((uint8_t *) &(current->data[current->read_offset]), current->resample_buffer + 2 * current->resample_remaining, remaining1 >> current->sample_size_shift);
+                    break;
+                case 2: // S8 mono
+                    conv_s8_mono((int8_t *) &(current->data[current->read_offset]), current->resample_buffer + current->resample_remaining, remaining1 >> current->sample_size_shift);
+                    break;
+                case 3: // S8 stereo
+                    conv_s8_stereo((int8_t *) &(current->data[current->read_offset]), current->resample_buffer + 2 * current->resample_remaining, remaining1 >> current->sample_size_shift);
+                    break;
+                case 4: // U16 (native endian) mono
+                    conv_u16_mono((uint16_t *) &(current->data[current->read_offset]), current->resample_buffer + current->resample_remaining, remaining1 >> current->sample_size_shift);
+                    break;
+                case 5: // U16 (native endian) stereo
+                    conv_u16_stereo((uint16_t *) &(current->data[current->read_offset]), current->resample_buffer + 2 * current->resample_remaining, remaining1 >> current->sample_size_shift);
+                    break;
+                case 6: // S16 (native endian) mono
+                    conv_s16_mono((int16_t *) &(current->data[current->read_offset]), current->resample_buffer + current->resample_remaining, remaining1 >> current->sample_size_shift);
+                    break;
+                case 7: // S16 (native endian) stereo
+                    conv_s16_stereo((int16_t *) &(current->data[current->read_offset]), current->resample_buffer + 2 * current->resample_remaining, remaining1 >> current->sample_size_shift);
+                    break;
+                case 8: // U16 (swap endian) mono
+                    conv_u16swap_mono((uint16_t *) &(current->data[current->read_offset]), current->resample_buffer + current->resample_remaining, remaining1 >> current->sample_size_shift);
+                    break;
+                case 9: // U16 (swap endian) stereo
+                    conv_u16swap_stereo((uint16_t *) &(current->data[current->read_offset]), current->resample_buffer + 2 * current->resample_remaining, remaining1 >> current->sample_size_shift);
+                    break;
+                case 10: // S16 (swap endian) mono
+                    conv_s16swap_mono((int16_t *) &(current->data[current->read_offset]), current->resample_buffer + current->resample_remaining, remaining1 >> current->sample_size_shift);
+                    break;
+                case 11: // S16 (swap endian) stereo
+                    conv_s16swap_stereo((int16_t *) &(current->data[current->read_offset]), current->resample_buffer + 2 * current->resample_remaining, remaining1 >> current->sample_size_shift);
+                    break;
+                }
+
+                current->resample_remaining += remaining1 >> current->sample_size_shift;
+
+                src_pos = 0;
+                cur_num = 0;
+
+                if (current->conv_format & 1)
+                {
+                    // stereo
+
+                    while ((src_pos + 1 < current->resample_remaining) && (cur_num < remaining_samples))
+                    {
+                        cur_src[2 * cur_num] = ((current->resample_buffer[2 * src_pos] * (0x10000 - (int)current->resample_position)) >> 16) + ((current->resample_buffer[2 * (src_pos + 1)] * (int)current->resample_position) >> 16);
+                        cur_src[2 * cur_num + 1] = ((current->resample_buffer[2 * src_pos + 1] * (0x10000 - (int)current->resample_position)) >> 16) + ((current->resample_buffer[2 * (src_pos + 1) + 1] * (int)current->resample_position) >> 16);
+                        cur_num++;
+                        current->resample_position += current->resample_step;
+                        src_pos += current->resample_position >> 16;
+                        current->resample_position &= 0xffff;
+                    }
+
+                    for (int index = 0; index + src_pos < current->resample_remaining; index++)
+                    {
+                        current->resample_buffer[2 * index] = current->resample_buffer[2 * (index + src_pos)];
+                        current->resample_buffer[2 * index + 1] = current->resample_buffer[2 * (index + src_pos) + 1];
+                    }
+                    current->resample_remaining -= src_pos;
+                }
+                else
+                {
+                    // mono
+
+                    while ((src_pos + 1 < current->resample_remaining) && (cur_num < remaining_samples))
+                    {
+                        cur_src[cur_num] = ((current->resample_buffer[src_pos] * (0x10000 - (int)current->resample_position)) >> 16) + ((current->resample_buffer[src_pos + 1] * (int)current->resample_position) >> 16);
+                        cur_num++;
+                        current->resample_position += current->resample_step;
+                        src_pos += current->resample_position >> 16;
+                        current->resample_position &= 0xffff;
+                    }
+
+                    for (int index = 0; index + src_pos < current->resample_remaining; index++)
+                    {
+                        current->resample_buffer[index] = current->resample_buffer[index + src_pos];
+                    }
+                    current->resample_remaining -= src_pos;
                 }
 
                 break;
@@ -1105,7 +1242,7 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
         if ((lpwfxFormat->wFormatTag != WAVE_FORMAT_PCM) ||
             ((lpwfxFormat->wBitsPerSample != 8) && (lpwfxFormat->wBitsPerSample != 16)) ||
             ((lpwfxFormat->nChannels != 1) && (lpwfxFormat->nChannels != 2)) ||
-            ((lpwfxFormat->nSamplesPerSec != 11025) && (lpwfxFormat->nSamplesPerSec != 22050) && (lpwfxFormat->nSamplesPerSec != 44100))
+            (lpwfxFormat->nSamplesPerSec < 11025)
            )
         {
 #ifdef DEBUG_DSOUND
@@ -1162,6 +1299,11 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
         lpDSB_c->write_offset = 0;
         lpDSB_c->last_conv_sample[0] = 0;
         lpDSB_c->last_conv_sample[1] = 0;
+
+        lpDSB_c->resample_freq = 0;
+        lpDSB_c->resample_buffer = NULL;
+        lpDSB_c->resample_position = 0;
+        lpDSB_c->resample_remaining = 0;
 
         *ppDSBuffer = lpDSB_c;
 
@@ -1374,6 +1516,11 @@ uint32_t IDirectSoundBuffer_Release_c(struct IDirectSoundBuffer_c *lpThis)
             {
                 free(lpThis->data);
                 lpThis->data = NULL;
+            }
+            if (lpThis->resample_buffer != NULL)
+            {
+                free(lpThis->resample_buffer);
+                lpThis->resample_buffer = NULL;
             }
         }
         free(lpThis);
@@ -1659,7 +1806,7 @@ uint32_t IDirectSoundBuffer_SetFormat_c(struct IDirectSoundBuffer_c *lpThis, con
 
     if ((pcfxFormat->wFormatTag != WAVE_FORMAT_PCM) ||
         ((pcfxFormat->nChannels != 1) && (pcfxFormat->nChannels != 2)) ||
-        ((pcfxFormat->nSamplesPerSec != 11025) && (pcfxFormat->nSamplesPerSec != 22050) && (pcfxFormat->nSamplesPerSec != 44100)) ||
+        (pcfxFormat->nSamplesPerSec < 11025) ||
         ((pcfxFormat->wBitsPerSample != 8) && (pcfxFormat->wBitsPerSample != 16))
        )
     {

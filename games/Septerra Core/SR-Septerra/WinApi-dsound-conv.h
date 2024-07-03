@@ -233,10 +233,10 @@ static void conv_u8_mono(uint8_t *src, int16_t *dst, int num_samples)
     conv_mono(((*src) << 8) - 0x8000)
 }
 
-//static void conv_s16_mono(int16_t *src, int16_t *dst, int num_samples)
-//{
-//    conv_mono(*src)
-//}
+static void conv_s16_mono(int16_t *src, int16_t *dst, int num_samples)
+{
+    conv_mono(*src)
+}
 
 static void conv_u16_mono(uint16_t *src, int16_t *dst, int num_samples)
 {
@@ -274,10 +274,10 @@ static void conv_u8_stereo(uint8_t *src, int16_t *dst, int num_samples)
     conv_stereo(((*src) << 8) - 0x8000)
 }
 
-//static void conv_s16_stereo(int16_t *src, int16_t *dst, int num_samples)
-//{
-//    conv_stereo(*src)
-//}
+static void conv_s16_stereo(int16_t *src, int16_t *dst, int num_samples)
+{
+    conv_stereo(*src)
+}
 
 static void conv_u16_stereo(uint16_t *src, int16_t *dst, int num_samples)
 {

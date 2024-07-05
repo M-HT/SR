@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -43,6 +43,9 @@ GAME_CONFIG_STORAGE int Display_IntegerScaling; /* integer scaling ? */
 GAME_CONFIG_STORAGE int Display_DelayAfterFlip; /* delay after image flip in miliseconds */
 
 GAME_CONFIG_STORAGE int Audio_BufferSize;       /* audio buffer size (in samples) */
+GAME_CONFIG_STORAGE int Audio_ResamplingQuality;/* resampling quality
+                                                       0: normal quality
+                                                       1: higher quality */
 
 GAME_CONFIG_STORAGE int Option_DefaultMovement; /* default movement speed - 0 = walk; 1 = run */
 GAME_CONFIG_STORAGE int Option_MovieResolution; /* movie resolution - 0 = native; 1 = doubled */

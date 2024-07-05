@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2019-2023 Roman Pauer
+#  Copyright (C) 2019-2024 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -31,10 +31,14 @@ vars.Add(EnumVariable('debug', 'Set debug level (0 = release version)', '0',
 vars.Add(EnumVariable('device', 'Set target device', 'none',
                                  allowed_values=('none', 'pc-linux', 'arm-linux-llasm', 'pc-linux-llasm', 'pandora-llasm', 'pc64-linux-llasm', 'arm64-linux-llasm'),
                                  ignorecase=2))
+vars.Add(EnumVariable('speexdsp', 'Use SpeexDSP library for higher quality resampling', '0',
+                                 allowed_values=('0', '1'),
+                                 ignorecase=2))
 env = Environment(variables = vars)
 
 debug = int(env['debug'])
 device = env['device']
+speexdsp = int(env['speexdsp'])
 clean = env.GetOption('clean')
 
 if device == 'none':
@@ -116,6 +120,10 @@ elif device == 'pandora':
                      )
     llasm_params = '-inline-float'
     llvm_params = '-mtriple=thumbv7a-unknown-linux-eabi -mcpu=cortex-a8 -float-abi=soft'
+
+if speexdsp > 0:
+    env.Append(CCFLAGS = ' -DUSE_SPEEXDSP_RESAMPLER')
+    env.Append(LIBS = ['speexdsp'])
 
 def get_compiler_version(compiler_path, env_path):
     process = subprocess.Popen([compiler_path, '-dumpversion'], stdout=subprocess.PIPE, env={"PATH": env_path})

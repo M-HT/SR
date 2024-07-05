@@ -29,6 +29,9 @@
 #include <stdio.h>
 #include "WinApi-dsound.h"
 #include "Game-Config.h"
+#ifdef USE_SPEEXDSP_RESAMPLER
+#include <speex/speex_resampler.h>
+#endif
 
 
 #define make_hresult(s,f,c) ((uint32_t)(((unsigned long)(s)<<31)|((unsigned long)(f)<<16)|((unsigned long)(c))))
@@ -128,6 +131,9 @@ struct IDirectSoundBuffer_c {
             int resample_freq;
             int16_t *resample_buffer;
             int32_t resample_step, resample_position, resample_remaining;
+#ifdef USE_SPEEXDSP_RESAMPLER
+            SpeexResamplerState *resampler;
+#endif
         };
     };
 };
@@ -243,6 +249,12 @@ static void remove_from_list(struct IDirectSoundBuffer_c *PrimaryBuffer, struct 
         buf->last_conv_sample[1] = 0;
         buf->resample_position = 0;
         buf->resample_remaining = 0;
+#ifdef USE_SPEEXDSP_RESAMPLER
+        if (buf->resampler != NULL)
+        {
+            speex_resampler_reset_mem(buf->resampler);
+        }
+#endif
     }
     else
     {
@@ -256,7 +268,7 @@ static void remove_from_list(struct IDirectSoundBuffer_c *PrimaryBuffer, struct 
 static void fill_audio(void *udata, Uint8 *stream, int len)
 {
     struct IDirectSoundBuffer_c *PrimaryBuffer, *buffer1, *current, *next;
-    int num_playing, remaining1, remaining2, num_samples, remaining_samples, left_volume, right_volume;
+    int num_playing, remaining1, remaining2, num_samples, remaining_samples, left_volume, right_volume, needed_samples;
     unsigned int conv_method, freq_diff_shift;
     int16_t *cur_src;
     int32_t *cur_dst;
@@ -355,6 +367,12 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
             // use mono buffer with double frequency as stereo channel at normal frequency
             conv_method = 1;
         }
+#ifdef USE_SPEEXDSP_RESAMPLER
+        else if (Audio_ResamplingQuality > 0)
+        {
+            conv_method = 5;
+        }
+#endif
         else if (current->freq > PrimaryBuffer->freq)
         {
             conv_method = 2;
@@ -382,7 +400,11 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
             }
         }
 
-        if (conv_method == 4)
+        if ((conv_method == 4)
+#ifdef USE_SPEEXDSP_RESAMPLER
+            || (conv_method == 5)
+#endif
+           )
         {
             if (current->resample_freq != PrimaryBuffer->freq)
             {
@@ -390,8 +412,46 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 
                 current->resample_step = (((int64_t)current->freq) << 16) / PrimaryBuffer->freq;
 
+#ifdef USE_SPEEXDSP_RESAMPLER
+                if (conv_method == 5)
+                {
+                    int err;
+
+                    needed_samples = ((num_samples * (int64_t)current->resample_step) >> 16) + 8;
+                    if (needed_samples & 7) needed_samples += 8 - (needed_samples & 7);
+
+                    if (current->resampler != NULL)
+                    {
+                        err = speex_resampler_set_rate(current->resampler, current->freq, PrimaryBuffer->freq);
+                        if (err != RESAMPLER_ERR_SUCCESS)
+                        {
+                            speex_resampler_destroy(current->resampler);
+                            current->resampler = NULL;
+                        }
+                    }
+                    else
+                    {
+                        current->resampler = speex_resampler_init((current->conv_format & 1)?2:1, current->freq, PrimaryBuffer->freq, SPEEX_RESAMPLER_QUALITY_DESKTOP, &err);
+                        if ((current->resampler == NULL) || (err != RESAMPLER_ERR_SUCCESS))
+                        {
+                            current->resampler = NULL;
+                        }
+                    }
+
+                    if (current->resampler == NULL)
+                    {
+                        current->resample_freq = 0;
+
+                        remove_from_list(PrimaryBuffer, current, 1);
+                        continue;
+                    }
+                }
+                else
+#endif
+                needed_samples = ((num_samples * (int64_t)current->resample_step) >> 16) + 4 + (current->resample_step >> 16);
+
                 old_buffer = current->resample_buffer;
-                current->resample_buffer = (int16_t *)realloc(old_buffer, (((num_samples * (int64_t)current->resample_step) >> 16) + 4 + (current->resample_step >> 16)) * 2 * sizeof(int16_t));
+                current->resample_buffer = (int16_t *)realloc(old_buffer, needed_samples * 2 * sizeof(int16_t));
                 if (current->resample_buffer == NULL)
                 {
                     if (old_buffer != NULL)
@@ -420,9 +480,23 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 
         remaining_samples = num_samples;
 
-        while ((remaining_samples != 0) && (remaining1 != 0))
+        while ((remaining_samples != 0) &&
+               ((remaining1 != 0) ||
+                ((current->resample_remaining != 0) &&
+                 ((conv_method == 4)
+#ifdef USE_SPEEXDSP_RESAMPLER
+                  || (conv_method == 5)
+#endif
+                 )
+                )
+               )
+              )
         {
-            int cur_num;
+            int cur_num, src_pos, index;
+#ifdef USE_SPEEXDSP_RESAMPLER
+            int err;
+            spx_uint32_t in_len, out_len;
+#endif
 
             switch (conv_method)
             {
@@ -584,7 +658,15 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 
                 break;
             case 4: // resampling (non-integer ratio)
-                int needed_samples, src_pos;
+#ifdef USE_SPEEXDSP_RESAMPLER
+            case 5: // resampling (using SpeexDSP)
+                if (conv_method == 5)
+                {
+                    needed_samples = ((remaining_samples * (int64_t)current->resample_step) >> 16) + 8;
+                    if (needed_samples & 7) needed_samples += 8 - (needed_samples & 7);
+                }
+                else
+#endif
                 needed_samples = ((remaining_samples * (int64_t)current->resample_step + current->resample_position) >> 16) + 2 + (current->resample_step >> 16);
 
                 if (remaining1 >= (needed_samples - current->resample_remaining) << current->sample_size_shift)
@@ -642,6 +724,21 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
                 {
                     // stereo
 
+#ifdef USE_SPEEXDSP_RESAMPLER
+                    if (conv_method == 5)
+                    {
+                        in_len = current->resample_remaining;
+                        out_len = remaining_samples;
+
+                        err = speex_resampler_process_interleaved_int(current->resampler, current->resample_buffer, &in_len, cur_src, &out_len);
+                        if (err == RESAMPLER_ERR_SUCCESS)
+                        {
+                            src_pos = in_len;
+                            cur_num = out_len;
+                        }
+                    }
+                    else
+#endif
                     while ((src_pos + 1 < current->resample_remaining) && (cur_num < remaining_samples))
                     {
                         cur_src[2 * cur_num] = ((current->resample_buffer[2 * src_pos] * (0x10000 - (int)current->resample_position)) >> 16) + ((current->resample_buffer[2 * (src_pos + 1)] * (int)current->resample_position) >> 16);
@@ -652,17 +749,31 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
                         current->resample_position &= 0xffff;
                     }
 
-                    for (int index = 0; index + src_pos < current->resample_remaining; index++)
+                    for (index = 0; index + src_pos < current->resample_remaining; index++)
                     {
                         current->resample_buffer[2 * index] = current->resample_buffer[2 * (index + src_pos)];
                         current->resample_buffer[2 * index + 1] = current->resample_buffer[2 * (index + src_pos) + 1];
                     }
-                    current->resample_remaining -= src_pos;
                 }
                 else
                 {
                     // mono
 
+#ifdef USE_SPEEXDSP_RESAMPLER
+                    if (conv_method == 5)
+                    {
+                        in_len = current->resample_remaining;
+                        out_len = remaining_samples;
+
+                        err = speex_resampler_process_int(current->resampler, 0, current->resample_buffer, &in_len, cur_src, &out_len);
+                        if (err == RESAMPLER_ERR_SUCCESS)
+                        {
+                            src_pos = in_len;
+                            cur_num = out_len;
+                        }
+                    }
+                    else
+#endif
                     while ((src_pos + 1 < current->resample_remaining) && (cur_num < remaining_samples))
                     {
                         cur_src[cur_num] = ((current->resample_buffer[src_pos] * (0x10000 - (int)current->resample_position)) >> 16) + ((current->resample_buffer[src_pos + 1] * (int)current->resample_position) >> 16);
@@ -672,11 +783,16 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
                         current->resample_position &= 0xffff;
                     }
 
-                    for (int index = 0; index + src_pos < current->resample_remaining; index++)
+                    for (index = 0; index + src_pos < current->resample_remaining; index++)
                     {
                         current->resample_buffer[index] = current->resample_buffer[index + src_pos];
                     }
-                    current->resample_remaining -= src_pos;
+                }
+
+                current->resample_remaining -= src_pos;
+                if (current->resample_remaining < 0)
+                {
+                    current->resample_remaining = 0;
                 }
 
                 break;
@@ -692,8 +808,23 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
                 else
                 {
                     remaining2 = 0;
-                    remove_from_list(PrimaryBuffer, current, 1);
+                    if (((conv_method != 4)
+#ifdef USE_SPEEXDSP_RESAMPLER
+                         && (conv_method != 5)
+#endif
+                        ) ||
+                        (cur_num == 0) ||
+                        (current->resample_remaining == 0)
+                       )
+                    {
+                        remove_from_list(PrimaryBuffer, current, 1);
+                    }
                 }
+            }
+
+            if ((cur_num == 0) && (remaining1 == 0))
+            {
+                break;
             }
 
             // add converted data to accumulator data
@@ -1242,7 +1373,8 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
         if ((lpwfxFormat->wFormatTag != WAVE_FORMAT_PCM) ||
             ((lpwfxFormat->wBitsPerSample != 8) && (lpwfxFormat->wBitsPerSample != 16)) ||
             ((lpwfxFormat->nChannels != 1) && (lpwfxFormat->nChannels != 2)) ||
-            (lpwfxFormat->nSamplesPerSec < 11025)
+            (lpwfxFormat->nSamplesPerSec < 11025) ||
+            (lpwfxFormat->nSamplesPerSec > 384000)
            )
         {
 #ifdef DEBUG_DSOUND
@@ -1304,6 +1436,9 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
         lpDSB_c->resample_buffer = NULL;
         lpDSB_c->resample_position = 0;
         lpDSB_c->resample_remaining = 0;
+#ifdef USE_SPEEXDSP_RESAMPLER
+        lpDSB_c->resampler = NULL;
+#endif
 
         *ppDSBuffer = lpDSB_c;
 
@@ -1522,6 +1657,13 @@ uint32_t IDirectSoundBuffer_Release_c(struct IDirectSoundBuffer_c *lpThis)
                 free(lpThis->resample_buffer);
                 lpThis->resample_buffer = NULL;
             }
+#ifdef USE_SPEEXDSP_RESAMPLER
+            if (lpThis->resampler != NULL)
+            {
+                speex_resampler_destroy(lpThis->resampler);
+                lpThis->resampler = NULL;
+            }
+#endif
         }
         free(lpThis);
         return 0;
@@ -1807,6 +1949,7 @@ uint32_t IDirectSoundBuffer_SetFormat_c(struct IDirectSoundBuffer_c *lpThis, con
     if ((pcfxFormat->wFormatTag != WAVE_FORMAT_PCM) ||
         ((pcfxFormat->nChannels != 1) && (pcfxFormat->nChannels != 2)) ||
         (pcfxFormat->nSamplesPerSec < 11025) ||
+        (pcfxFormat->nSamplesPerSec > 384000) ||
         ((pcfxFormat->wBitsPerSample != 8) && (pcfxFormat->wBitsPerSample != 16))
        )
     {
@@ -1819,6 +1962,11 @@ uint32_t IDirectSoundBuffer_SetFormat_c(struct IDirectSoundBuffer_c *lpThis, con
     desired.freq = pcfxFormat->nSamplesPerSec;
     desired.format = (pcfxFormat->wBitsPerSample == 16)?AUDIO_S16LSB:AUDIO_U8;
     desired.channels = pcfxFormat->nChannels;
+
+    if ((desired.freq == 22050) && (Audio_ResamplingQuality > 0))
+    {
+        desired.freq = 44100;
+    }
 
     if ((desired.freq == lpThis->freq) &&
         (desired.format == lpThis->format) &&

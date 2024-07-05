@@ -31,6 +31,8 @@
 #define GAME_CONFIG_STORAGE extern
 #endif
 
+GAME_CONFIG_STORAGE int Game_Installation;      /* game installation - 0 = installed; 1 = portable */
+
 GAME_CONFIG_STORAGE int Intro_Play;             /* play intro movies ? */
 
 GAME_CONFIG_STORAGE int Display_Mode;           /* display mode - 0 = window; 1 = desktop; 2 = fullscreen */

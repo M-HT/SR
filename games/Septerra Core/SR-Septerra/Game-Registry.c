@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,7 +22,12 @@
  *
  */
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
 #include "Game-Registry.h"
+#include "Game-Config.h"
 
 #if (defined(__WIN32__) || defined(__WINDOWS__)) && !defined(_WIN32)
 #define _WIN32
@@ -32,17 +37,12 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #else
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
 #include "CLIB.h"
 #endif
 
 #define REGISTRY_BASE "SOFTWARE\\Valkyrie Studios\\Septerra Core"
 #define CONF_NAME "septerra.conf"
 
-#if !defined(_WIN32)
 static int SetValue(const char *ValueName, char *Value)
 {
     FILE *file, *fnew;
@@ -55,16 +55,18 @@ static int SetValue(const char *ValueName, char *Value)
     file = fopen(CONF_NAME, "rb");
     if (file == NULL)
     {
+#if !defined(_WIN32)
         if (CLIB_FindFile(CONF_NAME, buf))
         {
             conf_name = buf;
             file = fopen(buf, "rb");
         }
+#endif
     } else conf_name = NULL;
 
     if (file == NULL)
     {
-        fnew = fopen(buf, "wb");
+        fnew = fopen(CONF_NAME, "wb");
         if (fnew == NULL)
         {
             return 0;
@@ -188,6 +190,7 @@ static int GetValue(const char *ValueName, char *Value, unsigned int Length)
     char *value_start, *name_start;
 
     file = fopen(CONF_NAME, "rb");
+#if !defined(_WIN32)
     if (file == NULL)
     {
         if (CLIB_FindFile(CONF_NAME, buf))
@@ -195,6 +198,7 @@ static int GetValue(const char *ValueName, char *Value, unsigned int Length)
             file = fopen(buf, "rb");
         }
     }
+#endif
     if (file == NULL) return 0;
 
     while (!feof(file))
@@ -242,124 +246,138 @@ static int GetValue(const char *ValueName, char *Value, unsigned int Length)
     fclose(file);
     return 0;
 }
-#endif
 
 int32_t Registry_SetValueDword(const char *ValueName, uint32_t Value)
 {
 #ifdef _WIN32
-    HKEY hKey;
-    LSTATUS result;
-
-    if (ERROR_SUCCESS != RegOpenKeyExA(HKEY_LOCAL_MACHINE, REGISTRY_BASE, 0, KEY_QUERY_VALUE, &hKey))
+    if (Game_Installation == 0)
     {
-        return 0;
+        HKEY hKey;
+        LSTATUS result;
+
+        if (ERROR_SUCCESS != RegOpenKeyExA(HKEY_LOCAL_MACHINE, REGISTRY_BASE, 0, KEY_QUERY_VALUE, &hKey))
+        {
+            return 0;
+        }
+
+        result = RegSetValueExA(hKey, ValueName, 0, REG_DWORD, (const BYTE *)&Value, 4);
+
+        RegCloseKey(hKey);
+
+        return (result == ERROR_SUCCESS)?1:0;
     }
-
-    result = RegSetValueExA(hKey, ValueName, 0, REG_DWORD, (const BYTE *)&Value, 4);
-
-    RegCloseKey(hKey);
-
-    return (result == ERROR_SUCCESS)?1:0;
-#else
-    char StringValue[20];
-    uint32_t OldValue;
-
-    if (Registry_GetValueDword(ValueName, &OldValue))
-    {
-        if (OldValue == Value) return 1;
-    }
-
-    snprintf(StringValue, sizeof(StringValue), "0x%x", (unsigned int) Value);
-    return SetValue(ValueName, StringValue);
+    else
 #endif
+    {
+        char StringValue[20];
+        uint32_t OldValue;
+
+        if (Registry_GetValueDword(ValueName, &OldValue))
+        {
+            if (OldValue == Value) return 1;
+        }
+
+        snprintf(StringValue, sizeof(StringValue), "0x%x", (unsigned int) Value);
+        return SetValue(ValueName, StringValue);
+    }
 }
 
 /*int32_t Registry_SetValueString(const char *ValueName, const char *Value)
 {
 #ifdef _WIN32
-    HKEY hKey;
-    LSTATUS result;
-
-    if (ERROR_SUCCESS != RegOpenKeyExA(HKEY_LOCAL_MACHINE, REGISTRY_BASE, 0, KEY_QUERY_VALUE, &hKey))
+    if (Game_Installation == 0)
     {
-        return 0;
+        HKEY hKey;
+        LSTATUS result;
+
+        if (ERROR_SUCCESS != RegOpenKeyExA(HKEY_LOCAL_MACHINE, REGISTRY_BASE, 0, KEY_QUERY_VALUE, &hKey))
+        {
+            return 0;
+        }
+
+        result = RegSetValueExA(hKey, ValueName, 0, REG_SZ, (const BYTE *)Value, strlen(Value) + 1);
+
+        RegCloseKey(hKey);
+
+        return (result == ERROR_SUCCESS)?1:0;
     }
-
-    result = RegSetValueExA(hKey, ValueName, 0, REG_SZ, (const BYTE *)Value, strlen(Value) + 1);
-
-    RegCloseKey(hKey);
-
-    return (result == ERROR_SUCCESS)?1:0;
-#else
-    return SetValue(ValueName, Value);
 #endif
+    return SetValue(ValueName, Value);
 }*/
 
 int32_t Registry_GetValueDword(const char *ValueName, uint32_t *Value)
 {
 #ifdef _WIN32
-    HKEY hKey;
-    LSTATUS result;
-    DWORD type, cbData;
-
-    *Value = -1;
-    if (ERROR_SUCCESS == RegOpenKeyExA(HKEY_LOCAL_MACHINE, REGISTRY_BASE, 0, KEY_QUERY_VALUE, &hKey))
+    if (Game_Installation == 0)
     {
-        cbData = 4;
-        result = RegQueryValueExA(hKey, ValueName, 0, &type, (LPBYTE)Value, &cbData);
-        RegCloseKey(hKey);
-
-        if (result == ERROR_SUCCESS) return 1;
+        HKEY hKey;
+        LSTATUS result;
+        DWORD type, cbData;
 
         *Value = -1;
+        if (ERROR_SUCCESS == RegOpenKeyExA(HKEY_LOCAL_MACHINE, REGISTRY_BASE, 0, KEY_QUERY_VALUE, &hKey))
+        {
+            cbData = 4;
+            result = RegQueryValueExA(hKey, ValueName, 0, &type, (LPBYTE)Value, &cbData);
+            RegCloseKey(hKey);
+
+            if (result == ERROR_SUCCESS) return 1;
+
+            *Value = -1;
+        }
+
+        return 0;
     }
-
-    return 0;
-#else
-    char StringValue[20];
-    unsigned long IntValue;
-
-    if (GetValue(ValueName, &(StringValue[0]), 20))
+    else
+#endif
     {
-        IntValue = strtoul(&(StringValue[0]), NULL, 0);
-        if (errno == ERANGE)
+        char StringValue[20];
+        unsigned long IntValue;
+
+        if (GetValue(ValueName, &(StringValue[0]), 20))
+        {
+            IntValue = strtoul(&(StringValue[0]), NULL, 0);
+            if (errno == ERANGE)
+            {
+                *Value = 0;
+                return 0;
+            }
+
+            *Value = IntValue;
+            return 1;
+        }
+        else
         {
             *Value = 0;
             return 0;
         }
-
-        *Value = IntValue;
-        return 1;
     }
-    else
-    {
-        *Value = 0;
-        return 0;
-    }
-#endif
 }
 
 int32_t Registry_GetValueString(const char *ValueName, char *Value)
 {
 #ifdef _WIN32
-    HKEY hKey;
-    LSTATUS result;
-    DWORD type, cbData;
-
-    *Value = 0;
-    if (ERROR_SUCCESS == RegOpenKeyExA(HKEY_LOCAL_MACHINE, REGISTRY_BASE, 0, KEY_QUERY_VALUE, &hKey))
+    if (Game_Installation == 0)
     {
-        cbData = 254;
-        result = RegQueryValueExA(hKey, ValueName, 0, &type, (LPBYTE)Value, &cbData);
-        RegCloseKey(hKey);
-
-        if (result == ERROR_SUCCESS) return 1;
+        HKEY hKey;
+        LSTATUS result;
+        DWORD type, cbData;
 
         *Value = 0;
-    }
+        if (ERROR_SUCCESS == RegOpenKeyExA(HKEY_LOCAL_MACHINE, REGISTRY_BASE, 0, KEY_QUERY_VALUE, &hKey))
+        {
+            cbData = 254;
+            result = RegQueryValueExA(hKey, ValueName, 0, &type, (LPBYTE)Value, &cbData);
+            RegCloseKey(hKey);
 
-    return 0;
-#else
+            if (result == ERROR_SUCCESS) return 1;
+
+            *Value = 0;
+        }
+
+        return 0;
+    }
+#endif
     if (0 == strcasecmp(ValueName, "InstallPath"))
     {
         Value[0] = '.';
@@ -382,6 +400,5 @@ int32_t Registry_GetValueString(const char *ValueName, char *Value)
         *Value = 0;
         return 0;
     }
-#endif
 }
 

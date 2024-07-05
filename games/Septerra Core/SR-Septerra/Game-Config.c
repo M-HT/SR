@@ -65,6 +65,8 @@ void ReadConfiguration(void)
     char *str, *param;
     int items, num_int;
 
+    Game_Installation = 0;
+
     Intro_Play = 1;
 
     Display_Mode = 0;
@@ -136,7 +138,26 @@ void ReadConfiguration(void)
         str = trim_string(str);
         param = trim_string(param);
 
-        if ( strncasecmp(str, "Intro_", 6) == 0 ) // str begins with "Intro_"
+        if ( strncasecmp(str, "Game_", 5) == 0 ) // str begins with "Game_"
+        {
+            // game settings
+
+            str += 5;
+
+            if ( strcasecmp(str, "Installation") == 0 ) // str equals "Installation"
+            {
+                if ( strcasecmp(param, "installed") == 0 ) // param equals "installed"
+                {
+                    Game_Installation = 0;
+                }
+                else if ( strcasecmp(param, "portable") == 0 ) // param equals "portable"
+                {
+                    Game_Installation = 1;
+                }
+            }
+
+        }
+        else if ( strncasecmp(str, "Intro_", 6) == 0 ) // str begins with "Intro_"
         {
             // intro settings
 

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -128,7 +128,9 @@ EXTERNAL_VARIABLE unsigned int Game_AudioFormat;	/* audio format */
 EXTERNAL_VARIABLE unsigned int Game_AudioChannels;	/* number of audio channels */
 EXTERNAL_VARIABLE int Game_AudioRate;				/* audio rate (Hz) */
 EXTERNAL_VARIABLE int Game_AudioBufferSize;			/* audio buffer size */
-EXTERNAL_VARIABLE int Game_InterpolateAudio;		/* interpolate audio when resampling ? */
+EXTERNAL_VARIABLE int Game_ResamplingQuality;		/* audio resampling quality
+                                                       0: normal quality
+                                                       1: higher quality */
 EXTERNAL_VARIABLE AIL_sequence* Game_MainSequence;	/* main sequence - priority sequence */
 EXTERNAL_VARIABLE AIL_sequence* Game_ActiveSequence;	/* active sequence - sequence being played */
 EXTERNAL_VARIABLE int Game_VolumeDelta;				/*  0: Volume is stationary

@@ -32,7 +32,7 @@ void Init_Audio(void)
     Game_AudioChannels = 2;
     Game_AudioRate = 44100;
     Game_AudioBufferSize = 2048;
-    Game_InterpolateAudio = 1;
+    Game_ResamplingQuality = 0;
 
     Game_AudioMusicVolume = 128;    // Music's relative loudness x/128
     Game_AudioSampleVolume = 128;   // Sound sample relative loudness x/128

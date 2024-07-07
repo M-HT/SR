@@ -32,7 +32,7 @@ void Init_Audio(void)
     Game_AudioChannels = 2;
     Game_AudioRate = 44100;
     Game_AudioBufferSize = 4096;
-    Game_InterpolateAudio = 1;
+    Game_ResamplingQuality = 0;
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     Game_MidiSubsystem = 3;
 #else

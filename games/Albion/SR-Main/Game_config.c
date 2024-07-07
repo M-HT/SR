@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -152,17 +152,13 @@ void Game_ReadConfig(void)
                     Game_AudioBufferSize = num_int;
                 }
             }
-            else if ( strcasecmp(str, "Interpolation") == 0 ) // str equals "Interpolation"
+            else if ( strcasecmp(str, "Resampling_Quality") == 0 ) // str equals "Resampling_Quality"
             {
-                // audio interpolation
-
-                if ( strcasecmp(param, "on") == 0 ) // param equals "on"
+                num_int = 0;
+                sscanf(param, "%i", &num_int);
+                if (num_int >= 0)
                 {
-                    Game_InterpolateAudio = 1;
-                }
-                else if ( strcasecmp(param, "off") == 0 ) // param equals "off"
-                {
-                    Game_InterpolateAudio = 0;
+                    Game_ResamplingQuality = num_int;
                 }
             }
             else if ( strcasecmp(str, "Swap_Channels") == 0 ) // str equals "Swap_Channels"

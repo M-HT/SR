@@ -199,12 +199,13 @@ static int Compare_Samples(AIL_sample *S, Game_sample *sample)
         len = S->len;
         Sdata = (uint8_t *) S->start;
 
-        if ( sample->orig_data[0] == *( (uint32_t *) &(Sdata[((len - 4) / 8) & 0xfffffffc]) ) &&
-             sample->orig_data[1] == *( (uint32_t *) &(Sdata[((len - 4) / 4) & 0xfffffffc]) ) &&
-             sample->orig_data[2] == *( (uint32_t *) &(Sdata[((len - 4) / 2) & 0xfffffffc]) ) &&
-             sample->orig_data[3] == *( (uint32_t *) &(Sdata[sample->orig_data_offset[0]]) ) &&
-             sample->orig_data[4] == *( (uint32_t *) &(Sdata[sample->orig_data_offset[1]]) ) &&
-             sample->orig_data[5] == *( (uint32_t *) &(Sdata[sample->orig_data_offset[2]]) )
+        if ( sample->orig_data[0] == *( (uint32_t *) &(Sdata[((len - 4) / 8) & 0xfffffffcUL]) ) &&
+             sample->orig_data[1] == *( (uint32_t *) &(Sdata[(((len - 4) * 2) / 8) & 0xfffffffcUL]) ) &&
+             sample->orig_data[2] == *( (uint32_t *) &(Sdata[(((len - 4) * 3) / 8) & 0xfffffffcUL]) ) &&
+             sample->orig_data[3] == *( (uint32_t *) &(Sdata[(((len - 4) * 4) / 8) & 0xfffffffcUL]) ) &&
+             sample->orig_data[4] == *( (uint32_t *) &(Sdata[(((len - 4) * 5) / 8) & 0xfffffffcUL]) ) &&
+             sample->orig_data[5] == *( (uint32_t *) &(Sdata[(((len - 4) * 6) / 8) & 0xfffffffcUL]) ) &&
+             sample->orig_data[6] == *( (uint32_t *) &(Sdata[(((len - 4) * 7) / 8) & 0xfffffffcUL]) )
             )
         {
             return 0;
@@ -213,33 +214,6 @@ static int Compare_Samples(AIL_sample *S, Game_sample *sample)
 
     return 1;
 }
-
-#if !defined(USE_SDL2)
-static int Is_MulPow2(uint32_t src_rate, uint32_t dst_rate)
-{
-    uint32_t higher, lower;
-    int mult;
-
-    higher = (src_rate <= dst_rate)?dst_rate:src_rate;
-    lower = (src_rate <= dst_rate)?src_rate:dst_rate;
-    mult = (src_rate <= dst_rate)?1:-1;
-
-    while (higher >= lower)
-    {
-        if (higher == lower)
-        {
-            return mult;
-        }
-        else if (higher & 1)
-        {
-            break;
-        }
-        higher /= 2;
-        mult*=2;
-    }
-    return 0;
-}
-#endif
 
 // returns dst size in bytes
 static uint32_t Get_Resampled_Size(int _stereo, int _16bit, uint32_t src_rate, uint32_t dst_rate, uint32_t src_size_bytes, uint32_t *dst_size_samples)
@@ -264,157 +238,6 @@ static uint32_t Get_Resampled_Size(int _stereo, int _16bit, uint32_t src_rate, u
     }
 }
 
-static void Resample(int _stereo, int _16bit, uint32_t src_rate, uint32_t dst_rate, uint8_t *srcbuf, uint8_t *dstbuf, uint32_t dst_size)
-{
-    if (src_rate <= dst_rate)
-    {
-        uint32_t delta, curpos;
-
-        curpos = 0;
-        delta = (((uint64_t) src_rate) << 31) / dst_rate;
-
-        if (!_stereo && !_16bit)
-        {
-            // byte samples
-            uint8_t *src, *dst;
-
-            src = srcbuf;
-            dst = dstbuf;
-
-            while (dst_size != 0)
-            {
-                *dst = *src;
-                dst++;
-                curpos+=delta;
-                if (curpos & 0x80000000)
-                {
-                    curpos &= 0x7fffffff;
-                    src++;
-                }
-                dst_size--;
-            }
-        }
-        else if (!_stereo || !_16bit)
-        {
-            // word samples
-            uint16_t *src, *dst;
-
-            src = (uint16_t *) srcbuf;
-            dst = (uint16_t *) dstbuf;
-
-            while (dst_size != 0)
-            {
-                *dst = *src;
-                dst++;
-                curpos+=delta;
-                if (curpos & 0x80000000)
-                {
-                    curpos &= 0x7fffffff;
-                    src++;
-                }
-                dst_size--;
-            }
-        }
-        else
-        {
-            // dword samples
-            uint32_t *src, *dst;
-
-            src = (uint32_t *) srcbuf;
-            dst = (uint32_t *) dstbuf;
-
-            while (dst_size != 0)
-            {
-                *dst = *src;
-                dst++;
-                curpos+=delta;
-                if (curpos & 0x80000000)
-                {
-                    curpos &= 0x7fffffff;
-                    src++;
-                }
-                dst_size--;
-            }
-        }
-    }
-    else
-    {
-        uint32_t delta_frac, delta_int, curpos;
-
-        curpos = 0;
-        delta_int  = ( (((uint64_t) src_rate) << 31) / dst_rate ) >> 31;
-        delta_frac = ( (((uint64_t) src_rate) << 31) / dst_rate ) & 0x7fffffff;
-
-        if (!_stereo && !_16bit)
-        {
-            // byte samples
-            uint8_t *src, *dst;
-
-            src = srcbuf;
-            dst = dstbuf;
-
-            while (dst_size != 0)
-            {
-                *dst = *src;
-                dst++;
-                src+=delta_int;
-                curpos+=delta_frac;
-                if (curpos & 0x80000000)
-                {
-                    curpos &= 0x7fffffff;
-                    src++;
-                }
-                dst_size--;
-            }
-        }
-        else if (!_stereo || !_16bit)
-        {
-            // word samples
-            uint16_t *src, *dst;
-
-            src = (uint16_t *) srcbuf;
-            dst = (uint16_t *) dstbuf;
-
-            while (dst_size != 0)
-            {
-                *dst = *src;
-                dst++;
-                src+=delta_int;
-                curpos+=delta_frac;
-                if (curpos & 0x80000000)
-                {
-                    curpos &= 0x7fffffff;
-                    src++;
-                }
-                dst_size--;
-            }
-        }
-        else
-        {
-            // dword samples
-            uint32_t *src, *dst;
-
-            src = (uint32_t *) srcbuf;
-            dst = (uint32_t *) dstbuf;
-
-            while (dst_size != 0)
-            {
-                *dst = *src;
-                dst++;
-                src+=delta_int;
-                curpos+=delta_frac;
-                if (curpos & 0x80000000)
-                {
-                    curpos &= 0x7fffffff;
-                    src++;
-                }
-                dst_size--;
-            }
-        }
-    }
-}
-
-#if !defined(USE_SDL2)
 static void Interpolated_Resample(int _stereo, int _16bit, int _signed, uint32_t src_rate, uint32_t dst_rate, uint8_t *srcbuf, uint8_t *dstbuf, uint32_t src_size, uint32_t dst_size)
 {
     uint32_t src_delta, src_pos, dst_lastsize;
@@ -545,7 +368,6 @@ static void Interpolated_Resample(int _stereo, int _16bit, int _signed, uint32_t
 #undef CALC_MONO
 #undef RESAMPLE
 }
-#endif
 
 void Game_AIL_start_sample(AIL_sample *S)
 {
@@ -716,10 +538,11 @@ void Game_AIL_start_sample(AIL_sample *S)
                 }
 
                 resample_type = 0;
-                if (Game_InterpolateAudio)
+                if (Game_AudioRate != S->playback_rate)
                 {
-#if !defined(USE_SDL2)
-                    if (Game_AudioRate != S->playback_rate)
+#if defined(USE_SDL2)
+                    if (Game_ResamplingQuality <= 0)
+#endif
                     {
                         // interpolated resampling
                         uint32_t newlen_bytes, newlen_samples, form_mult;
@@ -759,59 +582,13 @@ void Game_AIL_start_sample(AIL_sample *S)
 
                         if (sample->len >= 4)
                         {
-                            sample->orig_data[0] = *( (uint32_t *) &(sample->start[((sample->len - 4) / 8) & 0xfffffffc]) );
-                            sample->orig_data[1] = *( (uint32_t *) &(sample->start[((sample->len - 4) / 4) & 0xfffffffc]) );
-                            sample->orig_data[2] = *( (uint32_t *) &(sample->start[((sample->len - 4) / 2) & 0xfffffffc]) );
-                            sample->orig_data_offset[0] = (rand() % (sample->len - 4)) & 0xfffffffc;
-                            sample->orig_data[3] = *( (uint32_t *) &(sample->start[sample->orig_data_offset[0]]) );
-                            sample->orig_data_offset[1] = (rand() % (sample->len - 4)) & 0xfffffffc;
-                            sample->orig_data[4] = *( (uint32_t *) &(sample->start[sample->orig_data_offset[1]]) );
-                            sample->orig_data_offset[2] = (rand() % (sample->len - 4)) & 0xfffffffc;
-                            sample->orig_data[5] = *( (uint32_t *) &(sample->start[sample->orig_data_offset[2]]) );
-                        }
-                    }
-#endif
-                }
-                else
-                {
-                    // SDL1 supports resampling only when higher frequency equals lower frequency multiplied by power of 2,
-                    // so I'm using my resampling when it's not the case
-                    // or when the target frequency is lower than the source frequency to use less memory
-#if !defined(USE_SDL2)
-                    if (Game_AudioRate < S->playback_rate ||
-                        (Is_MulPow2(Game_AudioRate, S->playback_rate) == 0)
-                       )
-#endif
-                    {
-                        // near-neighbour resampling
-                        uint32_t newlen_bytes, newlen_samples;
-
-                        resample_type = 1;
-
-                        newlen_bytes = Get_Resampled_Size(S->_stereo, S->_16bit, S->playback_rate, Game_AudioRate, S->len, &newlen_samples);
-
-                        SDL_BuildAudioCVT(&cvt, format, channels, Game_AudioRate, Game_AudioFormat, Game_AudioChannels, Game_AudioRate);
-
-                        sample = (Game_sample *) malloc(sizeof(Game_sample) + newlen_bytes * cvt.len_mult);
-
-                        sample->start = (uint8_t *) S->start;
-                        sample->len = S->len;
-
-                        cvt.buf = (Uint8 *) &(sample->data);
-                        cvt.len = newlen_bytes;
-                        Resample(S->_stereo, S->_16bit, S->playback_rate, Game_AudioRate, sample->start, cvt.buf, newlen_samples);
-
-                        if (sample->len >= 4)
-                        {
-                            sample->orig_data[0] = *( (uint32_t *) &(sample->start[((sample->len - 4) / 8) & 0xfffffffc]) );
-                            sample->orig_data[1] = *( (uint32_t *) &(sample->start[((sample->len - 4) / 4) & 0xfffffffc]) );
-                            sample->orig_data[2] = *( (uint32_t *) &(sample->start[((sample->len - 4) / 2) & 0xfffffffc]) );
-                            sample->orig_data_offset[0] = (rand() % (sample->len - 4)) & 0xfffffffc;
-                            sample->orig_data[3] = *( (uint32_t *) &(sample->start[sample->orig_data_offset[0]]) );
-                            sample->orig_data_offset[1] = (rand() % (sample->len - 4)) & 0xfffffffc;
-                            sample->orig_data[4] = *( (uint32_t *) &(sample->start[sample->orig_data_offset[1]]) );
-                            sample->orig_data_offset[2] = (rand() % (sample->len - 4)) & 0xfffffffc;
-                            sample->orig_data[5] = *( (uint32_t *) &(sample->start[sample->orig_data_offset[2]]) );
+                            sample->orig_data[0] = *( (uint32_t *) &(sample->start[((sample->len - 4) / 8) & 0xfffffffcUL]) );
+                            sample->orig_data[1] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 2) / 8) & 0xfffffffcUL]) );
+                            sample->orig_data[2] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 3) / 8) & 0xfffffffcUL]) );
+                            sample->orig_data[3] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 4) / 8) & 0xfffffffcUL]) );
+                            sample->orig_data[4] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 5) / 8) & 0xfffffffcUL]) );
+                            sample->orig_data[5] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 6) / 8) & 0xfffffffcUL]) );
+                            sample->orig_data[6] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 7) / 8) & 0xfffffffcUL]) );
                         }
                     }
                 }
@@ -833,15 +610,13 @@ void Game_AIL_start_sample(AIL_sample *S)
 
                     if (cvt.len >= 4)
                     {
-                        sample->orig_data[0] = *( (uint32_t *) &(cvt.buf[((cvt.len - 4) / 8) & 0xfffffffc]) );
-                        sample->orig_data[1] = *( (uint32_t *) &(cvt.buf[((cvt.len - 4) / 4) & 0xfffffffc]) );
-                        sample->orig_data[2] = *( (uint32_t *) &(cvt.buf[((cvt.len - 4) / 2) & 0xfffffffc]) );
-                        sample->orig_data_offset[0] = (rand() % (cvt.len - 4)) & 0xfffffffc;
-                        sample->orig_data[3] = *( (uint32_t *) &(cvt.buf[sample->orig_data_offset[0]]) );
-                        sample->orig_data_offset[1] = (rand() % (cvt.len - 4)) & 0xfffffffc;
-                        sample->orig_data[4] = *( (uint32_t *) &(cvt.buf[sample->orig_data_offset[1]]) );
-                        sample->orig_data_offset[2] = (rand() % (cvt.len - 4)) & 0xfffffffc;
-                        sample->orig_data[5] = *( (uint32_t *) &(cvt.buf[sample->orig_data_offset[2]]) );
+                        sample->orig_data[0] = *( (uint32_t *) &(cvt.buf[((cvt.len - 4) / 8) & 0xfffffffcUL]) );
+                        sample->orig_data[1] = *( (uint32_t *) &(cvt.buf[(((cvt.len - 4) * 2) / 8) & 0xfffffffcUL]) );
+                        sample->orig_data[2] = *( (uint32_t *) &(cvt.buf[(((cvt.len - 4) * 3) / 8) & 0xfffffffcUL]) );
+                        sample->orig_data[3] = *( (uint32_t *) &(cvt.buf[(((cvt.len - 4) * 4) / 8) & 0xfffffffcUL]) );
+                        sample->orig_data[4] = *( (uint32_t *) &(cvt.buf[(((cvt.len - 4) * 5) / 8) & 0xfffffffcUL]) );
+                        sample->orig_data[5] = *( (uint32_t *) &(cvt.buf[(((cvt.len - 4) * 6) / 8) & 0xfffffffcUL]) );
+                        sample->orig_data[6] = *( (uint32_t *) &(cvt.buf[(((cvt.len - 4) * 7) / 8) & 0xfffffffcUL]) );
                     }
                 }
 

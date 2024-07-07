@@ -516,7 +516,7 @@ int MidiPlugin_Startup(void)
     MP_parameters.mt32_roms_path = Game_MT32RomsPath;
     MP_parameters.opl3_bank_number = Game_OPL3BankNumber;
     MP_parameters.opl3_emulator = Game_OPL3Emulator;
-    MP_parameters.resampling_quality = 0;
+    MP_parameters.resampling_quality = Game_ResamplingQuality;
     MP_parameters.sampling_rate = Game_AudioRate;
 
     vfs_get_real_name("C:\\SOUND\\DRIVERS.CAT", (char *) &temp_str, NULL);

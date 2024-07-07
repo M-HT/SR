@@ -125,33 +125,6 @@ int16_t Game_ProcessAudio(void)
     }
 }
 
-#if !defined(USE_SDL2)
-static int Is_MulPow2(uint32_t src_rate, uint32_t dst_rate)
-{
-    uint32_t higher, lower;
-    int mult;
-
-    higher = (src_rate <= dst_rate)?dst_rate:src_rate;
-    lower = (src_rate <= dst_rate)?src_rate:dst_rate;
-    mult = (src_rate <= dst_rate)?1:-1;
-
-    while (higher >= lower)
-    {
-        if (higher == lower)
-        {
-            return mult;
-        }
-        else if (higher & 1)
-        {
-            break;
-        }
-        higher /= 2;
-        mult*=2;
-    }
-    return 0;
-}
-#endif
-
 // returns dst size in bytes
 static uint32_t Get_Resampled_Size(int _stereo, int _16bit, uint32_t src_rate, uint32_t dst_rate, uint32_t src_size_bytes, uint32_t *dst_size_samples)
 {
@@ -175,169 +148,6 @@ static uint32_t Get_Resampled_Size(int _stereo, int _16bit, uint32_t src_rate, u
     }
 }
 
-static void Resample(int _stereo, int _16bit, uint32_t src_rate, uint32_t dst_rate, uint8_t *srcbuf, uint8_t *dstbuf, uint32_t src_size)
-{
-    if (src_rate <= dst_rate)
-    {
-        uint32_t delta, curpos, dst_size;
-
-        curpos = 0;
-        delta = (((uint64_t) src_rate) << 31) / dst_rate;
-
-        if (!_stereo && !_16bit)
-        {
-            // byte samples
-            uint8_t *src, *dst;
-
-            dst_size = ( ((uint64_t) src_size) * dst_rate ) / src_rate;
-
-            src = srcbuf;
-            dst = dstbuf;
-
-            while (dst_size != 0)
-            {
-                *dst = *src;
-                dst++;
-                curpos+=delta;
-                if (curpos & 0x80000000)
-                {
-                    curpos &= 0x7fffffff;
-                    src++;
-                }
-                dst_size--;
-            }
-        }
-        else if (!_stereo || !_16bit)
-        {
-            // word samples
-            uint16_t *src, *dst;
-
-            dst_size = ( ((uint64_t) (src_size / 2)) * dst_rate ) / src_rate;
-
-            src = (uint16_t *) srcbuf;
-            dst = (uint16_t *) dstbuf;
-
-            while (dst_size != 0)
-            {
-                *dst = *src;
-                dst++;
-                curpos+=delta;
-                if (curpos & 0x80000000)
-                {
-                    curpos &= 0x7fffffff;
-                    src++;
-                }
-                dst_size--;
-            }
-        }
-        else
-        {
-            // dword samples
-            uint32_t *src, *dst;
-
-            dst_size = ( ((uint64_t) (src_size / 4)) * dst_rate ) / src_rate;
-
-            src = (uint32_t *) srcbuf;
-            dst = (uint32_t *) dstbuf;
-
-            while (dst_size != 0)
-            {
-                *dst = *src;
-                dst++;
-                curpos+=delta;
-                if (curpos & 0x80000000)
-                {
-                    curpos &= 0x7fffffff;
-                    src++;
-                }
-                dst_size--;
-            }
-        }
-    }
-    else
-    {
-        uint32_t delta_frac, delta_int, curpos, dst_size;
-
-        curpos = 0;
-        delta_int  = ( (((uint64_t) src_rate) << 31) / dst_rate ) >> 31;
-        delta_frac = ( (((uint64_t) src_rate) << 31) / dst_rate ) & 0x7fffffff;
-
-        if (!_stereo && !_16bit)
-        {
-            // byte samples
-            uint8_t *src, *dst;
-
-            dst_size = ( ((uint64_t) src_size) * dst_rate ) / src_rate;
-
-            src = srcbuf;
-            dst = dstbuf;
-
-            while (dst_size != 0)
-            {
-                *dst = *src;
-                dst++;
-                src+=delta_int;
-                curpos+=delta_frac;
-                if (curpos & 0x80000000)
-                {
-                    curpos &= 0x7fffffff;
-                    src++;
-                }
-                dst_size--;
-            }
-        }
-        else if (!_stereo || !_16bit)
-        {
-            // word samples
-            uint16_t *src, *dst;
-
-            dst_size = ( ((uint64_t) (src_size/2)) * dst_rate ) / src_rate;
-
-            src = (uint16_t *) srcbuf;
-            dst = (uint16_t *) dstbuf;
-
-            while (dst_size != 0)
-            {
-                *dst = *src;
-                dst++;
-                src+=delta_int;
-                curpos+=delta_frac;
-                if (curpos & 0x80000000)
-                {
-                    curpos &= 0x7fffffff;
-                    src++;
-                }
-                dst_size--;
-            }
-        }
-        else
-        {
-            // dword samples
-            uint32_t *src, *dst;
-
-            dst_size = ( ((uint64_t) (src_size/4)) * dst_rate ) / src_rate;
-
-            src = (uint32_t *) srcbuf;
-            dst = (uint32_t *) dstbuf;
-
-            while (dst_size != 0)
-            {
-                *dst = *src;
-                dst++;
-                src+=delta_int;
-                curpos+=delta_frac;
-                if (curpos & 0x80000000)
-                {
-                    curpos &= 0x7fffffff;
-                    src++;
-                }
-                dst_size--;
-            }
-        }
-    }
-}
-
-#if !defined(USE_SDL2)
 static void Interpolated_Resample(int _stereo, int _16bit, int _signed, uint32_t src_rate, uint32_t dst_rate, uint8_t *srcbuf, uint8_t *dstbuf, uint32_t src_size, uint32_t dst_size)
 {
     uint32_t src_delta, src_pos, dst_lastsize;
@@ -468,7 +278,6 @@ static void Interpolated_Resample(int _stereo, int _16bit, int _signed, uint32_t
 #undef CALC_MONO
 #undef RESAMPLE
 }
-#endif
 
 static int16_t Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
 {
@@ -521,10 +330,11 @@ static int16_t Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
 
         resample_type = 0;
 
-        if (Game_InterpolateAudio)
+        if (Game_AudioRate != sample.playback_rate)
         {
-#if !defined(USE_SDL2)
-            if (Game_AudioRate != sample.playback_rate)
+#if defined(USE_SDL2)
+            if (Game_ResamplingQuality <= 0)
+#endif
             {
                 // interpolated resampling
                 uint32_t newlen_bytes, newlen_samples, form_mult;
@@ -558,34 +368,6 @@ static int16_t Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
                 cvt.buf = (Uint8 *) sample.start;
                 cvt.len = newlen_bytes * form_mult;
                 Interpolated_Resample(sample._stereo, sample._16bit, sample._signed, sample.playback_rate, Game_AudioRate, (uint8_t *) sample.sound, cvt.buf, sample.len, newlen_samples);
-            }
-#endif
-        }
-        else
-        {
-            // SDL1 supports resampling only when higher frequency equals lower frequency multiplied by power of 2,
-            // so I'm using my resampling when it's not the case
-            // or when the target frequency is lower than the source frequency to use less memory
-#if !defined(USE_SDL2)
-            if (Game_AudioRate < sample.playback_rate ||
-                (Is_MulPow2(Game_AudioRate, sample.playback_rate) == 0)
-               )
-#endif
-            {
-                // near-neighbour resampling
-                uint32_t newlen_bytes, newlen_samples;
-
-                resample_type = 1;
-
-                newlen_bytes = Get_Resampled_Size(sample._stereo, sample._16bit, sample.playback_rate, Game_AudioRate, sample.len, &newlen_samples);
-
-                SDL_BuildAudioCVT(&cvt, audio_format, audio_channels, Game_AudioRate, Game_AudioFormat, Game_AudioChannels, Game_AudioRate);
-
-                sample.start = malloc(newlen_bytes * cvt.len_mult);
-
-                cvt.buf = (Uint8 *) sample.start;
-                cvt.len = newlen_bytes;
-                Resample(sample._stereo, sample._16bit, sample.playback_rate, Game_AudioRate, (uint8_t *) sample.sound, cvt.buf, newlen_samples);
             }
         }
 

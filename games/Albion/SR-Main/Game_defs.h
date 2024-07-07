@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -215,8 +215,7 @@ typedef struct _Game_sample {
     uint8_t *start;
     uint32_t len, len_cvt, time;
     int32_t playback_rate;	/* Hz */
-    uint32_t orig_data[6];
-    uint32_t orig_data_offset[3];
+    uint32_t orig_data[7];
     uint8_t data[];
 } Game_sample;
 

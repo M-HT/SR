@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -424,12 +424,12 @@ static void Interpolated_Resample(int _stereo, int _16bit, int _signed, uint32_t
         ((dst_type *)dstbuf)[1] = (( ( ((temp_type) (((src_type *) srcbuf)[1])) * ((temp_type) (0x10000 - src_pos)) ) + ( ((temp_type) (((src_type *) srcbuf)[3])) * ((temp_type) src_pos) ) ) >> (16 - (dst_shift))) - (dst_sub); \
     }
 
-    dst_lastsize = (((dst_rate << 16) / src_rate) + 0xffff) >> 16;
+    dst_lastsize = (((((uint64_t)dst_rate) << 16) / src_rate) + 0xffff) >> 16;
     dst_size -= dst_lastsize;
-    src_delta = (src_rate << 16) / dst_rate;
+    src_delta = (((uint64_t)src_rate) << 16) / dst_rate;
     if (src_rate > dst_rate)
     {
-        src_pos = ((src_rate - dst_rate) << 16) / src_rate;
+        src_pos = (((uint64_t)(src_rate - dst_rate)) << 16) / src_rate;
     }
     else
     {
@@ -600,6 +600,9 @@ void Game_AIL_start_sample(struct _AIL_sample *S)
             if (sample == NULL)
             {
                 /* played sample was NOT found in sample cache */
+#if defined(__DEBUG__)
+                fprintf(stderr, "sample was NOT found in sample cache\n");
+#endif
 
                 memset(&cvt, 0, sizeof(SDL_AudioCVT));
 
@@ -814,11 +817,20 @@ void Game_AIL_start_sample(struct _AIL_sample *S)
             else
             {
                 /* played sample was found in sample cache */
+#if defined(__DEBUG__)
+                fprintf(stderr, "sample was found in sample cache\n");
+#endif
 
                 S->sample = sample;
                 sample->num_ref++;
             }
         }
+#if defined(__DEBUG__)
+        else
+        {
+            fprintf(stderr, "sample is the same as the sample played before\n");
+        }
+#endif
 
         sample->time = SDL_GetTicks();
 

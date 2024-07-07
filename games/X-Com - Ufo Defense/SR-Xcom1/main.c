@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -1399,8 +1399,7 @@ static void Game_Initialize2(void)
                         fprintf(stderr, "Audio format: 0x%x\n", format);
                         fprintf(stderr, "Audio channels: %i\n", channels);
 #endif
-                        if ((frequency <= 48000) &&
-                            (channels <= 2) &&
+                        if ((channels <= 2) &&
                             ((format == AUDIO_S8) || (format == AUDIO_U8) || (format == AUDIO_S16LSB) || (format == AUDIO_U16LSB))
                            )
                         {
@@ -1416,11 +1415,9 @@ static void Game_Initialize2(void)
                         format = Game_AudioFormat;
                         channels = Game_AudioChannels;
 
-                        if ( Mix_OpenAudioDevice(frequency, format, channels, Game_AudioBufferSize, NULL,
+                        if ( Mix_OpenAudioDevice(frequency, format, channels, Game_AudioBufferSize, NULL, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE
                                 #ifdef SDL_AUDIO_ALLOW_SAMPLES_CHANGE
-                                    SDL_AUDIO_ALLOW_SAMPLES_CHANGE
-                                #else
-                                    0
+                                    | SDL_AUDIO_ALLOW_SAMPLES_CHANGE
                                 #endif
                                 ) == 0
                            )
@@ -1441,8 +1438,7 @@ static void Game_Initialize2(void)
                     fprintf(stderr, "Audio format: 0x%x\n", format);
                     fprintf(stderr, "Audio channels: %i\n", channels);
 #endif
-                    if ((frequency <= 48000) &&
-                        (channels <= 2) &&
+                    if ((channels <= 2) &&
                         ((format == AUDIO_S8) || (format == AUDIO_U8) || (format == AUDIO_S16LSB) || (format == AUDIO_U16LSB))
                        )
                     {

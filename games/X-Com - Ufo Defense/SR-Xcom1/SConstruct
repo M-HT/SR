@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016-2023 Roman Pauer
+#  Copyright (C) 2016-2024 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -34,6 +34,9 @@ vars.Add(EnumVariable('device', 'Set target device', 'none',
 vars.Add(EnumVariable('sdl', 'Set SDL version', '2',
                                  allowed_values=('1', '2'),
                                  ignorecase=2))
+vars.Add(EnumVariable('speexdsp', 'Use SpeexDSP library for higher quality resampling', '0',
+                                 allowed_values=('0', '1'),
+                                 ignorecase=2))
 vars.Add(EnumVariable('executable', 'Set executable to compile', 'combined',
                                  allowed_values=('combined', 'geoscape', 'tactical', 'intro'),
                                  ignorecase=2))
@@ -42,6 +45,7 @@ env = Environment(variables = vars)
 debug = int(env['debug'])
 device = env['device']
 sdl = int(env['sdl'])
+speexdsp = int(env['speexdsp'])
 executable = env['executable']
 clean = env.GetOption('clean')
 
@@ -184,6 +188,10 @@ elif device == 'pandora':
         env.Append(CCFLAGS = ' -mthumb-interwork')
     # see arm/armconf.inc for explanation of these options (and others)
     env.Append(ASFLAGS = ' --defsym USE_R9=1 --defsym ALLOW_UNALIGNED_MEMORY_ACCESS=1')
+
+if speexdsp > 0:
+    env.Append(CCFLAGS = ' -DUSE_SPEEXDSP_RESAMPLER')
+    env.Append(LIBS = ['speexdsp'])
 
 if executable == 'geoscape':
     program_name = 'SR-Geoscape'

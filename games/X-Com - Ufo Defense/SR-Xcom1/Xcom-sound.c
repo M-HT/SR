@@ -32,6 +32,9 @@
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Xcom-sound.h"
+#ifdef USE_SPEEXDSP_RESAMPLER
+#include <speex/speex_resampler.h>
+#endif
 
 
 #define NOTPLAYING 0        // No sound is playing.
@@ -49,6 +52,11 @@ typedef struct _DIGPAK_SNDSTRUC_ {
 } DIGPAK_SNDSTRUC;
 
 #pragma pack()
+
+
+#ifdef USE_SPEEXDSP_RESAMPLER
+static SpeexResamplerState *resampler = NULL;
+#endif
 
 
 void Game_ChannelFinished(int channel)
@@ -332,34 +340,99 @@ static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
 
         if (Game_AudioRate != sample->playback_rate)
         {
+            uint32_t newlen_bytes, newlen_samples, form_mult;
+
+#ifdef USE_SPEEXDSP_RESAMPLER
+            if (resampler != NULL)
+            {
+                spx_uint32_t in_len, out_len;
+                int16_t *converted_data;
+
+                resample_type = 3;
+
+                newlen_bytes = Get_Resampled_Size(sample->_stereo, sample->_16bit, sample->playback_rate, Game_AudioRate, sample->len, &newlen_samples);
+
+                form_mult = (sample->_16bit) ? 1 : 2;
+
+                SDL_BuildAudioCVT(&cvt, AUDIO_S16LSB, audio_channels, Game_AudioRate, Game_AudioFormat, Game_AudioChannels, Game_AudioRate);
+
+                sample->start = malloc(newlen_bytes * cvt.len_mult * form_mult);
+
+                cvt.buf = (Uint8 *) sample->start;
+                cvt.len = newlen_bytes * form_mult;
+
+                if (sample->_16bit && sample->_signed)
+                {
+                    converted_data = NULL;
+                }
+                else
+                {
+                    converted_data = (int16_t *)malloc(sample->len * (sample->_16bit ? 1 : 2));
+
+                    out_len = sample->len;
+                    if (sample->_16bit)
+                    {
+                        out_len >>= 1;
+                        for (in_len = 0; in_len < out_len; in_len++)
+                        {
+                            converted_data[in_len] = ((uint16_t *)sample->sound)[in_len] - 32768;
+                        }
+                    }
+                    else if (sample->_signed)
+                    {
+                        for (in_len = 0; in_len < out_len; in_len++)
+                        {
+                            uint8_t value;
+                            value = ((uint8_t *)sample->sound)[in_len];
+                            converted_data[in_len] = (value << 8) | (value ^ 0x80);
+                        }
+                    }
+                    else
+                    {
+                        for (in_len = 0; in_len < out_len; in_len++)
+                        {
+                            uint8_t value;
+                            value = ((uint8_t *)sample->sound)[in_len];
+                            converted_data[in_len] = ((value << 8) | value) - 32768;
+                        }
+                    }
+                }
+
+                speex_resampler_set_rate(resampler, sample->playback_rate, Game_AudioRate);
+
+                in_len = sample->len;
+                if (sample->_stereo) in_len >>= 1;
+                if (sample->_16bit) in_len >>= 1;
+                out_len = newlen_samples;
+
+                if (sample->_stereo)
+                {
+                    speex_resampler_process_interleaved_int(resampler, (converted_data != NULL) ? converted_data : (int16_t *)sample->sound, &in_len, (int16_t *)cvt.buf, &out_len);
+                }
+                else
+                {
+                    speex_resampler_process_int(resampler, 0, (converted_data != NULL) ? converted_data : (int16_t *)sample->sound, &in_len, (int16_t *)cvt.buf, &out_len);
+                }
+
+                if (converted_data != NULL)
+                {
+                    free(converted_data);
+                }
+            }
+            else
+#endif
 #if defined(USE_SDL2)
             if (Game_ResamplingQuality <= 0)
 #endif
             {
                 // interpolated resampling
-                uint32_t newlen_bytes, newlen_samples, form_mult;
-
                 resample_type = 2;
 
                 newlen_bytes = Get_Resampled_Size(sample->_stereo, sample->_16bit, sample->playback_rate, Game_AudioRate, sample->len, &newlen_samples);
 
-                if ((!(sample->_16bit)) && ((Game_AudioFormat == AUDIO_S8) || (Game_AudioFormat == AUDIO_U8)))
-                {
-                    audio_format = Game_AudioFormat;
-                }
-                else
-                {
-                    audio_format = AUDIO_S16LSB;
-                }
+                audio_format = ((!(sample->_16bit)) && ((Game_AudioFormat == AUDIO_S8) || (Game_AudioFormat == AUDIO_U8))) ? Game_AudioFormat : AUDIO_S16LSB;
 
-                if ((!(sample->_16bit)) && (Game_AudioFormat != AUDIO_S8) && (Game_AudioFormat != AUDIO_U8))
-                {
-                    form_mult = 2;
-                }
-                else
-                {
-                    form_mult = 1;
-                }
+                form_mult = ((!(sample->_16bit)) && (Game_AudioFormat != AUDIO_S8) && (Game_AudioFormat != AUDIO_U8)) ? 2 : 1;
 
                 SDL_BuildAudioCVT(&cvt, audio_format, audio_channels, Game_AudioRate, Game_AudioFormat, Game_AudioChannels, Game_AudioRate);
 
@@ -459,6 +532,14 @@ void Game_StopSound(void)
         Game_samples[1].active = 0;
         Mix_HaltChannel(GAME_SOUND_CHANNEL);
     }
+
+#ifdef USE_SPEEXDSP_RESAMPLER
+    if (resampler != NULL)
+    {
+        speex_resampler_destroy(resampler);
+        resampler = NULL;
+    }
+#endif
 }
 
 int16_t Game_PostAudioPending(struct _DIGPAK_SNDSTRUC_ *sndplay)
@@ -493,6 +574,14 @@ int16_t Game_SetPlayMode(int16_t playmode)
     else fprintf(stderr, "unknown\n");
 #endif
 
+#ifdef USE_SPEEXDSP_RESAMPLER
+    if (resampler != NULL)
+    {
+        speex_resampler_destroy(resampler);
+        resampler = NULL;
+    }
+#endif
+
     switch (playmode)
     {
         case 0:
@@ -518,6 +607,23 @@ int16_t Game_SetPlayMode(int16_t playmode)
         default:
             return 0; // mode not supported by this driver
     }
+
+#ifdef USE_SPEEXDSP_RESAMPLER
+    if (Game_ResamplingQuality > 0)
+    {
+        int err;
+
+        resampler = speex_resampler_init(Game_SoundStereo ? 2 : 1, Game_AudioRate, Game_AudioRate, SPEEX_RESAMPLER_QUALITY_DESKTOP, &err);
+        if ((resampler == NULL) || (err != RESAMPLER_ERR_SUCCESS))
+        {
+            resampler = NULL;
+        }
+        else
+        {
+            speex_resampler_skip_zeros(resampler);
+        }
+    }
+#endif
 
     return 1; // mode set
 }

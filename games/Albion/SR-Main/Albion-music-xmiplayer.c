@@ -27,6 +27,9 @@
 #include "xmi2mid.h"
 #include "Albion-music-xmiplayer.h"
 #include <math.h>
+#ifdef USE_SPEEXDSP_RESAMPLER
+#include <speex/speex_resampler.h>
+#endif
 
 #if ( \
     defined(__aarch64__) || \
@@ -94,6 +97,10 @@ typedef struct _midi_channel {
     int32_t rate;
     uint64_t pos;
     uint64_t pos_inc;
+#ifdef USE_SPEEXDSP_RESAMPLER
+    SpeexResamplerState *resampler;
+    float *converted_data;
+#endif
 } midi_channel;
 
 typedef struct _xmi_player {
@@ -109,6 +116,10 @@ typedef struct _xmi_player {
     uint32_t seq_len;
     uint32_t event_time;
     const uint8_t *current_event;
+    int32_t *accum_data;
+#ifdef USE_SPEEXDSP_RESAMPLER
+    float *resampled_data;
+#endif
     midi_channel channels[16];
 } xmi_player;
 
@@ -122,6 +133,16 @@ typedef struct _xmi_player {
         res = (res << 7) | (___data & 0x7f);    \
     } while (___data & 0x80);                   }
 
+
+static inline int32_t S8toS16(uint8_t a)
+{
+    return (int16_t)((a << 8) | (a ^ 0x80));
+}
+
+static inline int32_t U8toS16(uint8_t a)
+{
+    return ((a << 8) | a) - 32768;
+}
 
 static void update_channel_instrument(const WAVE_ENTRY *wave_synthetizer, midi_channel *channel)
 {
@@ -150,6 +171,19 @@ static void update_channel_instrument(const WAVE_ENTRY *wave_synthetizer, midi_c
         channel->instrument = new_instrument;
         channel->note_volume = 0;
 
+#ifdef USE_SPEEXDSP_RESAMPLER
+        if (channel->resampler != NULL)
+        {
+            speex_resampler_destroy(channel->resampler);
+            channel->resampler = NULL;
+        }
+        if (channel->converted_data != NULL)
+        {
+            free(channel->converted_data);
+            channel->converted_data = NULL;
+        }
+#endif
+
         if (new_instrument != NULL)
         {
             channel->sample_data = new_instrument->file_offset + (const uint8_t *)wave_synthetizer;
@@ -169,8 +203,65 @@ static void update_channel_instrument(const WAVE_ENTRY *wave_synthetizer, midi_c
             channel->format = (new_instrument->format & 3) | ((new_instrument->flags & 1) << 2);
             channel->key = new_instrument->root_key;
             channel->rate = new_instrument->playback_rate;
+
+#ifdef USE_SPEEXDSP_RESAMPLER
+            if (Game_ResamplingQuality > 0) do
+            {
+                int err, index, converted_length;
+
+                channel->resampler = speex_resampler_init((new_instrument->format & DIG_F_STEREO_MASK)?2:1, new_instrument->playback_rate, new_instrument->playback_rate, SPEEX_RESAMPLER_QUALITY_DESKTOP, &err);
+                if ((channel->resampler == NULL) || (err != RESAMPLER_ERR_SUCCESS))
+                {
+                    channel->resampler = NULL;
+                    break;
+                }
+
+                converted_length = channel->sample_length * ((new_instrument->format & DIG_F_STEREO_MASK)?2:1);
+
+                channel->converted_data = (float *)malloc(converted_length * sizeof(float));
+                if (channel->converted_data == NULL)
+                {
+                    speex_resampler_destroy(channel->resampler);
+                    channel->resampler = NULL;
+                    break;
+                }
+
+                switch (channel->format)
+                {
+                    case 0: // 8-bit, mono, unsigned
+                    case 2: // 8-bit, stereo, unsigned
+                        for (index = 0; index < converted_length; index++)
+                        {
+                            channel->converted_data[index] = U8toS16(((uint8_t *)channel->sample_data)[index]);
+                        }
+                        break;
+                    case 1: // 16-bit, mono, unsigned
+                    case 3: // 16-bit, stereo, unsigned
+                        for (index = 0; index < converted_length; index++)
+                        {
+                            channel->converted_data[index] = ((uint16_t *)channel->sample_data)[index] - 32768;
+                        }
+                        break;
+                    case 4: // 8-bit, mono, signed
+                    case 6: // 8-bit, stereo, signed
+                        for (index = 0; index < converted_length; index++)
+                        {
+                            channel->converted_data[index] = S8toS16(((uint8_t *)channel->sample_data)[index]);
+                        }
+                        break;
+                    case 5: // 16-bit, mono, signed
+                    case 7: // 16-bit, stereo, signed
+                        for (index = 0; index < converted_length; index++)
+                        {
+                            channel->converted_data[index] = ((int16_t *)channel->sample_data)[index];
+                        }
+                        break;
+                }
+            } while (0);
+#endif
         }
     }
+
 }
 
 static void update_channel_volume(midi_channel *channel)
@@ -194,6 +285,26 @@ struct _xmi_player *xmi_player_create(unsigned int rate, const void *wave_synthe
     player->samples_per_tick = rate / 120;
     player->wave_synthetizer = (const WAVE_ENTRY *) wave_synthetizer;
 
+    player->accum_data = (int32_t *)malloc(player->samples_per_tick * 2 * sizeof(int32_t));
+    if (player->accum_data == NULL)
+    {
+        free(player);
+        return NULL;
+    }
+
+#ifdef USE_SPEEXDSP_RESAMPLER
+    if (Game_ResamplingQuality > 0)
+    {
+        player->resampled_data = (float *)malloc(player->samples_per_tick * 2 * sizeof(float));
+        if (player->resampled_data == NULL)
+        {
+            free(player->accum_data);
+            free(player);
+            return NULL;
+        }
+    }
+#endif
+
     for (ch = 0; ch < 16; ch++)
     {
         update_channel_instrument(player->wave_synthetizer, &(player->channels[ch]));
@@ -205,6 +316,19 @@ struct _xmi_player *xmi_player_create(unsigned int rate, const void *wave_synthe
 void xmi_player_destroy(struct _xmi_player *player)
 {
     if (player == NULL) return;
+
+    xmi_player_close(player);
+
+    if (player->accum_data != NULL)
+    {
+        free(player->accum_data);
+    }
+#ifdef USE_SPEEXDSP_RESAMPLER
+    if (player->resampled_data != NULL)
+    {
+        free(player->resampled_data);
+    }
+#endif
 
     free(player);
 }
@@ -240,10 +364,29 @@ int xmi_player_open(struct _xmi_player *player, const uint8_t *xmi, int seq_num)
 
 void xmi_player_close(struct _xmi_player *player)
 {
+    int ch;
+
     if (player == NULL) return;
 
     player->playing = 0;
     player->seq = NULL;
+
+    for (ch = 0; ch < 16; ch++)
+    {
+        player->channels[ch].instrument = NULL;
+#ifdef USE_SPEEXDSP_RESAMPLER
+        if (player->channels[ch].resampler != NULL)
+        {
+            speex_resampler_destroy(player->channels[ch].resampler);
+            player->channels[ch].resampler = NULL;
+        }
+        if (player->channels[ch].converted_data != NULL)
+        {
+            free(player->channels[ch].converted_data);
+            player->channels[ch].converted_data = NULL;
+        }
+#endif
+    }
 }
 
 void xmi_player_set_volume(struct _xmi_player *player, int volume)
@@ -258,16 +401,6 @@ void xmi_player_set_loop_count(struct _xmi_player *player, int loop_count)
     if (player == NULL) return;
 
     player->loop_count = loop_count;
-}
-
-static inline int32_t S8toS16(uint8_t a)
-{
-    return (int16_t)((a << 8) | (a ^ 0x80));
-}
-
-static inline int32_t U8toS16(uint8_t a)
-{
-    return ((a << 8) | a) - 32768;
 }
 
 static inline int32_t clamp(int32_t value) {
@@ -290,7 +423,7 @@ void xmi_player_get_data(struct _xmi_player *player, void *buffer, uint32_t size
     const uint8_t *event_data;
     unsigned int status, var_len, index;
     midi_channel *channel;
-    int32_t accum_left, accum_right, left, right, frac;
+    int32_t left, right, frac;
 
     if ((buffer == NULL) || (size == 0)) return;
 
@@ -299,6 +432,8 @@ void xmi_player_get_data(struct _xmi_player *player, void *buffer, uint32_t size
     if ((player == NULL) || (!player->playing)) return;
 
     size >>= 2;
+
+    left = right = 0; // silence warnings
 
     while (size != 0)
     {
@@ -347,7 +482,7 @@ void xmi_player_get_data(struct _xmi_player *player, void *buffer, uint32_t size
                 switch (status >> 4)
                 {
                     case 0x08: // note off
-                        // shouldn't exist it xmi
+                        // shouldn't exist in xmi
                         player->channels[status & 0x0f].note_volume = 0;
                         player->current_event = event_data + 2;
                         break;
@@ -360,6 +495,12 @@ void xmi_player_get_data(struct _xmi_player *player, void *buffer, uint32_t size
                             if ((channel->key == event_data[0]) && (channel->pitch_bend == 0))
                             {
                                 channel->pos_inc = (((int64_t)channel->rate) << 32) / player->rate;
+#ifdef USE_SPEEXDSP_RESAMPLER
+                                if (channel->resampler != NULL)
+                                {
+                                    speex_resampler_set_rate(channel->resampler, channel->rate, player->rate);
+                                }
+#endif
                             }
                             else
                             {
@@ -367,7 +508,20 @@ void xmi_player_get_data(struct _xmi_player *player, void *buffer, uint32_t size
                                 double key_diff = (event_data[0] - channel->key) + (channel->pitch_bend * player->pitch_bend_sensitivity / 8192.0);
                                 double new_rate = pow(twelfth_root_two, key_diff) * channel->rate;
                                 channel->pos_inc = ((int64_t)(new_rate * 4294967296.0)) / player->rate;
+#ifdef USE_SPEEXDSP_RESAMPLER
+                                if (channel->resampler != NULL)
+                                {
+                                    speex_resampler_set_rate(channel->resampler, (int32_t)new_rate, player->rate);
+                                }
+#endif
                             }
+#ifdef USE_SPEEXDSP_RESAMPLER
+                            if (channel->resampler != NULL)
+                            {
+                                speex_resampler_reset_mem(channel->resampler);
+                                speex_resampler_skip_zeros(channel->resampler);
+                            }
+#endif
 
                             channel->note_volume = event_data[1];
                             update_channel_volume(channel);
@@ -490,43 +644,84 @@ void xmi_player_get_data(struct _xmi_player *player, void *buffer, uint32_t size
         player->samples_left -= count;
         size -= count;
 
-        for (index = 0; index < count; index++)
-        {
-            accum_left = accum_right = 0;
-            for (ch = 0; ch < 16; ch++)
-            {
-                channel = &(player->channels[ch]);
-                if (channel->note_volume == 0) continue;
 
+        memset(player->accum_data, 0, count * 2 * sizeof(int32_t));
+
+        for (ch = 0; ch < 16; ch++)
+        {
+            channel = &(player->channels[ch]);
+            if (channel->note_volume == 0) continue;
+
+#ifdef USE_SPEEXDSP_RESAMPLER
+            if (channel->resampler != NULL)
+            {
+                int err;
+                spx_uint32_t in_len, out_len;
+
+                in_len = channel->sample_length - channel->pos;
+                out_len = count;
+
+                if (channel->format & DIG_F_STEREO_MASK)
+                {
+                    // stereo
+                    err = speex_resampler_process_interleaved_float(channel->resampler, &(channel->converted_data[2 * channel->pos]), &in_len, player->resampled_data, &out_len);
+                    if (err == RESAMPLER_ERR_SUCCESS)
+                    {
+                        channel->pos += in_len;
+                        if (out_len < count)
+                        {
+                            channel->note_volume = 0;
+                        }
+
+                        for (index = 0; index < out_len; index++)
+                        {
+                            player->accum_data[2 * index] += (((int32_t)player->resampled_data[2 * index]) * channel->volume_left) >> (7 + 6);
+                            player->accum_data[2 * index + 1] += (((int32_t)player->resampled_data[2 * index + 1]) * channel->volume_right) >> (7 + 6);
+                        }
+                    }
+                }
+                else
+                {
+                    // mono
+                    err = speex_resampler_process_float(channel->resampler, 0, &(channel->converted_data[channel->pos]), &in_len, player->resampled_data, &out_len);
+                    if (err == RESAMPLER_ERR_SUCCESS)
+                    {
+                        channel->pos += in_len;
+                        if (out_len < count)
+                        {
+                            channel->note_volume = 0;
+                        }
+
+                        for (index = 0; index < out_len; index++)
+                        {
+                            player->accum_data[2 * index] += (((int32_t)player->resampled_data[index]) * channel->volume_left) >> (7 + 6);
+                            player->accum_data[2 * index + 1] += (((int32_t)player->resampled_data[index]) * channel->volume_right) >> (7 + 6);
+                        }
+                    }
+                }
+            }
+            else
+#endif
+            for (index = 0; index < count; index++)
+            {
                 pos1 = channel->pos >> 32;
                 frac = ((uint32_t)channel->pos) >> 16;
                 pos2 = pos1 + 1;
                 if (pos2 >= channel->sample_length) pos2 = pos1;
 
-                channel->pos += channel->pos_inc;
-                if ((channel->pos >> 32) >= channel->sample_length)
-                {
-                    channel->note_volume = 0;
-                }
-
                 switch (channel->format)
                 {
                     case 0: // 8-bit, mono, unsigned
-                        //left = (U8toS16(((uint8_t *)channel->sample_data)[pos1]) * (int32_t)(0x10000 - frac)) >> 16;
-                        left = (
+                        left = right = (
                             U8toS16(((uint8_t *)channel->sample_data)[pos1]) * (0x10000 - frac) +
                             U8toS16(((uint8_t *)channel->sample_data)[pos2]) * frac
                             ) >> 16;
-                        accum_left += (left * channel->volume_left) >> (7 + 6);
-                        accum_right += (left * channel->volume_right) >> (7 + 6);
                         break;
                     case 1: // 16-bit, mono, unsigned
-                        left = (
+                        left = right = (
                             (((uint16_t *)channel->sample_data)[pos1] - 32768) * (0x10000 - frac) +
                             (((uint16_t *)channel->sample_data)[pos2] - 32768) * frac
                             ) >> 16;
-                        accum_left += (left * channel->volume_left) >> (7 + 6);
-                        accum_right += (left * channel->volume_right) >> (7 + 6);
                         break;
                     case 2: // 8-bit, stereo, unsigned
                         left = (
@@ -537,8 +732,6 @@ void xmi_player_get_data(struct _xmi_player *player, void *buffer, uint32_t size
                             U8toS16(((uint8_t *)channel->sample_data)[2 * pos1 + 1]) * (0x10000 - frac) +
                             U8toS16(((uint8_t *)channel->sample_data)[2 * pos2 + 1]) * frac
                             ) >> 16;
-                        accum_left += (left * channel->volume_left) >> (7 + 6);
-                        accum_right += (right * channel->volume_right) >> (7 + 6);
                         break;
                     case 3: // 16-bit, stereo, unsigned
                         left = (
@@ -549,24 +742,18 @@ void xmi_player_get_data(struct _xmi_player *player, void *buffer, uint32_t size
                             (((uint16_t *)channel->sample_data)[2 * pos1 + 1] - 32768) * (0x10000 - frac) +
                             (((uint16_t *)channel->sample_data)[2 * pos2 + 1] - 32768) * frac
                             ) >> 16;
-                        accum_left += (left * channel->volume_left) >> (7 + 6);
-                        accum_right += (right * channel->volume_right) >> (7 + 6);
                         break;
                     case 4: // 8-bit, mono, signed
-                        left = (
+                        left = right = (
                             S8toS16(((uint8_t *)channel->sample_data)[pos1]) * (0x10000 - frac) +
                             S8toS16(((uint8_t *)channel->sample_data)[pos2]) * frac
                             ) >> 16;
-                        accum_left += (left * channel->volume_left) >> (7 + 6);
-                        accum_right += (left * channel->volume_right) >> (7 + 6);
                         break;
                     case 5: // 16-bit, mono, signed
-                        left = (
+                        left = right = (
                             ((int16_t *)channel->sample_data)[pos1] * (0x10000 - frac) +
                             ((int16_t *)channel->sample_data)[pos2] * frac
                             ) >> 16;
-                        accum_left += (left * channel->volume_left) >> (7 + 6);
-                        accum_right += (left * channel->volume_right) >> (7 + 6);
                         break;
                     case 6: // 8-bit, stereo, signed
                         left = (
@@ -577,8 +764,6 @@ void xmi_player_get_data(struct _xmi_player *player, void *buffer, uint32_t size
                             S8toS16(((uint8_t *)channel->sample_data)[2 * pos1 + 1]) * (0x10000 - frac) +
                             S8toS16(((uint8_t *)channel->sample_data)[2 * pos2 + 1]) * frac
                             ) >> 16;
-                        accum_left += (left * channel->volume_left) >> (7 + 6);
-                        accum_right += (right * channel->volume_right) >> (7 + 6);
                         break;
                     case 7: // 16-bit, stereo, signed
                         left = (
@@ -589,16 +774,28 @@ void xmi_player_get_data(struct _xmi_player *player, void *buffer, uint32_t size
                             ((int16_t *)channel->sample_data)[2 * pos1 + 1] * (0x10000 - frac) +
                             ((int16_t *)channel->sample_data)[2 * pos2 + 1] * frac
                             ) >> 16;
-                        accum_left += (left * channel->volume_left) >> (7 + 6);
-                        accum_right += (right * channel->volume_right) >> (7 + 6);
                         break;
                 }
-            }
 
-            ((int16_t *)buffer)[0] = clamp((accum_left * player->volume) >> 7);
-            ((int16_t *)buffer)[1] = clamp((accum_right * player->volume) >> 7);
-            buffer = &(((int16_t *)buffer)[2]);
+                player->accum_data[2 * index] += (left * channel->volume_left) >> (7 + 6);
+                player->accum_data[2 * index + 1] += (right * channel->volume_right) >> (7 + 6);
+
+                channel->pos += channel->pos_inc;
+                if ((channel->pos >> 32) >= channel->sample_length)
+                {
+                    channel->note_volume = 0;
+                    break;
+                }
+            }
         }
+
+        for (index = 0; index < count; index++)
+        {
+            ((int16_t *)buffer)[2 * index] = clamp((player->accum_data[2 * index] * player->volume) >> 7);
+            ((int16_t *)buffer)[2 * index + 1] = clamp((player->accum_data[2 * index + 1] * player->volume) >> 7);
+        }
+
+        buffer = &(((int16_t *)buffer)[2 * count]);
     }
 }
 

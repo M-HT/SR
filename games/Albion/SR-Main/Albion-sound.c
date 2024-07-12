@@ -29,6 +29,9 @@
 #include "Game_vars.h"
 #include "Albion-sound.h"
 #include "Albion-AIL.h"
+#ifdef USE_SPEEXDSP_RESAMPLER
+#include <speex/speex_resampler.h>
+#endif
 
 
 typedef struct _AIL_sample
@@ -428,62 +431,137 @@ void Game_AIL_start_sample(struct _AIL_sample *S)
 
                 memset(&cvt, 0, sizeof(SDL_AudioCVT));
 
-                channels = (S->_stereo)?2:1;
+                channels = (S->_stereo) ? 2 : 1;
 
                 if (S->_16bit)
                 {
-                    if (S->_signed)
-                    {
-                        format = AUDIO_S16LSB;
-                    }
-                    else
-                    {
-                        format = AUDIO_U16LSB;
-                    }
+                    format = (S->_signed) ? AUDIO_S16LSB : AUDIO_U16LSB;
                 }
                 else
                 {
-                    if (S->_signed)
-                    {
-                        format = AUDIO_S8;
-                    }
-                    else
-                    {
-                        format = AUDIO_U8;
-                    }
+                    format = (S->_signed) ? AUDIO_S8 : AUDIO_U8;
                 }
 
                 resample_type = 0;
                 if (Game_AudioRate != S->playback_rate)
                 {
+                    uint32_t newlen_bytes, newlen_samples, form_mult;
+
+#ifdef USE_SPEEXDSP_RESAMPLER
+                    if (Game_ResamplingQuality > 0)
+                    {
+                        SpeexResamplerState *resampler;
+                        int err;
+                        spx_uint32_t in_len, out_len;
+                        int16_t *converted_data;
+
+                        resample_type = 3;
+
+                        newlen_bytes = Get_Resampled_Size(S->_stereo, S->_16bit, S->playback_rate, Game_AudioRate, S->len, &newlen_samples);
+
+                        form_mult = (S->_16bit) ? 1 : 2;
+
+                        SDL_BuildAudioCVT(&cvt, AUDIO_S16LSB, channels, Game_AudioRate, Game_AudioFormat, Game_AudioChannels, Game_AudioRate);
+
+                        sample = (Game_sample *) malloc(sizeof(Game_sample) + newlen_bytes * cvt.len_mult * form_mult);
+
+                        sample->start = (uint8_t *) S->start;
+                        sample->len = S->len;
+
+                        cvt.buf = (Uint8 *) &(sample->data);
+                        cvt.len = newlen_bytes * form_mult;
+
+                        resampler = speex_resampler_init(channels, S->playback_rate, Game_AudioRate, SPEEX_RESAMPLER_QUALITY_DESKTOP, &err);
+                        if ((resampler != NULL) && (err == RESAMPLER_ERR_SUCCESS))
+                        {
+                            if (S->_16bit && S->_signed)
+                            {
+                                converted_data = NULL;
+                            }
+                            else
+                            {
+                                converted_data = (int16_t *)malloc(S->len * (S->_16bit ? 1 : 2));
+                                if (converted_data != NULL)
+                                {
+                                    out_len = S->len;
+                                    if (S->_16bit)
+                                    {
+                                        out_len >>= 1;
+                                        for (in_len = 0; in_len < out_len; in_len++)
+                                        {
+                                            converted_data[in_len] = ((uint16_t *)sample->start)[in_len] - 32768;
+                                        }
+                                    }
+                                    else if (S->_signed)
+                                    {
+                                        for (in_len = 0; in_len < out_len; in_len++)
+                                        {
+                                            uint8_t value;
+                                            value = ((uint8_t *)sample->start)[in_len];
+                                            converted_data[in_len] = (value << 8) | (value ^ 0x80);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        for (in_len = 0; in_len < out_len; in_len++)
+                                        {
+                                            uint8_t value;
+                                            value = ((uint8_t *)sample->start)[in_len];
+                                            converted_data[in_len] = ((value << 8) | value) - 32768;
+                                        }
+                                    }
+                                }
+                                else err = RESAMPLER_ERR_ALLOC_FAILED;
+                            }
+
+                            if (err == RESAMPLER_ERR_SUCCESS)
+                            {
+                                speex_resampler_skip_zeros(resampler);
+
+                                in_len = S->len;
+                                if (S->_stereo) in_len >>= 1;
+                                if (S->_16bit) in_len >>= 1;
+                                out_len = newlen_samples;
+
+                                if (S->_stereo)
+                                {
+                                    err = speex_resampler_process_interleaved_int(resampler, (converted_data != NULL) ? converted_data : (int16_t *)sample->start, &in_len, (int16_t *)cvt.buf, &out_len);
+                                }
+                                else
+                                {
+                                    err = speex_resampler_process_int(resampler, 0, (converted_data != NULL) ? converted_data : (int16_t *)sample->start, &in_len, (int16_t *)cvt.buf, &out_len);
+                                }
+                            }
+
+                            if (converted_data != NULL)
+                            {
+                                free(converted_data);
+                            }
+
+                            speex_resampler_destroy(resampler);
+                        }
+                        else err = RESAMPLER_ERR_ALLOC_FAILED;
+
+                        if (err != RESAMPLER_ERR_SUCCESS)
+                        {
+                            free(sample);
+                            resample_type = 0;
+                        }
+                    }
+                    else
+#endif
 #if defined(USE_SDL2)
                     if (Game_ResamplingQuality <= 0)
 #endif
                     {
                         // interpolated resampling
-                        uint32_t newlen_bytes, newlen_samples, form_mult;
-
                         resample_type = 2;
 
                         newlen_bytes = Get_Resampled_Size(S->_stereo, S->_16bit, S->playback_rate, Game_AudioRate, S->len, &newlen_samples);
 
-                        if ((!(S->_16bit)) && ((Game_AudioFormat == AUDIO_S8) || (Game_AudioFormat == AUDIO_U8)))
-                        {
-                            format = Game_AudioFormat;
-                        }
-                        else
-                        {
-                            format = AUDIO_S16LSB;
-                        }
+                        format = ((!(S->_16bit)) && ((Game_AudioFormat == AUDIO_S8) || (Game_AudioFormat == AUDIO_U8))) ? Game_AudioFormat : AUDIO_S16LSB;
 
-                        if ((!(S->_16bit)) && (Game_AudioFormat != AUDIO_S8) && (Game_AudioFormat != AUDIO_U8))
-                        {
-                            form_mult = 2;
-                        }
-                        else
-                        {
-                            form_mult = 1;
-                        }
+                        form_mult = ((!(S->_16bit)) && (Game_AudioFormat != AUDIO_S8) && (Game_AudioFormat != AUDIO_U8)) ? 2 : 1;
 
                         SDL_BuildAudioCVT(&cvt, format, channels, Game_AudioRate, Game_AudioFormat, Game_AudioChannels, Game_AudioRate);
 
@@ -495,17 +573,6 @@ void Game_AIL_start_sample(struct _AIL_sample *S)
                         cvt.buf = (Uint8 *) &(sample->data);
                         cvt.len = newlen_bytes * form_mult;
                         Interpolated_Resample(S->_stereo, S->_16bit, S->_signed, S->playback_rate, Game_AudioRate, sample->start, cvt.buf, S->len, newlen_samples);
-
-                        if (sample->len >= 4)
-                        {
-                            sample->orig_data[0] = *( (uint32_t *) &(sample->start[((sample->len - 4) / 8) & 0xfffffffcUL]) );
-                            sample->orig_data[1] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 2) / 8) & 0xfffffffcUL]) );
-                            sample->orig_data[2] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 3) / 8) & 0xfffffffcUL]) );
-                            sample->orig_data[3] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 4) / 8) & 0xfffffffcUL]) );
-                            sample->orig_data[4] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 5) / 8) & 0xfffffffcUL]) );
-                            sample->orig_data[5] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 6) / 8) & 0xfffffffcUL]) );
-                            sample->orig_data[6] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 7) / 8) & 0xfffffffcUL]) );
-                        }
                     }
                 }
 
@@ -523,17 +590,17 @@ void Game_AIL_start_sample(struct _AIL_sample *S)
                     cvt.buf = (Uint8 *) &(sample->data);
                     cvt.len = S->len;
                     memcpy(cvt.buf, S->start, cvt.len);
+                }
 
-                    if (cvt.len >= 4)
-                    {
-                        sample->orig_data[0] = *( (uint32_t *) &(cvt.buf[((cvt.len - 4) / 8) & 0xfffffffcUL]) );
-                        sample->orig_data[1] = *( (uint32_t *) &(cvt.buf[(((cvt.len - 4) * 2) / 8) & 0xfffffffcUL]) );
-                        sample->orig_data[2] = *( (uint32_t *) &(cvt.buf[(((cvt.len - 4) * 3) / 8) & 0xfffffffcUL]) );
-                        sample->orig_data[3] = *( (uint32_t *) &(cvt.buf[(((cvt.len - 4) * 4) / 8) & 0xfffffffcUL]) );
-                        sample->orig_data[4] = *( (uint32_t *) &(cvt.buf[(((cvt.len - 4) * 5) / 8) & 0xfffffffcUL]) );
-                        sample->orig_data[5] = *( (uint32_t *) &(cvt.buf[(((cvt.len - 4) * 6) / 8) & 0xfffffffcUL]) );
-                        sample->orig_data[6] = *( (uint32_t *) &(cvt.buf[(((cvt.len - 4) * 7) / 8) & 0xfffffffcUL]) );
-                    }
+                if (sample->len >= 4)
+                {
+                    sample->orig_data[0] = *( (uint32_t *) &(sample->start[((sample->len - 4) / 8) & 0xfffffffcUL]) );
+                    sample->orig_data[1] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 2) / 8) & 0xfffffffcUL]) );
+                    sample->orig_data[2] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 3) / 8) & 0xfffffffcUL]) );
+                    sample->orig_data[3] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 4) / 8) & 0xfffffffcUL]) );
+                    sample->orig_data[4] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 5) / 8) & 0xfffffffcUL]) );
+                    sample->orig_data[5] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 6) / 8) & 0xfffffffcUL]) );
+                    sample->orig_data[6] = *( (uint32_t *) &(sample->start[(((sample->len - 4) * 7) / 8) & 0xfffffffcUL]) );
                 }
 
                 SDL_ConvertAudio(&cvt);

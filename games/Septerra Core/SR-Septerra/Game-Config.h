@@ -44,6 +44,7 @@ GAME_CONFIG_STORAGE int Display_ScalingQuality; /* scaling quality - 0 = nearest
 GAME_CONFIG_STORAGE int Display_IntegerScaling; /* integer scaling ? */
 GAME_CONFIG_STORAGE int Display_DelayAfterFlip; /* delay after image flip in miliseconds */
 
+GAME_CONFIG_STORAGE int Audio_SampleRate;       /* audio sample rate (in Hz) */
 GAME_CONFIG_STORAGE int Audio_BufferSize;       /* audio buffer size (in samples) */
 GAME_CONFIG_STORAGE int Audio_ResamplingQuality;/* resampling quality
                                                        0: normal quality

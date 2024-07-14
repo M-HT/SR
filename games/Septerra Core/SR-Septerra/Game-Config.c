@@ -78,6 +78,7 @@ void ReadConfiguration(void)
     Display_IntegerScaling = 0;
     Display_DelayAfterFlip = 0;
 
+    Audio_SampleRate = 0;
     Audio_BufferSize = 0;
     Audio_ResamplingQuality = 0;
 
@@ -276,7 +277,16 @@ void ReadConfiguration(void)
 
             str += 6;
 
-            if ( strcasecmp(str, "BufferSize") == 0 ) // str equals "BufferSize"
+            if ( strcasecmp(str, "SampleRate") == 0 ) // str equals "SampleRate"
+            {
+                num_int = 0;
+                sscanf(param, "%i", &num_int);
+                if (num_int > 0)
+                {
+                    Audio_SampleRate = num_int;
+                }
+            }
+            else if ( strcasecmp(str, "BufferSize") == 0 ) // str equals "BufferSize"
             {
                 num_int = 0;
                 sscanf(param, "%i", &num_int);

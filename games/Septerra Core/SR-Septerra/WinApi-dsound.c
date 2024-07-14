@@ -1262,10 +1262,10 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
         lpDSB_c->first = NULL;
         lpDSB_c->num_channels = 0;
 
-        desired.freq = 44100;
+        desired.freq = (Audio_SampleRate) ? Audio_SampleRate : 44100;
         desired.format = AUDIO_S16LSB;
         desired.channels = 2;
-        desired.samples = (Audio_BufferSize) ? (((Audio_BufferSize + 127) >> 7) << 7) : 1024;
+        desired.samples = (Audio_BufferSize) ? (((Audio_BufferSize + 127) >> 7) << 7) : (256 * (desired.freq / 11025));
         desired.callback = &fill_audio;
         desired.userdata = lpDSB_c;
 
@@ -1967,6 +1967,10 @@ uint32_t IDirectSoundBuffer_SetFormat_c(struct IDirectSoundBuffer_c *lpThis, con
     {
         desired.freq = 44100;
     }
+    if (Audio_SampleRate)
+    {
+        desired.freq = Audio_SampleRate;
+    }
 
     if ((desired.freq == lpThis->freq) &&
         (desired.format == lpThis->format) &&
@@ -1978,7 +1982,7 @@ uint32_t IDirectSoundBuffer_SetFormat_c(struct IDirectSoundBuffer_c *lpThis, con
         return DS_OK;
     }
 
-    desired.samples = (Audio_BufferSize) ? (((Audio_BufferSize + 127) >> 7) << 7) : (256 * (pcfxFormat->nSamplesPerSec / 11025));
+    desired.samples = (Audio_BufferSize) ? (((Audio_BufferSize + 127) >> 7) << 7) : (256 * (desired.freq / 11025));
     desired.callback = &fill_audio;
     desired.userdata = lpThis;
 

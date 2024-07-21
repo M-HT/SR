@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -23,7 +23,12 @@
  */
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+    #ifndef WINVER
+    #define WINVER 0x0602
+    #endif
     #include <windows.h>
+    #include <cfgmgr32.h>
+    #include <mmddk.h>
 #endif
 
 #include <stdlib.h>
@@ -34,8 +39,37 @@
 static unsigned char *reset_controller_events = NULL;
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+// Multimedia Class Scheduler Service Functions
+typedef HANDLE(WINAPI *AvSetMmThreadCharacteristicsWFunc) (LPCWSTR TaskName, LPDWORD TaskIndex);
+typedef BOOL(WINAPI *AvRevertMmThreadCharacteristicsFunc) (HANDLE AvrtHandle);
+
+// Configuration Manager Notification Functions
+typedef CONFIGRET(WINAPI *CM_Register_Notification_Func) (PCM_NOTIFY_FILTER pFilter, PVOID pContext, PCM_NOTIFY_CALLBACK pCallback, PHCMNOTIFICATION pNotifyContext);
+typedef CONFIGRET(WINAPI *CM_Unregister_Notification_Func) (HCMNOTIFICATION NotifyContext);
+
+enum {
+    NOTIFY_UNREGISTER = 1 << 0,
+    NOTIFY_REREGISTER = 1 << 1,
+    NOTIFY_NEWDEVICE  = 1 << 2
+};
+
 static HMIDISTRM hStream = NULL;
 static HANDLE midi_thread_handle = NULL;
+static char *midi_stream_name = NULL;
+static LPWSTR lpDeviceInterfaceName = NULL;
+static unsigned char *initial_sysex_events = NULL;
+
+static HMODULE hAvrt = NULL;
+static AvSetMmThreadCharacteristicsWFunc dyn_AvSetMmThreadCharacteristicsW;
+static AvRevertMmThreadCharacteristicsFunc dyn_AvRevertMmThreadCharacteristics;
+
+static HMODULE hCfgmgr32 = NULL;
+static CM_Register_Notification_Func dyn_CM_Register_Notification;
+static CM_Unregister_Notification_Func dyn_CM_Unregister_Notification;
+
+static HCMNOTIFICATION hNotificationHandle = NULL;
+static HCMNOTIFICATION hNotificationInstance = NULL;
+static volatile unsigned int notification_events = 0;
 
 static volatile int midi_quit = 0;
 static volatile int midi_loaded = 0;
@@ -47,7 +81,7 @@ static MIDIHDR midi_headers[4];
 static volatile int midi_header_wait = 0;
 static volatile int midi_header_send = 0;
 
-static CRITICAL_SECTION midi_critical_section;
+static CRITICAL_SECTION midi_critical_section, notification_critical_section;
 
 #define GETU32FBE(buf) (			\
             (uint32_t) ( (buf)[0] ) << 24 | \
@@ -486,15 +520,176 @@ midi_error_1:
 }
 
 
+static int send_initial_sysex_events(unsigned char const *sysex_events);
+static void reset_playing(void);
+static void get_device_interface_name(UINT uDeviceID);
+static void register_notifications(void);
+
 static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 {
-	unsigned int num_waiting, send_next;
+	unsigned int num_waiting, send_next, current_notification_events;
+	int midi_stream_exists;
 	midi_data_info *midi_info;
+	HANDLE AvrtHandle;
+	DWORD TaskIndex;
+
+	AvrtHandle = NULL;
+	TaskIndex = 0;
+	if (hAvrt != NULL)
+	{
+		AvrtHandle = dyn_AvSetMmThreadCharacteristicsW(L"Pro Audio", &TaskIndex);
+	}
+
+	midi_stream_exists = 1;
 
 	while (1)
 	{
 		Sleep(10);
-		if (midi_quit) return 0;
+
+		if (midi_quit)
+		{
+			if (AvrtHandle != NULL)
+			{
+				dyn_AvRevertMmThreadCharacteristics(AvrtHandle);
+			}
+			return 0;
+		}
+
+		if (notification_events != 0)
+		{
+			EnterCriticalSection(&notification_critical_section);
+			current_notification_events = notification_events;
+			notification_events = 0;
+			LeaveCriticalSection(&notification_critical_section);
+
+			if ((current_notification_events & NOTIFY_UNREGISTER) && midi_stream_exists)
+			{
+				midi_stream_exists = 0;
+				if (hNotificationHandle != NULL)
+				{
+					dyn_CM_Unregister_Notification(hNotificationHandle);
+					hNotificationHandle = NULL;
+				}
+				if (midi_loaded)
+				{
+					EnterCriticalSection(&midi_critical_section);
+					if (midi_loaded && (midi_loop_count == 0))
+					{
+						midi_next_data = NULL;
+					}
+					LeaveCriticalSection(&midi_critical_section);
+				}
+			}
+			else if ((current_notification_events & NOTIFY_REREGISTER) && midi_stream_exists)
+			{
+				if (hNotificationHandle != NULL)
+				{
+					dyn_CM_Unregister_Notification(hNotificationHandle);
+					hNotificationHandle = NULL;
+				}
+				register_notifications();
+			}
+
+			if ((current_notification_events & NOTIFY_NEWDEVICE) && !midi_stream_exists)
+			{
+				int numDevices, devid;
+				MIDIOUTCAPS midicaps;
+				UINT uDeviceID;
+				MIDIPROPTEMPO miditempo;
+				MIDIPROPTIMEDIV miditimediv;
+
+				numDevices = midiOutGetNumDevs();
+
+				uDeviceID = numDevices;
+				for (devid = 0; devid < numDevices; devid++)
+				{
+					if (MMSYSERR_NOERROR != midiOutGetDevCaps(devid, &midicaps, sizeof(midicaps))) continue;
+
+					if (0 == strcmp(midi_stream_name, midicaps.szPname))
+					{
+						uDeviceID = devid;
+						break;
+					}
+				}
+
+				if (uDeviceID != numDevices)
+				{
+					midi_stream_exists = 1;
+					EnterCriticalSection(&midi_critical_section);
+
+					if (midi_loaded)
+					{
+						miditimediv.cbStruct = sizeof(miditimediv);
+						midiStreamProperty(hStream, (LPBYTE)&miditimediv, MIDIPROP_GET | MIDIPROP_TIMEDIV);
+
+						miditempo.cbStruct = sizeof(miditimediv);
+						midiStreamProperty(hStream, (LPBYTE)&miditempo, MIDIPROP_GET | MIDIPROP_TEMPO);
+					}
+
+					midiStreamStop(hStream);
+
+					while (midi_header_wait != midi_header_send)
+					{
+						midiOutUnprepareHeader((HMIDIOUT)hStream, &(midi_headers[midi_header_wait]), sizeof(MIDIHDR));
+						midi_header_wait = (midi_header_wait + 1) & 3;
+					};
+
+					midiStreamClose(hStream);
+					hStream = NULL;
+
+					if (lpDeviceInterfaceName != NULL)
+					{
+						free(lpDeviceInterfaceName);
+						lpDeviceInterfaceName = NULL;
+					}
+
+					if (MMSYSERR_NOERROR == midiStreamOpen(&hStream, &uDeviceID, 1, 0, 0, CALLBACK_NULL))
+					{
+						get_device_interface_name(uDeviceID);
+						register_notifications();
+
+						if (initial_sysex_events != NULL && *initial_sysex_events == 0xf0)
+						{
+							send_initial_sysex_events(initial_sysex_events);
+						}
+
+						reset_playing();
+
+						if (midi_loaded)
+						{
+							midiStreamProperty(hStream, (LPBYTE)&miditimediv, MIDIPROP_SET | MIDIPROP_TIMEDIV);
+
+							midiStreamProperty(hStream, (LPBYTE)&miditempo, MIDIPROP_SET | MIDIPROP_TEMPO);
+
+							if (midi_next_data != NULL)
+							{
+								midi_next_data = midi_first_data;
+								midi_header_wait = midi_header_send = 0;
+							}
+
+							if (midi_playing)
+							{
+								midiStreamRestart(hStream);
+							}
+						}
+					}
+					else
+					{
+						hStream = NULL;
+						if (midi_loaded)
+						{
+							free_midi_data((uint8_t *) midi_first_data);
+							midi_first_data = midi_next_data = NULL;
+							midi_header_wait = midi_header_send = 0;
+							midi_loaded = 0;
+						}
+					}
+
+					LeaveCriticalSection(&midi_critical_section);
+				}
+			}
+		}
+
 		if (!midi_loaded) continue;
 
 		num_waiting = (midi_header_send + 4 - midi_header_wait) & 3;
@@ -593,9 +788,13 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 }
 
 
-static void send_initial_sysex_events(unsigned char const *sysex_events)
+static int send_initial_sysex_events(unsigned char const *sysex_events)
 {
-	if (hStream == NULL) return;
+	int events_len;
+
+	if (hStream == NULL) return 0;
+
+	events_len = 0;
 
 	while (*sysex_events == 0xf0)
 	{
@@ -610,11 +809,14 @@ static void send_initial_sysex_events(unsigned char const *sysex_events)
 		midihdr.dwFlags = 0;
 
 		sysex_events += len;
+		events_len += len;
 
 		midiOutPrepareHeader((HMIDIOUT)hStream, &midihdr, sizeof(midihdr));
 		midiOutLongMsg((HMIDIOUT)hStream, &midihdr, sizeof(midihdr));
 		midiOutUnprepareHeader((HMIDIOUT)hStream, &midihdr, sizeof(midihdr));
 	};
+
+	return events_len;
 }
 
 
@@ -683,6 +885,159 @@ static void close_midi(void)
 	LeaveCriticalSection(&midi_critical_section);
 
 	reset_playing();
+}
+
+
+static void load_windows_dlls(void)
+{
+	hAvrt = LoadLibraryW(L"avrt.dll");
+	if (hAvrt != NULL)
+	{
+		dyn_AvSetMmThreadCharacteristicsW = (AvSetMmThreadCharacteristicsWFunc)GetProcAddress(hAvrt, "AvSetMmThreadCharacteristicsW");
+		dyn_AvRevertMmThreadCharacteristics = (AvRevertMmThreadCharacteristicsFunc)GetProcAddress(hAvrt, "AvRevertMmThreadCharacteristics");
+		if ((dyn_AvSetMmThreadCharacteristicsW == NULL) || (dyn_AvRevertMmThreadCharacteristics == NULL))
+		{
+			FreeLibrary(hAvrt);
+			hAvrt = NULL;
+		}
+	}
+
+	hCfgmgr32 = LoadLibraryW(L"cfgmgr32.dll");
+	if (hCfgmgr32 != NULL)
+	{
+		dyn_CM_Register_Notification = (CM_Register_Notification_Func)GetProcAddress(hCfgmgr32, "CM_Register_Notification");
+		dyn_CM_Unregister_Notification = (CM_Unregister_Notification_Func)GetProcAddress(hCfgmgr32, "CM_Unregister_Notification");
+		if ((dyn_CM_Register_Notification == NULL) || (dyn_CM_Unregister_Notification == NULL))
+		{
+			FreeLibrary(hCfgmgr32);
+			hCfgmgr32 = NULL;
+		}
+	}
+}
+
+
+static void get_device_interface_name(UINT uDeviceID)
+{
+	ULONG uSize;
+
+	if ((uDeviceID < 0) || (midi_stream_name == NULL))
+	{
+		return;
+	}
+
+	if (MMSYSERR_NOERROR != midiOutMessage((HMIDIOUT)uDeviceID, DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&uSize, 0))
+	{
+		return;
+	}
+
+	if ((uSize <= 2) || (uSize & 1))
+	{
+		return;
+	}
+
+	lpDeviceInterfaceName = (LPWSTR)malloc(uSize);
+	if (lpDeviceInterfaceName == NULL)
+	{
+		return;
+	}
+
+	if (MMSYSERR_NOERROR != midiOutMessage((HMIDIOUT)uDeviceID, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)lpDeviceInterfaceName, uSize))
+	{
+		free(lpDeviceInterfaceName);
+		lpDeviceInterfaceName = NULL;
+		return;
+	}
+}
+
+static DWORD WINAPI notify_callback(HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIFY_ACTION Action, PCM_NOTIFY_EVENT_DATA EventData, DWORD EventDataSize)
+{
+	switch(Action)
+	{
+		// CM_NOTIFY_FILTER_TYPE_DEVICEHANDLE actions
+
+		case CM_NOTIFY_ACTION_DEVICEQUERYREMOVE:
+		case CM_NOTIFY_ACTION_DEVICECUSTOMEVENT:
+			if (hNotificationHandle == NULL) hNotificationHandle = hNotify;
+			break;
+		case CM_NOTIFY_ACTION_DEVICEQUERYREMOVEFAILED:
+			if (hNotificationHandle == NULL) hNotificationHandle = hNotify;
+			EnterCriticalSection(&notification_critical_section);
+			notification_events |= NOTIFY_REREGISTER;
+			LeaveCriticalSection(&notification_critical_section);
+			break;
+		case CM_NOTIFY_ACTION_DEVICEREMOVEPENDING:
+		case CM_NOTIFY_ACTION_DEVICEREMOVECOMPLETE:
+			if (hNotificationHandle == NULL) hNotificationHandle = hNotify;
+			EnterCriticalSection(&notification_critical_section);
+			notification_events |= NOTIFY_UNREGISTER;
+			LeaveCriticalSection(&notification_critical_section);
+			break;
+
+		// CM_NOTIFY_FILTER_TYPE_DEVICEINSTANCE actions
+
+		case CM_NOTIFY_ACTION_DEVICEINSTANCEENUMERATED:
+		case CM_NOTIFY_ACTION_DEVICEINSTANCEREMOVED:
+			break;
+		case CM_NOTIFY_ACTION_DEVICEINSTANCESTARTED:
+			if (0 == memcmp(EventData->u.DeviceInstance.InstanceId, L"SWD\\MMDEVAPI\\", 2 * 13))
+			{
+				EnterCriticalSection(&notification_critical_section);
+				notification_events |= NOTIFY_NEWDEVICE;
+				LeaveCriticalSection(&notification_critical_section);
+			}
+			break;
+
+		default:
+			break;
+	}
+
+	return ERROR_SUCCESS;
+}
+
+static void register_notifications(void)
+{
+	HANDLE hDeviceInterface;
+	CM_NOTIFY_FILTER cmFilter;
+
+	if ((hCfgmgr32 == NULL) || (lpDeviceInterfaceName == NULL))
+	{
+		return;
+	}
+
+	hDeviceInterface = CreateFileW(lpDeviceInterfaceName, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hDeviceInterface == INVALID_HANDLE_VALUE)
+	{
+		return;
+	}
+
+	cmFilter.cbSize = sizeof(cmFilter);
+	cmFilter.Flags = 0;
+	cmFilter.FilterType = CM_NOTIFY_FILTER_TYPE_DEVICEHANDLE;
+	cmFilter.Reserved = 0;
+	cmFilter.u.DeviceHandle.hTarget = hDeviceInterface;
+	if (CR_SUCCESS != dyn_CM_Register_Notification(&cmFilter, NULL, &notify_callback, &hNotificationHandle))
+	{
+		hNotificationHandle = NULL;
+		CloseHandle(hDeviceInterface);
+		return;
+	}
+
+	CloseHandle(hDeviceInterface);
+
+	if (hNotificationInstance == NULL)
+	{
+		cmFilter.FilterType = CM_NOTIFY_FILTER_TYPE_DEVICEINSTANCE;
+		cmFilter.Flags = CM_NOTIFY_FILTER_FLAG_ALL_DEVICE_INSTANCES;
+		cmFilter.u.DeviceInstance.InstanceId[0] = 0;
+
+		if (CR_SUCCESS != dyn_CM_Register_Notification(&cmFilter, NULL, &notify_callback, &hNotificationInstance))
+		{
+			hNotificationInstance = NULL;
+			dyn_CM_Unregister_Notification(hNotificationHandle);
+			hNotificationHandle = NULL;
+			return;
+		}
+	}
 }
 
 #endif
@@ -869,6 +1224,18 @@ static int set_loop_count(int loop_count) // -1 = unlimited
 static void shutdown_plugin(void)
 {
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+	if (hNotificationInstance != NULL)
+	{
+		dyn_CM_Unregister_Notification(hNotificationInstance);
+		hNotificationInstance = NULL;
+	}
+	if (hNotificationHandle != NULL)
+	{
+		dyn_CM_Unregister_Notification(hNotificationHandle);
+		hNotificationHandle = NULL;
+	}
+	notification_events = 0;
+
 	if (hStream != NULL)
 	{
 		if (midi_loaded)
@@ -890,13 +1257,44 @@ static void shutdown_plugin(void)
 		midi_quit = 0;
 	}
 
+	if (hAvrt != NULL)
+	{
+		FreeLibrary(hAvrt);
+		hAvrt = NULL;
+	}
+
+	if (hCfgmgr32 != NULL)
+	{
+		FreeLibrary(hCfgmgr32);
+		hCfgmgr32 = NULL;
+	}
+
 	if (hStream != NULL)
 	{
-		DeleteCriticalSection(&midi_critical_section);
-
 		midiStreamClose(hStream);
 		hStream = NULL;
 	}
+
+	if (lpDeviceInterfaceName != NULL)
+	{
+		free(lpDeviceInterfaceName);
+		lpDeviceInterfaceName = NULL;
+	}
+
+	if (midi_stream_name != NULL)
+	{
+		free(midi_stream_name);
+		midi_stream_name = NULL;
+	}
+
+	if (initial_sysex_events != NULL)
+	{
+		free(initial_sysex_events);
+		initial_sysex_events = NULL;
+	}
+
+	DeleteCriticalSection(&notification_critical_section);
+	DeleteCriticalSection(&midi_critical_section);
 #endif
 
     if (reset_controller_events != NULL)
@@ -912,6 +1310,7 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 {
     char const *device_name;
     unsigned char const *sysex_events, *controller_events;
+    int events_len;
 
     if (functions == NULL) return -3;
 
@@ -927,17 +1326,15 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 
     if (controller_events != NULL && *controller_events == 0xb0)
     {
-        int len;
+        events_len = 1;
+        while (controller_events[events_len] != 0xff) events_len++;
 
-        len = 1;
-        while (controller_events[len] != 0xff) len++;
-
-        if (len > 1)
+        if (events_len > 1)
         {
-            reset_controller_events = (unsigned char *)malloc(len);
+            reset_controller_events = (unsigned char *)malloc(events_len);
             if (reset_controller_events != NULL)
             {
-                memcpy(reset_controller_events, controller_events + 1, len);
+                memcpy(reset_controller_events, controller_events + 1, events_len);
             }
         }
     }
@@ -956,8 +1353,17 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 	MIDIOUTCAPS midicaps;
 	UINT uDeviceID;
 
+	InitializeCriticalSection(&midi_critical_section);
+	InitializeCriticalSection(&notification_critical_section);
+
+	load_windows_dlls();
+
 	numDevices = midiOutGetNumDevs();
-	if (numDevices == 0) return -4;
+	if (numDevices == 0)
+	{
+		shutdown_plugin();
+		return -4;
+	}
 
 	if (device_name == NULL || *device_name == 0)
 	{
@@ -973,27 +1379,68 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 			if (0 == strcmp(device_name, midicaps.szPname))
 			{
 				uDeviceID = devid;
+				midi_stream_name = strdup(midicaps.szPname);
 				break;
 			}
 		}
 
-		if (uDeviceID == numDevices) return -5;
+		if (uDeviceID == numDevices)
+		{
+			long device_num;
+			char *endptr;
+
+			errno = 0;
+			device_num = strtol(device_name, &endptr, 10);
+			if ((errno == 0) && (*endptr == 0) && (device_num >= 0) && (device_num < numDevices))
+			{
+				if (MMSYSERR_NOERROR == midiOutGetDevCaps(device_num, &midicaps, sizeof(midicaps)))
+				{
+					uDeviceID = device_num;
+					midi_stream_name = strdup(midicaps.szPname);
+				}
+			}
+		}
+
+		if (uDeviceID == numDevices)
+		{
+			shutdown_plugin();
+			return -5;
+		}
 	}
 
 	if (MMSYSERR_NOERROR != midiStreamOpen(&hStream, &uDeviceID, 1, 0, 0, CALLBACK_NULL))
 	{
-		if (device_name != NULL && *device_name != 0) return -6;
+		if (device_name != NULL && *device_name != 0)
+		{
+			hStream = NULL;
+			shutdown_plugin();
+			return -6;
+		}
 
 		uDeviceID = 0;
 		if (MMSYSERR_NOERROR != midiStreamOpen(&hStream, &uDeviceID, 1, 0, 0, CALLBACK_NULL))
 		{
+			hStream = NULL;
+			shutdown_plugin();
 			return -6;
 		}
 	}
 
+	get_device_interface_name(uDeviceID);
+	register_notifications();
+
 	if (sysex_events != NULL && *sysex_events == 0xf0)
 	{
-		send_initial_sysex_events(sysex_events);
+		events_len = send_initial_sysex_events(sysex_events);
+
+		if (events_len > 1)
+		{
+			initial_sysex_events = (unsigned char *)malloc(events_len);
+			if (initial_sysex_events != NULL)
+			{
+				memcpy(initial_sysex_events, sysex_events, events_len);
+			}
+		}
 	}
 
 	reset_playing();
@@ -1003,11 +1450,10 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 	{
 		midiStreamClose(hStream);
 		hStream = NULL;
+		shutdown_plugin();
 
 		return -7;
 	}
-
-    InitializeCriticalSection(&midi_critical_section);
 }
 #endif
 

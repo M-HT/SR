@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -878,6 +878,12 @@ int Handle_Input_Event2(SDL_Event *_event)
                     }
 
                     break;
+                case GP2X_BUTTON_START:
+                    if (!Game_JButton[GP2X_BUTTON_R] && !Game_JButton[GP2X_BUTTON_L])
+                    {
+                        Action_key(1, SDLK_F10);
+                    }
+                    break;
                 case GP2X_BUTTON_UP:
                 case GP2X_BUTTON_DOWN:
                 case GP2X_BUTTON_LEFT:
@@ -1054,8 +1060,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                     }
                     else if (!Game_JButton[GP2X_BUTTON_R] && !Game_JButton[GP2X_BUTTON_L])
                     {
-                        ReleaseCursorKeys();
-                        EmulateKey(SDL_KEYUP, SDLK_PAUSE);
+                        Action_key(0, SDLK_F10);
                     }
                     break;
                 case GP2X_BUTTON_UP:

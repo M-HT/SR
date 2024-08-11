@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -308,7 +308,7 @@ static int Action_right_mouse_button(int pressed, int key, SDL_Event *event)
 
 static int Action_key(int pressed, int key, SDL_Event *event)
 {
-    if ((!Game_Paused) || (key == SDLK_PAUSE))
+    if (!Game_Paused)
     {
         event->key.keysym.sym = (SDLKey) key;
         return 0;
@@ -433,7 +433,7 @@ void Init_Input(void)
     Action_button[BUTTON_START] = &Action_key;
     Action_button[BUTTON_SELECT] = &Action_toggle_scaling;
 
-    Action_button_Key[BUTTON_START] = SDLK_PAUSE;
+    Action_button_Key[BUTTON_START] = SDLK_F10;
 }
 
 void Init_Input2(void)
@@ -637,13 +637,6 @@ int Config_Input(char *str, char *param)
                 // Toggle scaling
 
                 Action_current = &Action_toggle_scaling;
-            }
-            else if ( strcasecmp(param, "pause") == 0 ) // param equals "pause"
-            {
-                // Pause game
-
-                Action_current = &Action_key;
-                Action_current_Key = SDLK_PAUSE;
             }
             else if ( strcasecmp(param, "none") == 0 ) // param equals "none"
             {

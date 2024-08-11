@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -279,7 +279,7 @@ static int Action_key_alt(int pressed, int key, SDL_Event *event)
 
 static int Action_key(int pressed, int key, SDL_Event *event)
 {
-    if ((!Game_Paused) || (key == SDLK_PAUSE))
+    if (!Game_Paused)
     {
 #ifdef USE_SDL2
         event->key.keysym.sym = (SDL_Keycode) key;
@@ -335,10 +335,8 @@ void Init_Input(void)
     memset(Action_button_Key, 0, sizeof(Action_button_Key));
     memset(Action_button_R_Key, 0, sizeof(Action_button_R_Key));
 
-    Action_button[BUTTON_START] = &Action_key;
+    Action_button[BUTTON_START] = &Action_toggle_enhanced_3d_rendering;
     Action_button[BUTTON_SELECT] = &Action_toggle_scaling;
-
-    Action_button_Key[BUTTON_START] = SDLK_PAUSE;
 }
 
 void Init_Input2(void)
@@ -480,13 +478,6 @@ int Config_Input(char *str, char *param)
                 // Toggle enhanced 3d rendering
 
                 Action_current = &Action_toggle_enhanced_3d_rendering;
-            }
-            else if ( strcasecmp(param, "pause") == 0 ) // param equals "pause"
-            {
-                // Pause game
-
-                Action_current = &Action_key;
-                Action_current_Key = SDLK_PAUSE;
             }
             else if ( strcasecmp(param, "none") == 0 ) // param equals "none"
             {

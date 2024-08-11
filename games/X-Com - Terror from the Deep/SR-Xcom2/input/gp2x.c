@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -1133,27 +1133,6 @@ static void Action_deselectcurrentsoldier(int pressed, int key)
     }
 }
 
-//senquack - Pause is now a remappable action
-static void Action_pause(int pressed, int key)
-{
-    if ( !(Game_JButton[GP2X_BUTTON_R] && Game_JButton[GP2X_BUTTON_L]) && pressed == 1)
-    {
-        //Make sure all scrolling is stopped
-        Game_CurrentlyScrolling = 0;
-#if defined(__DEBUG__)
-        fprintf(stderr, "XCOM: Pausing game..\n");
-#endif
-        EmulateKey(SDL_KEYDOWN, SDLK_PAUSE);
-    }
-    else if ( !(Game_JButton[GP2X_BUTTON_R] && Game_JButton[GP2X_BUTTON_L]) && pressed == 0)
-    {
-#if defined(__DEBUG__)
-        fprintf(stderr, "XCOM: Un-pausing game..\n");
-#endif
-        EmulateKey(SDL_KEYUP, SDLK_PAUSE);
-    }
-}
-
 //senquack - volume increase/decrease actions
 static void Action_volume_increase(int pressed, int key)
 {
@@ -1221,7 +1200,7 @@ void Init_Input(void)
     Action_button_Y = &Action_key;
     Action_button_Select = &Action_none;
     //senquack
-    Action_button_Start = &Action_pause;
+    Action_button_Start = &Action_key;
 
     Action_button_VolUp = &Action_none;
     Action_button_VolDown = &Action_none;
@@ -1231,6 +1210,7 @@ void Init_Input(void)
     Action_button_X_Key = 0;
     Action_button_Y_Key = SDLK_y;
     Action_button_Select_Key = 0;
+    Action_button_Start_Key = SDLK_F15;
     Action_button_VolUp_Key = 0;
     Action_button_VolDown_Key = 0;
     //senquack - added these:
@@ -1493,12 +1473,6 @@ int Config_Input(char *str, char *param)
                 // Battlescape Deselect Current Soldier
 
                 Action_button = &Action_deselectcurrentsoldier;
-            }
-            //senquack
-            else if ( strcasecmp(param, "pause") == 0 ) // param equals "pause"
-            {
-                // Pause game
-                Action_button = &Action_pause;
             }
             else if ( strcasecmp(param, "volume_increase") == 0 ) // param equals "volume_increase"
             {
@@ -2174,16 +2148,11 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                         SDL_PushEvent(&pump_event);
                     }
-//senquack
+                    //senquack
                     else
                     {
                         Action_button_Start(0, Action_button_Start_Key);
                     }
-                    // senquack - pausing is now remappable:
-//                    else if (!Game_JButton[GP2X_BUTTON_R] && !Game_JButton[GP2X_BUTTON_L])
-//                    {
-//                        EmulateKey(SDL_KEYUP, SDLK_PAUSE);
-//                    }
                     break;
                 case GP2X_BUTTON_UP:
                     //senquack

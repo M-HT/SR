@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -386,25 +386,6 @@ static void Action_key(int pressed, int key)
     }
 }
 
-//senquack - Pause is now a remappable action
-static void Action_pause(int pressed, int key)
-{
-    if ( !(Game_JButton[GP2X_BUTTON_R] && Game_JButton[GP2X_BUTTON_L]) && pressed == 1)
-    {
-#if defined(__DEBUG__)
-        fprintf(stderr, "Pausing game..\n");
-#endif
-        EmulateKey(SDL_KEYDOWN, SDLK_PAUSE);
-    }
-    else if ( !(Game_JButton[GP2X_BUTTON_R] && Game_JButton[GP2X_BUTTON_L]) && pressed == 0)
-    {
-#if defined(__DEBUG__)
-        fprintf(stderr, "Un-pausing game..\n");
-#endif
-        EmulateKey(SDL_KEYUP, SDLK_PAUSE);
-    }
-}
-
 //senquack - volume increase/decrease actions
 static void Action_volume_increase(int pressed, int key)
 {
@@ -482,8 +463,7 @@ void Init_Input(void)
     Action_button_X = &Action_right_mouse_button;
     Action_button_Y = &Action_key;
     Action_button_Select = &Action_key;
-    //senquack - pause is now a remappable action:
-    Action_button_Start = &Action_pause;
+    Action_button_Start = &Action_key;
     //senquack - triggers now mappable:
     Action_button_L = &Action_none;
     Action_button_R = &Action_key_ctrl; /* Default to control key as always */
@@ -506,6 +486,7 @@ void Init_Input(void)
     Action_button_X_Key = 0;
     Action_button_Y_Key = SDLK_y;
     Action_button_Select_Key = SDLK_TAB;
+    Action_button_Start_Key = SDLK_ESCAPE;
     Action_button_VolUp_Key = 0;
     Action_button_VolDown_Key = 0;
 
@@ -770,15 +751,9 @@ int Config_Input(char *str, char *param)
             //senquack - screen scaling can now be toggled on the fly:
             else if ( strcasecmp(param, "toggle_scaling") == 0 ) // param equals "toggle_scaling"
             {
-                // Pause game
+                // Toggle scaling
 
                 Action_button = &Action_toggle_scaling;
-            }
-            else if ( strcasecmp(param, "pause") == 0 ) // param equals "pause"
-            {
-                // Pause game
-
-                Action_button = &Action_pause;
             }
             else if ( strcasecmp(param, "none") == 0 ) // param equals "none"
             {
@@ -1554,7 +1529,6 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                         if (!Game_JButton[GP2X_BUTTON_R] && !Game_JButton[GP2X_BUTTON_L])
                         {
-//                                EmulateKey(SDL_KEYUP, SDLK_PAUSE);
                             Action_button_Start(0, Action_button_Start_Key);
                         }
                     }

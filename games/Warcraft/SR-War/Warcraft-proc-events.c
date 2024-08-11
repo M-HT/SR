@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -755,113 +755,6 @@ YZ123456
     Game_BaseClockValue += (SDL_GetTicks() - clock_shift);
     Game_Paused = 0;
 }
-
-static void Game_Pause(void)
-{
-    SDL_Event *cevent, event;
-    int Cont, orig_x, orig_y;
-    uint32_t clock_shift;
-
-    Game_KQueueRead = (Game_KQueueRead + 1) & (GAME_KQUEUE_LENGTH - 1);
-
-    if (Game_Screen == NULL) return;
-
-    clock_shift = SDL_GetTicks();
-
-    Game_Paused = 1;
-
-    Cont = 1;
-
-    SDL_GetMouseState(&orig_x, &orig_y);
-
-    //SDL_ShowCursor(SDL_DISABLE);
-
-    /* wait for existing flip to finish */
-    SDL_Delay(100);
-
-    /* display pause */
-    SDL_LockSurface(Game_Screen);
-
-    memset(Game_Screen->pixels, 0, Game_Screen->pitch * Game_Screen->h);
-
-    Game_DisplayVK_Char(40 + 15, -5, 0, 0);
-    Game_DisplayVK_Char(40 +  0, -3, 0, 0);
-    Game_DisplayVK_Char(40 + 20, -1, 0, 0);
-    Game_DisplayVK_Char(40 + 18,  1, 0, 0);
-    Game_DisplayVK_Char(40 +  4,  3, 0, 0);
-    Game_DisplayVK_Char(40 +  3,  5, 0, 0);
-
-    SDL_UnlockSurface(Game_Screen);
-    SDL_Flip(Game_Screen);
-
-    while (Cont)
-    {
-        SDL_Delay(10);
-
-        if (Thread_Exit)
-        {
-            Game_Paused = 0;
-            return;
-        }
-
-        /* ignore mouse events */
-        if (Game_MQueueWrite != Game_MQueueRead)
-        {
-            Game_MQueueRead = Game_MQueueWrite;
-        }
-
-
-        while (Cont && Game_KQueueWrite != Game_KQueueRead)
-        {
-            if (Thread_Exit)
-            {
-                Game_Paused = 0;
-                return;
-            }
-
-            cevent = &(Game_EventKQueue[Game_KQueueRead]);
-
-            switch(cevent->type)
-            {
-                case SDL_KEYUP:
-                    switch((int) cevent->key.keysym.sym)
-                    {
-                        case SDLK_PAUSE:
-                            Cont = 0;
-                            break;
-                    } // switch((int) cevent->key.keysym.sym)
-
-                    break;
-            } // switch(cevent->type)
-
-            Game_KQueueRead = (Game_KQueueRead + 1) & (GAME_KQUEUE_LENGTH - 1);
-        }
-
-    }
-
-    // Restore original cursor position
-    event.type = SDL_USEREVENT;
-    event.user.code = EC_MOUSE_SET;
-    event.user.data1 = (void *)(intptr_t) orig_x;
-    event.user.data2 = (void *)(intptr_t) orig_y;
-
-    SDL_PushEvent(&event);
-
-    if (!Display_MouseLocked)
-    {
-        //SDL_ShowCursor(SDL_ENABLE);
-    }
-
-    event.type = SDL_USEREVENT;
-    event.user.code = EC_DISPLAY_FLIP_START;
-    event.user.data1 = NULL;
-    event.user.data2 = NULL;
-
-    SDL_PushEvent(&event);
-
-    Game_BaseClockValue += (SDL_GetTicks() - clock_shift);
-    Game_Paused = 0;
-}
 #endif
 
 void Game_ProcessKEvents(void)
@@ -905,22 +798,7 @@ void Game_ProcessKEvents(void)
             case SDL_KEYUP:
                 if (cevent->key.keysym.sym == SDLK_PAUSE)
                 {
-            #ifdef USE_SDL2
                     goto _after_switch1;
-            #else
-                #ifdef ALLOW_OPENGL
-                    if (Game_UseOpenGL)
-                    {
-                        goto _after_switch1;
-                    }
-                #endif
-                    if (cevent->type == SDL_KEYUP)
-                    {
-                        Game_Pause();
-                        goto _after_switch2;
-                    }
-                    else goto _after_switch1;
-            #endif
                 }
                 else if (cevent->key.keysym.sym < 128)
                 {

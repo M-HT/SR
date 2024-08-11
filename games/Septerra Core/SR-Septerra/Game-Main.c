@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -61,7 +61,13 @@ extern uint32_t bHideText;
 extern uint32_t bShowFPS;
 
 #ifdef _WIN32
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern void init_sleepmode(void);
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 

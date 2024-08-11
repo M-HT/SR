@@ -150,14 +150,24 @@ static quicktime_t *qthandle[4];
 static void *lpDDSurface;
 
 
-#if SDL_VERSION_ATLEAST(2,0,0)
 #ifdef __cplusplus
 extern "C" {
 #endif
+extern void disable_virtual_keyboard(int disable);
+
+extern int display_virtual_keyboard(
+#if SDL_VERSION_ATLEAST(2,0,0)
+    SDL_Renderer *renderer
+#else
+    SDL_Surface *surface, SDL_Rect *update_area
+#endif
+);
+
+#if SDL_VERSION_ATLEAST(2,0,0)
 extern SDL_Renderer *GetSurfaceRenderer(void *);
+#endif
 #ifdef __cplusplus
 }
-#endif
 #endif
 
 
@@ -915,6 +925,11 @@ void StartMovie_c (void *theMovie)
 
     pthread_attr_destroy(&attr);
 #endif
+
+    if (movie->is_playing)
+    {
+        disable_virtual_keyboard(1);
+    }
 }
 
 //EXTERN_API( void )
@@ -950,6 +965,8 @@ void StopMovie_c (void *theMovie)
         {
             SDL_Delay(1);
         } while (movie->is_playing);
+
+        disable_virtual_keyboard(0);
     }
 }
 

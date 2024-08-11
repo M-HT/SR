@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -119,6 +119,8 @@ typedef struct _SE_struc_9 // final size
 
 extern PTR32(void) hWritePipe;
 
+uint32_t SoundEngine_Counter;
+
 
 #ifdef _WIN32
 // sub_4642A0
@@ -126,6 +128,7 @@ static void CALLBACK SE_fptc(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_P
 {
     int32_t PipeValue = 3;
     uint32_t NumberOfBytesWritten;
+    SoundEngine_Counter++;
     WriteFile_c(hWritePipe, &PipeValue, 4, &NumberOfBytesWritten, NULL);
 }
 #else
@@ -136,6 +139,8 @@ static void *SE_timer_CB(void *arg)
     struct timespec timer_time;
     int32_t PipeValue = 3;
     uint32_t NumberOfBytesWritten;
+
+    SoundEngine_Counter = 0;
 
     clock_gettime(CLOCK_MONOTONIC, &timer_time);
 
@@ -163,6 +168,7 @@ static void *SE_timer_CB(void *arg)
             timer_time.tv_sec++;
         }
 
+        SoundEngine_Counter++;
         WriteFile_c(hWritePipe, &PipeValue, 4, &NumberOfBytesWritten, NULL);
     };
 
@@ -173,6 +179,7 @@ static void *SE_timer_CB(void *arg)
 uint32_t SoundEngine_StartTimer(void)
 {
 #ifdef _WIN32
+    SoundEngine_Counter = 0;
     return timeSetEvent(20, 4, &SE_fptc, (DWORD_PTR)0, TIME_PERIODIC);
 #else
     pthread_attr_t attr;

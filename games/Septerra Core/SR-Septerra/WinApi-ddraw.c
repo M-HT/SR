@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -300,6 +300,21 @@ extern uint32_t IDirectDrawSurfaceVtbl_asm2c;
 extern int sdl_versionnum;
 extern uint8_t Patch_IsPreselected[4];
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern void delete_virtual_keyboard(void);
+extern int display_virtual_keyboard(
+#if SDL_VERSION_ATLEAST(2,0,0)
+    SDL_Renderer *renderer
+#else
+    SDL_Surface *surface, SDL_Rect *update_area
+#endif
+);
+#ifdef __cplusplus
+}
+#endif
+
 
 #if SDL_VERSION_ATLEAST(2,0,0)
 #ifdef __cplusplus
@@ -403,6 +418,7 @@ uint32_t IDirectDraw_Release_c(struct IDirectDraw_c *lpThis)
 #endif
     if (lpThis->RefCount == 0)
     {
+        delete_virtual_keyboard();
 #if SDL_VERSION_ATLEAST(2,0,0)
         if (lpThis->Window != NULL)
         {
@@ -1113,7 +1129,7 @@ uint32_t IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, struct _r
 
             SDL_SetRenderDrawColor(lpThis->Renderer, r, g, b, 255);
 
-            if (0 != SDL_RenderDrawRect(lpThis->Renderer, (lpDestRect != NULL)?&dstrect:NULL))
+            if (0 != SDL_RenderFillRect(lpThis->Renderer, (lpDestRect != NULL)?&dstrect:NULL))
             {
 #ifdef DEBUG_DDRAW
                 eprintf("error\n");
@@ -1121,6 +1137,7 @@ uint32_t IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, struct _r
                 return DDERR_SURFACEBUSY;
             }
 
+            display_virtual_keyboard(lpThis->Renderer);
             SDL_RenderPresent(lpThis->Renderer);
 
             // clear next frame
@@ -1165,10 +1182,14 @@ uint32_t IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, struct _r
         {
             if ((lpDestRect != NULL) && !(lpThis->Surface->flags & SDL_DOUBLEBUF))
             {
-                SDL_UpdateRect(lpThis->Surface, dstrect.x, dstrect.y, dstrect.w, dstrect.h);
+                if (!display_virtual_keyboard(lpThis->Surface, &dstrect))
+                {
+                    SDL_UpdateRect(lpThis->Surface, dstrect.x, dstrect.y, dstrect.w, dstrect.h);
+                }
             }
             else
             {
+                display_virtual_keyboard(lpThis->Surface, NULL);
                 SDL_Flip(lpThis->Surface);
             }
         }
@@ -1360,6 +1381,7 @@ uint32_t IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, struct _r
             SDL_UnlockTexture(lpThis->Texture[lpThis->current_texture]);
 
             SDL_RenderCopy(lpThis->Renderer, lpThis->Texture[lpThis->current_texture], NULL, NULL);
+            display_virtual_keyboard(lpThis->Renderer);
             SDL_RenderPresent(lpThis->Renderer);
 
             // clear next frame
@@ -1368,10 +1390,14 @@ uint32_t IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, struct _r
 #else
             if ((lpDestRect != NULL) && !(lpThis->Surface->flags & SDL_DOUBLEBUF))
             {
-                SDL_UpdateRect(lpThis->Surface, dstrect.x, dstrect.y, dstrect.w, dstrect.h);
+                if (!display_virtual_keyboard(lpThis->Surface, &dstrect))
+                {
+                    SDL_UpdateRect(lpThis->Surface, dstrect.x, dstrect.y, dstrect.w, dstrect.h);
+                }
             }
             else
             {
+                display_virtual_keyboard(lpThis->Surface, NULL);
                 SDL_Flip(lpThis->Surface);
             }
 #endif
@@ -1500,6 +1526,7 @@ uint32_t IDirectDrawSurface_Flip_c(struct IDirectDrawSurface_c *lpThis, struct I
 
         CopyBackbufferSurfaceToTexture(lpThis->lpBackbuffer->Surface, lpThis->Texture[lpThis->current_texture]);
         SDL_RenderCopy(lpThis->Renderer, lpThis->Texture[lpThis->current_texture], NULL, NULL);
+        display_virtual_keyboard(lpThis->Renderer);
         SDL_RenderPresent(lpThis->Renderer);
 
         SDL_Delay(Display_DelayAfterFlip);
@@ -1509,6 +1536,7 @@ uint32_t IDirectDrawSurface_Flip_c(struct IDirectDrawSurface_c *lpThis, struct I
         SDL_RenderClear(lpThis->Renderer);
 #else
         SDL_BlitSurface(lpThis->lpBackbuffer->Surface, NULL, lpThis->Surface, NULL);
+        display_virtual_keyboard(lpThis->Surface, NULL);
         SDL_Flip(lpThis->Surface);
 
         SDL_Delay(Display_DelayAfterFlip);

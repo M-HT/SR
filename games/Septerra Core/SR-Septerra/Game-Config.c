@@ -95,6 +95,10 @@ void ReadConfiguration(void)
     Cheat_HIDETEXT = 0;
     Cheat_FPS = 0;
 
+    Input_GameController = 0;
+
+    Controller_Deadzone = 1000;
+
     Keys_SwitchWSAD = 0;
     Keys_SwitchArrowKeys = 0;
 
@@ -438,6 +442,42 @@ void ReadConfiguration(void)
             }
 
         }
+#ifndef PANDORA
+        else if ( strncasecmp(str, "Input_", 6) == 0 ) // str begins with "Input_"
+        {
+            // input settings
+
+            str += 6;
+
+            if ( strcasecmp(str, "GameController") == 0 ) // str equals "GameController"
+            {
+                if ( strcasecmp(param, "yes") == 0 ) // param equals "yes"
+                {
+                    Input_GameController = 1;
+                }
+                else if ( strcasecmp(param, "no") == 0 ) // param equals "no"
+                {
+                    Input_GameController = 0;
+                }
+            }
+        }
+        else if ( strncasecmp(str, "Controller_", 11) == 0 ) // str begins with "Controller_"
+        {
+            // controller settings
+
+            str += 11;
+
+            if ( strcasecmp(str, "Deadzone") == 0 ) // str equals "Deadzone"
+            {
+                num_int = 0;
+                sscanf(param, "%i", &num_int);
+                if (num_int >= 0)
+                {
+                    Controller_Deadzone = num_int;
+                }
+            }
+        }
+#endif
         else if ( strncasecmp(str, "Keys_", 5) == 0 ) // str begins with "Keys_"
         {
             // keys settings

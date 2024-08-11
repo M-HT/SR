@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <SDL.h>
 #include "Game-Config.h"
+#include "VKfont.h"
 
 #if (defined(__WIN32__) || defined(__WINDOWS__)) && !defined(_WIN32)
 #define _WIN32
@@ -124,6 +125,7 @@ unsigned int Winapi_GetTicks(void);
 #define MK_XBUTTON2 0x0040
 
 
+#define VK_TAB 0x09
 #define VK_CLEAR 0x0C
 #define VK_RETURN 0x0D
 #define VK_SHIFT 0x10
@@ -227,6 +229,8 @@ typedef struct {
 } wndclassa;
 
 
+extern uint32_t SoundEngine_Counter;
+
 int sdl_versionnum = 0;
 static void *lpfnWndProc = NULL;
 static int cursor_visibility = 0;
@@ -252,6 +256,61 @@ static SDL_Renderer *mouse_renderer = NULL;
 static int mouse_clip_w = 0;
 static int mouse_clip_h = 0;
 #endif
+
+static SDL_Joystick *joystick = NULL;
+#if SDL_VERSION_ATLEAST(2,0,0)
+static SDL_GameController *controller = NULL;
+static int controller_base_axis;
+#endif
+static unsigned int joystick_hat_position = 0;
+static int controller_axis_x = 0;
+static int controller_axis_y = 0;
+static int controller_mouse_motion = 0;
+static int controller_frac_x;
+static int controller_frac_y;
+static uint32_t controller_mouse_last_time;
+static SDL_Event priority_event;
+static SDL_Surface *virtual_keyboard_surface = NULL;
+#if SDL_VERSION_ATLEAST(2,0,0)
+static SDL_Texture *virtual_keyboard_texture = NULL;
+static SDL_Surface *virtual_keyboard_texture_surface = NULL;
+#endif
+static int virtual_keyboard_state = 0;
+static unsigned int virtual_keyboard_disabled = 0;
+static int virtual_keyboard_pos_x;
+static int virtual_keyboard_pos_y;
+static int virtual_keyboard_altlayout;
+
+#ifdef DISPLAY_FULL_VIRTUAL_KEYBOARD
+#define VK_LAYOUT_WIDTH 13
+static const uint8_t virtual_keyboard_layout[2][4][VK_LAYOUT_WIDTH] = { {
+    {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'},
+    {'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'},
+    {'`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='},
+    {',', '.', '/', ';', '\'', '[', ']', '\\', ' ', '\b', '\177', '\r', '\n'},
+}, {
+    {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'},
+    {'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'},
+    {'~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+'},
+    {'<', '>', '?', ':', '"', '{', '}', '|', ' ', '\b', '\177', '\r', '\n'},
+}, };
+#else
+#define VK_LAYOUT_WIDTH 10
+static const uint8_t virtual_keyboard_layout[2][4][VK_LAYOUT_WIDTH] = { {
+    {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'},
+    {'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T'},
+    {'U', 'V', 'W', 'X', 'Y', 'Z', '1', '2', '3', '4'},
+    {'5', '6', '7', '8', '9', '0', '\b', '\177', '\r', '\n'},
+}, {
+    {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'},
+    {'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'},
+    {'u', 'v', 'w', 'x', 'y', 'z', '1', '2', '3', '4'},
+    {'5', '6', '7', '8', '9', '0', ' ', '\177', '\r', '\n'},
+}, };
+#endif
+
+static uint8_t virtual_keyboard_buffer[2 * VK_LAYOUT_WIDTH];
+static int virtual_keyboard_buflen;
 
 
 #ifdef __cplusplus
@@ -285,6 +344,9 @@ static void end_timer_period(void)
     timeEndPeriod(timer_period);
 }
 
+#ifdef __cplusplus
+extern "C"
+#endif
 void init_sleepmode(void)
 {
     use_nt_delay = 0;
@@ -344,14 +406,14 @@ void init_sleepmode(void)
 #endif
 
 #if SDL_VERSION_ATLEAST(2,0,0)
-void warp_mouse(int x, int y)
+static void warp_mouse(int x, int y)
 {
     if (mouse_renderer != NULL)
     {
 #if SDL_VERSION_ATLEAST(2,0,18)
         if (sdl_versionnum >= SDL_VERSIONNUM(2,0,18))
         {
-            SDL_RenderLogicalToWindow(mouse_renderer, x, y, &x, &y);
+            SDL_RenderLogicalToWindow(mouse_renderer, 0.5f + x, 0.5f + y, &x, &y);
         }
         else
 #endif
@@ -373,9 +435,588 @@ void warp_mouse(int x, int y)
 }
 #endif
 
+#ifdef __cplusplus
+extern "C"
+#endif
+void disable_virtual_keyboard(int disable)
+{
+    if (disable)
+    {
+        virtual_keyboard_state = 0;
+        virtual_keyboard_disabled++;
+    }
+    else
+    {
+        if (virtual_keyboard_disabled)
+        {
+            virtual_keyboard_disabled--;
+        }
+    }
+}
+
+#ifdef __cplusplus
+extern "C"
+#endif
+void delete_virtual_keyboard(void)
+{
+    virtual_keyboard_state = 0;
+    if (virtual_keyboard_surface != NULL)
+    {
+        SDL_FreeSurface(virtual_keyboard_surface);
+        virtual_keyboard_surface = NULL;
+    }
+#if SDL_VERSION_ATLEAST(2,0,0)
+    if (virtual_keyboard_texture != NULL)
+    {
+        SDL_DestroyTexture(virtual_keyboard_texture);
+        virtual_keyboard_texture = NULL;
+    }
+    if (virtual_keyboard_texture_surface != NULL)
+    {
+        SDL_FreeSurface(virtual_keyboard_texture_surface);
+        virtual_keyboard_texture_surface = NULL;
+    }
+#endif
+}
+
+static void vk_draw_chr(SDL_Surface *surface, uint8_t chr, int x, int y)
+{
+    const uint8_t *src;
+    uint8_t *dst, prev_value, value;
+    int offset, sx, sy;
+
+    if (vkfont_chr_index[chr] < 0) return;
+
+    src = vkfont_chr_data + vkfont_chr_size * vkfont_chr_index[chr];
+    dst = ((uint8_t *)surface->pixels) + y * surface->pitch + (x >> 3);
+
+    offset = x & 7;
+
+    if (offset == 0)
+    {
+        for (sy = 0; sy < vkfont_chr_height; sy++)
+        {
+            for (sx = 0; sx < vkfont_chr_width_bytes; sx++)
+            {
+                dst[sx] |= src[sx];
+            }
+            src += vkfont_chr_width_bytes;
+            dst += surface->pitch;
+        }
+    }
+    else if (((8 - (vkfont_chr_width_pixels & 7)) & 7) >= offset)
+    {
+        for (sy = 0; sy < vkfont_chr_height; sy++)
+        {
+            prev_value = 0;
+            for (sx = 0; sx < vkfont_chr_width_bytes; sx++)
+            {
+                value = src[sx];
+                dst[sx] |= (value >> offset) | (prev_value << (8 - offset));
+                prev_value = value;
+            }
+            src += vkfont_chr_width_bytes;
+            dst += surface->pitch;
+        }
+    }
+    else
+    {
+        for (sy = 0; sy < vkfont_chr_height; sy++)
+        {
+            prev_value = 0;
+            for (sx = 0; sx < vkfont_chr_width_bytes; sx++)
+            {
+                value = src[sx];
+                dst[sx] |= (value >> offset) | (prev_value << (8 - offset));
+                prev_value = value;
+            }
+            dst[vkfont_chr_width_bytes] |= prev_value << (8 - offset);
+            src += vkfont_chr_width_bytes;
+            dst += surface->pitch;
+        }
+    }
+}
+
+static void vk_invert_area(SDL_Surface *surface, int x, int y, int w, int h)
+{
+    uint8_t *dst, mask1, mask2;
+    int sy, sx, bytes;
+
+    dst = ((uint8_t *)surface->pixels) + y * surface->pitch + (x >> 3);
+
+    mask1 = 0xff >> (x & 7);
+    mask2 = 0xff << ((8 - ((x + w) & 7)) & 7);
+
+    if (w <= (8 - (x & 7)))
+    {
+        mask1 &= mask2;
+
+        for (sy = 0; sy < h; sy++)
+        {
+            *dst ^= mask1;
+            dst += surface->pitch;
+        }
+    }
+    else if (w <= (16 - (x & 7)))
+    {
+        for (sy = 0; sy < h; sy++)
+        {
+            dst[0] ^= mask1;
+            dst[1] ^= mask2;
+            dst += surface->pitch;
+        }
+    }
+    else
+    {
+        bytes = (w + (x & 7) - 1) >> 3;
+
+        for (sy = 0; sy < h; sy++)
+        {
+            dst[0] ^= mask1;
+            for (sx = 1; sx < bytes; sx++)
+            {
+                dst[sx] ^= 0xff;
+            }
+            dst[bytes] ^= mask2;
+            dst += surface->pitch;
+        }
+    }
+}
+
+#ifdef __cplusplus
+extern "C"
+#endif
+int display_virtual_keyboard(
+#if SDL_VERSION_ATLEAST(2,0,0)
+    SDL_Renderer *renderer
+#else
+    SDL_Surface *surface, SDL_Rect *update_area
+#endif
+)
+{
+    SDL_Rect vkrect;
+    int row, column;
+
+    if (!virtual_keyboard_state) return 0;
+
+    vkrect.w = (vkfont_chr_width_pixels + 2 * 2) * VK_LAYOUT_WIDTH + 4 * 2;
+    vkrect.h = (vkfont_chr_height + 2 * 2) * 6 + 4 * 2;
+    vkrect.x = (640 - vkrect.w) >> 1;
+    vkrect.y = (480 - vkrect.h) >> 1;
+
+    if (virtual_keyboard_state < 0)
+    {
+#if SDL_VERSION_ATLEAST(2,0,0)
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+        SDL_RenderFillRect(renderer, &vkrect);
+#else
+        SDL_FillRect(surface, &vkrect, 0);
+#endif
+
+        virtual_keyboard_state = 0;
+    }
+    else
+    {
+        if (virtual_keyboard_surface == NULL)
+        {
+            virtual_keyboard_surface = SDL_CreateRGBSurface(0, vkrect.w, vkrect.h, 1, 0, 0, 0, 0);
+            if (virtual_keyboard_surface == NULL)
+            {
+                return 0;
+            }
+
+            virtual_keyboard_surface->format->palette->colors[0].r = 0;
+            virtual_keyboard_surface->format->palette->colors[0].g = 0;
+            virtual_keyboard_surface->format->palette->colors[0].b = 0;
+            virtual_keyboard_surface->format->palette->colors[1].r = 255;
+            virtual_keyboard_surface->format->palette->colors[1].g = 255;
+            virtual_keyboard_surface->format->palette->colors[1].b = 255;
+#if SDL_VERSION_ATLEAST(2,0,0)
+            virtual_keyboard_surface->format->palette->colors[0].a = 128;
+            virtual_keyboard_surface->format->palette->colors[1].a = 255;
+#endif
+        }
+#if SDL_VERSION_ATLEAST(2,0,0)
+        if (virtual_keyboard_texture == NULL)
+        {
+            Uint32 format, Rmask, Gmask, Bmask, Amask;
+            SDL_RendererInfo info;
+            int index, bpp;
+
+            format = SDL_PIXELFORMAT_ABGR8888;
+            if (SDL_GetRendererInfo(renderer, &info) <= 0)
+            {
+                for (index = 0; index < (int)info.num_texture_formats; ++index)
+                {
+                    if (info.texture_formats[index] == SDL_PIXELFORMAT_ARGB8888 ||
+                        info.texture_formats[index] == SDL_PIXELFORMAT_ABGR8888 ||
+                        info.texture_formats[index] == SDL_PIXELFORMAT_RGB888 ||
+                        info.texture_formats[index] == SDL_PIXELFORMAT_BGR888) {
+                        format = info.texture_formats[index];
+                        break;
+                    }
+                }
+            }
+
+            SDL_PixelFormatEnumToMasks(format, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
+            virtual_keyboard_texture_surface = SDL_CreateRGBSurfaceFrom(NULL, vkrect.w, vkrect.h, bpp, 0, Rmask, Gmask, Bmask, Amask);
+            if (virtual_keyboard_texture_surface == NULL)
+            {
+                return 0;
+            }
+
+            virtual_keyboard_texture = SDL_CreateTexture(renderer, format, SDL_TEXTUREACCESS_STREAMING, vkrect.w, vkrect.h);
+            if (virtual_keyboard_texture == NULL)
+            {
+                SDL_FreeSurface(virtual_keyboard_texture_surface);
+                virtual_keyboard_texture_surface = NULL;
+                return 0;
+            }
+
+            if (Amask)
+            {
+                SDL_SetTextureBlendMode(virtual_keyboard_texture, SDL_BLENDMODE_BLEND);
+            }
+        }
+#endif
+
+        memset(virtual_keyboard_surface->pixels, 0, virtual_keyboard_surface->h * virtual_keyboard_surface->pitch);
+
+        for (row = 0; row < 4; row++)
+        {
+            for (column = 0; column < VK_LAYOUT_WIDTH; column++)
+            {
+                vk_draw_chr(virtual_keyboard_surface, virtual_keyboard_layout[virtual_keyboard_altlayout][row][column], (vkfont_chr_width_pixels + 2 * 2) * column + 2 + 4, (vkfont_chr_height + 2 * 2) * row + 2 + 4);
+            }
+        }
+
+        if (virtual_keyboard_buflen <= VK_LAYOUT_WIDTH)
+        {
+            for (column = 0; column < virtual_keyboard_buflen; column++)
+            {
+                vk_draw_chr(virtual_keyboard_surface, virtual_keyboard_buffer[column], (vkfont_chr_width_pixels + 2 * 2) * column + 2 + 4, (vkfont_chr_height + 2 * 2) * 5 + 2 + 4);
+            }
+        }
+        else
+        {
+            for (column = 0; column < VK_LAYOUT_WIDTH; column++)
+            {
+                vk_draw_chr(virtual_keyboard_surface, virtual_keyboard_buffer[column], (vkfont_chr_width_pixels + 2 * 2) * column + 2 + 4, (vkfont_chr_height + 2 * 2) * 4 + 2 + 4);
+            }
+            for (column = VK_LAYOUT_WIDTH; column < virtual_keyboard_buflen; column++)
+            {
+                vk_draw_chr(virtual_keyboard_surface, virtual_keyboard_buffer[column], (vkfont_chr_width_pixels + 2 * 2) * (column - VK_LAYOUT_WIDTH) + 2 + 4, (vkfont_chr_height + 2 * 2) * 5 + 2 + 4);
+            }
+        }
+
+        if ((virtual_keyboard_pos_y == 3) && (virtual_keyboard_pos_x >= (VK_LAYOUT_WIDTH - 2)))
+        {
+            vk_invert_area(virtual_keyboard_surface, (vkfont_chr_width_pixels + 2 * 2) * (VK_LAYOUT_WIDTH - 2) + 4, (vkfont_chr_height + 2 * 2) * 3 + 4, (vkfont_chr_width_pixels + 2 * 2) * 2, vkfont_chr_height + 2 * 2);
+        }
+        else
+        {
+            vk_invert_area(virtual_keyboard_surface, (vkfont_chr_width_pixels + 2 * 2) * virtual_keyboard_pos_x + 4, (vkfont_chr_height + 2 * 2) * virtual_keyboard_pos_y + 4, vkfont_chr_width_pixels + 2 * 2, vkfont_chr_height + 2 * 2);
+        }
+
+#if SDL_VERSION_ATLEAST(2,0,0)
+        if (SDL_LockTexture(virtual_keyboard_texture, NULL, &virtual_keyboard_texture_surface->pixels, &virtual_keyboard_texture_surface->pitch) >= 0)
+        {
+            SDL_UpperBlit(virtual_keyboard_surface, NULL, virtual_keyboard_texture_surface, NULL);
+            SDL_UnlockTexture(virtual_keyboard_texture);
+        }
+
+        SDL_RenderCopy(renderer, virtual_keyboard_texture, NULL, &vkrect);
+#else
+        SDL_UpperBlit(virtual_keyboard_surface, NULL, surface, &vkrect);
+#endif
+    }
+
+#if !SDL_VERSION_ATLEAST(2,0,0)
+    if (update_area != NULL)
+    {
+        if (vkrect.x > update_area->x) vkrect.x = update_area->x;
+        if (vkrect.y > update_area->y) vkrect.y = update_area->y;
+        if ((vkrect.x + vkrect.w) < (update_area->x + update_area->w)) vkrect.w = update_area->x + update_area->w - vkrect.x;
+        if ((vkrect.y + vkrect.h) < (update_area->y + update_area->h)) vkrect.h = update_area->y + update_area->h - vkrect.y;
+
+        SDL_UpdateRect(surface, vkrect.x, vkrect.y, vkrect.w, vkrect.h);
+    }
+#endif
+
+    return 1;
+}
+
+static void open_controller_or_joystick(int device_index)
+{
+    int num_joysticks, index;
+
+    num_joysticks = SDL_NumJoysticks();
+
+#if SDL_VERSION_ATLEAST(2,0,0)
+    // prefer game controllers over joysticks
+    for (index = 0; index < num_joysticks; index++)
+    {
+        if ((device_index >= 0) && (index != device_index))
+        {
+            continue;
+        }
+
+        if (SDL_IsGameController(index))
+        {
+            controller = SDL_GameControllerOpen(index);
+            if (controller != NULL)
+            {
+#if SDL_VERSION_ATLEAST(2,0,14)
+                if (sdl_versionnum >= SDL_VERSIONNUM(2,0,14))
+                {
+                    if (SDL_GameControllerHasAxis(controller, SDL_CONTROLLER_AXIS_LEFTX) && SDL_GameControllerHasAxis(controller, SDL_CONTROLLER_AXIS_LEFTY))
+                    {
+                        controller_base_axis = SDL_CONTROLLER_AXIS_LEFTX;
+                    }
+                    else if (SDL_GameControllerHasAxis(controller, SDL_CONTROLLER_AXIS_RIGHTX) && SDL_GameControllerHasAxis(controller, SDL_CONTROLLER_AXIS_RIGHTY))
+                    {
+                        controller_base_axis = SDL_CONTROLLER_AXIS_RIGHTX;
+                    }
+                    else
+                    {
+                        SDL_GameControllerClose(controller);
+                        controller = NULL;
+                        continue;
+                    }
+                }
+                else
+#endif
+                controller_base_axis = SDL_CONTROLLER_AXIS_LEFTX;
+                printf("Using controller: %s (%s)\n", SDL_GameControllerName(controller), SDL_JoystickName(SDL_GameControllerGetJoystick(controller)));
+                break;
+            }
+        }
+    }
+
+    if (controller == NULL)
+#endif
+    for (index = 0; index < num_joysticks; index++)
+    {
+        if ((device_index >= 0) && (index != device_index))
+        {
+            continue;
+        }
+
+        joystick = SDL_JoystickOpen(index);
+        if (joystick != NULL)
+        {
+            if (SDL_JoystickNumAxes(joystick) < 2)
+            {
+                SDL_JoystickClose(joystick);
+                joystick = NULL;
+                continue;
+            }
+
+            printf("Using joystick: %s\n",
+#if SDL_VERSION_ATLEAST(2,0,0)
+                SDL_JoystickName(joystick)
+#else
+                SDL_JoystickName(index)
+#endif
+            );
+            break;
+        }
+    }
+}
+
+static void handle_mouse_button(int pressed, int mouse_button, int event_button, int force_detect, int remove)
+{
+    if (pressed)
+    {
+        mouse_buttons |= SDL_BUTTON(event_button);
+
+#if SDL_VERSION_ATLEAST(2,0,2)
+        if (force_detect || (sdl_versionnum < SDL_VERSIONNUM(2,0,2)))
+#endif
+        {
+            if (mouse_button >= 0)
+            {
+                if (!mouse_last_peep[mouse_button])
+                {
+#ifdef _WIN32
+                    mouse_current_time[mouse_button] = GetTickCount();
+#else
+                    mouse_current_time[mouse_button] = Winapi_GetTicks();
+#endif
+                    mouse_current_x[mouse_button] = mouse_x;
+                    mouse_current_y[mouse_button] = mouse_y;
+                }
+
+                if ((((uint32_t)(mouse_current_time[mouse_button] - mouse_last_time[mouse_button])) < mouse_doubleclick_max_time) &&
+                    (abs(mouse_current_x[mouse_button] - mouse_last_x[mouse_button]) < mouse_doubleclick_max_distance) &&
+                    (abs(mouse_current_y[mouse_button] - mouse_last_y[mouse_button]) < mouse_doubleclick_max_distance)
+                   )
+                {
+                    mouse_doubleclick = 1;
+                }
+
+                if (remove)
+                {
+                    mouse_last_time[mouse_button] = mouse_current_time[mouse_button];
+                    mouse_last_x[mouse_button] = mouse_current_x[mouse_button];
+                    mouse_last_y[mouse_button] = mouse_current_y[mouse_button];
+                }
+                mouse_last_peep[mouse_button] = (remove)?0:1;
+            }
+        }
+    }
+    else
+    {
+        mouse_buttons &= ~SDL_BUTTON(event_button);
+    }
+}
+
+static int check_controller_event(SDL_Event *event, int remove)
+{
+    int x, y, dx, dy, newx, newy;
+    uint32_t diff;
+
+    x = controller_axis_x;
+    if ((x <= Controller_Deadzone) && (x >= -Controller_Deadzone)) x = 0;
+    y = controller_axis_y;
+    if ((y <= Controller_Deadzone) && (y >= -Controller_Deadzone)) y = 0;
+
+    if (virtual_keyboard_state)
+    {
+        if ((x <= 8192) && (x >= -8192)) x = 0;
+        if ((y <= 8192) && (y >= -8192)) y = 0;
+
+        if ((x != 0) || (y != 0))
+        {
+            diff = SoundEngine_Counter - controller_mouse_last_time;
+
+            if (diff >= 10)
+            {
+                controller_mouse_last_time = SoundEngine_Counter;
+
+                if (y > 0)
+                {
+                    virtual_keyboard_pos_y = (virtual_keyboard_pos_y < 3) ? virtual_keyboard_pos_y + 1 : 0;
+                }
+                else if (y < 0)
+                {
+                    virtual_keyboard_pos_y = (virtual_keyboard_pos_y) ? virtual_keyboard_pos_y - 1 : 3;
+                }
+
+                if (x > 0)
+                {
+                    if ((virtual_keyboard_pos_y == 3) && (virtual_keyboard_pos_x >= (VK_LAYOUT_WIDTH - 2)))
+                    {
+                        virtual_keyboard_pos_x = 0;
+                    }
+                    else
+                    {
+                        virtual_keyboard_pos_x = (virtual_keyboard_pos_x < (VK_LAYOUT_WIDTH - 1)) ? virtual_keyboard_pos_x + 1 : 0;
+                    }
+                }
+                else if (x < 0)
+                {
+                    if ((virtual_keyboard_pos_y == 3) && (virtual_keyboard_pos_x >= (VK_LAYOUT_WIDTH - 2)))
+                    {
+                        virtual_keyboard_pos_x = (VK_LAYOUT_WIDTH - 3);
+                    }
+                    else
+                    {
+                        virtual_keyboard_pos_x = (virtual_keyboard_pos_x) ? virtual_keyboard_pos_x - 1 : (VK_LAYOUT_WIDTH - 1);
+                    }
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    if ((x != 0) || (y != 0))
+    {
+        diff = SoundEngine_Counter - controller_mouse_last_time;
+
+        if (diff > 0)
+        {
+            if (!controller_mouse_motion)
+            {
+                diff = 1;
+                controller_frac_x = 0;
+                controller_frac_y = 0;
+            }
+
+            controller_mouse_motion = 1;
+            controller_mouse_last_time = SoundEngine_Counter;
+
+            dx = x * diff + controller_frac_x;
+            newx = dx >> 12;
+            controller_frac_x = dx - (newx << 12);
+            newx += mouse_x;
+
+            dy = y * diff + controller_frac_y;
+            newy = dy >> 12;
+            controller_frac_y = dy - (newy << 12);
+            newy += mouse_y;
+
+#if SDL_VERSION_ATLEAST(2,0,0)
+            if (Display_Mode)
+            {
+                if (newx < 0) newx = 0;
+                else if (newx >= mouse_clip_w) newx = mouse_clip_w - 1;
+
+                if (newy < 0) newy = 0;
+                else if (newy >= mouse_clip_h) newy = mouse_clip_h - 1;
+            }
+            else
+#endif
+            {
+                if (newx < 0) newx = 0;
+                else if (newx >= 640) newx = 639;
+
+                if (newy < 0) newy = 0;
+                else if (newy >= 480) newy = 479;
+            }
+
+
+            event->type = SDL_MOUSEMOTION;
+            event->motion.state = mouse_buttons;
+            event->motion.x = newx;
+            event->motion.y = newy;
+            event->motion.xrel = newx - mouse_x;
+            event->motion.yrel = newy - mouse_y;
+
+            mouse_x = newx;
+            mouse_y = newy;
+
+            if (!remove)
+            {
+                priority_event = *event;
+            }
+
+            return 1;
+        }
+    }
+    else
+    {
+        controller_mouse_motion = 0;
+    }
+
+    return 0;
+}
+
 static int find_event(SDL_Event *event, int remove, int wait)
 {
     int pump_events, can_sleep;
+
+    if (priority_event.type)
+    {
+        *event = priority_event;
+        if (remove)
+        {
+            priority_event.type = 0;
+        }
+        return 1;
+    }
 
     pump_events = 1;
     can_sleep = (CPU_SleepMode != 2)?1:0;
@@ -453,6 +1094,11 @@ static int find_event(SDL_Event *event, int remove, int wait)
                 }
             }
 
+            if (check_controller_event(event, remove))
+            {
+                return 1;
+            }
+
             return 0;
         }
 
@@ -463,7 +1109,10 @@ static int find_event(SDL_Event *event, int remove, int wait)
         case SDL_KEYDOWN:
         case SDL_KEYUP:
             // key events
-            keep_event = 1;
+            if (!virtual_keyboard_state)
+            {
+                keep_event = 1;
+            }
             keyboard_mods = event->key.keysym.mod;
             {
                 int modvalue;
@@ -521,7 +1170,10 @@ static int find_event(SDL_Event *event, int remove, int wait)
 
         case SDL_MOUSEMOTION:
             // mouse motion events
-            keep_event = 1;
+            if (!virtual_keyboard_state)
+            {
+                keep_event = 1;
+            }
             mouse_buttons = event->motion.state;
             if (mouse_right_button_mod && (mouse_buttons & SDL_BUTTON(SDL_BUTTON_LEFT)))
             {
@@ -601,54 +1253,15 @@ static int find_event(SDL_Event *event, int remove, int wait)
             else mouse_button = -1;
             if (mouse_button >= 0)
             {
-                keep_event = 1;
-            }
-
-            if (event->button.state == SDL_PRESSED)
-            {
-                mouse_buttons |= SDL_BUTTON(event->button.button);
-
-#if SDL_VERSION_ATLEAST(2,0,2)
-                if (sdl_versionnum < SDL_VERSIONNUM(2,0,2))
-#endif
+                if (!virtual_keyboard_state)
                 {
-                    if (mouse_button >= 0)
-                    {
-                        if (!mouse_last_peep[mouse_button])
-                        {
-#ifdef _WIN32
-                            mouse_current_time[mouse_button] = GetTickCount();
-#else
-                            mouse_current_time[mouse_button] = Winapi_GetTicks();
-#endif
-                            mouse_current_x[mouse_button] = event->button.x;
-                            mouse_current_y[mouse_button] = event->button.y;
-                        }
-
-                        if ((((uint32_t)(mouse_current_time[mouse_button] - mouse_last_time[mouse_button])) < mouse_doubleclick_max_time) &&
-                            (abs(mouse_current_x[mouse_button] - mouse_last_x[mouse_button]) < mouse_doubleclick_max_distance) &&
-                            (abs(mouse_current_y[mouse_button] - mouse_last_y[mouse_button]) < mouse_doubleclick_max_distance)
-                           )
-                        {
-                            mouse_doubleclick = 1;
-                        }
-
-                        if (remove)
-                        {
-                            mouse_last_time[mouse_button] = mouse_current_time[mouse_button];
-                            mouse_last_x[mouse_button] = mouse_current_x[mouse_button];
-                            mouse_last_y[mouse_button] = mouse_current_y[mouse_button];
-                        }
-                        mouse_last_peep[mouse_button] = (remove)?0:1;
-                    }
+                    keep_event = 1;
                 }
             }
-            else
-            {
-                mouse_buttons &= ~SDL_BUTTON(event->button.button);
-            }
+
             mouse_x = event->button.x;
             mouse_y = event->button.y;
+            handle_mouse_button((event->button.state == SDL_PRESSED)?1:0, mouse_button, event->button.button, 0, remove);
 #if SDL_VERSION_ATLEAST(2,0,0)
             if (Display_Mode)
             {
@@ -663,6 +1276,22 @@ static int find_event(SDL_Event *event, int remove, int wait)
 
         case SDL_JOYAXISMOTION:
             // joystick axis motion event
+            if (joystick != NULL)
+            {
+                if (event->jaxis.axis == 0)
+                {
+                    controller_axis_x = event->jaxis.value;
+                }
+                else if (event->jaxis.axis == 1)
+                {
+                    controller_axis_y = event->jaxis.value;
+                }
+
+                if (check_controller_event(event, remove))
+                {
+                    keep_event = 1;
+                }
+            }
             break;
 
         case SDL_JOYBALLMOTION:
@@ -671,14 +1300,170 @@ static int find_event(SDL_Event *event, int remove, int wait)
 
         case SDL_JOYHATMOTION:
             // joystick hat motion event
+            if (joystick != NULL)
+            {
+                if (event->jhat.hat == 0)
+                {
+                    if ((event->jhat.value & 0x0f) != joystick_hat_position)
+                    {
+                        if (virtual_keyboard_state)
+                        {
+                            if ((event->jhat.value & 1) && !(joystick_hat_position & 1)) // UP
+                            {
+                                virtual_keyboard_pos_y = (virtual_keyboard_pos_y) ? virtual_keyboard_pos_y - 1 : 3;
+                            }
+                            if ((event->jhat.value & 2) && !(joystick_hat_position & 2)) // RIGHT
+                            {
+                                if ((virtual_keyboard_pos_y == 3) && (virtual_keyboard_pos_x >= (VK_LAYOUT_WIDTH - 2)))
+                                {
+                                    virtual_keyboard_pos_x = 0;
+                                }
+                                else
+                                {
+                                    virtual_keyboard_pos_x = (virtual_keyboard_pos_x < (VK_LAYOUT_WIDTH - 1)) ? virtual_keyboard_pos_x + 1 : 0;
+                                }
+                            }
+                            if ((event->jhat.value & 4) && !(joystick_hat_position & 4)) // DOWN
+                            {
+                                virtual_keyboard_pos_y = (virtual_keyboard_pos_y < 3) ? virtual_keyboard_pos_y + 1 : 0;
+                            }
+                            if ((event->jhat.value & 8) && !(joystick_hat_position & 8)) // LEFT
+                            {
+                                if ((virtual_keyboard_pos_y == 3) && (virtual_keyboard_pos_x >= (VK_LAYOUT_WIDTH - 2)))
+                                {
+                                    virtual_keyboard_pos_x = VK_LAYOUT_WIDTH - 3;
+                                }
+                                else
+                                {
+                                    virtual_keyboard_pos_x = (virtual_keyboard_pos_x) ? virtual_keyboard_pos_x - 1 : (VK_LAYOUT_WIDTH - 1);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            keep_event = 1;
+                        }
+                        event->jhat.value = (event->jhat.value & 0x0f) | (joystick_hat_position << 4); // store previous hat position in upper nibble
+                        if (remove || !keep_event)
+                        {
+                            joystick_hat_position = event->jhat.value & 0x0f;
+                        }
+                    }
+                }
+            }
             break;
 
         case SDL_JOYBUTTONDOWN:
         case SDL_JOYBUTTONUP:
             // joystick button event
+            if (joystick != NULL)
+            {
+                mouse_button = -1;
+                switch (event->jbutton.button)
+                {
+                case 0:
+                case 1:
+                    if (virtual_keyboard_state)
+                    {
+                        if (event->type == SDL_JOYBUTTONDOWN)
+                        {
+                            if (event->jbutton.button == 0)
+                            {
+                                if ((virtual_keyboard_pos_y == 3) && (virtual_keyboard_pos_x >= (VK_LAYOUT_WIDTH - 3)))
+                                {
+                                    if (virtual_keyboard_pos_x >= (VK_LAYOUT_WIDTH - 2))
+                                    {
+                                        if (virtual_keyboard_state > 0)
+                                        {
+                                            virtual_keyboard_state = -1;
+                                            if (virtual_keyboard_buflen)
+                                            {
+                                                priority_event.type = SDL_USEREVENT;
+                                                priority_event.user.code = 4;
+                                                priority_event.user.data1 = NULL;
+                                                priority_event.user.data2 = NULL;
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (virtual_keyboard_buflen)
+                                        {
+                                            virtual_keyboard_buflen--;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    if (virtual_keyboard_buflen < 2 * VK_LAYOUT_WIDTH)
+                                    {
+                                        virtual_keyboard_buffer[virtual_keyboard_buflen] = virtual_keyboard_layout[virtual_keyboard_altlayout][virtual_keyboard_pos_y][virtual_keyboard_pos_x];
+                                        virtual_keyboard_buflen++;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (virtual_keyboard_buflen)
+                                {
+                                    virtual_keyboard_buflen--;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        mouse_button = event->jbutton.button;
+                    }
+                    break;
+                case 2:
+                    if (event->type == SDL_JOYBUTTONDOWN)
+                    {
+                        if (!virtual_keyboard_disabled)
+                        {
+                            if (virtual_keyboard_state <= 0)
+                            {
+                                virtual_keyboard_state = 1;
+                                virtual_keyboard_pos_x = 0;
+                                virtual_keyboard_pos_y = 0;
+                                virtual_keyboard_altlayout = 0;
+                                virtual_keyboard_buflen = 0;
+                            }
+                            else
+                            {
+                                virtual_keyboard_state = -1;
+                            }
+                        }
+                    }
+                    break;
+                case 3:
+                    if (virtual_keyboard_state)
+                    {
+                        if (event->type == SDL_JOYBUTTONDOWN)
+                        {
+                            virtual_keyboard_altlayout = 1 - virtual_keyboard_altlayout;
+                        }
+                    }
+                    else
+                    {
+                        keep_event = 1;
+                    }
+                    break;
+                default:
+                    break;
+                }
+
+                if (mouse_button >= 0)
+                {
+                    keep_event = 1;
+                    mouse_doubleclick = 0;
+                    handle_mouse_button((event->type == SDL_JOYBUTTONDOWN)?1:0, mouse_button, (mouse_button)?SDL_BUTTON_RIGHT:SDL_BUTTON_LEFT, 1, remove);
+                }
+            }
             break;
 
         case SDL_QUIT:
+            virtual_keyboard_state = 0;
             keep_event = 1;
             break;
 
@@ -704,15 +1489,211 @@ static int find_event(SDL_Event *event, int remove, int wait)
 
         case  SDL_CONTROLLERAXISMOTION:
             // game controller axis motion event
+            if (controller != NULL)
+            {
+                if (event->caxis.axis == controller_base_axis)
+                {
+                    controller_axis_x = event->caxis.value;
+                }
+                else if (event->caxis.axis == (controller_base_axis + 1))
+                {
+                    controller_axis_y = event->caxis.value;
+                }
+
+                if (check_controller_event(event, remove))
+                {
+                    keep_event = 1;
+                }
+            }
             break;
 
         case SDL_CONTROLLERBUTTONDOWN:
         case SDL_CONTROLLERBUTTONUP:
             // game controller button event
+            if (controller != NULL)
+            {
+                mouse_button = -1;
+                switch (event->cbutton.button)
+                {
+                case SDL_CONTROLLER_BUTTON_A:
+                case SDL_CONTROLLER_BUTTON_X:
+                    if (virtual_keyboard_state)
+                    {
+                        if (event->type == SDL_CONTROLLERBUTTONDOWN)
+                        {
+                            if ((virtual_keyboard_pos_y == 3) && (virtual_keyboard_pos_x >= (VK_LAYOUT_WIDTH - 3)))
+                            {
+                                if (virtual_keyboard_pos_x >= (VK_LAYOUT_WIDTH - 2))
+                                {
+                                    if (virtual_keyboard_state > 0)
+                                    {
+                                        virtual_keyboard_state = -1;
+                                        if (virtual_keyboard_buflen)
+                                        {
+                                            priority_event.type = SDL_USEREVENT;
+                                            priority_event.user.code = 4;
+                                            priority_event.user.data1 = NULL;
+                                            priority_event.user.data2 = NULL;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    if (virtual_keyboard_buflen)
+                                    {
+                                        virtual_keyboard_buflen--;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (virtual_keyboard_buflen < 2 * VK_LAYOUT_WIDTH)
+                                {
+                                    virtual_keyboard_buffer[virtual_keyboard_buflen] = virtual_keyboard_layout[virtual_keyboard_altlayout][virtual_keyboard_pos_y][virtual_keyboard_pos_x];
+                                    virtual_keyboard_buflen++;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        mouse_button = 0;
+                    }
+                    break;
+                case SDL_CONTROLLER_BUTTON_B:
+                case SDL_CONTROLLER_BUTTON_Y:
+                    if (virtual_keyboard_state)
+                    {
+                        if (event->type == SDL_CONTROLLERBUTTONDOWN)
+                        {
+                            if (virtual_keyboard_buflen)
+                            {
+                                virtual_keyboard_buflen--;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        mouse_button = 1;
+                    }
+                    break;
+
+                case SDL_CONTROLLER_BUTTON_START:
+                    if (event->type == SDL_CONTROLLERBUTTONDOWN)
+                    {
+                        if (!virtual_keyboard_disabled)
+                        {
+                            if (virtual_keyboard_state <= 0)
+                            {
+                                virtual_keyboard_state = 1;
+                                virtual_keyboard_pos_x = 0;
+                                virtual_keyboard_pos_y = 0;
+                                virtual_keyboard_altlayout = 0;
+                                virtual_keyboard_buflen = 0;
+                            }
+                            else
+                            {
+                                virtual_keyboard_state = -1;
+                            }
+                        }
+                    }
+                    break;
+
+                case SDL_CONTROLLER_BUTTON_BACK:
+                case SDL_CONTROLLER_BUTTON_DPAD_UP:
+                case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+                case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+                case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+                    if (virtual_keyboard_state)
+                    {
+                        if (event->type == SDL_CONTROLLERBUTTONDOWN)
+                        {
+                            switch (event->cbutton.button)
+                            {
+                            case SDL_CONTROLLER_BUTTON_BACK:
+                                virtual_keyboard_altlayout = 1 - virtual_keyboard_altlayout;
+                                break;
+                            case SDL_CONTROLLER_BUTTON_DPAD_UP:
+                                virtual_keyboard_pos_y = (virtual_keyboard_pos_y) ? virtual_keyboard_pos_y - 1 : 3;
+                                break;
+                            case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+                                virtual_keyboard_pos_y = (virtual_keyboard_pos_y < 3) ? virtual_keyboard_pos_y + 1 : 0;
+                                break;
+                            case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+                                if ((virtual_keyboard_pos_y == 3) && (virtual_keyboard_pos_x >= (VK_LAYOUT_WIDTH - 2)))
+                                {
+                                    virtual_keyboard_pos_x = (VK_LAYOUT_WIDTH - 3);
+                                }
+                                else
+                                {
+                                    virtual_keyboard_pos_x = (virtual_keyboard_pos_x) ? virtual_keyboard_pos_x - 1 : (VK_LAYOUT_WIDTH - 1);
+                                }
+                                break;
+                            case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+                                if ((virtual_keyboard_pos_y == 3) && (virtual_keyboard_pos_x >= (VK_LAYOUT_WIDTH - 2)))
+                                {
+                                    virtual_keyboard_pos_x = 0;
+                                }
+                                else
+                                {
+                                    virtual_keyboard_pos_x = (virtual_keyboard_pos_x < (VK_LAYOUT_WIDTH - 1)) ? virtual_keyboard_pos_x + 1 : 0;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        keep_event = 1;
+                    }
+                    break;
+
+                default:
+                    break;
+                }
+
+                if (mouse_button >= 0)
+                {
+                    keep_event = 1;
+                    mouse_doubleclick = 0;
+                    handle_mouse_button((event->type == SDL_CONTROLLERBUTTONDOWN)?1:0, mouse_button, (mouse_button)?SDL_BUTTON_RIGHT:SDL_BUTTON_LEFT, 1, remove);
+                }
+            }
             break;
 
         case SDL_CONTROLLERDEVICEADDED:
+            // controller device event
+            if (Input_GameController && (joystick == NULL)
+#if SDL_VERSION_ATLEAST(2,0,0)
+                && (controller == NULL)
+#endif
+            )
+            {
+                open_controller_or_joystick(event->cdevice.which);
+            }
+            break;
         case SDL_CONTROLLERDEVICEREMOVED:
+            // controller device event
+            if (controller != NULL)
+            {
+                if (SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(controller)) == event->cdevice.which)
+                {
+                    SDL_GameControllerClose(controller);
+                    controller = NULL;
+
+                    controller_axis_x = 0;
+                    controller_axis_y = 0;
+                    controller_mouse_motion = 0;
+
+                    if (virtual_keyboard_state)
+                    {
+                        virtual_keyboard_state = -1;
+                    }
+
+                    printf("Controller disconnected\n");
+                }
+            }
+            break;
         case SDL_CONTROLLERDEVICEREMAPPED:
             // controller device event
             break;
@@ -738,8 +1719,38 @@ static int find_event(SDL_Event *event, int remove, int wait)
             break;
 
         case SDL_JOYDEVICEADDED:
+            // joystick device event
+            if (Input_GameController && (joystick == NULL)
+#if SDL_VERSION_ATLEAST(2,0,0)
+                && (controller == NULL)
+#endif
+            )
+            {
+                open_controller_or_joystick(event->jdevice.which);
+            }
+            break;
         case SDL_JOYDEVICEREMOVED:
             // joystick device event
+            if (joystick != NULL)
+            {
+                if (SDL_JoystickInstanceID(joystick) == event->jdevice.which)
+                {
+                    SDL_JoystickClose(joystick);
+                    joystick = NULL;
+
+                    joystick_hat_position = 0;
+                    controller_axis_x = 0;
+                    controller_axis_y = 0;
+                    controller_mouse_motion = 0;
+
+                    if (virtual_keyboard_state)
+                    {
+                        virtual_keyboard_state = -1;
+                    }
+
+                    printf("Joystick disconnected\n");
+                }
+            }
             break;
 
         case SDL_MOUSEWHEEL:
@@ -837,9 +1848,59 @@ static int find_event(SDL_Event *event, int remove, int wait)
     };
 }
 
-static void translate_event(lpmsg lpMsg, SDL_Event *event)
+static void translate_key(lpmsg lpMsg, int released, int vkey, int scancode, int repeat)
 {
-    int doubleclick, vkey, scancode;
+    lpMsg->message = (released)?WM_KEYUP:WM_KEYDOWN;
+    lpMsg->wParam = vkey;
+    lpMsg->lParam = scancode << 16;
+    if (released)
+    {
+        lpMsg->lParam |= 1 | (1 << 30) | (1 << 31);
+        // missing bits (unused by Septerra Core):
+        // bit 24 - Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
+    }
+    else
+    {
+        // missing bits (unused by Septerra Core):
+        // bits 0-15 - The repeat count for the current message.
+        // bit 24 - Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
+        // bit 30 - The previous key state.
+        if (repeat)
+        {
+            lpMsg->lParam |= 1 | (1 << 30);
+        }
+    }
+}
+
+static void translate_mouse_button(lpmsg lpMsg, int pressed, int mouse_button, int doubleclick)
+{
+    switch (mouse_button)
+    {
+    case 0:
+        lpMsg->message = (pressed)?(doubleclick?WM_LBUTTONDBLCLK:WM_LBUTTONDOWN):WM_LBUTTONUP;
+        break;
+    case 1:
+        lpMsg->message = (pressed)?(doubleclick?WM_RBUTTONDBLCLK:WM_RBUTTONDOWN):WM_RBUTTONUP;
+        break;
+    case 2:
+        lpMsg->message = (pressed)?(doubleclick?WM_MBUTTONDBLCLK:WM_MBUTTONDOWN):WM_MBUTTONUP;
+        break;
+    }
+
+    if (mouse_buttons & SDL_BUTTON_LMASK) lpMsg->wParam |= MK_LBUTTON;
+    if (mouse_buttons & SDL_BUTTON_RMASK) lpMsg->wParam |= MK_RBUTTON;
+    if (mouse_buttons & SDL_BUTTON_MMASK) lpMsg->wParam |= MK_MBUTTON;
+    if (mouse_buttons & SDL_BUTTON_X1MASK) lpMsg->wParam |= MK_XBUTTON1;
+    if (mouse_buttons & SDL_BUTTON_X2MASK) lpMsg->wParam |= MK_XBUTTON2;
+    if (keyboard_mods & KMOD_SHIFT) lpMsg->wParam |= MK_SHIFT;
+    if (keyboard_mods & KMOD_CTRL) lpMsg->wParam |= MK_CONTROL;
+
+    lpMsg->lParam = (mouse_x & 0xffff) | ((mouse_y & 0xffff) << 16);
+}
+
+static void translate_event(lpmsg lpMsg, SDL_Event *event, int remove)
+{
+    int doubleclick, mouse_button, vkey, scancode, index, released;
 
     const static uint8_t vkey_table[128] = {
            0,    0,    0,    0,    0,    0,    0,    0, 0x08, 0x09,    0,    0, 0x0c, 0x0d,    0,    0, /*   0- 15 */
@@ -861,6 +1922,17 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event)
         0x19, 0x10, 0x13, 0x1f, 0x14, 0x16, 0x2f, 0x11, 0x2d, 0x15, 0x2c, 0x1a, 0x2b, 0x1b, 0x07, 0x0c, /*  80- 95 */
         0x29, 0x1e, 0x30, 0x2e, 0x20, 0x12, 0x21, 0x22, 0x23, 0x17, 0x24, 0x25, 0x26, 0x32, 0x31, 0x18, /*  96-111 */
         0x19, 0x10, 0x13, 0x1f, 0x14, 0x16, 0x2f, 0x11, 0x2d, 0x15, 0x2c, 0x1a, 0x2b, 0x1b, 0x29, 0x53, /* 112-127 */
+    };
+
+    const static uint8_t vk_shift_table[128] = {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*   0- 15 */
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*  16- 31 */
+        0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, /*  32- 47 */
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, /*  48- 63 */
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /*  64- 79 */
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, /*  80- 95 */
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*  96-111 */
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, /* 112-127 */
     };
 
     memset((void *)lpMsg, 0, sizeof(msg));
@@ -1349,28 +2421,13 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event)
                 }
             }
 
-            lpMsg->message = (event->type == SDL_KEYUP)?WM_KEYUP:WM_KEYDOWN;
-            lpMsg->wParam = vkey;
-            lpMsg->lParam = scancode << 16;
-            if (event->type == SDL_KEYUP)
-            {
-                lpMsg->lParam |= 1 | (1 << 30) | (1 << 31);
-                // missing bits (unused by Septerra Core):
-                // bit 24 - Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
-            }
-            else
-            {
-                // missing bits (unused by Septerra Core):
-                // bits 0-15 - The repeat count for the current message.
-                // bit 24 - Indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard. The value is 1 if it is an extended key; otherwise, it is 0.
-                // bit 30 - The previous key state.
+            translate_key(lpMsg, (event->type == SDL_KEYUP)?1:0, vkey, scancode,
 #if SDL_VERSION_ATLEAST(2,0,0)
-                if (event->key.repeat)
-                {
-                    lpMsg->lParam |= 1 | (1 << 30);
-                }
+                event->key.repeat
+#else
+                0
 #endif
-            }
+            );
 
             break;
 
@@ -1414,25 +2471,111 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event)
         switch (event->button.button)
         {
         case SDL_BUTTON_LEFT:
-            lpMsg->message = (event->button.state == SDL_PRESSED)?(doubleclick?WM_LBUTTONDBLCLK:WM_LBUTTONDOWN):WM_LBUTTONUP;
+            mouse_button = 0;
             break;
         case SDL_BUTTON_MIDDLE:
-            lpMsg->message = (event->button.state == SDL_PRESSED)?(doubleclick?WM_MBUTTONDBLCLK:WM_MBUTTONDOWN):WM_MBUTTONUP;
+            mouse_button = 2;
             break;
         case SDL_BUTTON_RIGHT:
-            lpMsg->message = (event->button.state == SDL_PRESSED)?(doubleclick?WM_RBUTTONDBLCLK:WM_RBUTTONDOWN):WM_RBUTTONUP;
+            mouse_button = 1;
+            break;
+        default:
+            mouse_button = -1;
             break;
         }
 
-        if (mouse_buttons & SDL_BUTTON_LMASK) lpMsg->wParam |= MK_LBUTTON;
-        if (mouse_buttons & SDL_BUTTON_RMASK) lpMsg->wParam |= MK_RBUTTON;
-        if (mouse_buttons & SDL_BUTTON_MMASK) lpMsg->wParam |= MK_MBUTTON;
-        if (mouse_buttons & SDL_BUTTON_X1MASK) lpMsg->wParam |= MK_XBUTTON1;
-        if (mouse_buttons & SDL_BUTTON_X2MASK) lpMsg->wParam |= MK_XBUTTON2;
-        if (keyboard_mods & KMOD_SHIFT) lpMsg->wParam |= MK_SHIFT;
-        if (keyboard_mods & KMOD_CTRL) lpMsg->wParam |= MK_CONTROL;
+        translate_mouse_button(lpMsg, (event->button.state == SDL_PRESSED)?1:0, mouse_button, doubleclick);
+        break;
 
-        lpMsg->lParam = (mouse_x & 0xffff) | ((mouse_y & 0xffff) << 16);
+    case SDL_JOYHATMOTION:
+        // joystick hat motion event
+        released = 0;
+        for (index = 0; index < 4; index++)
+        {
+            // search for released key
+            if ((event->jhat.value & (0x10 << index)) && !(event->jhat.value & (1 << index)))
+            {
+                released = 1;
+                event->jhat.value &= ~(0x10 << index);
+                break;
+            }
+        }
+        if (!released)
+        {
+            released = 1;
+            for (index = 0; index < 4; index++)
+            {
+                // search for pressed key
+                if ((event->jhat.value & (1 << index)) && !(event->jhat.value & (0x10 << index)))
+                {
+                    released = 0;
+                    event->jhat.value |= (0x10 << index);
+                    break;
+                }
+            }
+        }
+
+        switch (index)
+        {
+        case 0:
+            vkey = VK_UP;
+            scancode = 0x48;
+            break;
+        case 1:
+            vkey = VK_RIGHT;
+            scancode = 0x4d;
+            break;
+        case 2:
+            vkey = VK_DOWN;
+            scancode = 0x50;
+            break;
+        case 3:
+            vkey = VK_LEFT;
+            scancode = 0x4b;
+            break;
+        default:
+            vkey = 0;
+            scancode = 0;
+            break;
+        }
+
+        translate_key(lpMsg, released, vkey, scancode, 0);
+
+        if (remove && ((event->jhat.value & 0x0f) != (event->jhat.value >> 4)))
+        {
+            priority_event = *event;
+        }
+        break;
+
+    case SDL_JOYBUTTONDOWN:
+    case SDL_JOYBUTTONUP:
+        // joystick button event
+        mouse_button = -1;
+        vkey = 0;
+        scancode = 0;
+
+        switch (event->jbutton.button)
+        {
+        case 0:
+        case 1:
+            mouse_button = event->jbutton.button;
+            break;
+        case 3:
+            vkey = VK_TAB;
+            scancode = 0x0f;
+            break;
+        default:
+            break;
+        }
+
+        if (vkey)
+        {
+            translate_key(lpMsg, (event->type == SDL_JOYBUTTONUP)?1:0, vkey, scancode, 0);
+        }
+        else
+        {
+            translate_mouse_button(lpMsg, (event->type == SDL_JOYBUTTONDOWN)?1:0, mouse_button, mouse_doubleclick);
+        }
         break;
 
     case SDL_QUIT:
@@ -1442,22 +2585,135 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event)
         break;
 
     case SDL_USEREVENT:
-        if (event->user.code == 0)
+        switch (event->user.code)
         {
+        case 0:
             lpMsg->message = WM_QUIT;
             lpMsg->wParam = (uintptr_t)event->user.data1;
-        }
-        else if (event->user.code == 1)
-        {
+            break;
+        case 1:
             lpMsg->message = WM_NULL;
-        }
-        else
-        {
+            break;
+        case 2:
+        case 3:
             lpMsg->message = WM_APP + event->user.code - 2;
+            break;
+        case 4:
+            index = virtual_keyboard_buffer[(uintptr_t)event->user.data1];
+            switch ((uintptr_t)event->user.data2)
+            {
+            case 0:
+                translate_key(lpMsg, 1, VK_SHIFT, 0x36, 0); // release right shift
+                if (remove)
+                {
+                    event->user.data2 = (void *)(intptr_t)1;
+                }
+                break;
+            case 1:
+                translate_key(lpMsg, (vk_shift_table[index])?0:1, VK_SHIFT, 0x2a, 0); // press/release left shift
+                if (remove)
+                {
+                    event->user.data2 = (void *)(intptr_t)2;
+                }
+                break;
+            case 2:
+                translate_key(lpMsg, 0, vkey_table[index], scancode_table[index], 0); // press key
+                if (remove)
+                {
+                    event->user.data2 = (void *)(intptr_t)3;
+                }
+                break;
+            case 3:
+                translate_key(lpMsg, 1, vkey_table[index], scancode_table[index], 0); // release key
+                if (remove)
+                {
+                    if (1 + (intptr_t)event->user.data1 < virtual_keyboard_buflen)
+                    {
+                        event->user.data1 = (void *)(1 + (uintptr_t)event->user.data1);
+                        event->user.data2 = (void *)(intptr_t)((vk_shift_table[index] == vk_shift_table[virtual_keyboard_buffer[(uintptr_t)event->user.data1]])?2:1);
+                    }
+                    else
+                    {
+                        event->user.data2 = (void *)(intptr_t)((vk_shift_table[index])?4:5);
+                    }
+                }
+                break;
+            case 4:
+                translate_key(lpMsg, 1, VK_SHIFT, 0x2a, 0); // release left shift
+                if (remove)
+                {
+                    event->user.data2 = (void *)(intptr_t)5;
+                }
+                break;
+            }
+
+            if (remove)
+            {
+                if ((uintptr_t)event->user.data2 < 5)
+                {
+                    priority_event = *event;
+                }
+            }
+            break;
         }
         break;
 
 #if SDL_VERSION_ATLEAST(2,0,0)
+    case SDL_CONTROLLERBUTTONDOWN:
+    case SDL_CONTROLLERBUTTONUP:
+        // game controller button event
+        mouse_button = -1;
+        vkey = 0;
+        scancode = 0;
+
+        switch (event->cbutton.button)
+        {
+        case SDL_CONTROLLER_BUTTON_A:
+        case SDL_CONTROLLER_BUTTON_X:
+            mouse_button = 0;
+            break;
+
+        case SDL_CONTROLLER_BUTTON_B:
+        case SDL_CONTROLLER_BUTTON_Y:
+            mouse_button = 1;
+            break;
+
+        case SDL_CONTROLLER_BUTTON_BACK:
+            vkey = VK_TAB;
+            scancode = 0x0f;
+            break;
+        case SDL_CONTROLLER_BUTTON_DPAD_UP:
+            vkey = VK_UP;
+            scancode = 0x48;
+            break;
+        case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+            vkey = VK_DOWN;
+            scancode = 0x50;
+            break;
+        case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+            vkey = VK_LEFT;
+            scancode = 0x4b;
+            break;
+        case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+            vkey = VK_RIGHT;
+            scancode = 0x4d;
+            break;
+
+        default:
+            break;
+        }
+
+        if (vkey)
+        {
+            translate_key(lpMsg, (event->type == SDL_CONTROLLERBUTTONUP)?1:0, vkey, scancode, 0);
+        }
+        else
+        {
+            translate_mouse_button(lpMsg, (event->type == SDL_CONTROLLERBUTTONDOWN)?1:0, mouse_button, mouse_doubleclick);
+        }
+
+        break;
+
     case SDL_WINDOWEVENT:
         // window state change event
         switch (event->window.event)
@@ -1533,6 +2789,38 @@ void *CreateWindowExA_c(uint32_t dwExStyle, const char *lpClassName, const char 
     linked = SDL_Linked_Version();
     sdl_versionnum = SDL_VERSIONNUM(linked->major, linked->minor, linked->patch);
 #endif
+
+    priority_event.type = 0;
+    controller_mouse_last_time = SoundEngine_Counter;
+
+    if (Input_GameController && (joystick == NULL)
+#if SDL_VERSION_ATLEAST(2,0,0)
+        && (controller == NULL)
+#endif
+    )
+    {
+        SDL_InitSubSystem(SDL_INIT_JOYSTICK
+#if SDL_VERSION_ATLEAST(2,0,0)
+            | SDL_INIT_GAMECONTROLLER
+#endif
+        );
+
+#if SDL_VERSION_ATLEAST(2,0,2)
+        if (sdl_versionnum >= SDL_VERSIONNUM(2,0,2))
+        {
+            SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
+        }
+#endif
+
+        open_controller_or_joystick(-1);
+
+#if !SDL_VERSION_ATLEAST(2,0,0)
+        if (joystick == NULL)
+        {
+            SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
+        }
+#endif
+    }
 
     return (void *)1;
 }
@@ -1669,7 +2957,7 @@ uint32_t GetMessageA_c(void *lpMsg, void *hWnd, uint32_t wMsgFilterMin, uint32_t
             return -1;
         }
 
-        translate_event((lpmsg)lpMsg, &event);
+        translate_event((lpmsg)lpMsg, &event, 1);
 
 #ifdef _WIN32
         message_time = GetTickCount();
@@ -2038,7 +3326,7 @@ uint32_t PeekMessageA_c(void *lpMsg, void *hWnd, uint32_t wMsgFilterMin, uint32_
 
         if (lpMsg != NULL)
         {
-            translate_event((lpmsg)lpMsg, &event);
+            translate_event((lpmsg)lpMsg, &event, wRemoveMsg);
         }
 
         return 1;

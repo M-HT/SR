@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2023 Roman Pauer
+ *  Copyright (C) 2020-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -23,11 +23,6 @@
  */
 
 #include <stdio.h>
-#ifdef USE_SDL2
-    #include <SDL2/SDL.h>
-#else
-    #include <SDL/SDL.h>
-#endif
 #include "Game_vars.h"
 #include "Game_scalerplugin.h"
 #include "Game_thread.h"
@@ -50,7 +45,7 @@ static int SMK_double_pixels;
 static SDL_sem *SMK_FuncSem;
 static volatile int main_result;
 
-#ifdef USE_SDL2
+#if SDL_VERSION_ATLEAST(2,0,0)
 static SDL_Texture *SMK_Texture[3];
 static SDL_Texture *SMK_ScaledTexture[3];
 #elif defined(ALLOW_OPENGL)
@@ -63,7 +58,7 @@ static PFNGLDELETEFRAMEBUFFERSEXTPROC gl_glDeleteFramebuffersEXT;
 static PFNGLFRAMEBUFFERTEXTURE2DEXTPROC gl_glFramebufferTexture2DEXT;
 static PFNGLBINDFRAMEBUFFEREXTPROC gl_glBindFramebufferEXT;
 #endif
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
 static void *SMK_TextureData;
 static void *SMK_ScaledTextureData;
 static int SMK_CurrentTexture;
@@ -518,7 +513,7 @@ static void Blit_16_double_height_double_pixels(SDL_Surface *surface, uint16_t *
 
 static void eventloop_initialize(void)
 {
-#ifdef USE_SDL2
+#if SDL_VERSION_ATLEAST(2,0,0)
     int index;
     SDL_RendererInfo info;
 
@@ -834,7 +829,7 @@ static void eventloop_initialize(void)
 
     main_result = 1;
 
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
 main_init_exit:
 #endif
     SDL_SemPost(SMK_FuncSem);
@@ -842,7 +837,7 @@ main_init_exit:
 
 static void eventloop_deinitialize(void)
 {
-#ifdef USE_SDL2
+#if SDL_VERSION_ATLEAST(2,0,0)
     if (SMK_ScaledTextureData != NULL)
     {
         free(SMK_ScaledTextureData);
@@ -905,7 +900,7 @@ static void eventloop_deinitialize(void)
 
 static void eventloop_flip(void)
 {
-#if defined(USE_SDL2)
+#if SDL_VERSION_ATLEAST(2,0,0)
     if (Scaler_ScaleTextureData)
     {
         SDL_UpdateTexture(SMK_Texture[SMK_CurrentTexture], NULL, SMK_ScaledTextureData, SMK_ScaleFactor * 320 * Display_Bitsperpixel / 8);
@@ -1016,7 +1011,7 @@ static int initialize_display(void)
 {
     SDL_Event event;
 
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     if (Game_AdvancedScaling)
     {
         SMK_ScaleFactor = Game_ScaleFactor;
@@ -1060,10 +1055,10 @@ static int initialize_display(void)
     if (SMK_FuncSem == NULL) return 0;
 
 
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     SMK_TextureData = NULL;
     SMK_CurrentTexture = 0;
-#if !defined(USE_SDL2)
+#if !SDL_VERSION_ATLEAST(2,0,0)
     if (Game_UseOpenGL)
 #endif
     {
@@ -1074,7 +1069,7 @@ static int initialize_display(void)
     }
 #endif
 
-#ifdef USE_SDL2
+#if SDL_VERSION_ATLEAST(2,0,0)
     SMK_Texture[0] = NULL;
 #elif defined(ALLOW_OPENGL)
     SMK_GLTexture[0] = 0;
@@ -1098,7 +1093,7 @@ static int initialize_display(void)
     return 1;
 
 init_exit2:
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     if (SMK_TextureData != NULL)
     {
         free(SMK_TextureData);
@@ -1106,7 +1101,7 @@ init_exit2:
     }
 #endif
 
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
 init_exit1:
 #endif
     SDL_DestroySemaphore(SMK_FuncSem);
@@ -1132,7 +1127,7 @@ static void deinitialize_display(void)
         SDL_SemWait(SMK_FuncSem);
     }
 
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     if (SMK_TextureData != NULL)
     {
         free(SMK_TextureData);
@@ -1155,8 +1150,8 @@ static void BufferToScreen(void)
     // set palette
     if (Smack->FrameTypes[Smack->CurrentFrame] & 1)
     {
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
-#if !defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
+#if !SDL_VERSION_ATLEAST(2,0,0)
         if (Game_UseOpenGL)
 #endif
         {
@@ -1175,12 +1170,12 @@ static void BufferToScreen(void)
                 }
             }
         }
-#if !defined(USE_SDL2)
+#if !SDL_VERSION_ATLEAST(2,0,0)
         else
 #endif
 #endif
 
-#if !defined(USE_SDL2)
+#if !SDL_VERSION_ATLEAST(2,0,0)
         {
             for (index = 0; index < 256; index++)
             {
@@ -1193,8 +1188,8 @@ static void BufferToScreen(void)
 
     // display frame
 
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
-#if !defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
+#if !SDL_VERSION_ATLEAST(2,0,0)
     if (Game_UseOpenGL)
 #endif
     {
@@ -1212,12 +1207,12 @@ static void BufferToScreen(void)
             ScalerPlugin_scale(SMK_ScaleFactor, SMK_TextureData, SMK_ScaledTextureData, 320, 200, 1);
         }
     }
-#if !defined(USE_SDL2)
+#if !SDL_VERSION_ATLEAST(2,0,0)
     else
 #endif
 #endif
 
-#if !defined(USE_SDL2)
+#if !SDL_VERSION_ATLEAST(2,0,0)
     {
         SDL_LockSurface(Game_Screen);
 
@@ -1278,7 +1273,7 @@ static void play_smk(const char *filename)
     Uint32 lastticks, ticks;
     int delay;
 
-#ifdef USE_SDL2
+#if SDL_VERSION_ATLEAST(2,0,0)
     if (Game_Window == NULL) return;
 #else
     if (Game_Screen == NULL) return;

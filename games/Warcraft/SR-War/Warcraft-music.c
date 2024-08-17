@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,16 +25,9 @@
 #include <inttypes.h>
 #include <malloc.h>
 #include <string.h>
-#ifdef USE_SDL2
-    #include <SDL2/SDL.h>
-    #define USE_RWOPS
-    #include <SDL2/SDL_mixer.h>
-#else
-    #include <SDL/SDL.h>
-    #define USE_RWOPS
-    #include <SDL/SDL_mixer.h>
-#endif
+#define USE_RWOPS
 #include "Game_defs.h"
+#undef USE_RWOPS
 #include "Game_vars.h"
 #include "Warcraft-music.h"
 #include "Warcraft-music-midiplugin.h"
@@ -286,7 +279,7 @@ void Game_AIL_start_sequence(AIL_sequence *S)
     {
         S->midi_music = Mix_LoadMUS_RW(
             S->midi_RW
-#ifdef USE_SDL2
+#if SDL_VERSION_ATLEAST(2,0,0)
             , 0
 #endif
         );

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -24,11 +24,6 @@
 
 #include <stdio.h>
 #include <time.h>
-#ifdef USE_SDL2
-    #include <SDL2/SDL.h>
-#else
-    #include <SDL/SDL.h>
-#endif
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Xcom-int.h"
@@ -63,7 +58,7 @@ void X86_InterruptProcedure(
                     if (AL == 0x13)
                     {
 #if (EXE_BUILD != EXE_COMBINED)
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         if (Game_Window != NULL)
                     #else
                         if (Game_Screen != NULL)
@@ -89,7 +84,7 @@ void X86_InterruptProcedure(
 
                         SDL_SemWait(Game_DisplaySem);
 
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         if (Game_Window == NULL)
                     #else
                         if (Game_Screen == NULL)
@@ -105,7 +100,7 @@ void X86_InterruptProcedure(
                     }
                     else if (AL == 0x03)
                     {
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         if (Game_Window != NULL)
                     #else
                         if (Game_Screen != NULL)

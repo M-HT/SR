@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -34,7 +34,7 @@ static int DisplayMode;
 static int ScaleOutput, ScaledWidth, ScaledHeight, Fullscreen;
 static uint32_t *ScaleSrc;
 
-#if defined(USE_SDL2) || defined(ALLOW_OPENGL)
+#if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
 static pixel_format_disp Game_PaletteAlpha[256];
 #endif
 static uint32_t interpolation_matrix2[256*256];
@@ -45,7 +45,7 @@ static void Set_Palette_Value2(uint32_t index, uint32_t r, uint32_t g, uint32_t 
     uint32_t *val1, *val2;
     pixel_format_disp pixel;
 
-#if defined(USE_SDL2) || defined(ALLOW_OPENGL)
+#if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
     Game_PaletteAlpha[index].s.r = r;
     Game_PaletteAlpha[index].s.g = g;
     Game_PaletteAlpha[index].s.b = b;
@@ -76,7 +76,7 @@ static void Set_Palette_Value2(uint32_t index, uint32_t r, uint32_t g, uint32_t 
 #undef MAXDIFF
 }
 
-#if defined(USE_SDL2) || defined(ALLOW_OPENGL)
+#if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
 static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, uint32_t *dst2, int *dst2_used)
 {
     int counter, DrawOverlay;
@@ -1061,7 +1061,7 @@ static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2_lt(uint8_t *sr
 #undef WRITE_PIXEL2
 }
 
-#if !defined(ALLOW_OPENGL) && !defined(USE_SDL2)
+#if !defined(ALLOW_OPENGL) && !SDL_VERSION_ATLEAST(2,0,0)
 static void Flip_360x240x8_to_WxHx32_bilinear(uint8_t *src, uint32_t *dst)
 {
     uint32_t src_y, src_ydelta, src_ypos, src_xdelta, src_xpos, src_xpos_0, dst_xlastsize, height, width, val1, val2, dstval;
@@ -1198,7 +1198,7 @@ static void Flip_360x240x8_to_WxHx32_bilinear(uint8_t *src, uint32_t *dst)
 
 void Init_Display(void)
 {
-#if defined(USE_SDL2) || defined(ALLOW_OPENGL)
+#if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
     Display_FSType = 1;
 #else
     Display_FSType = 0;
@@ -1219,7 +1219,7 @@ void Init_Display2(void)
 
     memset(&(interpolation_matrix2[0]), 0, sizeof(interpolation_matrix2));
 
-#if !defined(USE_SDL2) && !defined(ALLOW_OPENGL)
+#if !SDL_VERSION_ATLEAST(2,0,0) && !defined(ALLOW_OPENGL)
     Game_AdvancedScaling = 0;
 #endif
 
@@ -1242,7 +1242,7 @@ void Init_Display2(void)
     {
         ScaleOutput = 1;
 
-    #if defined(USE_SDL2)
+    #if SDL_VERSION_ATLEAST(2,0,0)
     #elif defined(ALLOW_OPENGL)
         Game_UseOpenGL = 1;
     #else
@@ -1270,7 +1270,7 @@ void Init_Display2(void)
     Picture_Position_UL_Y = 0;
     Picture_Position_BR_X = ScaledWidth - 1;
     Picture_Position_BR_Y = ScaledHeight - 1;
-#if defined(USE_SDL2) || defined(ALLOW_OPENGL)
+#if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
     if (Game_AdvancedScaling)
     {
         Render_Width = 360;

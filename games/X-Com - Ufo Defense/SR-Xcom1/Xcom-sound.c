@@ -24,11 +24,6 @@
 
 #include <malloc.h>
 #include <string.h>
-#ifdef USE_SDL2
-    #include <SDL2/SDL_mixer.h>
-#else
-    #include <SDL/SDL_mixer.h>
-#endif
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Xcom-sound.h"
@@ -421,7 +416,7 @@ static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
             }
             else
 #endif
-#if defined(USE_SDL2)
+#if SDL_VERSION_ATLEAST(2,0,0)
             if (Game_ResamplingQuality <= 0)
 #endif
             {

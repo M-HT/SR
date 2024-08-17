@@ -25,13 +25,6 @@
 #include <inttypes.h>
 #include <malloc.h>
 #include <string.h>
-#ifdef USE_SDL2
-    #include <SDL2/SDL.h>
-    #include <SDL2/SDL_mixer.h>
-#else
-    #include <SDL/SDL.h>
-    #include <SDL/SDL_mixer.h>
-#endif
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Warcraft-sound.h"
@@ -634,7 +627,7 @@ void Game_AIL_start_sample(AIL_sample *S)
                     }
                     else
 #endif
-#if defined(USE_SDL2)
+#if SDL_VERSION_ATLEAST(2,0,0)
                     if (Game_ResamplingQuality <= 0)
 #endif
                     {

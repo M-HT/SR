@@ -99,7 +99,7 @@ EXTERNAL_VARIABLE int Game_ScaleFactor;				/* factor for advanced scaler: 0 = ma
 EXTERNAL_VARIABLE int Game_ExtraScalerThreads;		/* number of extra threads for advanced scaler: -1 = auto */
 EXTERNAL_VARIABLE Game_Advanced_Flip_Procedure Display_Advanced_Flip_Procedure;	/* advanced flip procedure */
 
-#ifdef USE_SDL2
+#if SDL_VERSION_ATLEAST(2,0,0)
 EXTERNAL_VARIABLE SDL_Window *Game_Window;
 EXTERNAL_VARIABLE SDL_Renderer *Game_Renderer;
 EXTERNAL_VARIABLE SDL_Texture *Game_Texture[3];
@@ -115,7 +115,7 @@ EXTERNAL_VARIABLE GLuint Game_GLFramebuffer[3];
 EXTERNAL_VARIABLE GLuint Game_GLScaledTexture[3];
 #endif
 #endif
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
 EXTERNAL_VARIABLE void *Game_TextureData;
 EXTERNAL_VARIABLE void *Game_TextureData2;
 EXTERNAL_VARIABLE void *Game_ScaledTextureData;

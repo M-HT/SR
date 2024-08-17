@@ -25,13 +25,6 @@
 #if !defined(_GAME_DEFS_H_INCLUDED_)
 #define _GAME_DEFS_H_INCLUDED_
 
-#ifdef USE_SDL2
-    #include <SDL2/SDL.h>
-    #include <SDL2/SDL_mixer.h>
-#else
-    #include <SDL/SDL.h>
-    #include <SDL/SDL_mixer.h>
-#endif
 #include <limits.h>
 #include "ptr32.h"
 

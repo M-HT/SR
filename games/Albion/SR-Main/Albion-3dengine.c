@@ -4581,7 +4581,7 @@ extern "C"
 #endif
 void draw_3dscene(void)
 {
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     if (Game_AdvancedScaling)
     {
         // using factor greater than 6 introduces visible artifacts (oveflow or loss of precision in fixed point calculations)

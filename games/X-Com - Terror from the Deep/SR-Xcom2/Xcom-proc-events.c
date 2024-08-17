@@ -23,17 +23,12 @@
  */
 
 #include <string.h>
-#ifdef USE_SDL2
-    #include <SDL2/SDL.h>
-#else
-    #include <SDL/SDL.h>
-#endif
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Xcom-proc-events.h"
 #include "input.h"
 
-#if !defined(USE_SDL2)
+#if !SDL_VERSION_ATLEAST(2,0,0)
 //senquack
 /* Convert GP2X touchscreen coordinates to keyboard cursor position */
 static void Game_VK_Convert_Mouse(int *posX, int *posY)
@@ -785,7 +780,7 @@ void Game_ProcessKEvents()
                 {
                     goto _after_switch1;
                 }
-            #if !defined(USE_SDL2)
+            #if !SDL_VERSION_ATLEAST(2,0,0)
                 else if ((cevent->key.keysym.unicode > 0) && (cevent->key.keysym.unicode < 128))
                 {
                     scancode = scancode_table[cevent->key.keysym.unicode];
@@ -819,7 +814,7 @@ void Game_ProcessKEvents()
 
                     switch((int) cevent->key.keysym.sym)
                     {
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_0:
                     #else
                         case SDLK_KP0:
@@ -828,7 +823,7 @@ void Game_ProcessKEvents()
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '0';
 
                             break;
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_1:
                     #else
                         case SDLK_KP1:
@@ -837,7 +832,7 @@ void Game_ProcessKEvents()
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '1';
 
                             break;
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_2:
                     #else
                         case SDLK_KP2:
@@ -846,7 +841,7 @@ void Game_ProcessKEvents()
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '2';
 
                             break;
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_3:
                     #else
                         case SDLK_KP3:
@@ -855,7 +850,7 @@ void Game_ProcessKEvents()
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '3';
 
                             break;
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_4:
                     #else
                         case SDLK_KP4:
@@ -864,7 +859,7 @@ void Game_ProcessKEvents()
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '4';
 
                             break;
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_5:
                     #else
                         case SDLK_KP5:
@@ -873,7 +868,7 @@ void Game_ProcessKEvents()
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '5';
 
                             break;
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_6:
                     #else
                         case SDLK_KP6:
@@ -882,7 +877,7 @@ void Game_ProcessKEvents()
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '6';
 
                             break;
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_7:
                     #else
                         case SDLK_KP7:
@@ -891,7 +886,7 @@ void Game_ProcessKEvents()
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '7';
 
                             break;
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_8:
                     #else
                         case SDLK_KP8:
@@ -900,7 +895,7 @@ void Game_ProcessKEvents()
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '8';
 
                             break;
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_9:
                     #else
                         case SDLK_KP9:
@@ -1029,7 +1024,7 @@ void Game_ProcessKEvents()
 
                             break;
                         case SDLK_F15:
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                             goto _after_switch1;
                     #else
                         #ifdef ALLOW_OPENGL
@@ -1045,7 +1040,7 @@ void Game_ProcessKEvents()
                             }
                             else goto _after_switch1;
                     #endif
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_NUMLOCKCLEAR:
                     #else
                         case SDLK_NUMLOCK:
@@ -1057,7 +1052,7 @@ void Game_ProcessKEvents()
                             scancode = 0x3a;
 
                             break;
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_SCROLLLOCK:
                     #else
                         case SDLK_SCROLLOCK:
@@ -1089,7 +1084,7 @@ void Game_ProcessKEvents()
                             scancode = 0x38;
 
                             break;
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_LGUI:
                     #else
                         case SDLK_LSUPER:
@@ -1097,7 +1092,7 @@ void Game_ProcessKEvents()
                             scancode = 0x5b;
 
                             break;
-                    #ifdef USE_SDL2
+                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_RGUI:
                     #else
                         case SDLK_RSUPER:
@@ -1149,7 +1144,7 @@ void Game_ProcessKEvents()
 
     _after_switch1:
         Game_KQueueRead = (Game_KQueueRead + 1) & (GAME_KQUEUE_LENGTH - 1);
-#if !defined(USE_SDL2)
+#if !SDL_VERSION_ATLEAST(2,0,0)
     _after_switch2:
 #endif
         if (VSyncTick != Game_VSyncTick) finish = 1;

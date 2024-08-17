@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,11 +26,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
-#ifdef USE_SDL2
-    #include <SDL2/SDL.h>
-#else
-    #include <SDL/SDL.h>
-#endif
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Game_scalerplugin.h"
@@ -166,7 +161,7 @@ int Game_MainThread(void *data)
 int Game_FlipThread(void *data)
 {
     SDL_Event event;
-#if !defined(USE_SDL2)
+#if !SDL_VERSION_ATLEAST(2,0,0)
     int clear_screen;
 #endif
 
@@ -180,7 +175,7 @@ int Game_FlipThread(void *data)
     LastTimer = Game_VSyncTick;
 #endif
 
-#if !defined(USE_SDL2)
+#if !SDL_VERSION_ATLEAST(2,0,0)
     clear_screen = 0;
 #endif
 
@@ -211,7 +206,7 @@ fprintf(stderr, "fps: %.3f    tps: %.3f\n", (float) NumDisplay * 1000 / (Current
 
         if (Game_DisplayActive)
         {
-        #ifdef USE_SDL2
+        #if SDL_VERSION_ATLEAST(2,0,0)
             Display_Flip_Procedure(Game_FrameBuffer, Game_TextureData);
 
             if (Scaler_ScaleTextureData)

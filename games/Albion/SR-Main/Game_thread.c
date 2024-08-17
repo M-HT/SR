@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -33,6 +33,11 @@
 #include "Albion-proc-events.h"
 #include "main.h"
 #include "display.h"
+#ifdef USE_SDL2
+    #include <SDL2/SDL_mixer.h>
+#else
+    #include <SDL/SDL_mixer.h>
+#endif
 
 int Game_Main(void)
 {
@@ -161,7 +166,7 @@ int Game_MainThread(void *data)
 int Game_FlipThread(void *data)
 {
     SDL_Event event;
-#if !defined(USE_SDL2)
+#if !SDL_VERSION_ATLEAST(2,0,0)
     int clear_screen;
 #endif
 
@@ -175,7 +180,7 @@ int Game_FlipThread(void *data)
     LastTimer = Game_VSyncTick;
 #endif
 
-#if !defined(USE_SDL2)
+#if !SDL_VERSION_ATLEAST(2,0,0)
     clear_screen = 0;
 #endif
 
@@ -202,8 +207,8 @@ fprintf(stderr, "fps: %.3f    tps: %.3f\n", (float) NumDisplay * 1000 / (Current
         }
 #endif
 
-    #if defined(USE_SDL2) || defined(ALLOW_OPENGL)
-    #if !defined(USE_SDL2)
+    #if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
+    #if !SDL_VERSION_ATLEAST(2,0,0)
         if (Game_UseOpenGL)
     #endif
         {
@@ -244,12 +249,12 @@ fprintf(stderr, "fps: %.3f    tps: %.3f\n", (float) NumDisplay * 1000 / (Current
                 }
             }
         }
-    #if !defined(USE_SDL2)
+    #if !SDL_VERSION_ATLEAST(2,0,0)
         else
     #endif
     #endif
 
-    #if !defined(USE_SDL2)
+    #if !SDL_VERSION_ATLEAST(2,0,0)
         {
             /* ??? */
 

@@ -281,7 +281,7 @@ static int Action_key(int pressed, int key, SDL_Event *event)
 {
     if (!Game_Paused)
     {
-#ifdef USE_SDL2
+#if SDL_VERSION_ATLEAST(2,0,0)
         event->key.keysym.sym = (SDL_Keycode) key;
 #else
         event->key.keysym.sym = (SDLKey) key;
@@ -1043,7 +1043,7 @@ int Handle_Input_Event(SDL_Event *_event)
             {
                 case EC_INPUT_KEY:
                     _event->type = (int) _event->user.data2;
-#ifdef USE_SDL2
+#if SDL_VERSION_ATLEAST(2,0,0)
                     _event->key.keysym.sym = (SDL_Keycode) (intptr_t) _event->user.data1;
 #else
                     _event->key.keysym.sym = (SDLKey) (intptr_t) _event->user.data1;

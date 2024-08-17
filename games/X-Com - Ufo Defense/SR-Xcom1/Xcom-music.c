@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -24,11 +24,6 @@
 
 #include <malloc.h>
 #include <string.h>
-#ifdef USE_SDL2
-    #include <SDL2/SDL_mixer.h>
-#else
-    #include <SDL/SDL_mixer.h>
-#endif
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Xcom-music.h"
@@ -117,7 +112,7 @@ void Game_start_sequence(uint8_t *seq)
 
         Game_MusicSequence.midi_music = Mix_LoadMUS_RW(
             Game_MusicSequence.midi_RW
-#ifdef USE_SDL2
+#if SDL_VERSION_ATLEAST(2,0,0)
             , 0
 #endif
         );

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -119,7 +119,7 @@ static inline uint8_t *write_32le(uint8_t *ptr, uint32_t value)
     return ptr + 4;
 }
 
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
 static uint8_t *fill_png_pixel_data_advanced(uint32_t *src, int remaining, uint8_t *curptr)
 {
     int x, y, ret;
@@ -194,7 +194,7 @@ static uint8_t *fill_png_pixel_data_advanced(uint32_t *src, int remaining, uint8
 static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverlay, int remaining, uint8_t *curptr)
 {
     int x, y, ret, overlay_y;
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     int counter, counter2;
 #endif
     uint8_t value;
@@ -213,7 +213,7 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
         case 2:
             pixel_data = (uint8_t *) alloca(724*2);
             break;
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
         case 5:
             pixel_data = (uint8_t *) alloca((360 * Scaler_ScaleFactor + 4) * 2);
             break;
@@ -263,7 +263,7 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
                 memcpy(&(pixel_data[4]), src, 360);
                 src += 360;
 
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
                 if (image_mode != 0)
                 {
                     src2_stride = Scaler_ScaleFactor * 360;
@@ -414,7 +414,7 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
             }
         }
     }
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     else if (image_mode == 5)
     {
         pixel_data[3] = 0; // filter for first line
@@ -698,7 +698,7 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
             }
         }
     }
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     else if (image_mode == 6)
     {
         for (counter = 0; counter < Scaler_ScaleFactor; counter++)
@@ -953,7 +953,7 @@ void Game_save_screenshot(const char *filename)
     char *filename2;
 
     int x, y;
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     int counter, counter2;
     uint8_t value;
 #endif
@@ -1003,7 +1003,7 @@ void Game_save_screenshot(const char *filename)
     screenshot_src = &(Game_FrameBuffer[loc_182010 * 360 * 240]);
     DrawOverlay = Get_DrawOverlay(screenshot_src, &Game_OverlayDraw);
 
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     if (Game_AdvancedScaling)
     {
         if ((Game_ScreenshotEnhancedResolution != 0) && (Scaler_ScaleFactor > 1))
@@ -1518,7 +1518,7 @@ void Game_save_screenshot(const char *filename)
 
         // write Pixels per unit, X axis
         curptr = write_32be(curptr,
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
             (Game_AdvancedScaling)?(Scaler_ScaleTextureData * 320):
 #endif
             640
@@ -1526,7 +1526,7 @@ void Game_save_screenshot(const char *filename)
 
         // write Pixels per unit, Y axis
         curptr = write_32be(curptr,
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
             (Game_AdvancedScaling)?(Scaler_ScaleTextureData * 240):
 #endif
             480
@@ -1601,7 +1601,7 @@ void Game_save_screenshot(const char *filename)
     }
 
     // fill pixel data
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     if (image_mode == 11)
     {
         uint32_t *palette, *buf_unscaled, *src32, *dst32;
@@ -1793,7 +1793,7 @@ void Game_save_screenshot(const char *filename)
         {
             unsigned int src2_stride, src2_factor;
 
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
             if (image_mode != 0)
             {
                 src2_stride = Scaler_ScaleFactor * 360;
@@ -1873,7 +1873,7 @@ void Game_save_screenshot(const char *filename)
                 curptr += width_in_file;
             }
         }
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
         else if (image_mode == 5)
         {
             src = screenshot_src;
@@ -2038,7 +2038,7 @@ void Game_save_screenshot(const char *filename)
                 curptr += width_in_file;
             }
         }
-#if defined(ALLOW_OPENGL) || defined(USE_SDL2)
+#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
         else if (image_mode == 6)
         {
             src = screenshot_src;

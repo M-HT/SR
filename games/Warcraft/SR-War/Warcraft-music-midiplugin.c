@@ -29,16 +29,9 @@
 #else
     #include <dlfcn.h>
 #endif
-#ifdef USE_SDL2
-    #include <SDL2/SDL.h>
-    #define USE_RWOPS
-    #include <SDL2/SDL_mixer.h>
-#else
-    #include <SDL/SDL.h>
-    #define USE_RWOPS
-    #include <SDL/SDL_mixer.h>
-#endif
+#define USE_RWOPS
 #include "Game_defs.h"
+#undef USE_RWOPS
 #include "Game_vars.h"
 #include "Warcraft-music-midiplugin.h"
 #include "xmi2mid.h"
@@ -784,7 +777,7 @@ int MidiPlugin_Startup(void)
 
     MP_thread = SDL_CreateThread(
         MidiPlugin_ProcessData,
-#ifdef USE_SDL2
+#if SDL_VERSION_ATLEAST(2,0,0)
         "midi",
 #endif
         NULL

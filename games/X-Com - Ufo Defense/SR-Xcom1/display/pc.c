@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -82,7 +82,7 @@ static void Flip_320x200x8_to_320x200x32(const uint8_t *src, uint32_t *dst)
     }
 }
 
-#if !defined(ALLOW_OPENGL) && !defined(USE_SDL2)
+#if !defined(ALLOW_OPENGL) && !SDL_VERSION_ATLEAST(2,0,0)
 static void Flip_320x200x8_to_WxHx32_bilinear(uint8_t *src, uint32_t *dst)
 {
     uint32_t src_y, src_ydelta, src_ypos, src_xdelta, src_xpos, src_xpos_0, dst_xlastsize, height, width, val1, val2, dstval;
@@ -253,7 +253,7 @@ static void Flip_320x200x8_to_WxHx32_bilinear(uint8_t *src, uint32_t *dst)
 
 void Init_Display(void)
 {
-#if defined(USE_SDL2) || defined(ALLOW_OPENGL)
+#if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
     Display_FSType = 1;
 #else
     Display_FSType = 0;
@@ -271,7 +271,7 @@ void Init_Display2(void)
 {
     Init_Palette();
 
-#if !defined(USE_SDL2) && !defined(ALLOW_OPENGL)
+#if !SDL_VERSION_ATLEAST(2,0,0) && !defined(ALLOW_OPENGL)
     Game_AdvancedScaling = 0;
 #endif
 
@@ -294,7 +294,7 @@ void Init_Display2(void)
     {
         ScaleOutput = 1;
 
-    #if defined(USE_SDL2)
+    #if SDL_VERSION_ATLEAST(2,0,0)
     #elif defined(ALLOW_OPENGL)
         Game_UseOpenGL = 1;
     #else
@@ -321,7 +321,7 @@ void Init_Display2(void)
     Picture_Position_UL_Y = 0;
     Picture_Position_BR_X = ScaledWidth-1;
     Picture_Position_BR_Y = ScaledHeight-1;
-#if defined(USE_SDL2) || defined(ALLOW_OPENGL)
+#if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
     if (Game_AdvancedScaling)
     {
         Render_Width = 320;

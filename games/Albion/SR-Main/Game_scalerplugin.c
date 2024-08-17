@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021-2023 Roman Pauer
+ *  Copyright (C) 2021-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -28,14 +28,9 @@
     #include <windows.h>
 #else
     #include <dlfcn.h>
-#endif
-#include <stddef.h>
-#ifdef USE_SDL2
-    #include <SDL2/SDL.h>
-#else
-    #include <SDL/SDL.h>
     #include <unistd.h>
 #endif
+#include <stddef.h>
 #include "Game_vars.h"
 #include "Game_scalerplugin.h"
 #include "scaler-plugins.h"
@@ -160,7 +155,7 @@ int ScalerPlugin_Startup(void)
     }
     else
     {
-#ifdef USE_SDL2
+#if SDL_VERSION_ATLEAST(2,0,0)
         cpu_count = SDL_GetCPUCount();
 #elif (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
         SYSTEM_INFO info;
@@ -202,7 +197,7 @@ int ScalerPlugin_Startup(void)
 
         extra_threads[index].thread = SDL_CreateThread(
             (int (*)(void *))ScalerPlugin_Thread,
-#ifdef USE_SDL2
+#if SDL_VERSION_ATLEAST(2,0,0)
             "scaler",
 #endif
             &extra_threads[index]

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -24,6 +24,14 @@
 
 #if !defined(_ALBION_MUSIC_H_INCLUDED_)
 #define _ALBION_MUSIC_H_INCLUDED_
+
+#define USE_RWOPS
+#ifdef USE_SDL2
+    #include <SDL2/SDL_mixer.h>
+#else
+    #include <SDL/SDL_mixer.h>
+#endif
+#undef USE_RWOPS
 
 typedef struct _AIL_sequence
 {

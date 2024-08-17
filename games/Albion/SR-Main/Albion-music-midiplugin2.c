@@ -29,15 +29,6 @@
 #else
     #include <dlfcn.h>
 #endif
-#ifdef USE_SDL2
-    #include <SDL2/SDL.h>
-    #define USE_RWOPS
-    #include <SDL2/SDL_mixer.h>
-#else
-    #include <SDL/SDL.h>
-    #define USE_RWOPS
-    #include <SDL/SDL_mixer.h>
-#endif
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Albion-music-midiplugin2.h"
@@ -602,7 +593,7 @@ int MidiPlugin2_Startup(void)
 
     MP_thread = SDL_CreateThread(
         MidiPlugin2_ProcessData,
-#ifdef USE_SDL2
+#if SDL_VERSION_ATLEAST(2,0,0)
         "midi2",
 #endif
         NULL

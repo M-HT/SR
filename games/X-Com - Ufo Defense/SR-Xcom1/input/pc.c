@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -40,7 +40,7 @@ void EmulateKey(int type, int key)
 
     pump_event.type = type;
     pump_event.key.state = (type == SDL_KEYUP)?SDL_RELEASED:SDL_PRESSED;
-#ifdef USE_SDL2
+#if SDL_VERSION_ATLEAST(2,0,0)
     pump_event.key.keysym.sym = (SDL_Keycode) key;
 #else
     pump_event.key.keysym.sym = (SDLKey) key;

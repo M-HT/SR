@@ -61,6 +61,7 @@
 #include "Game_config.h"
 #include "Game_scalerplugin.h"
 #include "Game_thread.h"
+#include "Game_virtualkeyboard.h"
 #include "virtualfs.h"
 #include "display.h"
 #include "audio.h"
@@ -779,6 +780,8 @@ static void Game_Display_Destroy(int post)
         Game_OldCursor = NULL;
     }
 
+    VirtualKeyboard_Delete();
+
     /* clear screen */
 #if SDL_VERSION_ATLEAST(2,0,0)
     SDL_SetRenderDrawColor(Game_Renderer, 0, 0, 0, 255);
@@ -1025,18 +1028,6 @@ static void Game_Cleanup(void)
         Game_SoundFontPath = NULL;
     }
 
-    if (Temp_Font_Data != NULL)
-    {
-        free(Temp_Font_Data);
-        Temp_Font_Data = NULL;
-    }
-
-    if (Albion_Font != NULL)
-    {
-        free(Albion_Font);
-        Albion_Font = NULL;
-    }
-
     if (Game_FlipSem != NULL)
     {
         SDL_DestroySemaphore(Game_FlipSem);
@@ -1188,6 +1179,7 @@ static void Game_ReadFontData(void)
     FILE *f;
     uint32_t size1, size2;
     size_t items;
+    uint8_t *albion_font;
 
     strcpy(fname_base, Albion_CDPath);
     strcat(fname_base, "XLDLIBS\\FONTS0.XLD");
@@ -1209,27 +1201,26 @@ static void Game_ReadFontData(void)
         return;
     }
 
-    Albion_Font = (uint8_t *) malloc(size2);
+    albion_font = (uint8_t *) malloc(size2);
 
-    if (Albion_Font == NULL)
+    if (albion_font == NULL)
     {
         fclose(f);
         return;
     }
 
     fseek(f, size1, SEEK_CUR);
-    items = fread(Albion_Font, 1, size2, f);
+    items = fread(albion_font, 1, size2, f);
 
     fclose(f);
 
     if (items != size2)
     {
-        free(Albion_Font);
-        Albion_Font = NULL;
+        free(albion_font);
         return;
     }
 
-    switch (calculate_crc(Albion_Font, size2))
+    switch (calculate_crc(albion_font, size2))
     {
         case 0x1183d03f:
             Albion_Font_Lang = AL_ENG_FRE;
@@ -1242,14 +1233,7 @@ static void Game_ReadFontData(void)
             break;
     }
 
-    if (Font_Size_Shift > 0)
-    {
-        Temp_Font_Data = (uint8_t *) malloc((8*8) << (2*Font_Size_Shift + 1));
-    }
-    else
-    {
-        Temp_Font_Data = NULL;
-    }
+    free(albion_font);
 }
 
 static int Game_Initialize(void)
@@ -1275,7 +1259,6 @@ static int Game_Initialize(void)
     memset(&Game_AllocatedMemory, 0, sizeof(Game_AllocatedMemory));
 
     Display_ChangeMode = 0;
-    Font_Size_Shift = 0;
 
 
     Game_TimerRunning = 0;
@@ -1284,8 +1267,8 @@ static int Game_Initialize(void)
     Game_VSyncTick = 0;
     Thread_Exited = 0;
     Thread_Exit = 0;
-    Game_Paused = 0;
     SMK_Playing = 0;
+    VK_Visible = 0;
     Game_OldCursor = NULL;
     Game_NoCursor = NULL;
     Game_MinCursor = NULL;
@@ -1313,6 +1296,8 @@ static int Game_Initialize(void)
     Game_MidiDevice = NULL;
     Game_OPL3Emulator = 0;
 
+    Game_TouchscreenButtonEvents = 0;
+    Game_RMBActive = 0;
 
     //senquack - multiple config files now supported
     if (Game_ConfigFilename[0] == 0)
@@ -1322,9 +1307,7 @@ static int Game_Initialize(void)
 
 
     Albion_CDPath[0] = 0;
-    Albion_Font = NULL;
     Albion_Font_Lang = AL_UNKNOWN;
-    Temp_Font_Data = NULL;
     Game_DisplaySem = NULL;
     Game_FlipSem = NULL;
     Game_ExitCode = 0;
@@ -1383,17 +1366,26 @@ static int Game_Initialize(void)
     Init_Audio();
     Init_Input();
 
-    if ( SDL_Init (SDL_INIT_VIDEO //| SDL_INIT_TIMER
-                    | ((Game_Joystick)?SDL_INIT_JOYSTICK:0)
-                  ) != 0 )
+    if ( SDL_Init (SDL_INIT_VIDEO) != 0 )
     {
         fprintf (stderr, "Error: Couldn't initialize SDL: %s\n", SDL_GetError ());
         return -1;
     }
 
+#if SDL_VERSION_ATLEAST(2,0,0)
+    SDL_version linked_version;
+
+    SDL_GetVersion(&linked_version);
+    Game_SDLVersionNum = SDL_VERSIONNUM(linked_version.major, linked_version.minor, linked_version.patch);
+#else
+    const SDL_version *linked_version;
+
+    linked_version = SDL_Linked_Version();
+    Game_SDLVersionNum = SDL_VERSIONNUM(linked_version->major, linked_version->minor, linked_version->patch);
+#endif
+
 #if (SDL_MAJOR_VERSION == 1)
-    const SDL_version *link_version = SDL_Linked_Version();
-    if (SDL_VERSIONNUM(link_version->major, link_version->minor, link_version->patch) >= SDL_VERSIONNUM(1,2,50))
+    if (Game_SDLVersionNum >= SDL_VERSIONNUM(1,2,50))
     {
         fprintf(stderr, "Warning: sdl12-compat detected.\nWarning: The program might not work properly.\nWarning: Using SDL2 version is recommended.\n");
     }
@@ -1414,11 +1406,6 @@ static int Game_Initialize(void)
         fprintf (stderr, "Error: Couldn't create cursor: %s\n", SDL_GetError ());
         Game_Cleanup();
         return -2;
-    }
-
-    if (Game_Joystick)
-    {
-        SDL_JoystickOpen(0);
     }
 
     Game_FrameBuffer = (uint8_t *) malloc(360*481);
@@ -1675,7 +1662,7 @@ static void Game_Event_Loop(void)
     uint32_t AppActive;
     int FlipActive, CreateAfterFlip, DestroyAfterFlip;
 #if SDL_VERSION_ATLEAST(2,0,0)
-    int ClearRenderer;
+    int ClearRenderer, MouseOldX, MouseOldY;
 #endif
 
 
@@ -1741,6 +1728,8 @@ static void Game_Event_Loop(void)
     AppInputFocus = 1;
     AppActive = 1;
     ClearRenderer = 0;
+    MouseOldX = 0;
+    MouseOldY = 0;
 #else
     {
         uint32_t AppState;
@@ -1837,7 +1826,18 @@ static void Game_Event_Loop(void)
                 #endif
                     && AppActive && AppInputFocus)
                 {
-                    if ( ( (Game_KQueueWrite + 1) & (GAME_KQUEUE_LENGTH - 1) ) == Game_KQueueRead )
+                    if (VK_Visible)
+                    {
+                        VirtualKeyboard_Event(&event);
+                    }
+                    else if ((event.key.keysym.sym == SDLK_F15) && !SMK_Playing)
+                    {
+                        if (event.type == SDL_KEYDOWN)
+                        {
+                            VirtualKeyboard_Show();
+                        }
+                    }
+                    else if ( ( (Game_KQueueWrite + 1) & (GAME_KQUEUE_LENGTH - 1) ) == Game_KQueueRead )
                     {
 #if defined(__DEBUG__)
                         printf("keyboard event queue overflow\n");
@@ -1854,6 +1854,17 @@ static void Game_Event_Loop(void)
                 break;
                 // case SDL_KEYDOWN, SDL_KEYUP:
             case SDL_MOUSEMOTION:
+                #if SDL_VERSION_ATLEAST(2,0,0)
+                    if ((event.motion.xrel == 0) && (event.motion.yrel == 0))
+                    {
+                        // warping the mouse doesn't fill relative motion attributes in SDL2
+                        event.motion.xrel = event.motion.x - MouseOldX;
+                        event.motion.yrel = event.motion.y - MouseOldY;
+                    }
+                    MouseOldX = event.motion.x;
+                    MouseOldY = event.motion.y;
+                #endif
+                // fallthrough
             case SDL_MOUSEBUTTONUP:
             case SDL_MOUSEBUTTONDOWN:
         #if SDL_VERSION_ATLEAST(2,0,0)
@@ -1867,8 +1878,11 @@ static void Game_Event_Loop(void)
                 #endif
                     && AppActive && AppInputFocus && AppMouseFocus && !SMK_Playing)
                 {
-
-                    if ( ( (Game_MQueueWrite + 1) & (GAME_MQUEUE_LENGTH - 1) ) == Game_MQueueRead )
+                    if (VK_Visible)
+                    {
+                        //VirtualKeyboard_Event(&event);
+                    }
+                    else if ( ( (Game_MQueueWrite + 1) & (GAME_MQUEUE_LENGTH - 1) ) == Game_MQueueRead )
                     {
 #if defined(__DEBUG__)
                         printf("mouse event queue overflow\n");
@@ -1990,6 +2004,9 @@ static void Game_Event_Loop(void)
                             {
                                 SDL_RenderCopy(Game_Renderer, Game_Texture[Game_CurrentTexture], NULL, NULL);
                             }
+
+                            VirtualKeyboard_Draw();
+
                             SDL_RenderPresent(Game_Renderer);
 
                             Game_CurrentTexture++;
@@ -2069,6 +2086,8 @@ static void Game_Event_Loop(void)
                                 glVertexPointer(2, GL_FLOAT, 0, &(QuadVertices[0]));
                                 glTexCoordPointer(2, GL_FLOAT, 0, &(QuadTexCoords[0]));
                                 glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+                                VirtualKeyboard_Draw();
 
                                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
                                 glDisableClientState(GL_VERTEX_ARRAY);

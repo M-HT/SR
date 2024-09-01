@@ -135,9 +135,11 @@ void EmulateKey(int type, int key)
     pump_event.type = type;
     pump_event.key.state = (type == SDL_KEYUP)?SDL_RELEASED:SDL_PRESSED;
 #if SDL_VERSION_ATLEAST(2,0,0)
+    pump_event.key.repeat = 0;
     pump_event.key.keysym.sym = (SDL_Keycode) key;
 #else
     pump_event.key.keysym.sym = (SDLKey) key;
+    pump_event.key.keysym.unicode = 0;
 #endif
     pump_event.key.keysym.mod = KMOD_NONE;
 
@@ -311,19 +313,13 @@ static void Action_none(int pressed, int key)
 // GAME_JOYSTICK = JOYSTICK_GP2X
 static void Action_left_mouse_button(int pressed, int key)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         EmulateMouseButton((pressed)?SDL_MOUSEBUTTONDOWN:SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
     }
     else
     {
-#if !defined(SDLK_ENTER)
-    #define SDLK_ENTER SDLK_RETURN
-#endif
-        if (pressed == 0)
-        {
-            EmulateKey(SDL_KEYUP, SDLK_ENTER);
-        }
+        EmulateKey((pressed)?SDL_KEYDOWN:SDL_KEYUP, SDLK_RETURN);
     }
 }
 
@@ -333,7 +329,7 @@ static void Action_right_mouse_button(int pressed, int key)
     //senquack - keep track of mouse button state for new touchscreen functionality:
     Game_RMBActive = pressed;
 
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (!Game_TouchscreenButtonEvents)
         {
@@ -349,13 +345,17 @@ static void Action_right_mouse_button(int pressed, int key)
         }
 
     }
+    else
+    {
+        EmulateKey((pressed)?SDL_KEYDOWN:SDL_KEYUP, SDLK_BACKSPACE);
+    }
 }
 
 static void Action_key_alt(int pressed, int key)
 {
     Game_AltButton = pressed;
 
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (Game_JKeyboard)
         {
@@ -369,7 +369,7 @@ static void Action_key_ctrl(int pressed, int key)
 {
     Game_CtrlButton = pressed;
 
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (Game_JKeyboard)
         {
@@ -380,7 +380,7 @@ static void Action_key_ctrl(int pressed, int key)
 
 static void Action_key(int pressed, int key)
 {
-    if (!Game_Paused)
+    if ((!VK_Visible) || (key == SDLK_TAB) || (key == SDLK_F15) || (key == SDLK_BACKSPACE))
     {
         EmulateKey((pressed)?SDL_KEYDOWN:SDL_KEYUP, key);
     }
@@ -435,8 +435,6 @@ static void Action_toggle_scaling(int pressed, int key)
 
 void Init_Input(void)
 {
-    Game_Joystick = 1;
-
 // GAME_JOYSTICK != JOYSTICK_NONE
     Game_AltButton = 0;
     Game_JKeyboard = 0;
@@ -444,8 +442,6 @@ void Init_Input(void)
 
 // GAME_JOYSTICK = JOYSTICK_GP2X
     //senquack
-    Game_TouchscreenButtonEvents = 0;
-    Game_RMBActive = 0;
     Game_UsingTouchscreen = 0;
     Game_CursorButtons = GAME_CURSORBUTTONS_DPAD;
 
@@ -519,6 +515,9 @@ void Init_Input(void)
 
 void Init_Input2(void)
 {
+    SDL_InitSubSystem(SDL_INIT_JOYSTICK);
+    SDL_JoystickOpen(0);
+
 // GAME_JOYSTICK = JOYSTICK_GP2X
 // senquack
 #if defined(SDL_GP2X__H)
@@ -922,14 +921,18 @@ int Handle_Input_Event2(SDL_Event *_event)
             switch (event.jbutton.button)
             {
                 case GP2X_BUTTON_A:
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         Game_JButton[event.jbutton.button] = 1;
                     }
 
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_ABXY)
                     {
-                        if (Game_JKeyboard && !Game_Paused)
+                        if (VK_Visible)
+                        {
+                            EmulateKey(SDL_KEYDOWN, SDLK_LEFT);
+                        }
+                        else if (Game_JKeyboard)
                         {
                             ChangeCursorKeys();
                         }
@@ -957,14 +960,18 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                     break;
                 case GP2X_BUTTON_B:
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         Game_JButton[event.jbutton.button] = 1;
                     }
 
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_ABXY)
                     {
-                        if (Game_JKeyboard && !Game_Paused)
+                        if (VK_Visible)
+                        {
+                            EmulateKey(SDL_KEYDOWN, SDLK_RIGHT);
+                        }
+                        else if (Game_JKeyboard)
                         {
                             ChangeCursorKeys();
                         }
@@ -992,14 +999,18 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                     break;
                 case GP2X_BUTTON_X:
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         Game_JButton[event.jbutton.button] = 1;
                     }
 
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_ABXY)
                     {
-                        if (Game_JKeyboard && !Game_Paused)
+                        if (VK_Visible)
+                        {
+                            EmulateKey(SDL_KEYDOWN, SDLK_DOWN);
+                        }
+                        else if (Game_JKeyboard)
                         {
                             ChangeCursorKeys();
                         }
@@ -1027,14 +1038,18 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                     break;
                 case GP2X_BUTTON_Y:
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         Game_JButton[event.jbutton.button] = 1;
                     }
 
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_ABXY)
                     {
-                        if (Game_JKeyboard && !Game_Paused)
+                        if (VK_Visible)
+                        {
+                            EmulateKey(SDL_KEYDOWN, SDLK_UP);
+                        }
+                        else if (Game_JKeyboard)
                         {
                             ChangeCursorKeys();
                         }
@@ -1154,14 +1169,18 @@ int Handle_Input_Event2(SDL_Event *_event)
                 //senquack - up/down/left/right are now mappable:
                 case GP2X_BUTTON_UP:
                     //senquack
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         Game_JButton[event.jbutton.button] = 1;
                     }
 
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_DPAD)
                     {
-                        if (Game_JKeyboard && !Game_Paused)
+                        if (VK_Visible)
+                        {
+                            EmulateKey(SDL_KEYDOWN, SDLK_UP);
+                        }
+                        else if (Game_JKeyboard)
                         {
                             ChangeCursorKeys();
                         }
@@ -1175,11 +1194,18 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                     break;
                 case GP2X_BUTTON_DOWN:
-                    Game_JButton[event.jbutton.button] = 1;
+                    if (!VK_Visible)
+                    {
+                        Game_JButton[event.jbutton.button] = 1;
+                    }
 
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_DPAD)
                     {
-                        if (Game_JKeyboard && !Game_Paused)
+                        if (VK_Visible)
+                        {
+                            EmulateKey(SDL_KEYDOWN, SDLK_DOWN);
+                        }
+                        else if (Game_JKeyboard)
                         {
                             ChangeCursorKeys();
                         }
@@ -1194,14 +1220,18 @@ int Handle_Input_Event2(SDL_Event *_event)
                     break;
                 case GP2X_BUTTON_LEFT:
                     //senquack
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         Game_JButton[event.jbutton.button] = 1;
                     }
 
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_DPAD)
                     {
-                        if (Game_JKeyboard && !Game_Paused)
+                        if (VK_Visible)
+                        {
+                            EmulateKey(SDL_KEYDOWN, SDLK_LEFT);
+                        }
+                        else if (Game_JKeyboard)
                         {
                             ChangeCursorKeys();
                         }
@@ -1216,14 +1246,18 @@ int Handle_Input_Event2(SDL_Event *_event)
                     break;
                 case GP2X_BUTTON_RIGHT:
                     //senquack
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         Game_JButton[event.jbutton.button] = 1;
                     }
 
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_DPAD)
                     {
-                        if (Game_JKeyboard && !Game_Paused)
+                        if (VK_Visible)
+                        {
+                            EmulateKey(SDL_KEYDOWN, SDLK_RIGHT);
+                        }
+                        else if (Game_JKeyboard)
                         {
                             ChangeCursorKeys();
                         }
@@ -1246,7 +1280,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                 case GP2X_BUTTON_DOWNLEFT:
                 case GP2X_BUTTON_DOWNRIGHT:
                     //senquack
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         Game_JButton[event.jbutton.button] = 1;
                         if (Game_CursorButtons == GAME_CURSORBUTTONS_DPAD)
@@ -1262,7 +1296,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                     //senquack - Button R is now mappable and also is no longer the
                     //           de-facto control key, as that is also mappable now
                     Game_JButton[GP2X_BUTTON_R] = 1;
-//                        if (!Game_Paused)
+//                        if (!VK_Visible)
 //                        {
 //                            if (Game_JKeyboard)
 //                            {
@@ -1295,7 +1329,11 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_ABXY)
                     {
-                        if (Game_JKeyboard && !Game_Paused)
+                        if (VK_Visible)
+                        {
+                            EmulateKey(SDL_KEYUP, SDLK_LEFT);
+                        }
+                        else if (Game_JKeyboard)
                         {
                             ChangeCursorKeys();
                         }
@@ -1326,7 +1364,11 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_ABXY)
                     {
-                        if (Game_JKeyboard && !Game_Paused)
+                        if (VK_Visible)
+                        {
+                            EmulateKey(SDL_KEYUP, SDLK_RIGHT);
+                        }
+                        else if (Game_JKeyboard)
                         {
                             ChangeCursorKeys();
                         }
@@ -1363,7 +1405,11 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_ABXY)
                     {
-                        if (Game_JKeyboard && !Game_Paused)
+                        if (VK_Visible)
+                        {
+                            EmulateKey(SDL_KEYUP, SDLK_DOWN);
+                        }
+                        else if (Game_JKeyboard)
                         {
                             ChangeCursorKeys();
                         }
@@ -1394,7 +1440,11 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_ABXY)
                     {
-                        if (Game_JKeyboard && !Game_Paused)
+                        if (VK_Visible)
+                        {
+                            EmulateKey(SDL_KEYUP, SDLK_UP);
+                        }
+                        else if (Game_JKeyboard)
                         {
                             ChangeCursorKeys();
                         }
@@ -1543,7 +1593,11 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_DPAD)
                     {
-                        if (Game_JKeyboard && !Game_Paused)
+                        if (VK_Visible)
+                        {
+                            EmulateKey(SDL_KEYUP, SDLK_UP);
+                        }
+                        else if (Game_JKeyboard)
                         {
                             ChangeCursorKeys();
                         }
@@ -1555,11 +1609,6 @@ int Handle_Input_Event2(SDL_Event *_event)
                         Action_button_Up(0, Action_button_Up_Key);
                     }
 
-                    if (Game_Paused)
-                    {
-                        EmulateKey(SDL_KEYUP, SDLK_UP);
-                    }
-
                     break;
                 case GP2X_BUTTON_DOWN:
                     //senquack
@@ -1567,7 +1616,11 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_DPAD)
                     {
-                        if (Game_JKeyboard && !Game_Paused)
+                        if (VK_Visible)
+                        {
+                            EmulateKey(SDL_KEYUP, SDLK_DOWN);
+                        }
+                        else if (Game_JKeyboard)
                         {
                             ChangeCursorKeys();
                         }
@@ -1579,11 +1632,6 @@ int Handle_Input_Event2(SDL_Event *_event)
                         Action_button_Down(0, Action_button_Down_Key);
                     }
 
-                    if (Game_Paused)
-                    {
-                        EmulateKey(SDL_KEYUP, SDLK_DOWN);
-                    }
-
                     break;
                 case GP2X_BUTTON_LEFT:
                     //senquack
@@ -1591,7 +1639,11 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_DPAD)
                     {
-                        if (Game_JKeyboard && !Game_Paused)
+                        if (VK_Visible)
+                        {
+                            EmulateKey(SDL_KEYUP, SDLK_LEFT);
+                        }
+                        else if (Game_JKeyboard)
                         {
                             ChangeCursorKeys();
                         }
@@ -1603,11 +1655,6 @@ int Handle_Input_Event2(SDL_Event *_event)
                         Action_button_Left(0, Action_button_Left_Key);
                     }
 
-                    if (Game_Paused)
-                    {
-                        EmulateKey(SDL_KEYUP, SDLK_LEFT);
-                    }
-
                     break;
                 case GP2X_BUTTON_RIGHT:
                     //senquack
@@ -1615,7 +1662,11 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                     if (Game_CursorButtons == GAME_CURSORBUTTONS_DPAD)
                     {
-                        if (Game_JKeyboard && !Game_Paused)
+                        if (VK_Visible)
+                        {
+                            EmulateKey(SDL_KEYUP, SDLK_RIGHT);
+                        }
+                        else if (Game_JKeyboard)
                         {
                             ChangeCursorKeys();
                         }
@@ -1627,11 +1678,6 @@ int Handle_Input_Event2(SDL_Event *_event)
                         Action_button_Right(0, Action_button_Right_Key);
                     }
 
-                    if (Game_Paused)
-                    {
-                        EmulateKey(SDL_KEYUP, SDLK_RIGHT);
-                    }
-
                     break;
                 case GP2X_BUTTON_UPLEFT:
                 case GP2X_BUTTON_UPRIGHT:
@@ -1640,7 +1686,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                     //senquack
                     Game_JButton[event.jbutton.button] = 0;
 
-                    if (Game_JKeyboard && !Game_Paused)
+                    if (Game_JKeyboard && !VK_Visible)
                     {
                         ChangeCursorKeys();
                     }
@@ -1649,7 +1695,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                     //senquack - Button R is now mappable and also is no longer the
                     //           de-facto control key, as that is also mappable now
                     Game_JButton[GP2X_BUTTON_R] = 0;
-//                        if (!Game_Paused)
+//                        if (!VK_Visible)
 //                        {
 //                            if (Game_JKeyboard)
 //                            {
@@ -1664,7 +1710,7 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                     if (!Game_UsingTouchscreen)
                     {
-                        if (!Game_Paused)
+                        if (!VK_Visible)
                         {
                             if (Game_JKeyboard)
                             {
@@ -1699,6 +1745,8 @@ void Handle_Timer_Input_Event(void)
 {
     int deltax, deltay;
     SDL_Event event;
+
+    if (VK_Visible) return;
 
     deltax = 0;
     deltay = 0;

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -141,8 +141,6 @@ int Game_TimerThread(void *data)
         {
             return 0;
         }
-
-        if (Game_Paused) continue;
 
         if (Game_VolumeDelta == 1)
         {

@@ -45,6 +45,8 @@
 
 EXTERNAL_VARIABLE uint32_t X86_InterruptFlag;		/* interrupt flag indicator */
 
+EXTERNAL_VARIABLE int Game_SDLVersionNum;			/* linked SDL version */
+
 EXTERNAL_VARIABLE uint8_t *Game_FrameBuffer;		/* video memory (all) */
 EXTERNAL_VARIABLE PTR32(uint8_t) Game_ScreenWindow;	/* video bank (64KiB) */
 EXTERNAL_VARIABLE uint32_t Game_InterruptTable[256];	/* interrupt table */
@@ -85,7 +87,6 @@ EXTERNAL_VARIABLE int32_t Picture_Position_UL_Y;	/* picture position - upper lef
 EXTERNAL_VARIABLE int32_t Picture_Position_BR_X;	/* picture position - bottom right corner - x (relative to display) */
 EXTERNAL_VARIABLE int32_t Picture_Position_BR_Y;	/* picture position - bottom right corner - y (relative to display) */
 EXTERNAL_VARIABLE Game_Flip_Procedure Display_Flip_Procedure;	/* flip procedure */
-EXTERNAL_VARIABLE int Font_Size_Shift;				/* font size = font size * 2 ^ Font_Size_Shift */
 
 EXTERNAL_VARIABLE uint32_t Game_AdvancedScaling;	/* advanced scaling enabled ? */
 EXTERNAL_VARIABLE uint32_t Game_ScalingQuality;		/* scaling quality: 0 = nearest neighbour, 1 = bilinear */
@@ -150,9 +151,6 @@ EXTERNAL_VARIABLE int Game_OPL3Emulator;			/* OPL3 emulator
                                                        0: fast - DOSBox
                                                        1: precise - Nuked OPL3 */
 
-// global input variables
-EXTERNAL_VARIABLE uint32_t Game_Joystick;			/* is joystick used ? */
-
 
 EXTERNAL_VARIABLE Game_sample *Game_SampleCache[GAME_SAMPLE_CACHE_SIZE];
 EXTERNAL_VARIABLE Game_channel Game_channels[GAME_MIXER_CHANNELS_MAXIMUM];
@@ -165,9 +163,6 @@ EXTERNAL_VARIABLE PTR32(FILE) Game_stdin;			/* stdin */
 EXTERNAL_VARIABLE PTR32(FILE) Game_stdout;			/* stdout */
 EXTERNAL_VARIABLE PTR32(FILE) Game_stderr;			/* stderr */
 
-EXTERNAL_VARIABLE uint8_t *Warcraft_Font;			/* warcraft font data */
-EXTERNAL_VARIABLE uint8_t *Temp_Font_Data;			/* temporary font data */
-
 
 EXTERNAL_VARIABLE volatile uint32_t Game_TimerRunning;	/* is timer interrupt running ? */
 EXTERNAL_VARIABLE volatile uint32_t Game_TimerTick;	/* Timer tick counter */
@@ -175,7 +170,7 @@ EXTERNAL_VARIABLE volatile uint32_t Game_TimerRun;	/* Timer number of runs count
 EXTERNAL_VARIABLE volatile uint32_t Game_VSyncTick;	/* VSync tick counter */
 EXTERNAL_VARIABLE volatile uint32_t Thread_Exited;	/* did main thread exit ? */
 EXTERNAL_VARIABLE volatile uint32_t Thread_Exit;	/* should thread exit ? */
-EXTERNAL_VARIABLE volatile uint32_t Game_Paused;	/* is game paused? */
+EXTERNAL_VARIABLE volatile uint32_t VK_Visible;		/* is virtual keyboard visible ? */
 
 EXTERNAL_VARIABLE SDL_sem *Game_DisplaySem;
 EXTERNAL_VARIABLE SDL_sem *Game_FlipSem;

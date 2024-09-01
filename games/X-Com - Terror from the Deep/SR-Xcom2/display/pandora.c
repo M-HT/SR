@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -919,7 +919,6 @@ static void Flip_320x200x8_to_640x400x16_in_800x480(uint8_t *src, uint16_t *dst)
 void Init_Display(void)
 {
     Display_FSType = 0;
-    Font_Size_Shift = 2;
     DisplayMode = 1;
 }
 

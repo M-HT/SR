@@ -1282,6 +1282,9 @@ static void play_smk(const char *filename)
     // stop timer, events, ...
     SMK_Playing = 1;
 
+    // hide virtual keyboard
+    VK_Visible = 0;
+
     // open video file
     strcpy(filepath, "C:\\");
     strcat(filepath, filename);
@@ -1470,7 +1473,10 @@ static void play_smk(const char *filename)
             switch(cevent->type)
             {
                 case SDL_KEYUP:
-                    if (cevent->key.keysym.sym == SDLK_ESCAPE)
+                    if ((cevent->key.keysym.sym == SDLK_ESCAPE) ||
+                        (cevent->key.keysym.sym == SDLK_TAB) ||
+                        (cevent->key.keysym.sym == SDLK_F15)
+                       )
                     {
                         goto SMK_exit5;
                     }

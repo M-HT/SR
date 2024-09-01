@@ -154,7 +154,7 @@ static void EmulateMouseButton(int type, int button)
 
 static int Action_left_mouse_button(int pressed, int key, SDL_Event *event)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         EmulateMouseButton((pressed)?SDL_MOUSEBUTTONDOWN:SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
 
@@ -162,24 +162,14 @@ static int Action_left_mouse_button(int pressed, int key, SDL_Event *event)
     }
     else
     {
-#if !defined(SDLK_ENTER)
-    #define SDLK_ENTER SDLK_RETURN
-#endif
-        if (pressed == 0)
-        {
-            event->key.keysym.sym = SDLK_ENTER;
-            return 0;
-        }
-        else
-        {
-            return 1;
-        }
+        event->key.keysym.sym = SDLK_RETURN;
+        return 0;
     }
 }
 
 static int Action_right_mouse_button(int pressed, int key, SDL_Event *event)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         EmulateMouseButton((pressed)?SDL_MOUSEBUTTONDOWN:SDL_MOUSEBUTTONUP, SDL_BUTTON_RIGHT);
 
@@ -187,13 +177,14 @@ static int Action_right_mouse_button(int pressed, int key, SDL_Event *event)
     }
     else
     {
-        return 1;
+        event->key.keysym.sym = SDLK_TAB;
+        return 0;
     }
 }
 
 static int Action_key(int pressed, int key, SDL_Event *event)
 {
-    if (!Game_Paused)
+    if ((!VK_Visible) || (key == SDLK_F15))
     {
         event->key.keysym.sym = (SDLKey) key;
         return 0;
@@ -204,7 +195,7 @@ static int Action_key(int pressed, int key, SDL_Event *event)
 //senquack - new set of four macros to facilitate rotating the earth/scrolling the view
 static int Action_rotateup(int pressed, int key, SDL_Event *event)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (pressed)
         {
@@ -303,7 +294,7 @@ static int Action_rotateup(int pressed, int key, SDL_Event *event)
 
 static int Action_rotatedown(int pressed, int key, SDL_Event *event)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (pressed)
         {
@@ -402,7 +393,7 @@ static int Action_rotatedown(int pressed, int key, SDL_Event *event)
 
 static int Action_rotateleft(int pressed, int key, SDL_Event *event)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (pressed)
         {
@@ -501,7 +492,7 @@ static int Action_rotateleft(int pressed, int key, SDL_Event *event)
 
 static int Action_rotateright(int pressed, int key, SDL_Event *event)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (pressed)
         {
@@ -604,7 +595,7 @@ static int Action_levelup(int pressed, int key, SDL_Event *event)
 {
     static int32_t orig_pos[2];			// Stores mouse coordinates while macro occurs
 
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (pressed)
         {
@@ -646,7 +637,7 @@ static int Action_leveldown(int pressed, int key, SDL_Event *event)
 {
     static int32_t orig_pos[2];			// Stores mouse coordinates while macro occurs
 
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (pressed)
         {
@@ -688,7 +679,7 @@ static int Action_selectnextsoldier(int pressed, int key, SDL_Event *event)
 {
     static int32_t orig_pos[2];			// Stores mouse coordinates while macro occurs
 
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (pressed)
         {
@@ -730,7 +721,7 @@ static int Action_deselectcurrentsoldier(int pressed, int key, SDL_Event *event)
 {
     static int32_t orig_pos[2];			// Stores mouse coordinates while macro occurs
 
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (pressed)
         {
@@ -785,8 +776,6 @@ static int Action_none(int pressed, int key, SDL_Event *event)
 
 void Init_Input(void)
 {
-    Game_Joystick = 0;
-
     Game_InputMode = GAME_TOUCHSCREEN_DPAD;
     Game_ModButton = 0;
     Game_DKeyboard = 0;
@@ -905,7 +894,7 @@ int Config_Input(char *str, char *param)
                     // enter key
 
                     Action_current = &Action_key;
-                    Action_current_Key = SDLK_ENTER;
+                    Action_current_Key = SDLK_RETURN;
                 }
             }
             else if ( strncasecmp(param, "mouse_", 6) == 0 ) // param begins with "mouse_"
@@ -1213,7 +1202,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     else
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_UP;
                         }
@@ -1244,7 +1233,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     else
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_DOWN;
                         }
@@ -1275,7 +1264,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     else
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_LEFT;
                         }
@@ -1306,7 +1295,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     else
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_RIGHT;
                         }
@@ -1326,7 +1315,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     Game_PButton[BUTTON_Y] = (_event->type == SDL_KEYDOWN)?1:0;
                     if (Game_InputMode == GAME_TOUCHSCREEN_ABXY)
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_UP;
                         }
@@ -1357,7 +1346,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     Game_PButton[BUTTON_X] = (_event->type == SDL_KEYDOWN)?1:0;
                     if (Game_InputMode == GAME_TOUCHSCREEN_ABXY)
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_DOWN;
                         }
@@ -1388,7 +1377,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     Game_PButton[BUTTON_A] = (_event->type == SDL_KEYDOWN)?1:0;
                     if (Game_InputMode == GAME_TOUCHSCREEN_ABXY)
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_LEFT;
                         }
@@ -1419,7 +1408,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     Game_PButton[BUTTON_B] = (_event->type == SDL_KEYDOWN)?1:0;
                     if (Game_InputMode == GAME_TOUCHSCREEN_ABXY)
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_RIGHT;
                         }
@@ -1534,8 +1523,14 @@ int Handle_Input_Event(SDL_Event *_event)
                     {
                         case SDL_KEYDOWN:
                         case SDL_KEYUP:
-                            _event->key.keysym.sym = (SDLKey) (uintptr_t) _event->user.data1;
                             _event->key.state = (_event->type == SDL_KEYUP)?SDL_RELEASED:SDL_PRESSED;
+#if SDL_VERSION_ATLEAST(2,0,0)
+                            _event->key.repeat = 0;
+                            _event->key.keysym.sym = (SDL_Keycode) (intptr_t) _event->user.data1;
+#else
+                            _event->key.keysym.sym = (SDLKey) (intptr_t) _event->user.data1;
+                            _event->key.keysym.unicode = 0;
+#endif
                             _event->key.keysym.mod = KMOD_NONE;
                             break;
                         case SDL_MOUSEBUTTONDOWN:
@@ -1716,6 +1711,8 @@ void Handle_Timer_Input_Event(void)
 {
     int deltax, deltay;
     SDL_Event event;
+
+    if (VK_Visible) return;
 
     deltax = 0;
     deltay = 0;

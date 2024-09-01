@@ -1203,7 +1203,6 @@ void Init_Display(void)
 #else
     Display_FSType = 0;
 #endif
-    Font_Size_Shift = 2;
     Game_UseEnhanced3DEngineNewValue = 1;
 
     ScaleOutput = 0;

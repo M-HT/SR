@@ -151,7 +151,13 @@ void EmulateKey(int type, int key)
 
     pump_event.type = type;
     pump_event.key.state = (type == SDL_KEYUP)?SDL_RELEASED:SDL_PRESSED;
+#if SDL_VERSION_ATLEAST(2,0,0)
+    pump_event.key.repeat = 0;
+    pump_event.key.keysym.sym = (SDL_Keycode) key;
+#else
     pump_event.key.keysym.sym = (SDLKey) key;
+    pump_event.key.keysym.unicode = 0;
+#endif
     pump_event.key.keysym.mod = KMOD_NONE;
 
     SDL_PushEvent(&pump_event);
@@ -192,33 +198,31 @@ static void Action_none(int pressed, int key)
 // GAME_JOYSTICK = JOYSTICK_GP2X
 static void Action_left_mouse_button(int pressed, int key)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         EmulateMouseButton((pressed)?SDL_MOUSEBUTTONDOWN:SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
     }
     else
     {
-#if !defined(SDLK_ENTER)
-    #define SDLK_ENTER SDLK_RETURN
-#endif
-        if (pressed == 0)
-        {
-            EmulateKey(SDL_KEYUP, SDLK_ENTER);
-        }
+        EmulateKey((pressed)?SDL_KEYDOWN:SDL_KEYUP, SDLK_RETURN);
     }
 }
 
 static void Action_right_mouse_button(int pressed, int key)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         EmulateMouseButton((pressed)?SDL_MOUSEBUTTONDOWN:SDL_MOUSEBUTTONUP, SDL_BUTTON_RIGHT);
+    }
+    else
+    {
+        EmulateKey((pressed)?SDL_KEYDOWN:SDL_KEYUP, SDLK_TAB);
     }
 }
 
 static void Action_key(int pressed, int key)
 {
-    if (!Game_Paused)
+    if ((!VK_Visible) || (key == SDLK_F15) || (key == SDLK_BACKSPACE))
     {
         EmulateKey((pressed)?SDL_KEYDOWN:SDL_KEYUP, key);
     }
@@ -231,7 +235,7 @@ static void Action_rotateup(int pressed, int key)
     {
     #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_GEOSCAPE))
         case EXE_GEOSCAPE:
-            if (!Game_Paused)
+            if (!VK_Visible)
             {
                 if (pressed)
                 {
@@ -342,7 +346,7 @@ static void Action_rotatedown(int pressed, int key)
     {
     #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_GEOSCAPE))
         case EXE_GEOSCAPE:
-            if (!Game_Paused)
+            if (!VK_Visible)
             {
                 if (pressed)
                 {
@@ -453,7 +457,7 @@ static void Action_rotateleft(int pressed, int key)
     {
     #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_GEOSCAPE))
         case EXE_GEOSCAPE:
-            if (!Game_Paused)
+            if (!VK_Visible)
             {
                 if (pressed)
                 {
@@ -563,7 +567,7 @@ static void Action_rotateright(int pressed, int key)
     {
     #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_GEOSCAPE))
         case EXE_GEOSCAPE:
-            if (!Game_Paused)
+            if (!VK_Visible)
             {
                 if (pressed)
                 {
@@ -675,7 +679,7 @@ static void Action_levelup(int pressed, int key)
     static int32_t orig_x, orig_y;			// Stores mouse coordinates while macro occurs
     SDL_Event pump_event;
 
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (pressed)
         {
@@ -791,7 +795,7 @@ static void Action_leveldown(int pressed, int key)
     static int32_t orig_x, orig_y;			// Stores mouse coordinates while macro occurs
     SDL_Event pump_event;
 
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (pressed)
         {
@@ -907,7 +911,7 @@ static void Action_selectnextsoldier(int pressed, int key)
     static int32_t orig_x, orig_y;			// Stores mouse coordinates while macro occurs
     SDL_Event pump_event;
 
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (pressed)
         {
@@ -1023,7 +1027,7 @@ static void Action_deselectcurrentsoldier(int pressed, int key)
     static int32_t orig_x, orig_y;			// Stores mouse coordinates while macro occurs
     SDL_Event pump_event;
 
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (pressed)
         {
@@ -1173,8 +1177,6 @@ static void Action_volume_decrease(int pressed, int key)
 
 void Init_Input(void)
 {
-    Game_Joystick = 1;
-
 //senquack
     Game_UsingTouchscreen = 0;
     Game_CurrentlyScrolling = 0;
@@ -1270,6 +1272,9 @@ void Init_Input(void)
 
 void Init_Input2(void)
 {
+    SDL_InitSubSystem(SDL_INIT_JOYSTICK);
+    SDL_JoystickOpen(0);
+
 // senquack
 #if defined(SDL_GP2X__H)
 
@@ -1712,7 +1717,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                         Action_button_A(1, Action_button_A_Key);
                     }
 
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         Game_JButton[event.jbutton.button] = 1;
                     }
@@ -1727,7 +1732,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                         Action_button_B(1, Action_button_B_Key);
                     }
 
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         Game_JButton[event.jbutton.button] = 1;
                     }
@@ -1742,7 +1747,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                         Action_button_X(1, Action_button_X_Key);
                     }
 
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         Game_JButton[event.jbutton.button] = 1;
                     }
@@ -1757,7 +1762,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                         Action_button_Y(1, Action_button_Y_Key);
                     }
 
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         Game_JButton[event.jbutton.button] = 1;
                     }
@@ -1856,130 +1861,146 @@ int Handle_Input_Event2(SDL_Event *_event)
 
                     break;
                 case GP2X_BUTTON_UP:
-                    //senquack
-                    if ( Game_JButton[GP2X_BUTTON_L] )
+                    if (VK_Visible)
                     {
-                        Action_button_L_Up(1, Action_button_L_Up_Key);
+                        EmulateKey(SDL_KEYDOWN, SDLK_UP);
                     }
                     else
                     {
-                        Action_button_Up(1, Action_button_Up_Key);
-                    }
+                        //senquack
+                        if ( Game_JButton[GP2X_BUTTON_L] )
+                        {
+                            Action_button_L_Up(1, Action_button_L_Up_Key);
+                        }
+                        else
+                        {
+                            Action_button_Up(1, Action_button_Up_Key);
+                        }
 
-                    if (!Game_Paused)
-                    {
                         Game_JButton[event.jbutton.button] = 1;
                     }
                     break;
                 case GP2X_BUTTON_DOWN:
-                    //senquack
-                    if ( Game_JButton[GP2X_BUTTON_L] )
+                    if (VK_Visible)
                     {
-                        Action_button_L_Down(1, Action_button_L_Down_Key);
+                        EmulateKey(SDL_KEYDOWN, SDLK_DOWN);
                     }
                     else
                     {
-                        Action_button_Down(1, Action_button_Down_Key);
-                    }
+                        //senquack
+                        if ( Game_JButton[GP2X_BUTTON_L] )
+                        {
+                            Action_button_L_Down(1, Action_button_L_Down_Key);
+                        }
+                        else
+                        {
+                            Action_button_Down(1, Action_button_Down_Key);
+                        }
 
-                    if (!Game_Paused)
-                    {
                         Game_JButton[event.jbutton.button] = 1;
                     }
                     break;
                 case GP2X_BUTTON_LEFT:
-                    //senquack
-                    if ( Game_JButton[GP2X_BUTTON_L] )
+                    if (VK_Visible)
                     {
-                        Action_button_L_Left(1, Action_button_L_Left_Key);
+                        EmulateKey(SDL_KEYDOWN, SDLK_LEFT);
                     }
                     else
                     {
-                        Action_button_Left(1, Action_button_Left_Key);
-                    }
+                        //senquack
+                        if ( Game_JButton[GP2X_BUTTON_L] )
+                        {
+                            Action_button_L_Left(1, Action_button_L_Left_Key);
+                        }
+                        else
+                        {
+                            Action_button_Left(1, Action_button_Left_Key);
+                        }
 
-                    if (!Game_Paused)
-                    {
                         Game_JButton[event.jbutton.button] = 1;
                     }
                     break;
                 case GP2X_BUTTON_RIGHT:
-                    //senquack
-                    if ( Game_JButton[GP2X_BUTTON_L] )
+                    if (VK_Visible)
                     {
-                        Action_button_L_Right(1, Action_button_L_Right_Key);
+                        EmulateKey(SDL_KEYDOWN, SDLK_RIGHT);
                     }
                     else
                     {
-                        Action_button_Right(1, Action_button_Right_Key);
-                    }
+                        //senquack
+                        if ( Game_JButton[GP2X_BUTTON_L] )
+                        {
+                            Action_button_L_Right(1, Action_button_L_Right_Key);
+                        }
+                        else
+                        {
+                            Action_button_Right(1, Action_button_Right_Key);
+                        }
 
-                    if (!Game_Paused)
-                    {
                         Game_JButton[event.jbutton.button] = 1;
                     }
                     break;
                 case GP2X_BUTTON_UPLEFT:
-                    //senquack
-                    if ( Game_JButton[GP2X_BUTTON_L] )
+                    if ( !VK_Visible )
                     {
-                        Action_button_L_UpLeft(1, Action_button_L_UpLeft_Key);
-                    }
-                    else
-                    {
-                        Action_button_UpLeft(1, Action_button_UpLeft_Key);
-                    }
+                        //senquack
+                        if ( Game_JButton[GP2X_BUTTON_L] )
+                        {
+                            Action_button_L_UpLeft(1, Action_button_L_UpLeft_Key);
+                        }
+                        else
+                        {
+                            Action_button_UpLeft(1, Action_button_UpLeft_Key);
+                        }
 
-                    if (!Game_Paused)
-                    {
                         Game_JButton[event.jbutton.button] = 1;
                     }
                     break;
                 case GP2X_BUTTON_UPRIGHT:
-                    //senquack
-                    if ( Game_JButton[GP2X_BUTTON_L] )
+                    if ( !VK_Visible )
                     {
-                        Action_button_L_UpRight(1, Action_button_L_UpRight_Key);
-                    }
-                    else
-                    {
-                        Action_button_UpRight(1, Action_button_UpRight_Key);
-                    }
+                        //senquack
+                        if ( Game_JButton[GP2X_BUTTON_L] )
+                        {
+                            Action_button_L_UpRight(1, Action_button_L_UpRight_Key);
+                        }
+                        else
+                        {
+                            Action_button_UpRight(1, Action_button_UpRight_Key);
+                        }
 
-                    if (!Game_Paused)
-                    {
                         Game_JButton[event.jbutton.button] = 1;
                     }
                     break;
                 case GP2X_BUTTON_DOWNLEFT:
-                    //senquack
-                    if ( Game_JButton[GP2X_BUTTON_L] )
+                    if ( !VK_Visible )
                     {
-                        Action_button_L_DownLeft(1, Action_button_L_DownLeft_Key);
-                    }
-                    else
-                    {
-                        Action_button_DownLeft(1, Action_button_DownLeft_Key);
-                    }
+                        //senquack
+                        if ( Game_JButton[GP2X_BUTTON_L] )
+                        {
+                            Action_button_L_DownLeft(1, Action_button_L_DownLeft_Key);
+                        }
+                        else
+                        {
+                            Action_button_DownLeft(1, Action_button_DownLeft_Key);
+                        }
 
-                    if (!Game_Paused)
-                    {
                         Game_JButton[event.jbutton.button] = 1;
                     }
                     break;
                 case GP2X_BUTTON_DOWNRIGHT:
-                    //senquack
-                    if ( Game_JButton[GP2X_BUTTON_L] )
+                    if ( !VK_Visible )
                     {
-                        Action_button_L_DownRight(1, Action_button_L_DownRight_Key);
-                    }
-                    else
-                    {
-                        Action_button_DownRight(1, Action_button_DownRight_Key);
-                    }
+                        //senquack
+                        if ( Game_JButton[GP2X_BUTTON_L] )
+                        {
+                            Action_button_L_DownRight(1, Action_button_L_DownRight_Key);
+                        }
+                        else
+                        {
+                            Action_button_DownRight(1, Action_button_DownRight_Key);
+                        }
 
-                    if (!Game_Paused)
-                    {
                         Game_JButton[event.jbutton.button] = 1;
                     }
                     break;
@@ -2156,7 +2177,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                     break;
                 case GP2X_BUTTON_UP:
                     //senquack
-                    if (Game_Paused)
+                    if (VK_Visible)
                     {
                         EmulateKey(SDL_KEYUP, SDLK_UP);
                     }
@@ -2175,7 +2196,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                     break;
                 case GP2X_BUTTON_DOWN:
                     //senquack
-                    if (Game_Paused)
+                    if (VK_Visible)
                     {
                         EmulateKey(SDL_KEYUP, SDLK_DOWN);
                     }
@@ -2194,7 +2215,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                     break;
                 case GP2X_BUTTON_LEFT:
                     //senquack
-                    if (Game_Paused)
+                    if (VK_Visible)
                     {
                         EmulateKey(SDL_KEYUP, SDLK_LEFT);
                     }
@@ -2213,7 +2234,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                     break;
                 case GP2X_BUTTON_RIGHT:
                     //senquack
-                    if (Game_Paused)
+                    if (VK_Visible)
                     {
                         EmulateKey(SDL_KEYUP, SDLK_RIGHT);
                     }
@@ -2231,7 +2252,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                     Game_JButton[event.jbutton.button] = 0;
                     break;
                 case GP2X_BUTTON_UPLEFT:
-                    if ( !Game_Paused )
+                    if ( !VK_Visible )
                     {
                         if ( Game_JButton[GP2X_BUTTON_L] )
                         {
@@ -2245,7 +2266,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                     Game_JButton[event.jbutton.button] = 0;
                     break;
                 case GP2X_BUTTON_UPRIGHT:
-                    if ( !Game_Paused )
+                    if ( !VK_Visible )
                     {
                         if ( Game_JButton[GP2X_BUTTON_L] )
                         {
@@ -2259,7 +2280,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                     Game_JButton[event.jbutton.button] = 0;
                     break;
                 case GP2X_BUTTON_DOWNLEFT:
-                    if ( !Game_Paused )
+                    if ( !VK_Visible )
                     {
                         if ( Game_JButton[GP2X_BUTTON_L] )
                         {
@@ -2273,7 +2294,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                     Game_JButton[event.jbutton.button] = 0;
                     break;
                 case GP2X_BUTTON_DOWNRIGHT:
-                    if ( !Game_Paused )
+                    if ( !VK_Visible )
                     {
                         if ( Game_JButton[GP2X_BUTTON_L] )
                         {
@@ -2305,6 +2326,8 @@ int Handle_Input_Event2(SDL_Event *_event)
 void Handle_Timer_Input_Event(void)
 {
     SDL_Event event;
+
+    if (VK_Visible) return;
 
 #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_TACTICAL))
 #if (EXE_BUILD == EXE_COMBINED)

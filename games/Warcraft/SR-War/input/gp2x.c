@@ -102,9 +102,11 @@ void EmulateKey(int type, int key)
     pump_event.type = type;
     pump_event.key.state = (type == SDL_KEYUP)?SDL_RELEASED:SDL_PRESSED;
 #if SDL_VERSION_ATLEAST(2,0,0)
+    pump_event.key.repeat = 0;
     pump_event.key.keysym.sym = (SDL_Keycode) key;
 #else
     pump_event.key.keysym.sym = (SDLKey) key;
+    pump_event.key.keysym.unicode = 0;
 #endif
     pump_event.key.keysym.mod = KMOD_NONE;
 
@@ -143,7 +145,7 @@ static void EmulateSelectGroup(void)
 {
     Game_SelectGroupOnMove = 0;
 
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         EmulateMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
 
@@ -270,33 +272,31 @@ static void Action_none(int pressed, int key)
 // GAME_JOYSTICK = JOYSTICK_GP2X
 static void Action_left_mouse_button(int pressed, int key)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         EmulateMouseButton((pressed)?SDL_MOUSEBUTTONDOWN:SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
     }
     else
     {
-#if !defined(SDLK_ENTER)
-    #define SDLK_ENTER SDLK_RETURN
-#endif
-        if (pressed == 0)
-        {
-            EmulateKey(SDL_KEYUP, SDLK_ENTER);
-        }
+        EmulateKey((pressed)?SDL_KEYDOWN:SDL_KEYUP, SDLK_RETURN);
     }
 }
 
 static void Action_right_mouse_button(int pressed, int key)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         EmulateMouseButton((pressed)?SDL_MOUSEBUTTONDOWN:SDL_MOUSEBUTTONUP, SDL_BUTTON_RIGHT);
+    }
+    else
+    {
+        EmulateKey((pressed)?SDL_KEYDOWN:SDL_KEYUP, SDLK_TAB);
     }
 }
 
 static void Action_key(int pressed, int key)
 {
-    if (!Game_Paused)
+    if ((!VK_Visible) || (key == SDLK_F15) || (key == SDLK_BACKSPACE))
     {
         EmulateKey((pressed)?SDL_KEYDOWN:SDL_KEYUP, key);
     }
@@ -304,7 +304,7 @@ static void Action_key(int pressed, int key)
 
 static void Action_macro_key_left_mouse_button(int pressed, int key)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (pressed)
         {
@@ -320,16 +320,13 @@ static void Action_macro_key_left_mouse_button(int pressed, int key)
     }
     else
     {
-        if (pressed == 0)
-        {
-            EmulateKey(SDL_KEYUP, SDLK_ENTER);
-        }
+        EmulateKey((pressed)?SDL_KEYDOWN:SDL_KEYUP, SDLK_RETURN);
     }
 }
 
 static void Action_combo_left_mouse_button_select_group(int pressed, int key)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (pressed)
         {
@@ -370,10 +367,7 @@ static void Action_combo_left_mouse_button_select_group(int pressed, int key)
     }
     else
     {
-        if (pressed == 0)
-        {
-            EmulateKey(SDL_KEYUP, SDLK_ENTER);
-        }
+        EmulateKey((pressed)?SDL_KEYDOWN:SDL_KEYUP, SDLK_RETURN);
     }
 }
 
@@ -417,8 +411,6 @@ static void Action_volume_decrease(int pressed, int key)
 
 void Init_Input(void)
 {
-    Game_Joystick = 1;
-
     Game_SelectGroupOnMove = 0;
 
 // GAME_JOYSTICK != JOYSTICK_NONE
@@ -461,6 +453,8 @@ void Init_Input(void)
 
 void Init_Input2(void)
 {
+    SDL_InitSubSystem(SDL_INIT_JOYSTICK);
+    SDL_JoystickOpen(0);
 }
 
 int Config_Input(char *str, char *param)
@@ -892,7 +886,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                 case GP2X_BUTTON_UPRIGHT:
                 case GP2X_BUTTON_DOWNLEFT:
                 case GP2X_BUTTON_DOWNRIGHT:
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         if (Game_SelectGroupOnMove) EmulateSelectGroup();
 
@@ -902,13 +896,31 @@ int Handle_Input_Event2(SDL_Event *_event)
                             ChangeCursorKeys();
                         }
                     }
+                    else
+                    {
+                        switch (event.jbutton.button)
+                        {
+                            case GP2X_BUTTON_UP:
+                                EmulateKey(SDL_KEYDOWN, SDLK_UP);
+                                break;
+                            case GP2X_BUTTON_DOWN:
+                                EmulateKey(SDL_KEYDOWN, SDLK_DOWN);
+                                break;
+                            case GP2X_BUTTON_LEFT:
+                                EmulateKey(SDL_KEYDOWN, SDLK_LEFT);
+                                break;
+                            case GP2X_BUTTON_RIGHT:
+                                EmulateKey(SDL_KEYDOWN, SDLK_RIGHT);
+                                break;
+                        }
+                    }
                     break;
                 case GP2X_BUTTON_R:
                     Game_JButton[GP2X_BUTTON_R] = 1;
                     break;
                 case GP2X_BUTTON_L:
                     Game_JButton[GP2X_BUTTON_L] = 1;
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         Game_JKeyboard = 1;
                         ChangeCursorKeys();
@@ -1071,7 +1083,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                 case GP2X_BUTTON_UPRIGHT:
                 case GP2X_BUTTON_DOWNLEFT:
                 case GP2X_BUTTON_DOWNRIGHT:
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         Game_JButton[event.jbutton.button] = 0;
                         if (Game_JKeyboard)
@@ -1103,7 +1115,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                     break;
                 case GP2X_BUTTON_L:
                     Game_JButton[GP2X_BUTTON_L] = 0;
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         ReleaseCursorKeys();
                         Game_JKeyboard = 0;
@@ -1123,6 +1135,8 @@ void Handle_Timer_Input_Event(void)
 {
     int deltax, deltay;
     SDL_Event event;
+
+    if (VK_Visible) return;
 
     deltax = 0;
     deltay = 0;

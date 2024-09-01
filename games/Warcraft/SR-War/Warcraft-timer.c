@@ -168,8 +168,6 @@ int Game_TimerThread(void *data)
             return 0;
         }
 
-        if (Game_Paused) continue;
-
         if (Game_VolumeDelta == 1)
         {
 //senquack - SOUND STUFF

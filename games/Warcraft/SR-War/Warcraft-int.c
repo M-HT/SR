@@ -37,6 +37,11 @@ void X86_InterruptProcedure(
 
 	switch (IntNum)
 	{
+		case 0x03:
+		// Trap to debugger
+        // triggered by pressing ` key (unless entering save name)
+			return;
+			// case 0x03:
 		case 0x10:
 		// Video
 			switch (AH)

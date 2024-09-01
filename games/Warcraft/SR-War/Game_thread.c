@@ -30,6 +30,7 @@
 #include "Game_vars.h"
 #include "Game_scalerplugin.h"
 #include "Game_thread.h"
+#include "Game_virtualkeyboard.h"
 #include "Warcraft-proc-events.h"
 #include "main.h"
 #include "display.h"
@@ -270,6 +271,9 @@ fprintf(stderr, "fps: %.3f    tps: %.3f\n", (float) NumDisplay * 1000 / (Current
 
                 /* ??? */
                 SDL_UnlockSurface(Game_Screen);
+
+                VirtualKeyboard_Draw();
+
                 SDL_Flip(Game_Screen);
             }
         #endif

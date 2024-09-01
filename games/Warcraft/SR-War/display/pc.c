@@ -258,7 +258,6 @@ void Init_Display(void)
 #else
     Display_FSType = 0;
 #endif
-    Font_Size_Shift = 2;
 
     ScaleOutput = 0;
     ScaledWidth = 640;

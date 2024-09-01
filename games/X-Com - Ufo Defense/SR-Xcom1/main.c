@@ -62,6 +62,7 @@
 #include "Game_misc.h"
 #include "Game_scalerplugin.h"
 #include "Game_thread.h"
+#include "Game_virtualkeyboard.h"
 #include "virtualfs.h"
 #include "Xcom-proc-vfs.h"
 #include "display.h"
@@ -762,6 +763,8 @@ static void Game_Display_Destroy(int post)
         Game_OldCursor = NULL;
     }
 
+    VirtualKeyboard_Delete();
+
     // clear screen
 #if SDL_VERSION_ATLEAST(2,0,0)
     SDL_SetRenderDrawColor(Game_Renderer, 0, 0, 0, 255);
@@ -979,18 +982,6 @@ static void Game_Cleanup(void)
         Game_samples[1].start = NULL;
     }
 
-    if (Temp_Font_Data != NULL)
-    {
-        free(Temp_Font_Data);
-        Temp_Font_Data = NULL;
-    }
-
-    if (UFO_Font != NULL)
-    {
-        free(UFO_Font);
-        UFO_Font = NULL;
-    }
-
     if (Zero_Segment != NULL)
     {
         free(Zero_Segment);
@@ -1065,52 +1056,6 @@ static void Game_BuildRTable(void)
     }
 }
 
-static void Game_ReadFontData(void)
-{
-    FILE *f;
-    off_t fsize;
-    size_t items;
-
-    f = Game_fopen("GEODATA\\SMALLSET.DAT", "rb");
-    if (f == NULL) return;
-
-    fsize = Game_filelength2(f);
-
-    if (fsize == -1)
-    {
-        Game_fclose(f);
-        return;
-    }
-
-    UFO_Font = (uint8_t *) malloc(fsize);
-
-    if (UFO_Font == NULL)
-    {
-        Game_fclose(f);
-        return;
-    }
-
-    items = fread(UFO_Font, 1, fsize, f);
-
-    Game_fclose(f);
-
-    if (items != (size_t)fsize)
-    {
-        free(UFO_Font);
-        UFO_Font = NULL;
-        return;
-    }
-
-    if (Font_Size_Shift > 0)
-    {
-        Temp_Font_Data = (uint8_t *) malloc((8*9) << (2*Font_Size_Shift + 1));
-    }
-    else
-    {
-        Temp_Font_Data = NULL;
-    }
-}
-
 static int Game_Initialize(void)
 {
     if (Game_Directory[0] == 0)
@@ -1141,7 +1086,7 @@ static int Game_Initialize(void)
     Game_VSyncTick = 0;
     Thread_Exited = 0;
     Thread_Exit = 0;
-    Game_Paused = 0;
+    VK_Visible = 0;
     Game_SDLTicks = 0;
     Game_LastAudio = 0;
     Game_OldCursor = NULL;
@@ -1193,7 +1138,6 @@ static int Game_Initialize(void)
     Game_SoundCfg.Reserved = 0;
 
     Display_ChangeMode = 0;
-    Font_Size_Shift = 0;
 
     Game_Delay_Game = 1;
     Game_Main_Loop_VSync_Ticks = 5;
@@ -1213,8 +1157,6 @@ static int Game_Initialize(void)
         strcpy(Game_ConfigFilename, "Ufo.cfg");				//default config file
     }
 
-    UFO_Font = NULL;
-    Temp_Font_Data = NULL;
     Zero_Segment = NULL;
     Game_DisplaySem = NULL;
     Game_FlipSem = NULL;
@@ -1265,17 +1207,26 @@ static int Game_Initialize(void)
     Init_Audio();
     Init_Input();
 
-    if ( SDL_Init (SDL_INIT_VIDEO //| SDL_INIT_TIMER
-                    | ((Game_Joystick)?SDL_INIT_JOYSTICK:0)
-                    ) != 0 )
+    if ( SDL_Init (SDL_INIT_VIDEO) != 0 )
     {
         fprintf (stderr, "Error: Couldn't initialize SDL: %s\n", SDL_GetError ());
         return -1;
     }
 
+#if SDL_VERSION_ATLEAST(2,0,0)
+    SDL_version linked_version;
+
+    SDL_GetVersion(&linked_version);
+    Game_SDLVersionNum = SDL_VERSIONNUM(linked_version.major, linked_version.minor, linked_version.patch);
+#else
+    const SDL_version *linked_version;
+
+    linked_version = SDL_Linked_Version();
+    Game_SDLVersionNum = SDL_VERSIONNUM(linked_version->major, linked_version->minor, linked_version->patch);
+#endif
+
 #if (SDL_MAJOR_VERSION == 1)
-    const SDL_version *link_version = SDL_Linked_Version();
-    if (SDL_VERSIONNUM(link_version->major, link_version->minor, link_version->patch) >= SDL_VERSIONNUM(1,2,50))
+    if (Game_SDLVersionNum >= SDL_VERSIONNUM(1,2,50))
     {
         fprintf(stderr, "Warning: sdl12-compat detected.\nWarning: The program might not work properly.\nWarning: Using SDL2 version is recommended.\n");
     }
@@ -1296,11 +1247,6 @@ static int Game_Initialize(void)
         fprintf (stderr, "Error: Couldn't create cursor: %s\n", SDL_GetError ());
         Game_Cleanup();
         return -2;
-    }
-
-    if (Game_Joystick)
-    {
-        SDL_JoystickOpen(0);
     }
 
     Game_FrameMemory = (uint8_t *) malloc(/*320*201*/ 65536*2);
@@ -1615,7 +1561,7 @@ static void Game_Event_Loop(void)
     uint32_t AppActive;
     int FlipActive, CreateAfterFlip, DestroyAfterFlip;
 #if SDL_VERSION_ATLEAST(2,0,0)
-    int ClearRenderer;
+    int ClearRenderer, MouseOldX, MouseOldY;
 #endif
 
 
@@ -1681,6 +1627,8 @@ static void Game_Event_Loop(void)
     AppInputFocus = 1;
     AppActive = 1;
     ClearRenderer = 0;
+    MouseOldX = 0;
+    MouseOldY = 0;
 #else
     {
         uint32_t AppState;
@@ -1777,7 +1725,18 @@ static void Game_Event_Loop(void)
                 #endif
                     && AppActive && AppInputFocus)
                 {
-                    if ( ( (Game_KQueueWrite + 1) & (GAME_KQUEUE_LENGTH - 1) ) == Game_KQueueRead )
+                    if (VK_Visible)
+                    {
+                        VirtualKeyboard_Event(&event);
+                    }
+                    else if (event.key.keysym.sym == SDLK_F15)
+                    {
+                        if (event.type == SDL_KEYDOWN)
+                        {
+                            VirtualKeyboard_Show();
+                        }
+                    }
+                    else if ( ( (Game_KQueueWrite + 1) & (GAME_KQUEUE_LENGTH - 1) ) == Game_KQueueRead )
                     {
 #if defined(__DEBUG__)
                         printf("keyboard event queue overflow\n");
@@ -1794,6 +1753,16 @@ static void Game_Event_Loop(void)
                 break;
                 // case SDL_KEYDOWN, SDL_KEYUP:
             case SDL_MOUSEMOTION:
+            #if SDL_VERSION_ATLEAST(2,0,0)
+                if ((event.motion.xrel == 0) && (event.motion.yrel == 0))
+                {
+                    // warping the mouse doesn't fill relative motion attributes in SDL2
+                    event.motion.xrel = event.motion.x - MouseOldX;
+                    event.motion.yrel = event.motion.y - MouseOldY;
+                }
+                MouseOldX = event.motion.x;
+                MouseOldY = event.motion.y;
+            #endif
                 if (
                 #if SDL_VERSION_ATLEAST(2,0,0)
                     Game_Window != NULL
@@ -1802,48 +1771,55 @@ static void Game_Event_Loop(void)
                 #endif
                     && AppActive && AppInputFocus && AppMouseFocus)
                 {
-                    int newx, newy;
-
-                    newx = event.motion.x;
-                    newy = event.motion.y;
-
-                    if (Display_MouseLocked || Display_Fullscreen)
+                    if (VK_Visible)
                     {
-                        if (event.motion.xrel > 0)
-                        {
-                            if (newx < Picture_Position_UL_X) newx = Picture_Position_UL_X + event.motion.xrel;
-                        }
-                        else if (event.motion.xrel < 0)
-                        {
-                            if (newx >= Picture_Position_BR_X) newx = Picture_Position_BR_X + event.motion.xrel - 1;
-                        }
-
-                        if (event.motion.yrel > 0)
-                        {
-                            if (newy < Picture_Position_UL_Y) newy = Picture_Position_UL_Y + event.motion.yrel;
-                        }
-                        else if (event.motion.yrel < 0)
-                        {
-                            if (newy >= Picture_Position_BR_Y) newy = Picture_Position_BR_Y + event.motion.yrel - 1;
-                        }
-
-                        if ((newx != event.motion.x) || (newy != event.motion.y))
-                        {
-                        #if SDL_VERSION_ATLEAST(2,0,0)
-                            SDL_WarpMouseInWindow(Game_Window, newx, newy);
-                        #else
-                            SDL_WarpMouse(newx, newy);
-                        #endif
-                        }
+                        //VirtualKeyboard_Event(&event);
                     }
+                    else
+                    {
+                        int newx, newy;
 
-                    Game_MouseX = newx;
-                    Game_MouseY = newy;
+                        newx = event.motion.x;
+                        newy = event.motion.y;
 
-                    /*Game_MouseButtons = ( (event.motion.state & SDL_BUTTON(SDL_BUTTON_LEFT)  )?1:0 ) |
-                                        ( (event.motion.state & SDL_BUTTON(SDL_BUTTON_RIGHT) )?2:0 ) |
-                                        ( (event.motion.state & SDL_BUTTON(SDL_BUTTON_MIDDLE))?4:0 );
-                    Game_MousePressedButtons |= Game_MouseButtons;*/
+                        if (Display_MouseLocked || Display_Fullscreen)
+                        {
+                            if (event.motion.xrel > 0)
+                            {
+                                if (newx < Picture_Position_UL_X) newx = Picture_Position_UL_X + event.motion.xrel;
+                            }
+                            else if (event.motion.xrel < 0)
+                            {
+                                if (newx >= Picture_Position_BR_X) newx = Picture_Position_BR_X + event.motion.xrel - 1;
+                            }
+
+                            if (event.motion.yrel > 0)
+                            {
+                                if (newy < Picture_Position_UL_Y) newy = Picture_Position_UL_Y + event.motion.yrel;
+                            }
+                            else if (event.motion.yrel < 0)
+                            {
+                                if (newy >= Picture_Position_BR_Y) newy = Picture_Position_BR_Y + event.motion.yrel - 1;
+                            }
+
+                            if ((newx != event.motion.x) || (newy != event.motion.y))
+                            {
+                            #if SDL_VERSION_ATLEAST(2,0,0)
+                                SDL_WarpMouseInWindow(Game_Window, newx, newy);
+                            #else
+                                SDL_WarpMouse(newx, newy);
+                            #endif
+                            }
+                        }
+
+                        Game_MouseX = newx;
+                        Game_MouseY = newy;
+
+                        /*Game_MouseButtons = ( (event.motion.state & SDL_BUTTON(SDL_BUTTON_LEFT)  )?1:0 ) |
+                                            ( (event.motion.state & SDL_BUTTON(SDL_BUTTON_RIGHT) )?2:0 ) |
+                                            ( (event.motion.state & SDL_BUTTON(SDL_BUTTON_MIDDLE))?4:0 );
+                        Game_MousePressedButtons |= Game_MouseButtons;*/
+                    }
                 }
                 break;
                 // case SDL_MOUSEMOTION:
@@ -1857,7 +1833,11 @@ static void Game_Event_Loop(void)
                 #endif
                     && AppActive && AppInputFocus && AppMouseFocus)
                 {
-                    if (event.button.button == SDL_BUTTON_LEFT ||
+                    if (VK_Visible)
+                    {
+                        //VirtualKeyboard_Event(&event);
+                    }
+                    else if (event.button.button == SDL_BUTTON_LEFT ||
                         event.button.button == SDL_BUTTON_RIGHT ||
                         event.button.button == SDL_BUTTON_MIDDLE)
                     {
@@ -2024,6 +2004,9 @@ static void Game_Event_Loop(void)
                                 {
                                     SDL_RenderCopy(Game_Renderer, Game_Texture[Game_CurrentTexture], NULL, NULL);
                                 }
+
+                                VirtualKeyboard_Draw();
+
                                 SDL_RenderPresent(Game_Renderer);
 
                                 Game_CurrentTexture++;
@@ -2090,6 +2073,8 @@ static void Game_Event_Loop(void)
                                 glVertexPointer(2, GL_FLOAT, 0, &(QuadVertices[0]));
                                 glTexCoordPointer(2, GL_FLOAT, 0, &(QuadTexCoords[0]));
                                 glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+                                VirtualKeyboard_Draw();
 
                                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
                                 glDisableClientState(GL_VERTEX_ARRAY);
@@ -2248,7 +2233,6 @@ int main (int argc, char *argv[])
     }
 
     Game_ReadConfig();
-    Game_ReadFontData();
 
     Game_Initialize2();
 

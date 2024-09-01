@@ -133,7 +133,7 @@ static void EmulateSelectGroup(void)
 {
     Game_SelectGroupOnMove = SELECT_GROUP_ACTIVE;
 
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         EmulateMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
 
@@ -269,7 +269,7 @@ static void ReleaseCursorKeys()
 
 static int Action_left_mouse_button(int pressed, int key, SDL_Event *event)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         EmulateMouseButton((pressed)?SDL_MOUSEBUTTONDOWN:SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT);
 
@@ -277,24 +277,14 @@ static int Action_left_mouse_button(int pressed, int key, SDL_Event *event)
     }
     else
     {
-#if !defined(SDLK_ENTER)
-    #define SDLK_ENTER SDLK_RETURN
-#endif
-        if (pressed == 0)
-        {
-            event->key.keysym.sym = SDLK_ENTER;
-            return 0;
-        }
-        else
-        {
-            return 1;
-        }
+        event->key.keysym.sym = SDLK_RETURN;
+        return 0;
     }
 }
 
 static int Action_right_mouse_button(int pressed, int key, SDL_Event *event)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         EmulateMouseButton((pressed)?SDL_MOUSEBUTTONDOWN:SDL_MOUSEBUTTONUP, SDL_BUTTON_RIGHT);
 
@@ -302,15 +292,20 @@ static int Action_right_mouse_button(int pressed, int key, SDL_Event *event)
     }
     else
     {
-        return 1;
+        event->key.keysym.sym = SDLK_TAB;
+        return 0;
     }
 }
 
 static int Action_key(int pressed, int key, SDL_Event *event)
 {
-    if (!Game_Paused)
+    if ((!VK_Visible) || (key == SDLK_F15))
     {
+#if SDL_VERSION_ATLEAST(2,0,0)
+        event->key.keysym.sym = (SDL_Keycode) key;
+#else
         event->key.keysym.sym = (SDLKey) key;
+#endif
         return 0;
     }
     return 1;
@@ -318,7 +313,7 @@ static int Action_key(int pressed, int key, SDL_Event *event)
 
 static int Action_macro_key_left_mouse_button(int pressed, int key, SDL_Event *event)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (pressed)
         {
@@ -334,18 +329,15 @@ static int Action_macro_key_left_mouse_button(int pressed, int key, SDL_Event *e
     }
     else
     {
-        if (pressed == 0)
-        {
-            event->key.keysym.sym = SDLK_ENTER;
-            return 0;
-        }
+        event->key.keysym.sym = SDLK_RETURN;
+        return 0;
     }
     return 1;
 }
 
 static int Action_combo_left_mouse_button_select_group(int pressed, int key, SDL_Event *event)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (pressed)
         {
@@ -384,11 +376,8 @@ static int Action_combo_left_mouse_button_select_group(int pressed, int key, SDL
     }
     else
     {
-        if (pressed == 0)
-        {
-            event->key.keysym.sym = SDLK_ENTER;
-            return 0;
-        }
+        event->key.keysym.sym = SDLK_RETURN;
+        return 0;
     }
     return 1;
 }
@@ -411,8 +400,6 @@ static int Action_none(int pressed, int key, SDL_Event *event)
 
 void Init_Input(void)
 {
-    Game_Joystick = 0;
-
     Game_MouseHelper = 0;
 
     Game_HelperMouseMiddleButton = 0;
@@ -866,7 +853,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     else
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_UP;
                         }
@@ -900,7 +887,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     else
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_DOWN;
                         }
@@ -934,7 +921,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     else
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_LEFT;
                         }
@@ -968,7 +955,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     else
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_RIGHT;
                         }
@@ -993,7 +980,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     Game_PButton[BUTTON_Y] = (_event->type == SDL_KEYDOWN)?1:0;
                     if (Game_InputMode == GAME_TOUCHSCREEN_ABXY)
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_UP;
                         }
@@ -1022,7 +1009,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     Game_PButton[BUTTON_X] = (_event->type == SDL_KEYDOWN)?1:0;
                     if (Game_InputMode == GAME_TOUCHSCREEN_ABXY)
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_DOWN;
                         }
@@ -1051,7 +1038,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     Game_PButton[BUTTON_A] = (_event->type == SDL_KEYDOWN)?1:0;
                     if (Game_InputMode == GAME_TOUCHSCREEN_ABXY)
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_LEFT;
                         }
@@ -1080,7 +1067,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     Game_PButton[BUTTON_B] = (_event->type == SDL_KEYDOWN)?1:0;
                     if (Game_InputMode == GAME_TOUCHSCREEN_ABXY)
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_RIGHT;
                         }
@@ -1116,7 +1103,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     else if (Game_InputMode == GAME_KEYBOARD_DPAD)
                     {
-                        if (!Game_Paused)
+                        if (!VK_Visible)
                         {
                             if (Game_PButton[BUTTON_L])
                             {
@@ -1200,8 +1187,14 @@ int Handle_Input_Event(SDL_Event *_event)
             {
                 case EC_INPUT_KEY:
                     _event->type = (int) _event->user.data2;
-                    _event->key.keysym.sym = (SDLKey) (uintptr_t) _event->user.data1;
                     _event->key.state = (_event->type == SDL_KEYUP)?SDL_RELEASED:SDL_PRESSED;
+#if SDL_VERSION_ATLEAST(2,0,0)
+                    _event->key.repeat = 0;
+                    _event->key.keysym.sym = (SDL_Keycode) (intptr_t) _event->user.data1;
+#else
+                    _event->key.keysym.sym = (SDLKey) (intptr_t) _event->user.data1;
+                    _event->key.keysym.unicode = 0;
+#endif
                     _event->key.keysym.mod = KMOD_NONE;
                     break;
                 case EC_INPUT_MOUSE_BUTTON:
@@ -1223,7 +1216,7 @@ int Handle_Input_Event(SDL_Event *_event)
             switch (_event->button.button)
             {
                 case SDL_BUTTON_LEFT:
-                    if (!Game_Paused)
+                    if (!VK_Visible)
                     {
                         if (Game_SelectGroupOnMove == SELECT_GROUP_STOPPED)
                         {
@@ -1241,7 +1234,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     break;
                 case SDL_BUTTON_MIDDLE:
-                    if (Game_MouseHelper && (Game_InputMode == GAME_KEYBOARD_DPAD) && !Game_Paused)
+                    if (Game_MouseHelper && (Game_InputMode == GAME_KEYBOARD_DPAD) && !VK_Visible)
                     {
                         Game_HelperMouseMiddleButton = 1;
                         EmulateRepairStop();
@@ -1249,7 +1242,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     break;
                 case SDL_BUTTON_RIGHT:
-                    if (Game_MouseHelper && (Game_InputMode == GAME_KEYBOARD_DPAD) && !Game_Paused)
+                    if (Game_MouseHelper && (Game_InputMode == GAME_KEYBOARD_DPAD) && !VK_Visible)
                     {
                         Game_HelperMouseRightButton = 1;
                         EmulateHarvestTransportAttackMoveWall();
@@ -1279,7 +1272,7 @@ int Handle_Input_Event(SDL_Event *_event)
                 case SDL_BUTTON_LEFT:
                     if (Game_MouseHelper || (Game_InputMode != GAME_KEYBOARD_DPAD))
                     {
-                        if ((Game_SelectGroupOnMove == SELECT_GROUP_ACTIVE) && !Game_Paused)
+                        if ((Game_SelectGroupOnMove == SELECT_GROUP_ACTIVE) && !VK_Visible)
                         {
                             Game_SelectGroupOnMove = SELECT_GROUP_STOPPED;
                         }
@@ -1315,6 +1308,8 @@ void Handle_Timer_Input_Event(void)
 {
     int deltax, deltay;
     SDL_Event event;
+
+    if (VK_Visible) return;
 
     deltax = 0;
     deltay = 0;

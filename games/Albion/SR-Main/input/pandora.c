@@ -211,7 +211,7 @@ static void ReleaseCursorKeys()
 
 static int Action_left_mouse_button(int pressed, int key, SDL_Event *event)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         int mousex, mousey;
 
@@ -226,24 +226,14 @@ static int Action_left_mouse_button(int pressed, int key, SDL_Event *event)
     }
     else
     {
-#if !defined(SDLK_ENTER)
-    #define SDLK_ENTER SDLK_RETURN
-#endif
-        if (pressed == 0)
-        {
-            event->key.keysym.sym = SDLK_ENTER;
-            return 0;
-        }
-        else
-        {
-            return 1;
-        }
+        event->key.keysym.sym = SDLK_RETURN;
+        return 0;
     }
 }
 
 static int Action_right_mouse_button(int pressed, int key, SDL_Event *event)
 {
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         int mousex, mousey;
 
@@ -259,7 +249,8 @@ static int Action_right_mouse_button(int pressed, int key, SDL_Event *event)
     }
     else
     {
-        return 1;
+        event->key.keysym.sym = SDLK_BACKSPACE;
+        return 0;
     }
 }
 
@@ -267,7 +258,7 @@ static int Action_key_alt(int pressed, int key, SDL_Event *event)
 {
     Game_AltButton = pressed;
 
-    if (!Game_Paused)
+    if (!VK_Visible)
     {
         if (Game_DKeyboard)
         {
@@ -279,7 +270,7 @@ static int Action_key_alt(int pressed, int key, SDL_Event *event)
 
 static int Action_key(int pressed, int key, SDL_Event *event)
 {
-    if (!Game_Paused)
+    if ((!VK_Visible) || (key == SDLK_TAB) || (key == SDLK_F15))
     {
 #if SDL_VERSION_ATLEAST(2,0,0)
         event->key.keysym.sym = (SDL_Keycode) key;
@@ -318,11 +309,6 @@ static int Action_none(int pressed, int key, SDL_Event *event)
 
 void Init_Input(void)
 {
-    Game_Joystick = 0;
-    Game_TouchscreenButtonEvents = 0;
-    Game_RMBActive = 0;
-
-
     Game_InputMode = GAME_TOUCHSCREEN_DPAD;
     Game_AltButton = 0;
     Game_CtrlButton = 0;
@@ -700,7 +686,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     else
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_UP;
                         }
@@ -729,7 +715,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     else
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_DOWN;
                         }
@@ -758,7 +744,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     else
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_LEFT;
                         }
@@ -787,7 +773,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     else
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_RIGHT;
                         }
@@ -807,7 +793,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     Game_PButton[BUTTON_Y] = (_event->type == SDL_KEYDOWN)?1:0;
                     if (Game_InputMode == GAME_TOUCHSCREEN_ABXY)
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_UP;
                         }
@@ -846,7 +832,7 @@ int Handle_Input_Event(SDL_Event *_event)
 
                     if (Game_InputMode == GAME_TOUCHSCREEN_ABXY)
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_DOWN;
                         }
@@ -875,7 +861,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     Game_PButton[BUTTON_A] = (_event->type == SDL_KEYDOWN)?1:0;
                     if (Game_InputMode == GAME_TOUCHSCREEN_ABXY)
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_LEFT;
                         }
@@ -904,7 +890,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     Game_PButton[BUTTON_B] = (_event->type == SDL_KEYDOWN)?1:0;
                     if (Game_InputMode == GAME_TOUCHSCREEN_ABXY)
                     {
-                        if (Game_Paused)
+                        if (VK_Visible)
                         {
                             _event->key.keysym.sym = SDLK_RIGHT;
                         }
@@ -936,7 +922,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     {
                         Game_CtrlButton = Game_PButton[BUTTON_L];
 
-                        if (Game_DKeyboard && !Game_Paused)
+                        if (Game_DKeyboard && !VK_Visible)
                         {
                             ChangeCursorKeys();
                         }
@@ -944,7 +930,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     }
                     else if (Game_InputMode == GAME_KEYBOARD_DPAD)
                     {
-                        if (!Game_Paused && !Game_PButton[BUTTON_L])
+                        if (!VK_Visible && !Game_PButton[BUTTON_L])
                         {
                             if (Game_DKeyboard)
                             {
@@ -972,7 +958,7 @@ int Handle_Input_Event(SDL_Event *_event)
                     {
                         Game_CtrlButton = Game_PButton[BUTTON_R];
 
-                        if (Game_DKeyboard && !Game_Paused)
+                        if (Game_DKeyboard && !VK_Visible)
                         {
                             ChangeCursorKeys();
                         }
@@ -1043,12 +1029,14 @@ int Handle_Input_Event(SDL_Event *_event)
             {
                 case EC_INPUT_KEY:
                     _event->type = (int) _event->user.data2;
+                    _event->key.state = (_event->type == SDL_KEYUP)?SDL_RELEASED:SDL_PRESSED;
 #if SDL_VERSION_ATLEAST(2,0,0)
+                    _event->key.repeat = 0;
                     _event->key.keysym.sym = (SDL_Keycode) (intptr_t) _event->user.data1;
 #else
                     _event->key.keysym.sym = (SDLKey) (intptr_t) _event->user.data1;
+                    _event->key.keysym.unicode = 0;
 #endif
-                    _event->key.state = (_event->type == SDL_KEYUP)?SDL_RELEASED:SDL_PRESSED;
                     _event->key.keysym.mod = KMOD_NONE;
                     break;
             }
@@ -1086,6 +1074,8 @@ void Handle_Timer_Input_Event(void)
 {
     int deltax, deltay;
     SDL_Event event;
+
+    if (VK_Visible) return;
 
     deltax = 0;
     deltay = 0;

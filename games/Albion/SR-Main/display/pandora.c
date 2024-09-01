@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -1805,7 +1805,6 @@ static void Flip_360x240x8_to_640x480x16_in_800x480_interpolated2_lt(uint8_t *sr
 void Init_Display(void)
 {
     Display_FSType = 0;
-    Font_Size_Shift = 2;
     DisplayMode = 0;
     Game_UseEnhanced3DEngineNewValue = 1;
 }

@@ -187,12 +187,6 @@ int Game_TimerThread(void *data)
             return 0;
         }
 
-        if (Game_Paused)
-        {
-            VSyncAction = TimerAction = 0;
-            continue;
-        }
-
         if (TimerAction)
         {
             TimerAction = 0;

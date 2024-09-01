@@ -45,6 +45,8 @@
 
 EXTERNAL_VARIABLE uint32_t X86_InterruptFlag;		/* interrupt flag indicator */
 
+EXTERNAL_VARIABLE int Game_SDLVersionNum;			/* linked SDL version */
+
 EXTERNAL_VARIABLE int Game_Executable;				/* current executable */
 EXTERNAL_VARIABLE char **main_argv;
 EXTERNAL_VARIABLE uint8_t *Game_FrameMemory;		/* allocated video memory */
@@ -92,7 +94,6 @@ EXTERNAL_VARIABLE int32_t Picture_Position_UL_Y;	/* picture position - upper lef
 EXTERNAL_VARIABLE int32_t Picture_Position_BR_X;	/* picture position - bottom right corner - x (relative to display) */
 EXTERNAL_VARIABLE int32_t Picture_Position_BR_Y;	/* picture position - bottom right corner - y (relative to display) */
 EXTERNAL_VARIABLE Game_Flip_Procedure Display_Flip_Procedure;	/* flip procedure */
-EXTERNAL_VARIABLE int Font_Size_Shift;				/* font size = font size * 2 ^ Font_Size_Shift */
 
 EXTERNAL_VARIABLE uint32_t Game_AdvancedScaling;	/* advanced scaling enabled ? */
 EXTERNAL_VARIABLE uint32_t Game_ScalingQuality;		/* scaling quality: 0 = nearest neighbour, 1 = bilinear */
@@ -177,18 +178,12 @@ EXTERNAL_VARIABLE int Game_OPL3Emulator;			/* OPL3 emulator
                                                        0: fast - DOSBox
                                                        1: precise - Nuked OPL3 */
 
-// global input variables
-EXTERNAL_VARIABLE uint32_t Game_Joystick;			/* is joystick used ? */
-
 
 EXTERNAL_VARIABLE PTR32(FILE) Game_stdin;			/* stdin */
 EXTERNAL_VARIABLE PTR32(FILE) Game_stdout;			/* stdout */
 EXTERNAL_VARIABLE PTR32(FILE) Game_stderr;			/* stderr */
 
 EXTERNAL_VARIABLE PTR32(uint8_t) Zero_Segment;		/* 64KiB of zeros */
-
-EXTERNAL_VARIABLE uint8_t *UFO_Font;				/* ufo font data */
-EXTERNAL_VARIABLE uint8_t *Temp_Font_Data;			/* temporary font data */
 
 #if (EXE_BUILD == EXE_COMBINED)
 EXTERNAL_VARIABLE void *Geoscape_DataBackup;		/* copy of geoscape data segment */
@@ -201,7 +196,7 @@ EXTERNAL_VARIABLE volatile uint32_t Game_TimerRun;	/* Timer "number of runs" cou
 EXTERNAL_VARIABLE volatile uint32_t Game_VSyncTick;	/* VSync tick counter */
 EXTERNAL_VARIABLE volatile uint32_t Thread_Exited;	/* did main thread exit ? */
 EXTERNAL_VARIABLE volatile uint32_t Thread_Exit;	/* should thread exit ? */
-EXTERNAL_VARIABLE volatile uint32_t Game_Paused;	/* is game paused? */
+EXTERNAL_VARIABLE volatile uint32_t VK_Visible;		/* is virtual keyboard visible ? */
 EXTERNAL_VARIABLE volatile uint32_t Game_SDLTicks;	/* value of SDL_GetTicks - set in timer thread */
 EXTERNAL_VARIABLE volatile uint32_t Game_LastAudio;	/* time of last call to Game_ProcessAudio */
 

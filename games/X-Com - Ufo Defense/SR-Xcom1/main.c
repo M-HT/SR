@@ -1559,7 +1559,7 @@ static void Game_Event_Loop(void)
     uint32_t AppMouseFocus;
     uint32_t AppInputFocus;
     uint32_t AppActive;
-    int FlipActive, CreateAfterFlip, DestroyAfterFlip;
+    int FlipActive, CreateAfterFlip, DestroyAfterFlip, NumEvents, PumpEvents;
 #if SDL_VERSION_ATLEAST(2,0,0)
     int ClearRenderer, MouseOldX, MouseOldY;
 #endif
@@ -1645,8 +1645,30 @@ static void Game_Event_Loop(void)
     CreateAfterFlip = 0;
     DestroyAfterFlip = 0;
 
-    while (!Thread_Exited && SDL_WaitEvent(&event))
+    PumpEvents = 1;
+
+    while (!Thread_Exited)
     {
+#if SDL_VERSION_ATLEAST(2,0,0)
+        NumEvents = SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
+#else
+        NumEvents = SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_ALLEVENTS);
+#endif
+        if (NumEvents <= 0) // error or no events
+        {
+            if (PumpEvents)
+            {
+                PumpEvents = 0;
+                SDL_PumpEvents();
+            }
+            else
+            {
+                SDL_Delay(1);
+                PumpEvents = 1;
+            }
+            continue;
+        }
+
         if (Handle_Input_Event(&event)) continue;
 
         switch(event.type)

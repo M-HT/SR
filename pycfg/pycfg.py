@@ -2,7 +2,7 @@
 # The script also works with python2
 
 #
-#  Copyright (C) 2014-2023 Roman Pauer
+#  Copyright (C) 2014-2024 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -200,8 +200,8 @@ class ConfigFile:
         # audio entries
         self.AddEntry("Audio_Channels", "stereo/mono", ("mono" if platform == "gp2x" else "stereo"))
         self.AddEntry("Audio_Resolution", "16/8", "16")
-        self.AddEntry("Audio_Sample_Rate", "11025-48000", ("44100" if platform == "pc" else "22050"))
-        self.AddEntry("Audio_Interpolation", "on/off", ("off" if platform == "gp2x" else "on"))
+        self.AddEntry("Audio_Sample_Rate", "11025-384000", ("44100" if platform == "pc" else "22050"))
+        self.AddEntry("Audio_Resampling_Quality", "0/1", ("1" if platform == "pc" else "0"))
 
         if platform == "gp2x":
             self.AddEntry("Audio_MIDI_Subsystem", "wildmidi/adlmidi/sdl_mixer", "sdl_mixer")
@@ -239,9 +239,9 @@ class ConfigFile:
             self.AddEntry("Audio_Music_Volume", "0-128", ("128" if platform == "gp2x" else "128"))
             self.AddEntry("Audio_Sample_Volume", "0-128", ("64" if platform == "gp2x" else "128"))
 
-            self.AddEntry("Audio_Buffer_Size", "256-8192", ("2048" if platform == "pc" else "1024"))
+            self.AddEntry("Audio_Buffer_Size", "256-65536", ("2048" if platform == "pc" else "1024"))
         else:
-            self.AddEntry("Audio_Buffer_Size", "256-8192", ("256" if platform == "gp2x" else ("4096" if platform == "pc" else "2048")))
+            self.AddEntry("Audio_Buffer_Size", "256-65536", ("256" if platform == "gp2x" else ("4096" if platform == "pc" else "2048")))
 
 
         # keys entries
@@ -253,6 +253,10 @@ class ConfigFile:
         # input entries
         if platform == "pandora":
             self.AddEntry("Input_Mode", "touchscreen_dpad/touchscreen_abxy/keyboard_dpad", "touchscreen_dpad")
+
+        if platform == "pc":
+            self.AddEntry("Input_GameController", "no/yes", "no")
+            self.AddEntry("Controller_Deadzone", "0-8190", "1000")
 
         if platform == "pandora" or platform == "pc":
             if game == "warcraft":
@@ -503,14 +507,14 @@ class ConfigGUI:
             self.CreateSeparator(vbox)
             self.CreateRadioSet(vbox, "Resolution:", "Audio_Resolution", "Audio resolution - 8 or 16 bits.")
             self.CreateSeparator(vbox)
-            self.CreateRadioSet2(vbox, "Sample Rate:", "Audio_Sample_Rate", "11025/22050/44100", "Audio frequency in Hz.")
+            self.CreateRadioSet2(vbox, "Sample Rate:", "Audio_Sample_Rate", "11025/22050/44100/48000/96000/192000/384000", "Audio frequency in Hz.")
             self.CreateSeparator(vbox)
-            self.CreateRadioSet2(vbox, "Buffer Size:", "Audio_Buffer_Size", "128/256/512/1024/2048/4096/8192", "Audio buffer size in bytes.")
+            self.CreateRadioSet2(vbox, "Buffer Size:", "Audio_Buffer_Size", "128/256/512/1024/2048/4096/8192/16384/32768", "Audio buffer size in bytes.")
 
-        if self.CfgFile.HasEntry("Audio_Interpolation"):
+        if self.CfgFile.HasEntry("Audio_Resampling_Quality"):
             vbox = self.AddPageFrameVBox(notebook, "Audio 2", "Audio parameters")
 
-            self.CreateRadioSet(vbox, "Interpolation ?", "Audio_Interpolation", "Select whether to use audio interpolation or not.")
+            self.CreateRadioSet2(vbox, "Resampling quality", "Audio_Resampling_Quality", None, "Select audio resampling quality.")
 
             if self.CfgFile.HasEntry("Audio_Swap_Channels"):
                 self.CreateSeparator(vbox)
@@ -714,7 +718,7 @@ class ConfigGUI:
             self.CreateRadioSet(vbox, "Use WSAD keys as WSAD keys or as arrow keys ?", "Keys_WSAD")
             self.CreateRadioSet(vbox, "Use arrow keys as arrow keys or as WSAD keys ?", "Keys_ArrowKeys")
 
-        if self.CfgFile.HasEntry("Input_Mode") or self.CfgFile.HasEntry("Input_MouseHelper"):
+        if self.CfgFile.HasEntry("Input_Mode") or self.CfgFile.HasEntry("Input_GameController") or self.CfgFile.HasEntry("Input_MouseHelper"):
             vbox = self.AddPageFrameVBox(notebook, "Input", "Input")
 
             dpad_input_mode = True
@@ -729,10 +733,18 @@ class ConfigGUI:
 
                 self.CreateRadioSet(vbox, "Input Mode:", "Input_Mode", description, True)
 
+            if self.CfgFile.HasEntry("Input_GameController"):
+                self.CreateRadioSet(vbox, "Game Controller:", "Input_GameController", "Select whether to use game controller or joystick as mouse / keyboard.")
+
+            if self.CfgFile.HasEntry("Controller_Deadzone"):
+                self.CreateSeparator(vbox)
+
+                self.CreateScale(vbox, "Controller Deadzone:", "Controller_Deadzone", "Select controller deadzone.")
+
             mouse_helper = False
             if dpad_input_mode and self.CfgFile.HasEntry("Input_MouseHelper"):
                 mouse_helper = True
-                if self.CfgFile.HasEntry("Input_Mode"):
+                if self.CfgFile.HasEntry("Input_Mode") or self.CfgFile.HasEntry("Input_GameController"):
                     vbox = self.AddPageFrameVBox(notebook, "Input2", "Input2")
 
                 description = "Select whether mouse helper is enabled."

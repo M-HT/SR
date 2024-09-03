@@ -11,6 +11,6 @@ g++ -c -ffast-math -m32 -march=x86-64 -O3 -Wall -Wno-strict-aliasing -Wno-attrib
 cd ..
 gcc -s -shared -o scaler-xbrz.dll -m32 scaler-xbrz.o xbrz/*.o scaler.def
 
-rm *.o
-rm hqx/*.o
-rm xbrz/*.o
+del *.o
+del hqx\*.o
+del xbrz\*.o

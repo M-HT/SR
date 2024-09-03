@@ -28,6 +28,7 @@
 #include "adlmidi.h"
 #ifdef USE_SPEEXDSP_RESAMPLER
 #include <speex/speex_resampler.h>
+#include <stdint.h>
 #endif
 
 
@@ -47,7 +48,7 @@ static int16_t resample_samples[2*1024];
 
 static void send_master_volume_sysex(void)
 {
-    uint8_t sysex[8];
+    ADL_UInt8 sysex[8];
 
     sysex[0] = 0xf0;
     sysex[1] = 0x7f;

@@ -965,31 +965,37 @@ void Game_save_screenshot(const char *filename)
         if (zlib_state < 0) return;
         else if (zlib_state == 0)
         {
-            fprintf(stderr, "%s: loading shared object: %s\n", "zlib", "libz.so");
-            zlib_handle = dlopen("libz.so", RTLD_LAZY);
+            static const char *zlib_libraries[2] = {"libz.so.1", "./libz.so"};
+            int zindex;
+
+            for (zindex = 0; zindex < 2; zindex++)
+            {
+                fprintf(stderr, "%s: loading shared object: %s\n", "zlib", zlib_libraries[zindex]);
+                zlib_handle = dlopen(zlib_libraries[zindex], RTLD_LAZY);
+                if (zlib_handle == NULL)
+                {
+                    fprintf(stderr, "%s: load error: %s\n", "zlib", dlerror());
+                    continue;
+                }
+
+                zlib_deflateInit2_ = (ZLIB_TYPEOF(zlib_deflateInit2_)) dlsym(zlib_handle, "deflateInit2_");
+                zlib_deflate = (ZLIB_TYPEOF(zlib_deflate)) dlsym(zlib_handle, "deflate");
+                zlib_deflateEnd = (ZLIB_TYPEOF(zlib_deflateEnd)) dlsym(zlib_handle, "deflateEnd");
+                zlib_crc32 = (ZLIB_TYPEOF(zlib_crc32)) dlsym(zlib_handle, "crc32");
+
+                if ((zlib_deflateInit2_ == NULL) || (zlib_deflate == NULL) || (zlib_deflateEnd == NULL) || (zlib_crc32 == NULL))
+                {
+                    fprintf(stderr, "%s: error: %s\n", "zlib", "functions not available in shared object");
+                    dlclose(zlib_handle);
+                    zlib_handle = NULL;
+                    continue;
+                }
+
+                break;
+            }
+
             if (zlib_handle == NULL)
             {
-                fprintf(stderr, "%s: load error: %s\n", "zlib", dlerror());
-
-                fprintf(stderr, "%s: loading shared object: %s\n", "zlib", "./libz.so");
-                zlib_handle = dlopen("./libz.so", RTLD_LAZY);
-            }
-            if (zlib_handle == NULL)
-            {
-                fprintf(stderr, "%s: load error: %s\n", "zlib", dlerror());
-                zlib_state = -1;
-                return;
-            }
-
-            zlib_deflateInit2_ = (ZLIB_TYPEOF(zlib_deflateInit2_)) dlsym(zlib_handle, "deflateInit2_");
-            zlib_deflate = (ZLIB_TYPEOF(zlib_deflate)) dlsym(zlib_handle, "deflate");
-            zlib_deflateEnd = (ZLIB_TYPEOF(zlib_deflateEnd)) dlsym(zlib_handle, "deflateEnd");
-            zlib_crc32 = (ZLIB_TYPEOF(zlib_crc32)) dlsym(zlib_handle, "crc32");
-
-            if ((zlib_deflateInit2_ == NULL) || (zlib_deflate == NULL) || (zlib_deflateEnd == NULL) || (zlib_crc32 == NULL))
-            {
-                fprintf(stderr, "%s: error: %s\n", "zlib", "functions not available in shared object");
-                dlclose(zlib_handle);
                 zlib_state = -1;
                 return;
             }

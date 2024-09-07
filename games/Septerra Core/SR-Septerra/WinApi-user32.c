@@ -312,6 +312,11 @@ static const uint8_t virtual_keyboard_layout[2][4][VK_LAYOUT_WIDTH] = { {
 static uint8_t virtual_keyboard_buffer[2 * VK_LAYOUT_WIDTH];
 static int virtual_keyboard_buflen;
 
+#ifdef PYRA
+static SDL_Joystick *pyra_stick = NULL;
+static int pyra_key_l2 = 0;
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -1175,9 +1180,9 @@ static int find_event(SDL_Event *event, int remove, int wait)
                 keep_event = 1;
             }
             mouse_buttons = event->motion.state;
-            if (mouse_right_button_mod && (mouse_buttons & SDL_BUTTON(SDL_BUTTON_LEFT)))
+            if (mouse_right_button_mod && (mouse_buttons & SDL_BUTTON_LMASK))
             {
-                mouse_buttons = (mouse_buttons & ~(SDL_BUTTON(SDL_BUTTON_LEFT))) | SDL_BUTTON(SDL_BUTTON_RIGHT);
+                mouse_buttons = (mouse_buttons & ~(SDL_BUTTON_LMASK)) | SDL_BUTTON_RMASK;
             }
             mouse_x = event->motion.x;
             mouse_y = event->motion.y;
@@ -1356,6 +1361,15 @@ static int find_event(SDL_Event *event, int remove, int wait)
         case SDL_JOYBUTTONDOWN:
         case SDL_JOYBUTTONUP:
             // joystick button event
+#ifdef PYRA
+            if (pyra_stick != NULL)
+            {
+                if (event->jbutton.button == 8) // L2 button on Pyra
+                {
+                    pyra_key_l2 = (event->type == SDL_JOYBUTTONDOWN)?1:0;
+                }
+            }
+#endif
             if (joystick != NULL)
             {
                 mouse_button = -1;
@@ -1663,11 +1677,7 @@ static int find_event(SDL_Event *event, int remove, int wait)
 
         case SDL_CONTROLLERDEVICEADDED:
             // controller device event
-            if (Input_GameController && (joystick == NULL)
-#if SDL_VERSION_ATLEAST(2,0,0)
-                && (controller == NULL)
-#endif
-            )
+            if (Input_GameController && (joystick == NULL) && (controller == NULL))
             {
                 open_controller_or_joystick(event->cdevice.which);
             }
@@ -1716,15 +1726,57 @@ static int find_event(SDL_Event *event, int remove, int wait)
         case SDL_FINGERDOWN:
         case SDL_FINGERUP:
             // finger touch event
+            if (mouse_renderer != NULL)
+            {
+                if (!virtual_keyboard_state)
+                {
+                    keep_event = 1;
+                }
+                if (event->type == SDL_FINGERMOTION)
+                {
+                    SDL_Rect viewport;
+
+                    SDL_RenderGetViewport(mouse_renderer, &viewport);
+
+                    mouse_x = SDL_floorf(event->tfinger.x * viewport.w);
+                    mouse_y = SDL_floorf(event->tfinger.y * viewport.h);
+                }
+                else if (event->type == SDL_FINGERDOWN)
+                {
+#ifdef PYRA
+                    if (pyra_key_l2 || (keyboard_mods & KMOD_RALT)) // L2/R2 button on Pyra
+                    {
+                        event->tfinger.timestamp |= 1; // remember which mouse button
+                        mouse_buttons |= SDL_BUTTON_RMASK;
+                        mouse_right_button_mod = 1;
+                    }
+                    else
+#endif
+                    {
+                        event->tfinger.timestamp &= 0xfffffffeUL; // remember which mouse button
+                        mouse_buttons |= SDL_BUTTON_LMASK;
+                    }
+                }
+                else
+                {
+                    if (mouse_right_button_mod)
+                    {
+                        event->tfinger.timestamp |= 1; // remember which mouse button
+                        mouse_buttons &= ~SDL_BUTTON_RMASK;
+                        if (remove) mouse_right_button_mod = 0;
+                    }
+                    else
+                    {
+                        event->tfinger.timestamp &= 0xfffffffeUL; // remember which mouse button
+                        mouse_buttons &= ~SDL_BUTTON_LMASK;
+                    }
+                }
+            }
             break;
 
         case SDL_JOYDEVICEADDED:
             // joystick device event
-            if (Input_GameController && (joystick == NULL)
-#if SDL_VERSION_ATLEAST(2,0,0)
-                && (controller == NULL)
-#endif
-            )
+            if (Input_GameController && (joystick == NULL) && (controller == NULL))
             {
                 open_controller_or_joystick(event->jdevice.which);
             }
@@ -1870,6 +1922,21 @@ static void translate_key(lpmsg lpMsg, int released, int vkey, int scancode, int
             lpMsg->lParam |= 1 | (1 << 30);
         }
     }
+}
+
+static void translate_mouse_motion(lpmsg lpMsg)
+{
+    lpMsg->message = WM_MOUSEMOVE;
+
+    if (mouse_buttons & SDL_BUTTON_LMASK) lpMsg->wParam |= MK_LBUTTON;
+    if (mouse_buttons & SDL_BUTTON_RMASK) lpMsg->wParam |= MK_RBUTTON;
+    if (mouse_buttons & SDL_BUTTON_MMASK) lpMsg->wParam |= MK_MBUTTON;
+    if (mouse_buttons & SDL_BUTTON_X1MASK) lpMsg->wParam |= MK_XBUTTON1;
+    if (mouse_buttons & SDL_BUTTON_X2MASK) lpMsg->wParam |= MK_XBUTTON2;
+    if (keyboard_mods & KMOD_SHIFT) lpMsg->wParam |= MK_SHIFT;
+    if (keyboard_mods & KMOD_CTRL) lpMsg->wParam |= MK_CONTROL;
+
+    lpMsg->lParam = (mouse_x & 0xffff) | ((mouse_y & 0xffff) << 16);
 }
 
 static void translate_mouse_button(lpmsg lpMsg, int pressed, int mouse_button, int doubleclick)
@@ -2433,17 +2500,7 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event, int remove)
 
     case SDL_MOUSEMOTION:
         // mouse motion events
-        lpMsg->message = WM_MOUSEMOVE;
-
-        if (mouse_buttons & SDL_BUTTON_LMASK) lpMsg->wParam |= MK_LBUTTON;
-        if (mouse_buttons & SDL_BUTTON_RMASK) lpMsg->wParam |= MK_RBUTTON;
-        if (mouse_buttons & SDL_BUTTON_MMASK) lpMsg->wParam |= MK_MBUTTON;
-        if (mouse_buttons & SDL_BUTTON_X1MASK) lpMsg->wParam |= MK_XBUTTON1;
-        if (mouse_buttons & SDL_BUTTON_X2MASK) lpMsg->wParam |= MK_XBUTTON2;
-        if (keyboard_mods & KMOD_SHIFT) lpMsg->wParam |= MK_SHIFT;
-        if (keyboard_mods & KMOD_CTRL) lpMsg->wParam |= MK_CONTROL;
-
-        lpMsg->lParam = (mouse_x & 0xffff) | ((mouse_y & 0xffff) << 16);
+        translate_mouse_motion(lpMsg);
         break;
 
     case SDL_MOUSEBUTTONDOWN:
@@ -2714,6 +2771,15 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event, int remove)
 
         break;
 
+    case SDL_FINGERMOTION:
+        // finger touch event
+        translate_mouse_motion(lpMsg);
+        break;
+    case SDL_FINGERDOWN:
+    case SDL_FINGERUP:
+        translate_mouse_button(lpMsg, (event->type == SDL_FINGERDOWN)?1:0, (event->tfinger.timestamp & 1)?1:0, 0);
+        break;
+
     case SDL_WINDOWEVENT:
         // window state change event
         switch (event->window.event)
@@ -2793,6 +2859,18 @@ void *CreateWindowExA_c(uint32_t dwExStyle, const char *lpClassName, const char 
     priority_event.type = 0;
     controller_mouse_last_time = SoundEngine_Counter;
 
+#ifdef PYRA
+    if (pyra_stick == NULL)
+    {
+        SDL_InitSubSystem(SDL_INIT_JOYSTICK);
+
+        pyra_stick = SDL_JoystickOpen(0);
+        if (pyra_stick == NULL)
+        {
+            SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
+        }
+    }
+#else
     if (Input_GameController && (joystick == NULL)
 #if SDL_VERSION_ATLEAST(2,0,0)
         && (controller == NULL)
@@ -2821,6 +2899,7 @@ void *CreateWindowExA_c(uint32_t dwExStyle, const char *lpClassName, const char 
         }
 #endif
     }
+#endif
 
     return (void *)1;
 }

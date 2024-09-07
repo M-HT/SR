@@ -33,7 +33,7 @@
 #define _WIN32
 #endif
 
-#ifdef PANDORA
+#if defined(PANDORA) || defined(PYRA)
 #define CONFIG_FILE "../Septerra.cfg"
 #else
 #define CONFIG_FILE "Septerra.cfg"
@@ -442,7 +442,7 @@ void ReadConfiguration(void)
             }
 
         }
-#ifndef PANDORA
+#if !defined(PANDORA) && !defined(PYRA)
         else if ( strncasecmp(str, "Input_", 6) == 0 ) // str begins with "Input_"
         {
             // input settings

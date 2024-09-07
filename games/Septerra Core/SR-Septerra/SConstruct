@@ -29,7 +29,7 @@ vars.Add(EnumVariable('debug', 'Set debug level (0 = release version)', '0',
                                  allowed_values=('0', '1', '2'),
                                  ignorecase=2))
 vars.Add(EnumVariable('device', 'Set target device', 'none',
-                                 allowed_values=('none', 'pc-linux', 'arm-linux-llasm', 'pc-linux-llasm', 'pandora-llasm', 'pc64-linux-llasm', 'arm64-linux-llasm'),
+                                 allowed_values=('none', 'pc-linux', 'arm-linux-llasm', 'pc-linux-llasm', 'pandora-llasm', 'pyra-llasm', 'pc64-linux-llasm', 'arm64-linux-llasm'),
                                  ignorecase=2))
 vars.Add(EnumVariable('speexdsp', 'Use SpeexDSP library for higher quality resampling', '0',
                                  allowed_values=('0', '1'),
@@ -120,6 +120,16 @@ elif device == 'pandora':
                      )
     llasm_params = '-inline-float'
     llvm_params = '-mtriple=thumbv7a-unknown-linux-eabi -mcpu=cortex-a8 -float-abi=soft'
+elif device == 'pyra':
+    env = Environment(CCFLAGS      = '-O3 -Wall -DPYRA -pipe -march=armv7ve+simd -mcpu=cortex-a15 -mtune=cortex-a15 -mfpu=neon-vfpv4 -mfloat-abi=hard -mthumb',
+                      CPPPATH      = ['/usr/include/SDL2', '/usr/local/include/SDL2'],
+                      INCPREFIX    = '-I',
+                      LINKFLAGS    = '-Wl,-z,noexecstack',
+                      LIBS         = ['SDL2', 'pthread', 'm', 'mpg123', 'quicktime'],
+                      ENV          = {'PATH' : os.environ['PATH']}
+                     )
+    llasm_params = '-inline-idiv -inline-float'
+    llvm_params = '-mtriple=thumbv7a-unknown-linux-eabi -mcpu=cortex-a15 -float-abi=hard'
 
 if speexdsp > 0:
     env.Append(CCFLAGS = ' -DUSE_SPEEXDSP_RESAMPLER')

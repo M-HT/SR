@@ -40,7 +40,7 @@ static void Set_Palette_Value2(uint32_t index, uint32_t r, uint32_t g, uint32_t 
     pixel_format_disp pixel;
 
 #define MAXDIFF 128
-#define INTERPOLATE(a, b) (((a) >= (b)) ? ( ((a) - (b) >= MAXDIFF) ? ((3 * (a) + (b)) / 4) : (((a) + (b)) / 2) ) : ( ((b) - (a) >= MAXDIFF) ? ((3 * (b) + (a)) / 4) : (((a) + (b)) / 2) ) )
+#define INTERPOLATE(a, b) (((int32_t)(a) - (int32_t)(b) >= MAXDIFF) ? ((3 * (a) + (b)) >> 2) : (((int32_t)(a) - (int32_t)(b) <= -MAXDIFF) ? ((3 * (b) + (a)) >> 2) : (((a) + (b)) >> 1)))
 
     val1 = &(interpolation_matrix2[index * 256]);
     val2 = &(interpolation_matrix2[index]);

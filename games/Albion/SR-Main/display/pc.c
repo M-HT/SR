@@ -37,13 +37,17 @@ static uint32_t *ScaleSrc;
 #if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
 static pixel_format_disp Game_PaletteAlpha[256];
 #endif
+#if !SDL_VERSION_ATLEAST(2,0,0)
 static uint32_t interpolation_matrix2[256*256];
 #define IM2_LOOKUP(a, b) ( interpolation_matrix2[(((uint32_t) (a)) << 8) + ((uint32_t) (b))] )
+#endif
 
 static void Set_Palette_Value2(uint32_t index, uint32_t r, uint32_t g, uint32_t b)
 {
+#if !SDL_VERSION_ATLEAST(2,0,0)
     uint32_t *val1, *val2;
     pixel_format_disp pixel;
+#endif
 
 #if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
     Game_PaletteAlpha[index].s.r = r;
@@ -53,7 +57,10 @@ static void Set_Palette_Value2(uint32_t index, uint32_t r, uint32_t g, uint32_t 
 #endif
 
 #define MAXDIFF 128
-#define INTERPOLATE(a, b) (((a) >= (b)) ? ( ((a) - (b) >= MAXDIFF) ? ((3 * (a) + (b)) / 4) : (((a) + (b)) / 2) ) : ( ((b) - (a) >= MAXDIFF) ? ((3 * (b) + (a)) / 4) : (((a) + (b)) / 2) ) )
+#define INTERPOLATE(a, b) (((int32_t)(a) - (int32_t)(b) >= MAXDIFF) ? ((3 * (a) + (b)) >> 2) : (((int32_t)(a) - (int32_t)(b) <= -MAXDIFF) ? ((3 * (b) + (a)) >> 2) : (((a) + (b)) >> 1)))
+
+#if !SDL_VERSION_ATLEAST(2,0,0)
+    if (ScaleOutput || Game_AdvancedScaling) return;
 
     val1 = &(interpolation_matrix2[index * 256]);
     val2 = &(interpolation_matrix2[index]);
@@ -71,6 +78,7 @@ static void Set_Palette_Value2(uint32_t index, uint32_t r, uint32_t g, uint32_t 
         val1++;
         val2 += 256;
     }
+#endif
 
 #undef INTERPOLATE
 #undef MAXDIFF
@@ -769,6 +777,7 @@ static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2(uint8_t *src, 
 }
 */
 
+#if !SDL_VERSION_ATLEAST(2,0,0)
 static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2_lt(uint8_t *src, uint32_t *dst)
 {
     int x, y, DrawOverlay, ViewportX_9, ViewportWidth_9, ViewportX2_9;
@@ -1060,6 +1069,7 @@ static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2_lt(uint8_t *sr
 #undef WRITE_PIXEL3
 #undef WRITE_PIXEL2
 }
+#endif
 
 #if !defined(ALLOW_OPENGL) && !SDL_VERSION_ATLEAST(2,0,0)
 static void Flip_360x240x8_to_WxHx32_bilinear(uint8_t *src, uint32_t *dst)
@@ -1216,7 +1226,9 @@ void Init_Display2(void)
 {
     Init_Palette();
 
+#if !SDL_VERSION_ATLEAST(2,0,0)
     memset(&(interpolation_matrix2[0]), 0, sizeof(interpolation_matrix2));
+#endif
 
 #if !SDL_VERSION_ATLEAST(2,0,0) && !defined(ALLOW_OPENGL)
     Game_AdvancedScaling = 0;
@@ -1346,6 +1358,7 @@ void Cleanup_Display(void)
     }
 }
 
+#if !SDL_VERSION_ATLEAST(2,0,0)
 int Change_Display_Mode(int direction)
 {
     int ClearScreen;
@@ -1377,4 +1390,5 @@ int Change_Display_Mode(int direction)
 
     return ClearScreen;
 }
+#endif
 

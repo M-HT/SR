@@ -29,7 +29,7 @@ vars.Add(EnumVariable('debug', 'Set debug level (0 = release version)', '0',
                                  allowed_values=('0', '1', '2'),
                                  ignorecase=2))
 vars.Add(EnumVariable('device', 'Set target device', 'none',
-                                 allowed_values=('none', 'pc-windows', 'pc-linux', 'arm-linux', 'gp2x', 'pandora', 'pc-linux-llasm', 'pandora-llasm', 'pc64-linux-llasm', 'arm64-linux-llasm'),
+                                 allowed_values=('none', 'pc-windows', 'pc-linux', 'arm-linux', 'gp2x', 'pandora', 'pyra', 'pc-linux-llasm', 'pandora-llasm', 'pyra-llasm', 'pc64-linux-llasm', 'arm64-linux-llasm'),
                                  ignorecase=2))
 vars.Add(EnumVariable('sdl', 'Set SDL version', '2',
                                  allowed_values=('1', '2'),
@@ -70,6 +70,8 @@ if device.endswith('-llasm'):
 
 if device == 'gp2x' or device == 'pandora':
     sdl = 1
+elif device == 'pyra':
+    sdl = 2
 
 if device == 'pc-linux':
     # default settings
@@ -180,6 +182,17 @@ elif device == 'pandora':
     if llasm_version:
         llvm_params = '-mtriple=thumbv7a-unknown-linux-eabi -mcpu=cortex-a8 -float-abi=soft'
         env.Append(CCFLAGS = ' -mthumb-interwork')
+    # see arm/armconf.inc for explanation of these options (and others)
+    env.Append(ASFLAGS = ' --defsym USE_R9=1 --defsym ALLOW_UNALIGNED_MEMORY_ACCESS=1')
+elif device == 'pyra':
+    env = Environment(CCFLAGS      = '-O2 -DUSE_SDL2 -DPYRA -pipe -march=armv7ve+simd -mcpu=cortex-a15 -mtune=cortex-a15 -mfpu=neon-vfpv4 -mfloat-abi=hard -mthumb -Wall',
+                      LINKFLAGS    = '-Wl,-z,noexecstack',
+                      LIBS         = ['SDL2_mixer', 'SDL2', 'pthread', 'm', 'dl'],
+                      ASFLAGS      = ' -EL -march=armv7ve -mcpu=cortex-a15 -mfpu=neon-vfpv4 -mfloat-abi=hard -I arm/'
+                     )
+    if llasm_version:
+        llasm_params = '-inline-idiv'
+        llvm_params = '-mtriple=thumbv7a-unknown-linux-eabi -mcpu=cortex-a15 -float-abi=hard'
     # see arm/armconf.inc for explanation of these options (and others)
     env.Append(ASFLAGS = ' --defsym USE_R9=1 --defsym ALLOW_UNALIGNED_MEMORY_ACCESS=1')
 

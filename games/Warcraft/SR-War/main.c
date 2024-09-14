@@ -119,22 +119,21 @@ static void Game_Display_Create(void)
 #if SDL_VERSION_ATLEAST(2,0,0)
     if (Display_Fullscreen && Display_FSType)
     {
-        Game_Window = SDL_CreateWindow("SDL Warcraft", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_INPUT_GRABBED | SDL_WINDOW_HIDDEN);
+        Game_Window = SDL_CreateWindow("SDL Warcraft", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_HIDDEN | (Display_MouseLocked ? SDL_WINDOW_INPUT_GRABBED : 0));
     }
     else
     {
         Uint32 flags;
 
+        flags = SDL_WINDOW_HIDDEN;
         if (Display_Fullscreen)
         {
-            flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_INPUT_GRABBED;
+            flags |= SDL_WINDOW_FULLSCREEN;
         }
-        else
+        if (Display_MouseLocked)
         {
-            flags = (Display_MouseLocked)?SDL_WINDOW_INPUT_GRABBED:0;
+            flags |= SDL_WINDOW_INPUT_GRABBED;
         }
-
-        flags |= SDL_WINDOW_HIDDEN;
 
         Game_Window = SDL_CreateWindow("SDL Warcraft", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Display_Width, Display_Height, flags);
     }

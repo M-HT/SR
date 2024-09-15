@@ -26,6 +26,7 @@
 import os
 import datetime
 import sys
+import re
 
 try:
     import pygtk
@@ -176,7 +177,7 @@ class ConfigFile:
             else:
                 self.AddEntry("Display", "stretched/original", "stretched")
 
-        if platform == "pc":
+        if platform == "pc" or platform == "pyra":
             if game == "albion":
                 self.AddEntry("Display_ScaledWidth", "640-3840", "720")
                 self.AddEntry("Display_ScaledHeight", "480-2160", "480")
@@ -184,15 +185,15 @@ class ConfigFile:
                 self.AddEntry("Display_ScaledWidth", "640-3840", "640")
                 self.AddEntry("Display_ScaledHeight", "400-2160", "400")
 
-            self.AddEntry("Display_Fullscreen", "yes/no", "no")
+            self.AddEntry("Display_Fullscreen", "yes/no", ("yes" if platform == "pyra" else "no"))
             self.AddEntry("Display_MouseCursor", "normal/minimal/none", "normal")
 
         if game == "albion":
-            if platform == "pandora" or platform == "pc":
+            if platform == "pc" or platform == "pyra" or platform == "pandora":
                 self.AddEntry("Display_Enhanced_3D_Rendering", "on/off", "on")
 
-        if platform == "pc":
-            self.AddEntry("Display_Scaling", "basic/basicnb/advanced/advancednb", "basic")
+        if platform == "pc" or platform == "pyra":
+            self.AddEntry("Display_Scaling", "basic/basicnb/advanced/advancednb", ("advanced" if platform == "pyra" else "basic"))
             self.AddEntry("Display_AdvancedScaler", "normal/hqx/xbrz", "normal")
             self.AddEntry("Display_ScalerFactor", "max/2/3/4/5/6", "max")
             self.AddEntry("Display_ExtraScalerThreads", "auto/0/1/2/3/4/5/6/7", "auto")
@@ -209,7 +210,7 @@ class ConfigFile:
             midi_values = "alsa/wildmidi/bassmidi/adlmidi/sdl_mixer"
             if game == "xcom1" or game == "xcom2":
                 midi_values += "/adlib-dosbox_opl"
-                if platform == "pc":
+                if platform == "pc" or platform == "pyra":
                     midi_values += "/mt32-munt"
                 midi_values += "/mt32-alsa"
             self.AddEntry("Audio_MIDI_Subsystem", midi_values, "adlmidi")
@@ -226,7 +227,7 @@ class ConfigFile:
             if game == "xcom1" or game == "xcom2":
                 self.AddEntry("Audio_OPL3_BankNumber", "0-77", "77")
 
-        if platform == "pc":
+        if platform == "pc" or platform == "pyra":
             self.AddEntry("Audio_OPL3_Emulator", "fast/precise", "precise" if platform == "pc" else "fast")
 
         if game == "albion":
@@ -245,7 +246,7 @@ class ConfigFile:
 
 
         # keys entries
-        if platform == "pc" and game == "albion":
+        if (platform == "pc" or platform == "pyra") and game == "albion":
             self.AddEntry("Keys_WSAD", "WSAD/ArrowKeys", "WSAD")
             self.AddEntry("Keys_ArrowKeys", "ArrowKeys/WSAD", "ArrowKeys")
 
@@ -258,7 +259,7 @@ class ConfigFile:
             self.AddEntry("Input_GameController", "no/yes", "no")
             self.AddEntry("Controller_Deadzone", "0-8190", "1000")
 
-        if platform == "pandora" or platform == "pc":
+        if platform == "pc" or platform == "pyra" or platform == "pandora":
             if game == "warcraft":
                 self.AddEntry("Input_MouseHelper", "on/off", "off")
                 self.AddEntry("Input_SelectGroupTreshold", "0-20", "6")
@@ -514,7 +515,7 @@ class ConfigGUI:
         if self.CfgFile.HasEntry("Audio_Resampling_Quality"):
             vbox = self.AddPageFrameVBox(notebook, "Audio 2", "Audio parameters")
 
-            self.CreateRadioSet2(vbox, "Resampling quality", "Audio_Resampling_Quality", None, "Select audio resampling quality.")
+            self.CreateRadioSet2(vbox, "Resampling quality", "Audio_Resampling_Quality", None, "Select audio resampling quality (higher = better).")
 
             if self.CfgFile.HasEntry("Audio_Swap_Channels"):
                 self.CreateSeparator(vbox)
@@ -593,7 +594,7 @@ class ConfigGUI:
                 vbox = self.AddPageFrameVBox(notebook, "MIDI 2", "MIDI")
 
             if self.CfgFile.HasEntry("Audio_MIDI_Device"):
-                self.CreateEntry(vbox, "MIDI Device:", "Audio_MIDI_Device", "Client name or port (e.g. 128:0). No value = autodetection.\nThis is used when MIDI playback using ALSA sequencer is selected.")
+                self.CreateAlsaClientSelector(vbox, "MIDI Device:", "Audio_MIDI_Device", "Client name or port (e.g. 128:0). No value = autodetection.\nThis is used when MIDI playback using ALSA sequencer is selected.")
                 num_extra_options -= 1
                 if num_extra_options != 0:
                     self.CreateSeparator(vbox)
@@ -945,6 +946,40 @@ class ConfigGUI:
         parentvbox.pack_start(vbox, False, False, 5)
         vbox.show()
 
+    def CreateAlsaClientSelector(self, parentvbox, entry_label, entry_name, entry_description = None):
+        vbox = gtk.VBox(homogeneous=False, spacing=0)
+        self.CreateEntryLabel(vbox, entry_label, 5)
+
+        hbox = gtk.HBox(homogeneous=False, spacing=0)
+        vbox.pack_start(hbox, False, False, 5)
+        hbox.show()
+
+        if hasattr(gtk, "ComboBoxText"):
+            combo = gtk.ComboBoxText(has_entry = True)
+        else:
+            combo = gtk.combo_box_entry_new_text()
+        entry = combo.get_child()
+        entry.set_max_length(256)
+        entry.set_text(self.CfgFile.GetEntryValue(entry_name))
+        entry.connect("changed", self.EntryChanged, entry_name)
+        hbox.pack_start(combo, True, True, 5)
+        combo.show()
+
+        self.widgets.append(("entry", entry_name, entry))
+
+        button = gtk.Button(label="Refresh")
+        button.connect("clicked", self.RefreshAlsaClients, combo)
+        hbox.pack_start(button, False, False, 5)
+        button.show()
+
+        self.RefreshAlsaClients(button, combo)
+
+        if not entry_description is None:
+            self.CreateEntryLabel(vbox, entry_description, 20)
+
+        parentvbox.pack_start(vbox, False, False, 5)
+        vbox.show()
+
     def CreateSoundfontSelector(self, parentvbox, entry_label, entry_name, entry_description = None):
         vbox = gtk.VBox(homogeneous=False, spacing=0)
         self.CreateEntryLabel(vbox, entry_label, 5)
@@ -1130,6 +1165,62 @@ class ConfigGUI:
     def ScaleChanged(self, widget, data=None):
         self.CfgFile.SetEntryValue(data, str(int(widget.get_value())))
 
+    def AppendAlsaClient(self, combo, client, all_ports):
+        output_ports = []
+        for port in all_ports:
+            if 'W' in port[2]:
+                output_ports.append(port)
+
+        if len(output_ports) == 0:
+            return
+
+        combo.append_text(client[1])
+        for port in output_ports:
+            combo.append_text(client[0] + ":" + port[0])
+
+    def RefreshAlsaClients(self, widget, combo=None):
+        if hasattr(combo, "remove_all"):
+            combo.remove_all()
+        else:
+            model = combo.get_model()
+            while True:
+                combo.remove_text(0)
+                iter0 = model.get_iter_first()
+                if iter0 is None:
+                    break
+
+        combo.append_text("")
+
+        try:
+            fClients = open("/proc/asound/seq/clients", "rt")
+        except:
+            return
+
+        pattern_client = re.compile(r'Client[\s]+([0-9]+)[\s]+:[\s]+"(.+)"[\s]+\[.+]')
+        pattern_port = re.compile(r'[\s]*Port[\s]+([0-9]+)[\s]+:[\s]+"(.+)"[\s]+\((.+)\)')
+
+        current_client = None
+
+        for client_line in fClients:
+            if current_client:
+                match_port = pattern_port.match(client_line)
+                if match_port:
+                    current_ports.append(match_port.group(1, 2, 3))
+                    continue
+
+            match_client = pattern_client.match(client_line)
+            if match_client:
+                if current_client:
+                    self.AppendAlsaClient(combo, current_client, current_ports)
+                current_client = match_client.group(1, 2)
+                current_ports = []
+                continue
+
+        if current_client:
+            self.AppendAlsaClient(combo, current_client, current_ports)
+
+        fClients.close()
+
     def SelectSoundfont(self, widget, entry=None):
         dialog = gtk.FileChooserDialog(title="Select SoundFont", parent=self.window, action=GTK_FILE_CHOOSER_ACTION_OPEN)
         dialog.add_buttons(gtk.STOCK_CANCEL,GTK_RESPONSE_CANCEL, gtk.STOCK_OK,GTK_RESPONSE_OK);
@@ -1195,5 +1286,5 @@ if len(sys.argv) >= 4:
 else:
     print("Not enough parameters: game platform file_path")
     print("\tgame = albion / xcom1 / xcom2 / warcraft")
-    print("\tplatform = pc / pandora / gp2x")
+    print("\tplatform = pc / pyra / pandora / gp2x")
 

@@ -1,5 +1,5 @@
 Battle Isle 3 for Linux (x86)
-Version 1.0.3
+Version 1.0.4
 
 Original Battle Isle 3 is required for playing.
 (version from GOG.com can be used for playing)
@@ -29,7 +29,7 @@ ALSA sequencer, WildMIDI, BASSMIDI, libADLMIDI
 libADLMIDI is the default library, others can be selected in the configuration file.
 ALSA sequencer can use hardware or software synth (like Fluidsynth or TiMidity++).
 libADLMIDI requires no additional files for MIDI playback,
-WildMIDI requirer GUS patches for MIDI playback,
+WildMIDI requires GUS patches for MIDI playback,
 BASSMIDI requires a soundfont for MIDI playback,
 libADLMIDI uses OPL3 emulator for MIDI playback.
 
@@ -58,11 +58,20 @@ The game uses following libraries for playing video:
 quicktime2 (http://libquicktime.sourceforge.net/)
 ffmpeg (https://www.ffmpeg.org/)
 
+The game optionally uses SpeexDSP library for audio resampling (https://github.com/xiph/speexdsp).
+
 Source code is available on GitHub: https://github.com/M-HT/SR
 
 
 Changes
 -------
+
+v1.0.4 (2024-09-15)
+* add option to use higher quality midi resampling in libADLMIDI, WildMIDI, BASSMIDI libraries
+* use latest versions of libADLMIDI, WildMIDI libraries
+* change setting volume in libADLMIDI
+* modify ALSA midi plugin to try all ports with the same client number when looking for midi port based on client name
+
 
 v1.0.3 (2023-11-13)
 * use bundled quicktime2 and ffmpeg libraries instead of system libraries

@@ -1,5 +1,5 @@
 Battle Isle 3 for Windows (x86)
-Version 1.0.3
+Version 1.0.4
 
 Original Battle Isle 3 is required for playing.
 (version from GOG.com can be used for playing)
@@ -56,11 +56,20 @@ dlfcn-win32 (https://github.com/dlfcn-win32/dlfcn-win32)
 ffmpeg (https://www.ffmpeg.org/)
 intl from gettext (https://www.gnu.org/software/gettext/)
 
+The game optionally uses SpeexDSP library for audio resampling (https://github.com/xiph/speexdsp).
+
 Source code is available on GitHub: https://github.com/M-HT/SR
 
 
 Changes
 -------
+
+v1.0.4 (2024-09-15)
+* add option to use higher quality midi resampling in libADLMIDI, WildMIDI, BASSMIDI libraries
+* use latest versions of libADLMIDI, WildMIDI libraries
+* change setting volume in libADLMIDI
+* modify NativeWindows midi plugin to reopen midi device after device reset
+
 
 v1.0.3 (2023-11-13)
 * fix reading command line options in path to executable

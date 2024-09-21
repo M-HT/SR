@@ -1,5 +1,5 @@
 Warcraft: Orcs & Humans for Windows (x86)
-Version 1.3.1
+Version 1.4.0
 
 Original DOS Warcraft CD version is required for playing.
 (version from GOG.com can be used for playing)
@@ -60,6 +60,24 @@ Configuration
 Configuration is stored in the file Warcraft.cfg.
 
 
+Controls
+--------
+
+The game can use gamepad or joystick to emulate mouse and keyboard, if it's enabled in the configuration file.
+
+Controller mappings can be added using file gamecontrollerdb.txt.
+
+Gamepad / joystick controls:
+Analog stick/pad: mouse movement
+Digital stick/pad: up/down/left/right arrow key
+A/X / 1st joystick button: left mouse button
+B/Y / 2nd joystick button: right mouse button
+Start / 3rd joystick button: virtual keyboard
+Back / 4th joystick button: enter key
+Left shoulder button: shift key
+Right shoulder button: ctrl key (mouse helper disabled) / middle mouse button (mouse helper enabled)
+
+
 Misc
 ----
 
@@ -70,11 +88,23 @@ libADLMIDI library uses version 3 of the GNU Lesser General Public License (LGPL
 HQX scaler uses version 2.1 of the GNU Lesser General Public License (LGPLv2.1).
 xBRZ scaler uses version 3 of the GNU General Public License (GPLv3).
 
+The game optionally uses SpeexDSP library for audio resampling (https://github.com/xiph/speexdsp).
+
 Source code is available on GitHub: https://github.com/M-HT/SR
 
 
 Changes
 -------
+
+v1.4.0 (2024-09-21)
+* add option to use higher quality audio resampling
+* remove option to interpolate audio when resampling
+* add support for higher sampling rates
+* add support for using gamepad or joystick as mouse/keyboard
+* use latest versions of libADLMIDI, WildMIDI libraries
+* change setting volume in libADLMIDI
+* modify NativeWindows midi plugin to reopen midi device after device reset
+* minor bug fixes
 
 v1.3.1 (2023-11-15)
 * fix aspect ratio in fullscreen

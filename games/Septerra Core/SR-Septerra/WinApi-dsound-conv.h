@@ -140,12 +140,13 @@ static void accum_2_u16swap_mono(int32_t *src, uint16_t *dst, int num_samples)
 
 
 #if defined(ARMV8)
+#define accum_2_stereo(dstvalue) \
 for (; num_samples != 0; num_samples--) \
 { \
     int32x4_t val1; \
     int16x4_t val2; \
-    int16_t value, value2;
-    val1 = vreinterpret_s32_u64(vld1q_dup_u64((uint64_t *)src)); \
+    int16_t value, value2; \
+    val1 = vreinterpretq_s32_u64(vld1q_dup_u64((uint64_t *)src)); \
     src += 2; \
     val2 = vqmovn_s32(val1); \
     value = vget_lane_s16(val2, 0); \

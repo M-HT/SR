@@ -1,5 +1,5 @@
 Albion for Linux (x64)
-Version 1.7.4
+Version 1.8.0
 
 Original Albion version 1.38 is required for playing.
 (English version preferred, but other languages should also work)
@@ -107,6 +107,24 @@ Configuration can be changed either by editing the configuration file directly,
 or by configuration editor (Albion-setup.sh).
 
 
+Controls
+--------
+
+The game can use gamepad or joystick to emulate mouse and keyboard, if it's enabled in the configuration file.
+
+Controller mappings can be added using file gamecontrollerdb.txt.
+
+Gamepad / joystick controls:
+Analog stick/pad: mouse movement
+Digital stick/pad: up/down/left/right arrow key
+A/X / 1st joystick button: left mouse button
+B/Y / 2nd joystick button: right mouse button
+Start / 3rd joystick button: virtual keyboard
+Back / 4th joystick button: tab key
+Left shoulder button: alt key
+Right shoulder button: ctrl key
+
+
 Misc
 ----
 
@@ -115,17 +133,24 @@ libADLMIDI library uses version 3 of the GNU Lesser General Public License (LGPL
 HQX scaler uses version 2.1 of the GNU Lesser General Public License (LGPLv2.1).
 xBRZ scaler uses version 3 of the GNU General Public License (GPLv3).
 
-Playback of background sound/music effects (played using music driver) uses modified WildMIDI library.
+The game optionally uses SpeexDSP library for audio resampling (https://github.com/xiph/speexdsp).
 
 Source code is available on GitHub: https://github.com/M-HT/SR
-
-MIDI playback using SDL_mixer can be selected in the configuration file, but
-it sounds worse and can't play more than one MIDI stream simultaneously
-(background sound/music effects (played using music driver) won't work).
 
 
 Changes
 -------
+
+v1.8.0 (2024-09-26)
+* add option to use higher quality audio resampling
+* remove option to interpolate audio when resampling
+* add support for higher sampling rates
+* add support for using gamepad or joystick as mouse/keyboard
+* use latest versions of libADLMIDI, WildMIDI libraries
+* change setting volume in libADLMIDI
+* modify ALSA midi plugin to try all ports with the same client number when looking for midi port based on client name
+* minor bug fixes
+
 
 v1.7.4 (2023-11-18)
 * fix aspect ratio in fullscreen

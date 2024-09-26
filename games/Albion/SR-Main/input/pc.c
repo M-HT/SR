@@ -577,8 +577,8 @@ void Handle_Timer_Input_Event(void)
 
             event.type = SDL_USEREVENT;
             event.user.code = EC_MOUSE_MOVE;
-            event.user.data1 = (void *) deltax;
-            event.user.data2 = (void *) deltay;
+            event.user.data1 = (void *)(intptr_t) deltax;
+            event.user.data2 = (void *)(intptr_t) deltay;
 
             SDL_PushEvent(&event);
         }

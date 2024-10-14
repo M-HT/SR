@@ -889,7 +889,7 @@ int midi_GetErrorString(int error, char *text, unsigned int length)
 
     if (errorText == NULL) return 0;
 
-    if (NULL == lstrcpynA(text, "", length))
+    if (NULL == lstrcpynA(text, errorText, length))
     {
         *text = 0;
         return 0;

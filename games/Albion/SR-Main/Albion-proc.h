@@ -30,6 +30,10 @@ extern "C" {
 #endif
 
 extern int32_t Game_errno(void);
+extern void Game_Set_errno_val(void);
+extern void Game_Set_errno_error(int32_t value);
+extern int32_t Game_fclose(FILE *fp);
+extern int32_t Game_fcloseall(void);
 extern int32_t Game_filelength(int32_t fd);
 extern uint32_t Game_dos_getvect(const int32_t intnum);
 extern int32_t Game_lseek(int32_t fd, int32_t offset, int32_t whence);

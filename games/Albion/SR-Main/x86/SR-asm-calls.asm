@@ -122,7 +122,7 @@
     %define OPM_FillBox _OPM_FillBox
     %define OPM_CopyOPMOPM _OPM_CopyOPMOPM
 
-    %define fcloseall __fcloseall
+    %define Game_fcloseall _Game_fcloseall
     %define Game_WaitAfterVerticalRetrace _Game_WaitAfterVerticalRetrace
     %define Game_WaitForVerticalRetrace _Game_WaitForVerticalRetrace
     %define Game_WaitAfter2ndVerticalRetrace _Game_WaitAfter2ndVerticalRetrace
@@ -137,7 +137,7 @@
     %define Game_dos_findnext _Game_dos_findnext
     %define Game_dos_getvect _Game_dos_getvect
     %define Game_ExitMain_Asm _Game_ExitMain_Asm
-    %define fclose _fclose
+    %define Game_fclose _Game_fclose
     %define Game_filelength _Game_filelength
     %define free _free
     %define ftime _ftime
@@ -285,7 +285,7 @@ extern OPM_Box
 extern OPM_FillBox
 extern OPM_CopyOPMOPM
 ; 0 params
-extern fcloseall
+extern Game_fcloseall
 extern Game_WaitAfterVerticalRetrace
 extern Game_WaitForVerticalRetrace
 extern Game_WaitAfter2ndVerticalRetrace
@@ -300,7 +300,7 @@ extern Game_dos_findclose
 extern Game_dos_findnext
 extern Game_dos_getvect
 extern Game_ExitMain_Asm
-extern fclose
+extern Game_fclose
 extern Game_filelength
 extern free
 extern ftime
@@ -1556,9 +1556,8 @@ SR_OPM_CopyOPMOPM:
 ; 0 params
 align 16
 SR_fcloseall:
-; closes also stdin, stdout, stderr (but shouldn't)
 
-        Game_Call_Asm_Reg0 fcloseall,-1
+        Game_Call_Asm_Reg0 Game_fcloseall,-1
 
 ; end procedure SR_fcloseall
 
@@ -1709,7 +1708,7 @@ SR_fclose:
 
 ; eax = FILE *fp
 
-        Game_Call_Asm_Reg1 fclose,'get_errno_val'
+        Game_Call_Asm_Reg1 Game_fclose,'get_errno_val'
 
 ; end procedure SR_fclose
 

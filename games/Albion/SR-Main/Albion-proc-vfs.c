@@ -33,18 +33,9 @@
 #include "Game_vars.h"
 #include "Albion-proc-vfs.h"
 #include "Albion-proc.h"
+#include "Game_misc.h"
 #include "Game_thread.h"
 #include "virtualfs.h"
-
-static void Game_Set_errno_val(void)
-{
-    errno_val = Game_errno();
-}
-
-static void Game_Set_errno_error(int errornum)
-{
-    errno_val = (errornum >= 0 && errornum < 256)?(errno_rtable[errornum]):(errornum);
-}
 
 
 static int file_pattern_match(const char *filename, const char *pattern)
@@ -245,6 +236,15 @@ FILE *Game_fopen(const char *filename, const char *mode)
     if (vfs_err && ret != NULL)
     {
         vfs_add_file(realdir, (char *) &temp_str, 0);
+    }
+
+    if (ret != NULL)
+    {
+        if (!Game_list_insert(&Game_FopenList, (uintptr_t)ret))
+        {
+            fclose(ret);
+            return NULL;
+        }
     }
 
     return ret;

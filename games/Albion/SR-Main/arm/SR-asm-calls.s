@@ -123,7 +123,7 @@
 .extern OPM_FillBox
 .extern OPM_CopyOPMOPM
 @ 0 params
-.extern fcloseall
+.extern Game_fcloseall
 .extern Game_WaitAfterVerticalRetrace
 .extern Game_WaitForVerticalRetrace
 .extern Game_WaitAfter2ndVerticalRetrace
@@ -138,7 +138,7 @@
 .extern Game_dos_findnext
 .extern Game_dos_getvect
 .extern Game_ExitMain_Asm
-.extern fclose
+.extern Game_fclose
 .extern Game_filelength
 .extern free
 .extern ftime
@@ -1257,9 +1257,8 @@ SR_OPM_CopyOPMOPM:
 
 @ 0 params
 SR_fcloseall:
-@ closes also stdin, stdout, stderr (but shouldn't)
 
-        Game_Call_Asm_Reg0 fcloseall,-1
+        Game_Call_Asm_Reg0 Game_fcloseall,-1
 
 @ end procedure SR_fcloseall
 
@@ -1386,7 +1385,7 @@ SR_fclose:
 
 @ eax = FILE *fp
 
-        Game_Call_Asm_Reg1 fclose,-1000
+        Game_Call_Asm_Reg1 Game_fclose,-1000
 
 @ end procedure SR_fclose
 

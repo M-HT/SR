@@ -70,6 +70,7 @@ EXTERNAL_VARIABLE int Game_PlayIntro;				/* play intro on start ? */
 EXTERNAL_VARIABLE int Game_SwitchWSAD;				/* switch WSAD keys for arrow keys ? */
 EXTERNAL_VARIABLE int Game_SwitchArrowKeys;			/* switch arrow keys for WSAD keys ? */
 
+EXTERNAL_VARIABLE void *Game_FopenList;				/* list of files opened using Game_fopen */
 
 // global display variables
 EXTERNAL_VARIABLE uint32_t Game_VideoAspectX;		/* X aspect ratio */

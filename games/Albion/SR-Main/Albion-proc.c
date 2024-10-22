@@ -35,7 +35,9 @@
 #include "Game_vars.h"
 #include "Albion-proc.h"
 #include "Albion-timer.h"
+#include "Game_misc.h"
 #include "Game_thread.h"
+
 
 int32_t Game_errno(void)
 {
@@ -44,6 +46,33 @@ int32_t Game_errno(void)
     err = errno;
 
     return (err >= 0 && err < 256)?(errno_rtable[err]):(err);
+}
+
+void Game_Set_errno_val(void)
+{
+    errno_val = Game_errno();
+}
+
+void Game_Set_errno_error(int errornum)
+{
+    errno_val = (errornum >= 0 && errornum < 256)?(errno_rtable[errornum]):(errornum);
+}
+
+int32_t Game_fclose(FILE *fp)
+{
+    int ret;
+
+    Game_list_remove(&Game_FopenList, (uintptr_t)fp);
+    ret = fclose(fp);
+    Game_Set_errno_val();
+
+    return ret;
+}
+
+int32_t Game_fcloseall(void)
+{
+    Game_list_clear(&Game_FopenList, (void (*)(uintptr_t)) &fclose);
+    return 0;
 }
 
 int32_t Game_filelength(int32_t fd)

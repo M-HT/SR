@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2023 Roman Pauer
+;;  Copyright (C) 2016-2024 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -171,6 +171,11 @@ endm
 macro Game_Call_Asm_Reg2 proc_name, _errno_val
     call \proc_name eax, edx
     mov eax, tmp0
+    Game_Call_Asm_Return \_errno_val, 0
+endm
+
+macro Game_Call_Asm_Reg2_void proc_name, _errno_val
+    call \proc_name eax, edx
     Game_Call_Asm_Return \_errno_val, 0
 endm
 

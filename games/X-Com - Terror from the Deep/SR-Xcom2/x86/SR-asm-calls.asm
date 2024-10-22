@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2023 Roman Pauer
+;;  Copyright (C) 2016-2024 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -64,7 +64,7 @@
     %define Game_free _Game_free
     %define Game_inp _Game_inp
     %define Game_malloc _Game_malloc
-    %define time _time
+    %define Game_time _Game_time
 
     %define Game_fopen _Game_fopen
     %define fputc _fputc
@@ -127,7 +127,7 @@ extern Game_filelength2
 extern Game_free
 extern Game_inp
 extern Game_malloc
-extern time
+extern Game_time
 ; 2 params
 extern Game_fopen
 extern fputc
@@ -618,7 +618,7 @@ SR_time:
 
 ; eax = time_t *tloc
 
-        Game_Call_Asm_Reg1 time,-1
+        Game_Call_Asm_Reg1 Game_time,-1
 
 ; end procedure SR_time
 

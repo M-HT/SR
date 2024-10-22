@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2021 Roman Pauer
+ *  Copyright (C) 2019-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,21 +22,12 @@
  *
  */
 
-#define _FILE_OFFSET_BITS 64
 #include <stdlib.h>
 #include <unistd.h>
 #include "CLIB.h"
 
 #include <string.h>
-#include <ctype.h>
 #include <stdio.h>
-#include <stdarg.h>
-#include <dirent.h>
-#include <time.h>
-#include <errno.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <ctype.h>
 
 #if (defined(__WIN32__) || (__WINDOWS__)) && !defined(_WIN32)
 #define _WIN32

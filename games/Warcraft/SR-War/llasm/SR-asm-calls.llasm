@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2023 Roman Pauer
+;;  Copyright (C) 2016-2024 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -78,7 +78,7 @@ func malloc size
 func puts *s
 func Game_raise condition
 func strlen *s
-func time *tloc
+func Game_time *tloc
 func Game_unlink *pathname
 ; 2 params
 func Game_fopen *filename, *mode
@@ -93,7 +93,7 @@ func strrchr *s, c
 ; 3 params
 func fgets *s, size, *stream
 func fseek *stream, offset, whence
-func lseek fd, offset, whence
+func Game_lseek fd, offset, whence
 func memcmp *s1, *s2, n
 func memcpy *dest, *src, n
 func memmove *dest, *src, n
@@ -599,7 +599,7 @@ proc SR_time public
 
 ; eax = time_t *tloc
 
-        Game_Call_Asm_Reg1 time,-1
+        Game_Call_Asm_Reg1 Game_time,-1
 
 endp ; end procedure SR_time
 
@@ -742,7 +742,7 @@ proc SR_lseek public
 ; edx = long int offset
 ; ebx = int origin
 
-        Game_Call_Asm_Reg3 lseek,-1000
+        Game_Call_Asm_Reg3 Game_lseek,-1000
 
 endp ; end procedure SR_lseek
 

@@ -26,6 +26,7 @@
 #include <malloc.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 #ifdef USE_SDL2
     #include <SDL2/SDL.h>
     #include <SDL2/SDL_thread.h>
@@ -979,6 +980,8 @@ static void Game_BuildRTable(void)
 
 static int Game_Initialize(void)
 {
+    tzset();
+
     if (Game_Directory[0] == 0)
     {
         vfs_init(1);

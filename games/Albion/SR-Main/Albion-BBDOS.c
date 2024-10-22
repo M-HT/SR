@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2023 Roman Pauer
+ *  Copyright (C) 2018-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -23,6 +23,7 @@
  */
 
 #define _FILE_OFFSET_BITS 64
+#define _TIME_BITS 64
 #include "Albion-BBDOS.h"
 #include "Albion-BBERROR.h"
 #include "Albion-BBBASMEM.h"
@@ -377,6 +378,7 @@ int32_t DOS_Write(int32_t file_handle, const void *buffer, uint32_t length)
 
 int32_t DOS_Seek(int32_t file_handle, int32_t origin, int32_t offset)
 {
+    off_t curpos;
 
     file_handle = (int16_t) file_handle;
 
@@ -394,7 +396,8 @@ int32_t DOS_Seek(int32_t file_handle, int32_t origin, int32_t offset)
         return 0;
     }
 
-    if (lseek(DOS_file_entries[file_handle].fd, offset, DOS_lseek_origins[origin]) == -1)
+    curpos = lseek(DOS_file_entries[file_handle].fd, offset, DOS_lseek_origins[origin]);
+    if (curpos < 0 || curpos > 2147483647)
     {
         DOS_ErrorStruct data;
 
@@ -614,7 +617,7 @@ int32_t DOS_GetFileLength(const char *path)
     lseek(DOS_file_entries[file_handle].fd, origpos, SEEK_SET);
 
     DOS_Close(file_handle);
-    return endpos;
+    return (endpos < 0 || endpos > 2147483647) ? -1 : endpos;
 }
 
 int32_t DOS_exists(const char *path)
@@ -804,6 +807,8 @@ static int DOS_eof(int file_handle)
 
 int32_t DOS_GetSeekPosition(int32_t file_handle)
 {
+    off_t curpos;
+
     file_handle = (int16_t) file_handle;
 
     if (!(DOS_file_entries[file_handle].flags & 1))
@@ -820,7 +825,8 @@ int32_t DOS_GetSeekPosition(int32_t file_handle)
         return 0;
     }
 
-    return lseek(DOS_file_entries[file_handle].fd, 0, SEEK_CUR);
+    curpos = lseek(DOS_file_entries[file_handle].fd, 0, SEEK_CUR);
+    return (curpos < 0 || curpos > 2147483647) ? -1 : curpos;
 }
 
 static void DOS_LocalPrintError(char *buffer, const uint8_t *data)

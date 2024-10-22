@@ -22,6 +22,8 @@
  *
  */
 
+#define _FILE_OFFSET_BITS 64
+#define _TIME_BITS 64
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +31,7 @@
 #include <malloc.h>
 #include <fcntl.h>		/* needed for procedure Game_openFlags */
 #include <ctype.h>
+#include <time.h>
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Xcom-proc.h"
@@ -100,19 +103,19 @@ int32_t Game_getch(void)
     return ret;
 }
 
-off_t Game_filelength2(FILE *f)
+int32_t Game_filelength2(FILE *f)
 {
     off_t origpos, endpos;
     int fd;
 
     fd = fileno(f);
     origpos = lseek(fd, 0, SEEK_CUR);
-    if (origpos == (off_t)-1) return (off_t)-1;
+    if (origpos < 0) return -1;
 
     endpos = lseek(fd, 0, SEEK_END);
     lseek(fd, origpos, SEEK_SET);
 
-    return endpos;
+    return (endpos < 0 || endpos > 2147483647) ? -1 : endpos;
 }
 
 void *Game_malloc(uint32_t size)
@@ -173,9 +176,24 @@ void Game_FreeMemory(void *mem)
     free(mem);
 }
 
+int32_t Game_time(int32_t *tloc)
+{
+    time_t t;
+
+    t = time(NULL);
+
+    if (tloc != NULL) *tloc = t;
+
+    return t;
+}
+
 int32_t Game_dlseek(int32_t fd, int32_t offset, int32_t whence)
 {
-    return lseek(fd, offset, ( (whence == 0)?(SEEK_SET):( (whence == 1)?(SEEK_CUR):( (whence == 2)?(SEEK_END):(whence) ) ) ));
+    off_t curpos;
+
+    curpos = lseek(fd, offset, ( (whence == 0)?(SEEK_SET):( (whence == 1)?(SEEK_CUR):( (whence == 2)?(SEEK_END):(whence) ) ) ));
+
+    return (curpos < 0 || curpos > 2147483647) ? -1 : curpos;
 }
 
 int32_t Game_dread(void *buf, int32_t count, int32_t fd)

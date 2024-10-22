@@ -22,6 +22,8 @@
  *
  */
 
+#define _FILE_OFFSET_BITS 64
+#define _TIME_BITS 64
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -149,6 +151,15 @@ void Game_dos_gettime(void *dtime)
 #endif
 }
 
+int32_t Game_lseek(int32_t fd, int32_t offset, int32_t whence)
+{
+    off_t curpos;
+
+    curpos = lseek(fd, offset, whence);
+
+    return (curpos < 0 || curpos > 2147483647) ? -1 : curpos;
+}
+
 int32_t Game_fmemcmp(void *s1, uint32_t s1_seg, const void *s2, uint32_t s2_seg, uint32_t n)
 {
     return memcmp(s1, s2, n);
@@ -247,6 +258,17 @@ uint32_t Game_strtoul(const char *nptr, PTR32(char) *endptr, int32_t base)
     ret = strtoul(nptr, &endptr2, base);
     if (endptr != NULL) *endptr = endptr2;
     return ret;
+}
+
+int32_t Game_time(int32_t *tloc)
+{
+    time_t t;
+
+    t = time(NULL);
+
+    if (tloc != NULL) *tloc = t;
+
+    return t;
 }
 
 void Game_FlipScreen(void)

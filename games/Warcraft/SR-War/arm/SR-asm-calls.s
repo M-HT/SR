@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016-2019 Roman Pauer
+@@  Copyright (C) 2016-2024 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -76,7 +76,7 @@
 .extern puts
 .extern Game_raise
 .extern strlen
-.extern time
+.extern Game_time
 .extern Game_unlink
 @ 2 params
 .extern Game_fopen
@@ -92,7 +92,7 @@
 @ 3 params
 .extern fgets
 .extern fseek
-.extern lseek
+.extern Game_lseek
 .extern memcmp
 .extern memcpy
 .extern memmove
@@ -688,7 +688,7 @@ SR_time:
 
 @ eax = time_t *tloc
 
-        Game_Call_Asm_Reg1 time,-1
+        Game_Call_Asm_Reg1 Game_time,-1
 
 @ end procedure SR_time
 
@@ -825,7 +825,7 @@ SR_lseek:
 @ edx = long int offset
 @ ebx = int origin
 
-        Game_Call_Asm_Reg3 lseek,-1000
+        Game_Call_Asm_Reg3 Game_lseek,-1000
 
 @ end procedure SR_lseek
 

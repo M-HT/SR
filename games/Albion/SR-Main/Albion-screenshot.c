@@ -23,6 +23,7 @@
  */
 
 #define _FILE_OFFSET_BITS 64
+#define _TIME_BITS 64
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     #define WIN32_LEAN_AND_MEAN
 

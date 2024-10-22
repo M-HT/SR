@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2023 Roman Pauer
+;;  Copyright (C) 2016-2024 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -66,7 +66,7 @@ funcv Game_free *ptr
 func Game_inp port
 func Game_malloc size
 func strlen *s
-func time *tloc
+func Game_time *tloc
 ; 2 params
 func Game_fopen *filename, *mode
 func fputc c, *stream
@@ -391,7 +391,7 @@ proc SR_time public
 
 ; eax = time_t *tloc
 
-        Game_Call_Asm_Reg1 time,-1
+        Game_Call_Asm_Reg1 Game_time,-1
 
 endp ; end procedure SR_time
 

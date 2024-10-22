@@ -32,6 +32,8 @@
 #include <unistd.h>
 #endif
 
+#define _FILE_OFFSET_BITS 64
+#define _TIME_BITS 64
 #include <SDL.h>
 #include <time.h>
 #include <stdlib.h>
@@ -183,6 +185,8 @@ int main(int argc, char *argv[])
             return 0;
         }
     }
+
+    tzset();
 
     if (SDL_Init(SDL_INIT_NOPARACHUTE))
     {

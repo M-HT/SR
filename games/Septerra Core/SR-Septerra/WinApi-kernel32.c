@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,6 +26,7 @@
 #define _SVID_SOURCE 1
 #define _DEFAULT_SOURCE 1
 #define _FILE_OFFSET_BITS 64
+#define _TIME_BITS 64
 #include <inttypes.h>
 #include "WinApi-kernel32.h"
 #include <stdio.h>

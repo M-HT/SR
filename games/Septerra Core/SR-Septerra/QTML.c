@@ -26,6 +26,7 @@
 // https://wiki.multimedia.cx/index.php?title=Cinepak
 
 #define _FILE_OFFSET_BITS 64
+#define _TIME_BITS 64
 #include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>

@@ -23,6 +23,7 @@
  */
 
 #define _FILE_OFFSET_BITS 64
+#define _TIME_BITS 64
 #include "../Game_defs.h"
 #include "../Game_vars.h"
 #include "../Xcom-proc-events.h"

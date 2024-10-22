@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2020 Roman Pauer
+;;  Copyright (C) 2016-2024 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -148,7 +148,7 @@
     %define Game_opendir _Game_opendir
     %define strlen _strlen
     %define Game_tell _Game_tell
-    %define time _time
+    %define Game_time _Game_time
     %define Game_unlink _Game_unlink
     %define Game_WaitTimerTicks _Game_WaitTimerTicks
     %define Game_save_screenshot _Game_save_screenshot
@@ -169,7 +169,7 @@
 
     %define Game_dos_findfirst _Game_dos_findfirst
     %define fgets _fgets
-    %define lseek _lseek
+    %define Game_lseek _Game_lseek
     %define memcpy _memcpy
     %define memmove _memmove
     %define memset _memset
@@ -311,7 +311,7 @@ extern malloc
 extern Game_opendir
 extern strlen
 extern Game_tell
-extern time
+extern Game_time
 extern Game_unlink
 extern Game_WaitTimerTicks
 extern Game_save_screenshot
@@ -332,7 +332,7 @@ extern Game_dos_setvect
 ; 3 params
 extern Game_dos_findfirst
 extern fgets
-extern lseek
+extern Game_lseek
 extern memcpy
 extern memmove
 extern memset
@@ -1687,6 +1687,8 @@ SR__dos_getvect:
     ; restore original esp value from stack
         mov esp, [esp + 1*4]
 
+        xor edx, edx
+
         pop ecx
 
         retn
@@ -1828,7 +1830,7 @@ SR_time:
 
 ; eax = time_t *tloc
 
-        Game_Call_Asm_Reg1 time,-1
+        Game_Call_Asm_Reg1 Game_time,-1
 
 ; end procedure SR_time
 
@@ -2105,7 +2107,7 @@ SR_lseek:
 ; edx = long int offset
 ; ebx = int origin
 
-        Game_Call_Asm_Reg3 lseek,'get_errno_val'
+        Game_Call_Asm_Reg3 Game_lseek,'get_errno_val'
 
 ; end procedure SR_lseek
 

@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2023 Roman Pauer
+;;  Copyright (C) 2016-2024 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -151,7 +151,7 @@ func malloc size
 func Game_opendir *dirname
 func strlen *s
 func Game_tell handle
-func time *tloc
+func Game_time *tloc
 func Game_unlink *pathname
 funcv Game_WaitTimerTicks ticks
 funcv Game_save_screenshot *filename
@@ -161,18 +161,18 @@ func fputs *s, *stream
 func Game_getcwd *buf, size
 func Game_outp port, value
 func Game_rename *oldpath, *newpath
-func Game_setbuf *fp, *buf
+funcv Game_setbuf *fp, *buf
 func strchr *s, c
 func strcmp *s1, *s2
 func strcpy *dest, *src
 func strcspn *s, *reject
 func strspn *s, *accept
 ; 2/3 params
-func Game_dos_setvect intnum, handler_low, handler_high
+funcv Game_dos_setvect intnum, handler_low, handler_high
 ; 3 params
 func Game_dos_findfirst *path, attributes, *buffer
 func fgets *s, size, *stream
-func lseek fd, offset, whence
+func Game_lseek fd, offset, whence
 func memcpy *dest, *src, n
 func memmove *dest, *src, n
 func memset *s, c, n
@@ -1342,7 +1342,7 @@ proc SR_time public
 
 ; eax = time_t *tloc
 
-        Game_Call_Asm_Reg1 time,-1
+        Game_Call_Asm_Reg1 Game_time,-1
 
 endp ; end procedure SR_time
 
@@ -1489,7 +1489,7 @@ proc SR_setbuf public
 ; eax = FILE *fp
 ; edx = char *buf
 
-        Game_Call_Asm_Reg2 Game_setbuf,-1000
+        Game_Call_Asm_Reg2_void Game_setbuf,-1000
 
 endp ; end procedure SR_setbuf
 
@@ -1578,7 +1578,7 @@ proc SR_lseek public
 ; edx = long int offset
 ; ebx = int origin
 
-        Game_Call_Asm_Reg3 lseek,-1000
+        Game_Call_Asm_Reg3 Game_lseek,-1000
 
 endp ; end procedure SR_lseek
 

@@ -22,6 +22,8 @@
  *
  */
 
+#define _FILE_OFFSET_BITS 64
+#define _TIME_BITS 64
 #include <stdio.h>
 #include <time.h>
 #include "Game_defs.h"

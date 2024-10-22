@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2019 Roman Pauer
+;;  Copyright (C) 2016-2024 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -74,7 +74,7 @@
     %define puts _puts
     %define Game_raise _Game_raise
     %define strlen _strlen
-    %define time _time
+    %define Game_time _Game_time
     %define Game_unlink _Game_unlink
 
     %define Game_fopen _Game_fopen
@@ -90,7 +90,7 @@
 
     %define fgets _fgets
     %define fseek _fseek
-    %define lseek _lseek
+    %define Game_lseek _Game_lseek
     %define memcmp _memcmp
     %define memcpy _memcpy
     %define memmove _memmove
@@ -164,7 +164,7 @@ extern malloc
 extern puts
 extern Game_raise
 extern strlen
-extern time
+extern Game_time
 extern Game_unlink
 ; 2 params
 extern Game_fopen
@@ -180,7 +180,7 @@ extern vprintf
 ; 3 params
 extern fgets
 extern fseek
-extern lseek
+extern Game_lseek
 extern memcmp
 extern memcpy
 extern memmove
@@ -860,7 +860,7 @@ SR_time:
 
 ; eax = time_t *tloc
 
-        Game_Call_Asm_Reg1 time,-1
+        Game_Call_Asm_Reg1 Game_time,-1
 
 ; end procedure SR_time
 
@@ -1011,7 +1011,7 @@ SR_lseek:
 ; edx = long int offset
 ; ebx = int origin
 
-        Game_Call_Asm_Reg3 lseek,'get_errno_val'
+        Game_Call_Asm_Reg3 Game_lseek,'get_errno_val'
 
 ; end procedure SR_lseek
 

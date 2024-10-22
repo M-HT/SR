@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,12 +22,15 @@
  *
  */
 
+#define _FILE_OFFSET_BITS 64
+#define _TIME_BITS 64
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
 #include <fcntl.h>		/* needed for procedure Game_openFlags */
 #include <ctype.h>
+#include <time.h>
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Albion-proc.h"
@@ -43,22 +46,31 @@ int32_t Game_errno(void)
     return (err >= 0 && err < 256)?(errno_rtable[err]):(err);
 }
 
-off_t Game_filelength(int32_t fd)
+int32_t Game_filelength(int32_t fd)
 {
     off_t origpos, endpos;
 
     origpos = lseek(fd, 0, SEEK_CUR);
-    if (origpos == (off_t)-1) return (off_t)-1;
+    if (origpos < 0) return -1;
 
     endpos = lseek(fd, 0, SEEK_END);
     lseek(fd, origpos, SEEK_SET);
 
-    return endpos;
+    return (endpos < 0 || endpos > 2147483647) ? -1 : endpos;
 }
 
-uint64_t Game_dos_getvect(const int32_t intnum)
+uint32_t Game_dos_getvect(const int32_t intnum)
 {
     return Game_InterruptTable[intnum & 0xff];
+}
+
+int32_t Game_lseek(int32_t fd, int32_t offset, int32_t whence)
+{
+    off_t curpos;
+
+    curpos = lseek(fd, offset, whence);
+
+    return (curpos < 0 || curpos > 2147483647) ? -1 : curpos;
 }
 
 #define WATCOM_BUFSIZ 0x1000
@@ -77,9 +89,24 @@ void Game_dos_setvect(const int32_t intnum, const uint32_t handler_low, const ui
     Game_InterruptTable[intnum & 0xff] = handler_low;
 }
 
-off_t Game_tell(int32_t handle)
+int32_t Game_tell(int32_t handle)
 {
-    return lseek(handle, 0, SEEK_CUR);
+    off_t curpos;
+
+    curpos = lseek(handle, 0, SEEK_CUR);
+
+    return (curpos < 0 || curpos > 2147483647) ? -1 : curpos;
+}
+
+int32_t Game_time(int32_t *tloc)
+{
+    time_t t;
+
+    t = time(NULL);
+
+    if (tloc != NULL) *tloc = t;
+
+    return t;
 }
 
 void Game_Sync(void)

@@ -49,6 +49,10 @@ typedef struct _DIGPAK_SNDSTRUC_ {
 #pragma pack()
 
 
+static int sound_initialized = 0;
+static SDL_mutex *sound_mutex = NULL;
+static int sound_read_index;
+
 #ifdef USE_SPEEXDSP_RESAMPLER
 static SpeexResamplerState *resampler = NULL;
 #endif
@@ -276,33 +280,27 @@ static void Interpolated_Resample(int _stereo, int _16bit, int _signed, uint32_t
 #undef RESAMPLE
 }
 
-static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
+static int16_t Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
 {
-    Game_sample *sample;
+    Game_sample sample;
     int same_audio_params;
     unsigned int audio_format, audio_channels;
     SDL_AudioCVT cvt;
 
-    if (sndplay->frequency == 0) return;
+    if (sndplay->frequency == 0) return 2;
 
-    sample = &(Game_samples[(pending)?1:0]);
+    sample.active = 1;
+    sample._stereo = Game_SoundStereo;
+    sample._16bit = Game_Sound16bit;
+    sample._signed = Game_SoundSigned;
+    sample.start = NULL;
+    sample.len = sndplay->sndlen;
+    sample.len_cvt = 0;
+    sample.playback_rate = sndplay->frequency;
+    sample.sound = sndplay->sound;
+    sample.IsPlaying = sndplay->IsPlaying;
 
-    if (sample->start != NULL)
-    {
-        free(sample->start);
-        sample->start = NULL;
-    }
-
-    sample->active = 1;
-    sample->_stereo = Game_SoundStereo;
-    sample->_16bit = Game_Sound16bit;
-    sample->_signed = Game_SoundSigned;
-    sample->len = sndplay->sndlen;
-    sample->playback_rate = sndplay->frequency;
-    sample->sound = sndplay->sound;
-    sample->IsPlaying = sndplay->IsPlaying;
-
-    //if (sample->IsPlaying != NULL) *(sample->IsPlaying) = 0;
+    //if (sample.IsPlaying != NULL) *(sample.IsPlaying) = 0;
 
     if (Game_Sound16bit)
     {
@@ -318,7 +316,7 @@ static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
     same_audio_params = 0;
     if (audio_channels == Game_AudioChannels)
     {
-        if (sample->playback_rate == Game_AudioRate)
+        if (sample.playback_rate == Game_AudioRate)
         {
             if (audio_format == Game_AudioFormat)
             {
@@ -333,7 +331,7 @@ static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
 
         resample_type = 0;
 
-        if (Game_AudioRate != sample->playback_rate)
+        if (Game_AudioRate != sample.playback_rate)
         {
             uint32_t newlen_bytes, newlen_samples, form_mult;
 
@@ -345,40 +343,40 @@ static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
 
                 resample_type = 3;
 
-                newlen_bytes = Get_Resampled_Size(sample->_stereo, sample->_16bit, sample->playback_rate, Game_AudioRate, sample->len, &newlen_samples);
+                newlen_bytes = Get_Resampled_Size(sample._stereo, sample._16bit, sample.playback_rate, Game_AudioRate, sample.len, &newlen_samples);
 
-                form_mult = (sample->_16bit) ? 1 : 2;
+                form_mult = (sample._16bit) ? 1 : 2;
 
                 SDL_BuildAudioCVT(&cvt, AUDIO_S16LSB, audio_channels, Game_AudioRate, Game_AudioFormat, Game_AudioChannels, Game_AudioRate);
 
-                sample->start = malloc(newlen_bytes * cvt.len_mult * form_mult);
+                sample.start = malloc(newlen_bytes * cvt.len_mult * form_mult);
 
-                cvt.buf = (Uint8 *) sample->start;
+                cvt.buf = (Uint8 *) sample.start;
                 cvt.len = newlen_bytes * form_mult;
 
-                if (sample->_16bit && sample->_signed)
+                if (sample._16bit && sample._signed)
                 {
                     converted_data = NULL;
                 }
                 else
                 {
-                    converted_data = (int16_t *)malloc(sample->len * (sample->_16bit ? 1 : 2));
+                    converted_data = (int16_t *)malloc(sample.len * (sample._16bit ? 1 : 2));
 
-                    out_len = sample->len;
-                    if (sample->_16bit)
+                    out_len = sample.len;
+                    if (sample._16bit)
                     {
                         out_len >>= 1;
                         for (in_len = 0; in_len < out_len; in_len++)
                         {
-                            converted_data[in_len] = ((uint16_t *)sample->sound)[in_len] - 32768;
+                            converted_data[in_len] = ((uint16_t *)sample.sound)[in_len] - 32768;
                         }
                     }
-                    else if (sample->_signed)
+                    else if (sample._signed)
                     {
                         for (in_len = 0; in_len < out_len; in_len++)
                         {
                             uint8_t value;
-                            value = ((uint8_t *)sample->sound)[in_len];
+                            value = ((uint8_t *)sample.sound)[in_len];
                             converted_data[in_len] = (value << 8) | (value ^ 0x80);
                         }
                     }
@@ -387,26 +385,26 @@ static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
                         for (in_len = 0; in_len < out_len; in_len++)
                         {
                             uint8_t value;
-                            value = ((uint8_t *)sample->sound)[in_len];
+                            value = ((uint8_t *)sample.sound)[in_len];
                             converted_data[in_len] = ((value << 8) | value) - 32768;
                         }
                     }
                 }
 
-                speex_resampler_set_rate(resampler, sample->playback_rate, Game_AudioRate);
+                speex_resampler_set_rate(resampler, sample.playback_rate, Game_AudioRate);
 
-                in_len = sample->len;
-                if (sample->_stereo) in_len >>= 1;
-                if (sample->_16bit) in_len >>= 1;
+                in_len = sample.len;
+                if (sample._stereo) in_len >>= 1;
+                if (sample._16bit) in_len >>= 1;
                 out_len = newlen_samples;
 
-                if (sample->_stereo)
+                if (sample._stereo)
                 {
-                    speex_resampler_process_interleaved_int(resampler, (converted_data != NULL) ? converted_data : (int16_t *)sample->sound, &in_len, (int16_t *)cvt.buf, &out_len);
+                    speex_resampler_process_interleaved_int(resampler, (converted_data != NULL) ? converted_data : (int16_t *)sample.sound, &in_len, (int16_t *)cvt.buf, &out_len);
                 }
                 else
                 {
-                    speex_resampler_process_int(resampler, 0, (converted_data != NULL) ? converted_data : (int16_t *)sample->sound, &in_len, (int16_t *)cvt.buf, &out_len);
+                    speex_resampler_process_int(resampler, 0, (converted_data != NULL) ? converted_data : (int16_t *)sample.sound, &in_len, (int16_t *)cvt.buf, &out_len);
                 }
 
                 if (converted_data != NULL)
@@ -423,19 +421,19 @@ static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
                 // interpolated resampling
                 resample_type = 2;
 
-                newlen_bytes = Get_Resampled_Size(sample->_stereo, sample->_16bit, sample->playback_rate, Game_AudioRate, sample->len, &newlen_samples);
+                newlen_bytes = Get_Resampled_Size(sample._stereo, sample._16bit, sample.playback_rate, Game_AudioRate, sample.len, &newlen_samples);
 
-                audio_format = ((!(sample->_16bit)) && ((Game_AudioFormat == AUDIO_S8) || (Game_AudioFormat == AUDIO_U8))) ? Game_AudioFormat : AUDIO_S16LSB;
+                audio_format = ((!(sample._16bit)) && ((Game_AudioFormat == AUDIO_S8) || (Game_AudioFormat == AUDIO_U8))) ? Game_AudioFormat : AUDIO_S16LSB;
 
-                form_mult = ((!(sample->_16bit)) && (Game_AudioFormat != AUDIO_S8) && (Game_AudioFormat != AUDIO_U8)) ? 2 : 1;
+                form_mult = ((!(sample._16bit)) && (Game_AudioFormat != AUDIO_S8) && (Game_AudioFormat != AUDIO_U8)) ? 2 : 1;
 
                 SDL_BuildAudioCVT(&cvt, audio_format, audio_channels, Game_AudioRate, Game_AudioFormat, Game_AudioChannels, Game_AudioRate);
 
-                sample->start = malloc(newlen_bytes * cvt.len_mult * form_mult);
+                sample.start = malloc(newlen_bytes * cvt.len_mult * form_mult);
 
-                cvt.buf = (Uint8 *) sample->start;
+                cvt.buf = (Uint8 *) sample.start;
                 cvt.len = newlen_bytes * form_mult;
-                Interpolated_Resample(sample->_stereo, sample->_16bit, sample->_signed, sample->playback_rate, Game_AudioRate, (uint8_t *) sample->sound, cvt.buf, sample->len, newlen_samples);
+                Interpolated_Resample(sample._stereo, sample._16bit, sample._signed, sample.playback_rate, Game_AudioRate, (uint8_t *) sample.sound, cvt.buf, sample.len, newlen_samples);
             }
         }
 
@@ -443,28 +441,56 @@ static void Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
         {
             // sdl resampling
 
-            SDL_BuildAudioCVT(&cvt, audio_format, audio_channels, sample->playback_rate, Game_AudioFormat, Game_AudioChannels, Game_AudioRate);
+            SDL_BuildAudioCVT(&cvt, audio_format, audio_channels, sample.playback_rate, Game_AudioFormat, Game_AudioChannels, Game_AudioRate);
 
-            sample->start = malloc(sample->len * cvt.len_mult);
+            sample.start = malloc(sample.len * cvt.len_mult);
 
-            cvt.buf = (Uint8 *) sample->start;
-            cvt.len = sample->len;
-            memcpy(cvt.buf, sample->sound, cvt.len);
+            cvt.buf = (Uint8 *) sample.start;
+            cvt.len = sample.len;
+            memcpy(cvt.buf, sample.sound, cvt.len);
         }
 
         SDL_ConvertAudio(&cvt);
 
-        sample->len_cvt = cvt.len_cvt;
+        sample.len_cvt = cvt.len_cvt;
     }
+
+    if (sound_initialized)
+    {
+        SDL_LockMutex(sound_mutex);
+    }
+
+    if (pending < 0)
+    {
+        pending = (Game_samples[0].active) ? 1 : 0;
+    }
+    else if (pending)
+    {
+        pending = 1;
+    }
+
+    if (Game_samples[pending].start != NULL)
+    {
+        free(Game_samples[pending].start);
+    }
+
+    Game_samples[pending] = sample;
 
     if (pending)
     {
         Game_AudioPending = 1;
     }
-    else
+    else if (!sound_initialized)
     {
         Game_PlayAudio();
     }
+
+    if (sound_initialized)
+    {
+        SDL_UnlockMutex(sound_mutex);
+    }
+
+    return pending;
 }
 
 
@@ -473,15 +499,37 @@ int16_t Game_DigPlay(struct _DIGPAK_SNDSTRUC_ *sndplay)
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: Playing sound:\n\tsample length: %i\n\tfrequency: %i\n", sndplay->sndlen, sndplay->frequency);
 #endif
-    if (NOTPLAYING == Game_ProcessAudio())
+    if (sound_initialized)
     {
-        Game_InsertSample(0, sndplay);
+        SDL_LockMutex(sound_mutex);
 
-        return 0; // ???
+        if (!Game_samples[0].active)
+        {
+            SDL_UnlockMutex(sound_mutex);
+
+            Game_InsertSample(0, sndplay);
+
+            return 0; // ???
+        }
+        else
+        {
+            SDL_UnlockMutex(sound_mutex);
+
+            return 2; // ???
+        }
     }
     else
     {
-        return 2; // ???
+        if (NOTPLAYING == Game_ProcessAudio())
+        {
+            Game_InsertSample(0, sndplay);
+
+            return 0; // ???
+        }
+        else
+        {
+            return 2; // ???
+        }
     }
 }
 
@@ -522,10 +570,23 @@ void Game_StopSound(void)
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: stopping sound\n");
 #endif
-    if (Mix_Playing(GAME_SOUND_CHANNEL))
+    if (sound_initialized)
     {
+        SDL_LockMutex(sound_mutex);
+
         Game_samples[1].active = 0;
-        Mix_HaltChannel(GAME_SOUND_CHANNEL);
+        Game_samples[0].active = 0;
+        Game_AudioPending = 0;
+
+        SDL_UnlockMutex(sound_mutex);
+    }
+    else
+    {
+        if (Mix_Playing(GAME_SOUND_CHANNEL))
+        {
+            Game_samples[1].active = 0;
+            Mix_HaltChannel(GAME_SOUND_CHANNEL);
+        }
     }
 
 #ifdef USE_SPEEXDSP_RESAMPLER
@@ -542,19 +603,39 @@ int16_t Game_PostAudioPending(struct _DIGPAK_SNDSTRUC_ *sndplay)
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: posting audio pending:\n\tsample length: %i\n\tfrequency: %i\n", sndplay->sndlen, sndplay->frequency);
 #endif
-    switch (Game_ProcessAudio())
+    if (sound_initialized)
     {
-        case NOTPLAYING:
-            Game_InsertSample(0, sndplay);
+        SDL_LockMutex(sound_mutex);
 
-            return 0; // Sound was started playing
-        case PLAYINGNOTPENDING:
-            Game_InsertSample(1, sndplay);
+        if (!Game_samples[1].active)
+        {
+            SDL_UnlockMutex(sound_mutex);
 
-            return 1; // Sound was posted as pending to play
-        case PENDINGSOUND:
-        default:
+            return Game_InsertSample(-1, sndplay);
+        }
+        else
+        {
+            SDL_UnlockMutex(sound_mutex);
+
             return 2; // Already a sound effect pending, this one not posted
+        }
+    }
+    else
+    {
+        switch (Game_ProcessAudio())
+        {
+            case NOTPLAYING:
+                Game_InsertSample(0, sndplay);
+
+                return 0; // Sound was started playing
+            case PLAYINGNOTPENDING:
+                Game_InsertSample(1, sndplay);
+
+                return 1; // Sound was posted as pending to play
+            case PENDINGSOUND:
+            default:
+                return 2; // Already a sound effect pending, this one not posted
+        }
     }
 }
 
@@ -672,3 +753,132 @@ uint32_t Game_RealPtr(uint32_t ptr)
 {
     return ptr;
 }
+
+static void sound_player(void *udata, Uint8 *stream, int len)
+{
+    Uint8 *abuf;
+    void *start;
+    int alen, len2;
+
+    Game_AudioSemaphore = 1;
+
+    SDL_LockMutex(sound_mutex);
+
+    if (Game_samples[0].active)
+    {
+        // play from active sample
+
+        if (Game_samples[0].start == NULL)
+        {
+            abuf = (Uint8 *) Game_samples[0].sound;
+            alen = Game_samples[0].len;
+        }
+        else
+        {
+            abuf = (Uint8 *) Game_samples[0].start;
+            alen = Game_samples[0].len_cvt;
+        }
+
+        len2 = alen - sound_read_index;
+        if (len2 > len) len2 = len;
+
+#if SDL_VERSION_ATLEAST(2,0,0)
+        SDL_MixAudioFormat(stream, &(abuf[sound_read_index]), Game_AudioFormat, len2, (Game_AudioSampleVolume * Game_AudioMasterVolume) >> 7);
+#else
+        SDL_MixAudio(stream, &(abuf[sound_read_index]), len2, (Game_AudioSampleVolume * Game_AudioMasterVolume) >> 7);
+#endif
+        stream += len2;
+        len -= len2;
+
+        sound_read_index += len2;
+        if (sound_read_index >= alen)
+        {
+            // active sample finished playing
+
+            Game_samples[0].active = 0;
+            sound_read_index = 0;
+
+            if (Game_samples[1].active)
+            {
+                // switch pending sample to active sample
+
+                start = Game_samples[0].start;
+                Game_samples[0] = Game_samples[1];
+                Game_samples[1].active = 0;
+                Game_samples[1].start = start;
+
+                Game_AudioPending = 0;
+
+                if (len)
+                {
+                    // play from previously pending sample
+
+                    if (Game_samples[0].start == NULL)
+                    {
+                        abuf = (Uint8 *) Game_samples[0].sound;
+                        alen = Game_samples[0].len;
+                    }
+                    else
+                    {
+                        abuf = (Uint8 *) Game_samples[0].start;
+                        alen = Game_samples[0].len_cvt;
+                    }
+
+                    len2 = (alen <= len) ? alen : len;
+
+#if SDL_VERSION_ATLEAST(2,0,0)
+                    SDL_MixAudioFormat(stream, abuf, Game_AudioFormat, len2, (Game_AudioSampleVolume * Game_AudioMasterVolume) >> 7);
+#else
+                    SDL_MixAudio(stream, abuf, len2, (Game_AudioSampleVolume * Game_AudioMasterVolume) >> 7);
+#endif
+                    stream += len2;
+                    len -= len2;
+
+                    sound_read_index = len2;
+                    if (sound_read_index >= alen)
+                    {
+                        // sample finished playing
+
+                        Game_samples[0].active = 0;
+                        sound_read_index = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    SDL_UnlockMutex(sound_mutex);
+
+    Game_AudioSemaphore = 0;
+}
+
+void Game_InitializeSound(void)
+{
+    sound_mutex = SDL_CreateMutex();
+    if (sound_mutex == NULL) return;
+
+    sound_read_index = 0;
+    sound_initialized = 1;
+    Mix_SetPostMix(&sound_player, NULL);
+}
+
+void Game_DeinitializeSound(void)
+{
+    if (!sound_initialized) return;
+
+    SDL_LockMutex(sound_mutex);
+
+    Game_samples[1].active = 0;
+    Game_samples[0].active = 0;
+    Game_AudioPending = 0;
+
+    sound_initialized = 0;
+
+    SDL_UnlockMutex(sound_mutex);
+
+    Mix_SetPostMix(NULL, NULL);
+
+    SDL_DestroyMutex(sound_mutex);
+    sound_mutex = NULL;
+}
+

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -28,7 +28,6 @@
 #include <stdint.h>
 
 int MidiPlugin_Startup(void);
-void MidiPlugin_Restore(void);
 void MidiPlugin_Shutdown(void);
 
 void MidiPlugin_SetMusicVolume(void);

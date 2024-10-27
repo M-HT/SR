@@ -27,7 +27,6 @@
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Xcom-sound.h"
-#include "Xcom-music-midiplugin.h"
 #ifdef USE_SPEEXDSP_RESAMPLER
 #include <speex/speex_resampler.h>
 #endif
@@ -50,9 +49,9 @@ typedef struct _DIGPAK_SNDSTRUC_ {
 #pragma pack()
 
 
-static int AnimVideoPlaying = 0;
-static SDL_mutex *AnimVideoMutex = NULL;
-static int AnimVideoReadIndex;
+static int sound_initialized = 0;
+static SDL_mutex *sound_mutex = NULL;
+static int sound_read_index;
 
 #ifdef USE_SPEEXDSP_RESAMPLER
 static SpeexResamplerState *resampler = NULL;
@@ -456,9 +455,9 @@ static int16_t Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
         sample.len_cvt = cvt.len_cvt;
     }
 
-    if (AnimVideoPlaying)
+    if (sound_initialized)
     {
-        SDL_LockMutex(AnimVideoMutex);
+        SDL_LockMutex(sound_mutex);
     }
 
     if (pending < 0)
@@ -481,14 +480,14 @@ static int16_t Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
     {
         Game_AudioPending = 1;
     }
-    else if (!AnimVideoPlaying)
+    else if (!sound_initialized)
     {
         Game_PlayAudio();
     }
 
-    if (AnimVideoPlaying)
+    if (sound_initialized)
     {
-        SDL_UnlockMutex(AnimVideoMutex);
+        SDL_UnlockMutex(sound_mutex);
     }
 
     return pending;
@@ -500,13 +499,13 @@ int16_t Game_DigPlay(struct _DIGPAK_SNDSTRUC_ *sndplay)
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: Playing sound:\n\tsample length: %i\n\tfrequency: %i\n", sndplay->sndlen, sndplay->frequency);
 #endif
-    if (AnimVideoPlaying)
+    if (sound_initialized)
     {
-        SDL_LockMutex(AnimVideoMutex);
+        SDL_LockMutex(sound_mutex);
 
         if (!Game_samples[0].active)
         {
-            SDL_UnlockMutex(AnimVideoMutex);
+            SDL_UnlockMutex(sound_mutex);
 
             Game_InsertSample(0, sndplay);
 
@@ -514,7 +513,7 @@ int16_t Game_DigPlay(struct _DIGPAK_SNDSTRUC_ *sndplay)
         }
         else
         {
-            SDL_UnlockMutex(AnimVideoMutex);
+            SDL_UnlockMutex(sound_mutex);
 
             return 2; // ???
         }
@@ -571,15 +570,15 @@ void Game_StopSound(void)
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: stopping sound\n");
 #endif
-    if (AnimVideoPlaying)
+    if (sound_initialized)
     {
-        SDL_LockMutex(AnimVideoMutex);
+        SDL_LockMutex(sound_mutex);
 
         Game_samples[1].active = 0;
         Game_samples[0].active = 0;
         Game_AudioPending = 0;
 
-        SDL_UnlockMutex(AnimVideoMutex);
+        SDL_UnlockMutex(sound_mutex);
     }
     else
     {
@@ -604,19 +603,19 @@ int16_t Game_PostAudioPending(struct _DIGPAK_SNDSTRUC_ *sndplay)
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: posting audio pending:\n\tsample length: %i\n\tfrequency: %i\n", sndplay->sndlen, sndplay->frequency);
 #endif
-    if (AnimVideoPlaying)
+    if (sound_initialized)
     {
-        SDL_LockMutex(AnimVideoMutex);
+        SDL_LockMutex(sound_mutex);
 
         if (!Game_samples[1].active)
         {
-            SDL_UnlockMutex(AnimVideoMutex);
+            SDL_UnlockMutex(sound_mutex);
 
             return Game_InsertSample(-1, sndplay);
         }
         else
         {
-            SDL_UnlockMutex(AnimVideoMutex);
+            SDL_UnlockMutex(sound_mutex);
 
             return 2; // Already a sound effect pending, this one not posted
         }
@@ -763,17 +762,15 @@ uint32_t Game_RealPtr(uint32_t ptr)
     return ptr;
 }
 
-static void audio_player(void *udata, Uint8 *stream, int len)
+static void sound_player(void *udata, Uint8 *stream, int len)
 {
     Uint8 *abuf;
     void *start;
     int alen, len2;
-    Uint8 silence[4];
-    int index;
 
     Game_AudioSemaphore = 1;
 
-    SDL_LockMutex(AnimVideoMutex);
+    SDL_LockMutex(sound_mutex);
 
     if (Game_samples[0].active)
     {
@@ -790,20 +787,24 @@ static void audio_player(void *udata, Uint8 *stream, int len)
             alen = Game_samples[0].len_cvt;
         }
 
-        len2 = alen - AnimVideoReadIndex;
+        len2 = alen - sound_read_index;
         if (len2 > len) len2 = len;
 
-        memcpy(stream, &(abuf[AnimVideoReadIndex]), len2);
+#if SDL_VERSION_ATLEAST(2,0,0)
+        SDL_MixAudioFormat(stream, &(abuf[sound_read_index]), Game_AudioFormat, len2, (Game_AudioSampleVolume * Game_AudioMasterVolume) >> 7);
+#else
+        SDL_MixAudio(stream, &(abuf[sound_read_index]), len2, (Game_AudioSampleVolume * Game_AudioMasterVolume) >> 7);
+#endif
         stream += len2;
         len -= len2;
 
-        AnimVideoReadIndex += len2;
-        if (AnimVideoReadIndex >= alen)
+        sound_read_index += len2;
+        if (sound_read_index >= alen)
         {
             // active sample finished playing
 
             Game_samples[0].active = 0;
-            AnimVideoReadIndex = 0;
+            sound_read_index = 0;
 
             if (Game_samples[1].active)
             {
@@ -833,95 +834,85 @@ static void audio_player(void *udata, Uint8 *stream, int len)
 
                     len2 = (alen <= len) ? alen : len;
 
-                    memcpy(stream, abuf, len2);
+#if SDL_VERSION_ATLEAST(2,0,0)
+                    SDL_MixAudioFormat(stream, abuf, Game_AudioFormat, len2, (Game_AudioSampleVolume * Game_AudioMasterVolume) >> 7);
+#else
+                    SDL_MixAudio(stream, abuf, len2, (Game_AudioSampleVolume * Game_AudioMasterVolume) >> 7);
+#endif
                     stream += len2;
                     len -= len2;
 
-                    AnimVideoReadIndex = len2;
-                    if (AnimVideoReadIndex >= alen)
+                    sound_read_index = len2;
+                    if (sound_read_index >= alen)
                     {
                         // sample finished playing
 
                         Game_samples[0].active = 0;
-                        AnimVideoReadIndex = 0;
+                        sound_read_index = 0;
                     }
                 }
             }
         }
     }
 
-    SDL_UnlockMutex(AnimVideoMutex);
-
-    if (len)
-    {
-        // fill buffer with silence
-
-        if (Game_SoundSigned)
-        {
-            silence[0] = silence[1] = silence[2] = silence[3] = 0;
-        }
-        else if (Game_Sound16bit)
-        {
-            silence[0] = silence[2] = 0;
-            silence[1] = silence[3] = 0x80;
-        }
-        else
-        {
-            silence[0] = silence[1] = silence[2] = silence[3] = 0x80;
-        }
-
-        for (; len >= 4; len -= 4, stream += 4)
-        {
-            stream[0] = silence[0];
-            stream[1] = silence[1];
-            stream[2] = silence[2];
-            stream[3] = silence[3];
-        }
-
-        for (index = 0; index < len; index++)
-        {
-            stream[index] = silence[index];
-        }
-    }
+    SDL_UnlockMutex(sound_mutex);
 
     Game_AudioSemaphore = 0;
 }
 
-void Game_StartAnimVideo(void)
+void Game_InitializeSound(void)
 {
-    AnimVideoMutex = SDL_CreateMutex();
-    if (AnimVideoMutex == NULL) return;
+    sound_mutex = SDL_CreateMutex();
+    if (sound_mutex == NULL) return;
 
-    AnimVideoReadIndex = 0;
-    AnimVideoPlaying = 1;
-    Mix_HookMusic(&audio_player, NULL);
+    sound_read_index = 0;
+    sound_initialized = 1;
+    Mix_SetPostMix(&sound_player, NULL);
 }
 
-void Game_StopAnimVideo(void)
+void Game_DeinitializeSound(void)
 {
-    if (!AnimVideoPlaying) return;
+    if (!sound_initialized) return;
 
-    SDL_LockMutex(AnimVideoMutex);
+    SDL_LockMutex(sound_mutex);
 
     Game_samples[1].active = 0;
     Game_samples[0].active = 0;
     Game_AudioPending = 0;
 
-    AnimVideoPlaying = 0;
+    sound_initialized = 0;
 
-    SDL_UnlockMutex(AnimVideoMutex);
+    SDL_UnlockMutex(sound_mutex);
 
-    Mix_HookMusic(NULL, NULL);
-    if (Game_Music && Game_MidiSubsystem)
-    {
-        // restore audio
-        if (Game_MidiSubsystem <= 20)
-        {
-            MidiPlugin_Restore();
-        }
-    }
+    Mix_SetPostMix(NULL, NULL);
 
-    SDL_DestroyMutex(AnimVideoMutex);
-    AnimVideoMutex = NULL;
+    SDL_DestroyMutex(sound_mutex);
+    sound_mutex = NULL;
+}
+
+void Game_StartAnimVideo(void)
+{
+    if (!sound_initialized) return;
+
+    SDL_LockMutex(sound_mutex);
+
+    Game_samples[1].active = 0;
+    Game_samples[0].active = 0;
+    Game_AudioPending = 0;
+
+    SDL_UnlockMutex(sound_mutex);
+}
+
+void Game_StopAnimVideo(void)
+{
+    if (!sound_initialized) return;
+
+    SDL_LockMutex(sound_mutex);
+
+    Game_samples[1].active = 0;
+    Game_samples[0].active = 0;
+    Game_AudioPending = 0;
+
+    SDL_UnlockMutex(sound_mutex);
 }
 

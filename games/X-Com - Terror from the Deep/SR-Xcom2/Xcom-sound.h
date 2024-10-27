@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -50,6 +50,8 @@ extern int16_t Game_VerifyDMA(char *data, int16_t length);
 extern void Game_SetDPMIMode(int16_t mode);
 extern int32_t Game_FillSoundCfg(void *buf, int32_t count);
 extern uint32_t Game_RealPtr(uint32_t ptr);
+extern void Game_InitializeSound(void);
+extern void Game_DeinitializeSound(void);
 extern void Game_StartAnimVideo(void);
 extern void Game_StopAnimVideo(void);
 

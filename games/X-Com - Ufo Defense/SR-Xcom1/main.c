@@ -936,6 +936,7 @@ static void Game_Cleanup(void)
         if (Game_Sound)
         {
             Mix_HaltChannel(-1);
+            Game_DeinitializeSound();
         }
         Mix_CloseAudio();
     }
@@ -1503,6 +1504,7 @@ static void Game_Initialize2(void)
 //        Sound samples relative volume now configurable
 //        Mix_Volume(-1, Game_AudioMasterVolume);
         Mix_Volume(-1, (Game_AudioMasterVolume * Game_AudioSampleVolume) >> 7);
+        Game_InitializeSound();
     }
 
     if (Game_Music)

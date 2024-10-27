@@ -45,7 +45,7 @@
 #define SEGMENT_VALUE 0x1000
 
 #define X86_REG_8_HILO(regnum, hilo) x86.regs8[(hilo) + 4*(regnum)]
-#define X86_REG_8(regnum) X86_REG_8_HILO((regnum) & 7, (regnum) >> 3)
+#define X86_REG_8(regnum) X86_REG_8_HILO((regnum) & 3, (regnum) >> 2)
 #define X86_REG_16(regnum) x86.regs16[2*(regnum)]
 
 #define PEEK_PREV_INSTRUCTION_BYTE (memory[x86.ip-1])
@@ -230,7 +230,7 @@ static unsigned int x86_get_flag_c(void)
         case op_negw:
             return (x86.fl.wres != 0)?1:0;
         case op_imulw:
-            return (((x86.fl.dwres & 0xffff8000) == 0xffff8000) || ((x86.fl.dwres & 0xffff8000) == 0x00000000))?1:0;
+            return (((x86.fl.dwres & 0xffff8000) == 0xffff8000) || ((x86.fl.dwres & 0xffff8000) == 0))?0:1;
         case op_sarw:
             return ((((int16_t)x86.fl.wop1) >> (x86.fl.bop2 - 1)) & 1)?1:0;
         case op_shrw:
@@ -274,7 +274,7 @@ static unsigned int x86_get_flag_o(void)
         case op_decw:
             return (x86.fl.wres == 0x7fff)?1:0;
         case op_imulw:
-            return (((x86.fl.dwres & 0xffff8000) == 0xffff8000) || ((x86.fl.dwres & 0xffff8000) == 0x00000000))?1:0;
+            return (((x86.fl.dwres & 0xffff8000) == 0xffff8000) || ((x86.fl.dwres & 0xffff8000) == 0))?0:1;
         case op_shrw:
             return ((x86.fl.bop2 == 1) && (x86.fl.wop1 & 0x8000))?1:0;
         case op_shlw:

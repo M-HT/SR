@@ -1378,7 +1378,19 @@ static void Game_Initialize2(void)
                                 ) == 0
                            )
                         {
-                            audio_ok = 1;
+                            if ( Mix_QuerySpec(&frequency, &format, &channels) )
+                            {
+#if defined(__DEBUG__)
+                                fprintf(stderr, "Audio rate: %i\n", frequency);
+                                fprintf(stderr, "Audio format: 0x%x\n", format);
+                                fprintf(stderr, "Audio channels: %i\n", channels);
+#endif
+                                audio_ok = 1;
+                            }
+                            else
+                            {
+                                Mix_CloseAudio();
+                            }
                         }
                     }
                 }

@@ -165,17 +165,20 @@ EXTERNAL_VARIABLE int Game_MidiSubsystem;			/* MIDI subsystem
                                                        3: ADLMIDI
                                                        10: adlib - dosbox opl emulator
                                                        11: MT32 - munt emulator
+                                                       12: AWE32 - pcem emu8k emulator
                                                        21: native Windows
                                                        22: ALSA
                                                        31: MT32 - native Windows
                                                        32: MT32 - ALSA */
 EXTERNAL_VARIABLE char *Game_SoundFontPath;			/* Path to SoundFont file */
 EXTERNAL_VARIABLE char *Game_MT32RomsPath;			/* Path to MT32 roms */
+EXTERNAL_VARIABLE char *Game_AWE32RomPath;			/* Path to AWE32 rom */
 EXTERNAL_VARIABLE char *Game_MidiDevice;			/* MIDI device name */
 EXTERNAL_VARIABLE int Game_OPL3BankNumber;			/* OPL3 bank number (0-77) */
 EXTERNAL_VARIABLE int Game_OPL3Emulator;			/* OPL3 emulator
                                                        0: fast - DOSBox
                                                        1: precise - Nuked OPL3 */
+EXTERNAL_VARIABLE int Game_SongLength;				/* Length of last loaded song */
 
 
 EXTERNAL_VARIABLE PTR32(FILE) Game_stdin;			/* stdin */

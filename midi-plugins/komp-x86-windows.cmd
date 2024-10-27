@@ -57,6 +57,18 @@ g++ -c -m32 -O3 -Wall -fno-exceptions sha1.cpp
 cd ../../../..
 gcc -s -shared -o mt32-munt.dll -m32 *.o src/*.o src/munt-2.7.0/mt32emu/*.o src/munt-2.7.0/mt32emu/sha1/*.o ../midi.def -lstdc++ -lm %SPEEXDSP_LINK% -L../lib/x86
 
+del src\*.o
+del src\munt-2.7.0\mt32emu\*.o
+del src\munt-2.7.0\mt32emu\sha1\*.o
+
+cd src
+gcc -c -m32 -O3 -Wall -Wno-maybe-uninitialized -DDRIVER=EMU8000 %SPEEXDSP_COMPILE% emu_x86.c -I./include -I../../include
+gcc -c -m32 -O2 -Wall -fno-exceptions emu_awe32.c
+cd pcem_emu8k
+gcc -c -m32 -march=x86-64 -O3 -Wall sound_emu8k.c
+cd ../..
+gcc -s -shared -o awe32-emu8k.dll -m32 *.o src/*.o src/pcem_emu8k/*.o ../midi.def -lm %SPEEXDSP_LINK% -L../lib/x86
+
 del *.o
 del src\*.o
 del src\munt-2.7.0\mt32emu\*.o

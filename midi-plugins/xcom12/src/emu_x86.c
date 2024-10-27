@@ -34,11 +34,22 @@
 
 #define ADLIB 1
 #define ROLAND 2
+#define EMU8000 3
 
 #if (DRIVER==ADLIB)
 #include "emu_opl2.h"
+#define BASE_SAMPLE_RATE 49716
+#define RESAMPLER_BUFFER_LEN 728
 #elif (DRIVER==ROLAND)
 #include "emu_mt32.h"
+#define BASE_SAMPLE_RATE 32000
+#define SYNTH_BUFFER_LEN 400
+#define RESAMPLER_BUFFER_LEN 416
+#elif (DRIVER==EMU8000)
+#include "emu_awe32.h"
+#define BASE_SAMPLE_RATE 44100
+#define SYNTH_BUFFER_LEN 630
+#define RESAMPLER_BUFFER_LEN 640
 #endif
 
 
@@ -64,11 +75,14 @@ enum {
     op_none,
 
     op_addw,
+    op_adcw, // only when carry flag is set, otherwise op_addw is used
     op_subw,
+    op_sbbw, // only when carry flag is set, otherwise op_subw is used
     op_xorw,
     op_incw,
     op_decw,
     op_negw,
+    op_mulw,
     op_imulw,
     op_sarw,
     op_shrw,
@@ -141,20 +155,16 @@ static uint8_t *memory;
 static SpeexResamplerState *resampler = NULL;
 static uint_fast64_t resample_step;
 static int resample_num_samples;
-#if (DRIVER==ADLIB)
-static int16_t resample_samples[2*728];
-#elif (DRIVER==ROLAND)
-static int16_t resample_samples[2*416];
-#endif
+static int16_t resample_samples[2*RESAMPLER_BUFFER_LEN];
 #endif
 
 #if (DRIVER==ADLIB)
 static uint_fast32_t sample_rate, num_samples_add, num_samples_left;
-#elif (DRIVER==ROLAND)
+#elif (DRIVER==ROLAND) || (DRIVER==EMU8000)
 static uint_fast32_t sample_rate, num_samples_left;
 static uint_fast64_t position_add, current_position, samples_mul;
 #ifndef USE_SPEEXDSP_RESAMPLER
-static int16_t resample_samples[2*(400+1)];
+static int16_t resample_samples[2*(SYNTH_BUFFER_LEN+1)];
 #endif
 #endif
 
@@ -225,10 +235,16 @@ static unsigned int x86_get_flag_c(void)
             return (x86.eflags & 1);
         case op_addw:
             return (x86.fl.wres < x86.fl.wop1)?1:0;
+        case op_adcw:
+            return (x86.fl.wres <= x86.fl.wop1)?1:0;
         case op_subw:
             return (x86.fl.wres > x86.fl.wop1)?1:0;
+        case op_sbbw:
+            return (x86.fl.wres >= x86.fl.wop1)?1:0;
         case op_negw:
             return (x86.fl.wres != 0)?1:0;
+        case op_mulw:
+            return ((x86.fl.dwres & 0xffff0000) == 0)?0:1;
         case op_imulw:
             return (((x86.fl.dwres & 0xffff8000) == 0xffff8000) || ((x86.fl.dwres & 0xffff8000) == 0))?0:1;
         case op_sarw:
@@ -265,14 +281,18 @@ static unsigned int x86_get_flag_o(void)
         case 0:
             return (x86.eflags & 0x800)?1:0;
         case op_addw:
+        case op_adcw:
             return (((x86.fl.wres ^ x86.fl.wop1) & (x86.fl.wres ^ x86.fl.wop2)) & 0x8000)?1:0;
         case op_subw:
+        case op_sbbw:
             return (((x86.fl.wres ^ x86.fl.wop1) & (x86.fl.wop1 ^ x86.fl.wop2)) & 0x8000)?1:0;
         case op_incw:
         case op_negw:
             return (x86.fl.wres == 0x8000)?1:0;
         case op_decw:
             return (x86.fl.wres == 0x7fff)?1:0;
+        case op_mulw:
+            return ((x86.fl.dwres & 0xffff0000) == 0)?0:1;
         case op_imulw:
             return (((x86.fl.dwres & 0xffff8000) == 0xffff8000) || ((x86.fl.dwres & 0xffff8000) == 0))?0:1;
         case op_shrw:
@@ -311,7 +331,9 @@ static unsigned int x86_get_flag_s(void)
         case 0:
             return (x86.eflags & 0x80)?1:0;
         case op_addw:
+        case op_adcw:
         case op_subw:
+        case op_sbbw:
         case op_xorw:
         case op_incw:
         case op_decw:
@@ -332,6 +354,7 @@ static unsigned int x86_get_flag_s(void)
         case op_subd:
         case op_xord:
             return (x86.fl.dwres & 0x80000000)?1:0;
+        case op_mulw:
         case op_imulw:
         case op_divw:
         default:
@@ -346,7 +369,9 @@ static unsigned int x86_get_flag_z(void)
         case 0:
             return (x86.eflags & 0x40)?1:0;
         case op_addw:
+        case op_adcw:
         case op_subw:
+        case op_sbbw:
         case op_xorw:
         case op_incw:
         case op_decw:
@@ -367,6 +392,7 @@ static unsigned int x86_get_flag_z(void)
         case op_subd:
         case op_xord:
             return (x86.fl.dwres == 0)?1:0;
+        case op_mulw:
         case op_imulw:
         case op_divw:
         default:
@@ -381,7 +407,9 @@ static unsigned int x86_get_flag_p(void)
         case 0:
             return (x86.eflags & 0x04)?1:0;
         case op_addw:
+        case op_adcw:
         case op_subw:
+        case op_sbbw:
         case op_xorw:
         case op_incw:
         case op_decw:
@@ -408,6 +436,7 @@ static unsigned int x86_get_flag_p(void)
                 parity = parity | (parity >> 1);
                 return (parity & 1);
             }
+        case op_mulw:
         case op_imulw:
         case op_divw:
         default:
@@ -422,7 +451,9 @@ static unsigned int x86_get_flag_a(void)
         case 0:
             return (x86.eflags & 0x10)?1:0;
         case op_addw:
+        case op_adcw:
         case op_subw:
+        case op_sbbw:
             return ((x86.fl.wop1 ^ x86.fl.wop2) ^ x86.fl.wres) & 0x10;
 
         case op_incw:
@@ -449,6 +480,7 @@ static unsigned int x86_get_flag_a(void)
             fprintf(stderr, "todo: x86_get_flag_a\n");
             return 0;
         case op_xorw:
+        case op_mulw:
         case op_imulw:
         case op_divw:
         case op_xorb:
@@ -762,6 +794,32 @@ static void x86_port_in8(uint16_t port)
     };
 }
 
+static void x86_port_in16(uint16_t port)
+{
+    switch (port)
+    {
+#if (DRIVER==EMU8000)
+        case 0x620:
+        case 0x621:
+        case 0x622:
+        case 0x623:
+        case 0xa20:
+        case 0xa21:
+        case 0xa22:
+        case 0xa23:
+        case 0xe20:
+        case 0xe21:
+        case 0xe22:
+        case 0xe23:
+            x86.ax = emu_awe32_read16(port);
+            break;
+#endif
+        default:
+            fprintf(stderr, "Unhandled port in: 0x%x ip: 0x%x\n", port, x86.ip);
+            exit(1);
+    };
+}
+
 static void x86_port_out8(uint16_t port)
 {
     switch (port)
@@ -779,6 +837,33 @@ static void x86_port_out8(uint16_t port)
             break;
         case 0x331:
             emu_mt32_write_331(x86.al);
+            break;
+#endif
+        default:
+            fprintf(stderr, "Unhandled port out: 0x%x ip: 0x%x\n", port, x86.ip);
+            exit(1);
+    };
+}
+
+static void x86_port_out16(uint16_t port)
+{
+    switch (port)
+    {
+#if (DRIVER==EMU8000)
+
+        case 0x620:
+        case 0x621:
+        case 0x622:
+        case 0x623:
+        case 0xa20:
+        case 0xa21:
+        case 0xa22:
+        case 0xa23:
+        case 0xe20:
+        case 0xe21:
+        case 0xe22:
+        case 0xe23:
+            emu_awe32_write16(port, x86.ax);
             break;
 #endif
         default:
@@ -842,6 +927,13 @@ static void emulator(void)
                 x86.fl.wop2 = X86_REG_16(x86.modrm_reg);
                 *tempptr16 = x86.fl.wres = x86.fl.wop1 + x86.fl.wop2;
                 break;
+            case 0x02: // ADD reg8,r/m8                 ; 02 /r
+                tempval8 = *x86_decode_modrm8();
+                x86.fl.oper = op_addb;
+                x86.fl.bop1 = X86_REG_8(x86.modrm_reg);
+                x86.fl.bop2 = tempval8;
+                X86_REG_8(x86.modrm_reg) = x86.fl.bres = x86.fl.bop1 + x86.fl.bop2;
+                break;
             case 0x03: // ADD reg16,r/m16               ; o16 03 /r
                 tempval16 = *x86_decode_modrm16();
                 x86.fl.oper = op_addw;
@@ -860,6 +952,15 @@ static void emulator(void)
                 x86.fl.wop1 = x86.ax;
                 READ_INSTRUCTION_UINT16_TO(x86.fl.wop2);
                 x86.ax = x86.fl.wres = x86.fl.wop1 + x86.fl.wop2;
+                break;
+
+            case 0x11: // ADC r/m16,reg16               ; o16 11 /r
+                tempptr16 = x86_decode_modrm16();
+                tempval32 = x86_get_flag_c();
+                x86.fl.oper = tempval32 ? op_adcw : op_addw;
+                x86.fl.wop1 = *tempptr16;
+                x86.fl.wop2 = X86_REG_16(x86.modrm_reg);
+                *tempptr16 = x86.fl.wres = x86.fl.wop1 + x86.fl.wop2 + tempval32;
                 break;
 
             case 0x06: // PUSH ES                       ; 06
@@ -977,6 +1078,22 @@ static void emulator(void)
                 // ignore
                 break;
 
+            case 0x19: // SBB r/m16,reg16               ; o16 19 /r
+                tempptr16 = x86_decode_modrm16();
+                tempval32 = x86_get_flag_c();
+                x86.fl.oper = tempval32 ? op_sbbw : op_subw;
+                x86.fl.wop1 = *tempptr16;
+                x86.fl.wop2 = X86_REG_16(x86.modrm_reg);
+                *tempptr16 = x86.fl.wres = x86.fl.wop1 - (x86.fl.wop2 + tempval32);
+                break;
+            case 0x1b: // SBB reg16,r/m16               ; o16 1B /r
+                tempval16 = *x86_decode_modrm16();
+                tempval32 = x86_get_flag_c();
+                x86.fl.oper = tempval32 ? op_sbbw : op_subw;
+                x86.fl.wop1 = X86_REG_16(x86.modrm_reg);
+                x86.fl.wop2 = tempval16;
+                X86_REG_16(x86.modrm_reg) = x86.fl.wres = x86.fl.wop1 - (x86.fl.wop2 + tempval32);
+                break;
             case 0x29: // SUB r/m16,reg16               ; o16 29 /r
                 tempptr16 = x86_decode_modrm16();
                 x86.fl.oper = op_subw;
@@ -984,12 +1101,25 @@ static void emulator(void)
                 x86.fl.wop2 = X86_REG_16(x86.modrm_reg);
                 *tempptr16 = x86.fl.wres = x86.fl.wop1 - x86.fl.wop2;
                 break;
+            case 0x2a: // SUB reg8,r/m8                 ; 2A /r
+                tempval8 = *x86_decode_modrm8();
+                x86.fl.oper = op_subb;
+                x86.fl.bop1 = X86_REG_8(x86.modrm_reg);
+                x86.fl.bop2 = tempval8;
+                X86_REG_8(x86.modrm_reg) = x86.fl.bres = x86.fl.bop1 - x86.fl.bop2;
+                break;
             case 0x2b: // SUB reg16,r/m16               ; o16 2B /r
                 tempval16 = *x86_decode_modrm16();
                 x86.fl.oper = op_subw;
                 x86.fl.wop1 = X86_REG_16(x86.modrm_reg);
                 x86.fl.wop2 = tempval16;
                 X86_REG_16(x86.modrm_reg) = x86.fl.wres = x86.fl.wop1 - x86.fl.wop2;
+                break;
+            case 0x2c: // SUB AL,imm8                   ; 2C ib
+                x86.fl.oper = op_subb;
+                x86.fl.bop1 = x86.al;
+                x86.fl.bop2 = GET_INSTRUCTION_UINT8;
+                x86.al = x86.fl.bres = x86.fl.bop1 - x86.fl.bop2;
                 break;
             case 0x2d: // SUB AX,imm16                  ; o16 2D iw
                 x86.fl.oper = op_subw;
@@ -1064,6 +1194,20 @@ static void emulator(void)
                 x86.fl.oper = op_incw;
                 x86.fl.wop1 = X86_REG_16(PEEK_PREV_INSTRUCTION_BYTE - 0x40);
                 X86_REG_16(PEEK_PREV_INSTRUCTION_BYTE - 0x40) = x86.fl.wres = x86.fl.wop1 + 1;
+                break;
+
+            case 0x48: // DEC reg16                     ; o16 48+r
+            case 0x49:
+            case 0x4a:
+            case 0x4b:
+            case 0x4c:
+            case 0x4d:
+            case 0x4e:
+            case 0x4f:
+                x86_calculate_carry_flag();
+                x86.fl.oper = op_decw;
+                x86.fl.wop1 = X86_REG_16(PEEK_PREV_INSTRUCTION_BYTE - 0x48);
+                X86_REG_16(PEEK_PREV_INSTRUCTION_BYTE - 0x48) = x86.fl.wres = x86.fl.wop1 - 1;
                 break;
 
             case 0x66:
@@ -1173,6 +1317,13 @@ static void emulator(void)
                 };
                 break;
 
+            case 0x69: // IMUL reg16,r/m16,imm16        ; o16 69 /r iw
+                tempval16 = *x86_decode_modrm16();
+                x86.fl.oper = op_imulw;
+                x86.fl.wop1 = tempval16;
+                READ_INSTRUCTION_UINT16_TO(x86.fl.wop2);
+                X86_REG_16(x86.modrm_reg) = x86.fl.dwres = ((int16_t)x86.fl.wop1) * (int32_t)((int16_t)x86.fl.wop2);
+                break;
             case 0x6b: // IMUL reg16,r/m16,imm8         ; o16 6B /r ib
                 tempval16 = *x86_decode_modrm16();
                 x86.fl.oper = op_imulw;
@@ -1223,9 +1374,23 @@ static void emulator(void)
                     x86.ip += tempval16;
                 }
                 break;
+            case 0x79: // Jcc imm                       ; 70+cc rb
+                tempval16 = (int16_t)GET_INSTRUCTION_INT8;
+                if (!(x86_get_flag_s())) // jns
+                {
+                    x86.ip += tempval16;
+                }
+                break;
             case 0x7c: // Jcc imm                       ; 70+cc rb
                 tempval16 = (int16_t)GET_INSTRUCTION_INT8;
                 if (x86_get_flag_s() ^ x86_get_flag_o()) // jl
+                {
+                    x86.ip += tempval16;
+                }
+                break;
+            case 0x7d: // Jcc imm                       ; 70+cc rb
+                tempval16 = (int16_t)GET_INSTRUCTION_INT8;
+                if (!(x86_get_flag_s() ^ x86_get_flag_o())) // jge
                 {
                     x86.ip += tempval16;
                 }
@@ -1237,11 +1402,30 @@ static void emulator(void)
                     x86.ip += tempval16;
                 }
                 break;
+            case 0x7f: // Jcc imm                       ; 70+cc rb
+                tempval16 = (int16_t)GET_INSTRUCTION_INT8;
+                if (!(x86_get_flag_z() || (x86_get_flag_s() ^ x86_get_flag_o()))) // jg
+                {
+                    x86.ip += tempval16;
+                }
+                break;
 
             case 0x80:
                 tempptr8 = x86_decode_modrm8();
                 switch (x86.modrm_reg)
                 {
+                    case 0: // ADD r/m8,imm8                 ; 80 /0 ib
+                        x86.fl.oper = op_addb;
+                        x86.fl.bop1 = *tempptr8;
+                        x86.fl.bop2 = GET_INSTRUCTION_UINT8;
+                        *tempptr8 = x86.fl.bres = x86.fl.bop1 + x86.fl.bop2;
+                        break;
+                    case 1: // OR r/m8,imm8                  ; 80 /1 ib
+                        x86.fl.oper = op_xorb;
+                        x86.fl.bop1 = *tempptr8;
+                        x86.fl.bop2 = GET_INSTRUCTION_UINT8;
+                        *tempptr8 = x86.fl.bres = x86.fl.bop1 | x86.fl.bop2;
+                        break;
                     case 4: // AND r/m8,imm8                 ; 80 /4 ib
                         x86.fl.oper = op_xorb;
                         x86.fl.bop1 = *tempptr8;
@@ -1270,6 +1454,18 @@ static void emulator(void)
                 tempptr16 = x86_decode_modrm16();
                 switch (x86.modrm_reg)
                 {
+                    case 0: // ADD r/m16,imm16               ; o16 81 /0 iw
+                        x86.fl.oper = op_addw;
+                        x86.fl.wop1 = *tempptr16;
+                        READ_INSTRUCTION_UINT16_TO(x86.fl.wop2);
+                        *tempptr16 = x86.fl.wres = x86.fl.wop1 + x86.fl.wop2;
+                        break;
+                    case 4: // AND r/m16,imm16               ; o16 81 /4 iw
+                        x86.fl.oper = op_xorw;
+                        x86.fl.wop1 = *tempptr16;
+                        READ_INSTRUCTION_UINT16_TO(x86.fl.wop2);
+                        *tempptr16 = x86.fl.wres = x86.fl.wop1 & x86.fl.wop2;
+                        break;
                     case 7: // CMP r/m16,imm16               ; o16 81 /7 iw
                         x86.fl.oper = op_subw;
                         x86.fl.wop1 = *tempptr16;
@@ -1291,6 +1487,20 @@ static void emulator(void)
                         x86.fl.wop1 = *tempptr16;
                         x86.fl.wop2 = (int16_t)GET_INSTRUCTION_INT8;
                         *tempptr16 = x86.fl.wres = x86.fl.wop1 + x86.fl.wop2;
+                        break;
+                    case 2: // ADC r/m16,imm8                ; o16 83 /2 ib
+                        tempval32 = x86_get_flag_c();
+                        x86.fl.oper = tempval32 ? op_adcw : op_addw;
+                        x86.fl.wop1 = *tempptr16;
+                        x86.fl.wop2 = (int16_t)GET_INSTRUCTION_INT8;
+                        *tempptr16 = x86.fl.wres = x86.fl.wop1 + x86.fl.wop2 + tempval32;
+                        break;
+                    case 3: // SBB r/m16,imm8                ; o16 83 /3 ib
+                        tempval32 = x86_get_flag_c();
+                        x86.fl.oper = tempval32 ? op_sbbw : op_subw;
+                        x86.fl.wop1 = *tempptr16;
+                        x86.fl.wop2 = (int16_t)GET_INSTRUCTION_INT8;
+                        *tempptr16 = x86.fl.wres = x86.fl.wop1 - (x86.fl.wop2 + tempval32);
                         break;
                     case 4: // AND r/m16,imm8                ; o16 83 /4 ib
                         x86.fl.oper = op_xorw;
@@ -1329,6 +1539,10 @@ static void emulator(void)
             case 0x8c: // MOV r/m16,segreg              ; o16 8C /r
                 tempptr16 = x86_decode_modrm16();
                 *tempptr16 = x86.segregs[x86.modrm_reg];
+                break;
+            case 0x8d: // LEA reg16,mem                 ; o16 8D /r
+                tempptr16 = x86_decode_modrm16();
+                X86_REG_16(x86.modrm_reg) = (uintptr_t)tempptr16 - (uintptr_t)memory;
                 break;
             case 0x8e: // MOV segreg,r/m16              ; o16 8E /r
                 tempval16 = *x86_decode_modrm16();
@@ -1438,6 +1652,12 @@ static void emulator(void)
                         fprintf(stderr, "Unhandled instruction c1: 0x%x\n", x86.ip-2);
                         exit(1);
                 }
+                break;
+
+            case 0xc2: // RET imm16                     ; C2
+                READ_INSTRUCTION_UINT16_TO(tempval16);
+                x86.ip = x86_pop();
+                x86.sp += tempval16;
                 break;
 
             case 0xc3: // RET                           ; C3
@@ -1574,14 +1794,54 @@ static void emulator(void)
             case 0xec: // IN AL,DX                      ; EC
                 x86_port_in8(x86.dx);
                 break;
+            case 0xed: // IN AX,DX                      ; ED
+                x86_port_in16(x86.dx);
+                break;
             case 0xee: // OUT DX,AL                     ; EE
                 x86_port_out8(x86.dx);
+                break;
+            case 0xef: // OUT DX,AX                     ; EF
+                x86_port_out16(x86.dx);
+                break;
+
+            case 0xf3:
+                switch (GET_INSTRUCTION_UINT8)
+                {
+                    case 0xa5: // REP MOVSW
+                        tempval16 = (x86.flags & 0x0400) ? -2 : 2;
+                        do
+                        {
+                            WRITE_MEMORY_UINT16(x86.di, READ_MEMORY_UINT16(x86.si));
+                            x86.si += tempval16;
+                            x86.di += tempval16;
+                            x86.cx--;
+                        } while (x86.cx != 0);
+                        break;
+                    case 0xab: // REP STOSW
+                        tempval16 = (x86.flags & 0x0400) ? -2 : 2;
+                        do
+                        {
+                            WRITE_MEMORY_UINT16(x86.di, x86.ax);
+                            x86.di += tempval16;
+                            x86.cx--;
+                        } while (x86.cx != 0);
+                        break;
+                    default:
+                        fprintf(stderr, "Unhandled instruction f3: 0x%x\n", x86.ip-2);
+                        exit(1);
+                }
                 break;
 
             case 0xf6:
                 tempptr8 = x86_decode_modrm8();
                 switch (x86.modrm_reg)
                 {
+                    case 0: // TEST r/m8,imm8                ; F6 /0 ib
+                        x86.fl.oper = op_xorb;
+                        x86.fl.bop1 = *tempptr8;
+                        x86.fl.bop2 = GET_INSTRUCTION_UINT8;
+                        x86.fl.bres = x86.fl.bop1 & x86.fl.bop2;
+                        break;
                     case 3: // NEG r/m8                      ; F6 /3
                         x86.fl.oper = op_negb;
                         x86.fl.bop1 = *tempptr8;
@@ -1607,6 +1867,14 @@ static void emulator(void)
                         x86.fl.oper = op_negw;
                         x86.fl.wop1 = *tempptr16;
                         *tempptr16 = x86.fl.wres = - (int16_t)x86.fl.wop1;
+                        break;
+                    case 4: // MUL r/m16                     ; o16 F7 /4
+                        x86.fl.oper = op_mulw;
+                        x86.fl.wop1 = x86.ax;
+                        x86.fl.wop2 = *tempptr16;
+                        x86.fl.dwres = x86.fl.wop1 * (uint32_t)x86.fl.wop2;
+                        x86.ax = (uint16_t)x86.fl.dwres;
+                        x86.dx = (uint16_t)(x86.fl.dwres >> 16);
                         break;
                     case 5: // IMUL r/m16                    ; o16 F7 /5
                         x86.fl.oper = op_imulw;
@@ -1639,6 +1907,10 @@ static void emulator(void)
                 break;
 
             case 0xfa: // CLI                           ; FA
+                // do nothing
+                break;
+
+            case 0xfb: // STI                           ; FB
                 // do nothing
                 break;
 
@@ -1735,6 +2007,9 @@ static void InitMusic(void)
 #elif (DRIVER==ROLAND)
     WRITE_MEMORY_UINT16(0xf6, 1); // MusicDriver
     WRITE_MEMORY_UINT16(0xf8, 0x330); // MusicBasePort
+#elif (DRIVER==EMU8000)
+    WRITE_MEMORY_UINT16(0xf6, 3); // MusicDriver
+    WRITE_MEMORY_UINT16(0xf8, 0x620); // MusicBasePort
 #else
     WRITE_MEMORY_UINT16(0xf6, 4); // MusicDriver
 #endif
@@ -1832,7 +2107,7 @@ static void SetTimerFrequency(uint16_t frequency)
 }
 
 
-int emu_x86_initialize(unsigned int rate, char const *drivers_cat, char const *mt32_roms, int opl3_emulator, int resampling_quality)
+int emu_x86_initialize(unsigned int rate, char const *drivers_cat, char const *mt32_roms, char const *awe32_rom, int opl3_emulator, int resampling_quality)
 {
     FILE *f;
     uint32_t num_files, file_offset, file_len;
@@ -1901,6 +2176,16 @@ int emu_x86_initialize(unsigned int rate, char const *drivers_cat, char const *m
 
             if (driver_com != NULL) break;
         }
+#elif (DRIVER==EMU8000)
+        if (strcasecmp((char *)name, "awemusic.com") == 0)
+        {
+            driver_com_len = file_len;
+            driver_com = malloc(file_len);
+            if (driver_com == NULL) goto emu_x86_initialize_error_1;
+            if (fread(driver_com, 1, file_len, f) != file_len) goto emu_x86_initialize_error_1;
+
+            break;
+        }
 #endif
     }
 
@@ -1927,42 +2212,46 @@ int emu_x86_initialize(unsigned int rate, char const *drivers_cat, char const *m
 
 #if (DRIVER==ADLIB)
 #ifdef USE_SPEEXDSP_RESAMPLER
-    if ((resampling_quality > 0) && (rate != 49716))
+    if ((resampling_quality > 0) && (rate != BASE_SAMPLE_RATE))
     {
         int err;
 
-        resampler = speex_resampler_init(2, 49716, rate, SPEEX_RESAMPLER_QUALITY_DESKTOP, &err);
+        resampler = speex_resampler_init(2, BASE_SAMPLE_RATE, rate, SPEEX_RESAMPLER_QUALITY_DESKTOP, &err);
         if ((resampler == NULL) || (err != RESAMPLER_ERR_SUCCESS))
         {
             resampler = NULL;
         }
         else
         {
-            resample_step = ((((uint64_t)49716) << 32) / rate);
+            resample_step = ((((uint64_t)BASE_SAMPLE_RATE) << 32) / rate);
         }
     }
     else resampler = NULL;
 
-    if (resampler != NULL) emu_opl2_init(49716, opl3_emulator);
+    if (resampler != NULL) emu_opl2_init(BASE_SAMPLE_RATE, opl3_emulator);
     else
 #endif
     emu_opl2_init(rate, opl3_emulator);
-#elif (DRIVER==ROLAND)
-    if (emu_mt32_init(32000, mt32_roms)) goto emu_x86_initialize_error_2;
+#elif (DRIVER==ROLAND) || (DRIVER==EMU8000)
+#if (DRIVER==ROLAND)
+    if (emu_mt32_init(BASE_SAMPLE_RATE, mt32_roms)) goto emu_x86_initialize_error_2;
+#elif (DRIVER==EMU8000)
+    if (emu_awe32_init(BASE_SAMPLE_RATE, awe32_rom)) goto emu_x86_initialize_error_2;
+#endif
 
 #ifdef USE_SPEEXDSP_RESAMPLER
-    if ((resampling_quality > 0) && (rate != 32000))
+    if ((resampling_quality > 0) && (rate != BASE_SAMPLE_RATE))
     {
         int err;
 
-        resampler = speex_resampler_init(2, 32000, rate, SPEEX_RESAMPLER_QUALITY_DESKTOP, &err);
+        resampler = speex_resampler_init(2, BASE_SAMPLE_RATE, rate, SPEEX_RESAMPLER_QUALITY_DESKTOP, &err);
         if ((resampler == NULL) || (err != RESAMPLER_ERR_SUCCESS))
         {
             resampler = NULL;
         }
         else
         {
-            resample_step = ((((uint64_t)32000) << 32) / rate);
+            resample_step = ((((uint64_t)BASE_SAMPLE_RATE) << 32) / rate);
         }
     }
     else resampler = NULL;
@@ -1981,18 +2270,22 @@ int emu_x86_initialize(unsigned int rate, char const *drivers_cat, char const *m
     SetTimerFrequency(70);
 
 #ifdef USE_SPEEXDSP_RESAMPLER
-    if (resampler != NULL) sample_rate = 49716;
+    if (resampler != NULL) sample_rate = BASE_SAMPLE_RATE;
     else
 #endif
     sample_rate = rate;
     num_samples_add = (sample_rate << 10) / 70;
     num_samples_left = 0;
-#elif (DRIVER==ROLAND)
+#elif (DRIVER==ROLAND) || (DRIVER==EMU8000)
+#if (DRIVER==ROLAND)
     SetTimerFrequency(80);
+#elif (DRIVER==EMU8000)
+    SetTimerFrequency(70);
+#endif
 
     sample_rate = rate;
-    position_add = (((uint64_t)32000) << 32) / sample_rate;
-    samples_mul = (((uint64_t)sample_rate) << 32) / 32000;
+    position_add = (((uint64_t)BASE_SAMPLE_RATE) << 32) / sample_rate;
+    samples_mul = (((uint64_t)sample_rate) << 32) / BASE_SAMPLE_RATE;
 #endif
 
     return 1;
@@ -2024,21 +2317,28 @@ int emu_x86_playsequence(void const *sequence, int size)
 #endif
 #if (DRIVER==ADLIB)
     num_samples_left = num_samples_add;
-#elif (DRIVER==ROLAND)
-    num_samples_left = 400;
+#elif (DRIVER==ROLAND) || (DRIVER==EMU8000)
+    num_samples_left = SYNTH_BUFFER_LEN;
 
-    if (32000 > sample_rate)
+    if (BASE_SAMPLE_RATE > sample_rate)
     {
-        current_position = ((((uint64_t)(32000 - sample_rate)) << 32) / 32000) + (((uint64_t)1) << 32);
+        current_position = ((((uint64_t)(BASE_SAMPLE_RATE - sample_rate)) << 32) / BASE_SAMPLE_RATE) + (((uint64_t)1) << 32);
     }
     else
     {
         current_position = (((uint64_t)1) << 32);
     }
 
-    if (sample_rate != 32000)
+#ifdef USE_SPEEXDSP_RESAMPLER
+    if (resampler == NULL)
+#endif
+    if (sample_rate != BASE_SAMPLE_RATE)
     {
-        emu_mt32_getsamples(&(resample_samples[2]), 400);
+#if (DRIVER==ROLAND)
+        emu_mt32_getsamples(&(resample_samples[2]), SYNTH_BUFFER_LEN);
+#elif (DRIVER==EMU8000)
+        emu_awe32_getsamples(&(resample_samples[2]), SYNTH_BUFFER_LEN);
+#endif
     }
 #endif
     return retval;
@@ -2076,7 +2376,7 @@ int emu_x86_getdata(void *buffer, int size)
 
             samples_toread = (((numsamples + 1) * resample_step) >> 32) + 8;
             if (samples_toread & 7) samples_toread += 8 - (samples_toread & 7);
-            if (samples_toread > 728) samples_toread = 728;
+            if (samples_toread > RESAMPLER_BUFFER_LEN) samples_toread = RESAMPLER_BUFFER_LEN;
 
             samples_toread -= resample_num_samples;
             if (samples_toread > samples_left) samples_toread = samples_left;
@@ -2134,7 +2434,7 @@ int emu_x86_getdata(void *buffer, int size)
 
         num_samples_left -= samples_toread << 10;
     }
-#elif (DRIVER==ROLAND)
+#elif (DRIVER==ROLAND) || (DRIVER==EMU8000)
 #ifdef USE_SPEEXDSP_RESAMPLER
     if (resampler != NULL)
     {
@@ -2150,17 +2450,21 @@ int emu_x86_getdata(void *buffer, int size)
                 if (!IsSequencePlaying()) break;
                 ProcessSequence();
 
-                num_samples_left = 400;
+                num_samples_left = SYNTH_BUFFER_LEN;
             }
 
             samples_toread = (((numsamples + 1) * resample_step) >> 32) + 8;
             if (samples_toread & 7) samples_toread += 8 - (samples_toread & 7);
-            if (samples_toread > 416) samples_toread = 416;
+            if (samples_toread > RESAMPLER_BUFFER_LEN) samples_toread = RESAMPLER_BUFFER_LEN;
 
             samples_toread -= resample_num_samples;
             if (samples_toread > num_samples_left) samples_toread = num_samples_left;
 
+#if (DRIVER==ROLAND)
             emu_mt32_getsamples(&(resample_samples[2 * resample_num_samples]), samples_toread);
+#elif (DRIVER==EMU8000)
+            emu_awe32_getsamples(&(resample_samples[2 * resample_num_samples]), samples_toread);
+#endif
 
             resample_num_samples += samples_toread;
             num_samples_left -= samples_toread;
@@ -2189,7 +2493,7 @@ int emu_x86_getdata(void *buffer, int size)
     }
     else
 #endif
-    if (sample_rate == 32000)
+    if (sample_rate == BASE_SAMPLE_RATE)
     {
         while (numsamples != 0)
         {
@@ -2200,12 +2504,16 @@ int emu_x86_getdata(void *buffer, int size)
                 if (!IsSequencePlaying()) break;
                 ProcessSequence();
 
-                num_samples_left = 400;
+                num_samples_left = SYNTH_BUFFER_LEN;
             }
 
             samples_toread = (numsamples <= num_samples_left)?numsamples:num_samples_left;
 
+#if (DRIVER==ROLAND)
             emu_mt32_getsamples(buf, samples_toread);
+#elif (DRIVER==EMU8000)
+            emu_awe32_getsamples(buf, samples_toread);
+#endif
 
             buf += 2 * samples_toread;
             samples_read += samples_toread;
@@ -2221,21 +2529,25 @@ int emu_x86_getdata(void *buffer, int size)
             int position, samples_toread;
 
             position = current_position >> 32;
-            if (position >= 400)
+            if (position >= SYNTH_BUFFER_LEN)
             {
                 if (!IsSequencePlaying()) break;
                 ProcessSequence();
 
-                resample_samples[0] = resample_samples[2*400];
-                resample_samples[1] = resample_samples[2*400+1];
+                resample_samples[0] = resample_samples[2*SYNTH_BUFFER_LEN];
+                resample_samples[1] = resample_samples[2*SYNTH_BUFFER_LEN+1];
 
-                emu_mt32_getsamples(&(resample_samples[2]), 400);
+#if (DRIVER==ROLAND)
+                emu_mt32_getsamples(&(resample_samples[2]), SYNTH_BUFFER_LEN);
+#elif (DRIVER==EMU8000)
+                emu_awe32_getsamples(&(resample_samples[2]), SYNTH_BUFFER_LEN);
+#endif
 
-                current_position -= (((uint64_t)400) << 32);
+                current_position -= (((uint64_t)SYNTH_BUFFER_LEN) << 32);
                 position = current_position >> 32;
             }
 
-            samples_toread = ((399 - position) * samples_mul) >> 32;
+            samples_toread = (((SYNTH_BUFFER_LEN - 1) - position) * samples_mul) >> 32;
             if (numsamples < samples_toread) samples_toread = numsamples;
 
             samples_read += samples_toread;
@@ -2252,7 +2564,7 @@ int emu_x86_getdata(void *buffer, int size)
                 position = current_position >> 32;
             }
 
-            while ((numsamples != 0) && (position < 400))
+            while ((numsamples != 0) && (position < SYNTH_BUFFER_LEN))
             {
                 buf[0] = resample_samples[2*position] + (((resample_samples[2*(position + 1)] - resample_samples[2*position]) * ((int32_t)(((uint32_t)current_position) >> 16))) >> 16);
                 buf[1] = resample_samples[2*position+1] + (((resample_samples[2*(position + 1)+1] - resample_samples[2*position+1]) * ((int32_t)(((uint32_t)current_position) >> 16))) >> 16);
@@ -2302,6 +2614,8 @@ void emu_x86_shutdown(void)
 #endif
 #if (DRIVER==ROLAND)
     emu_mt32_shutdown();
+#elif (DRIVER==EMU8000)
+    emu_awe32_shutdown();
 #endif
 }
 

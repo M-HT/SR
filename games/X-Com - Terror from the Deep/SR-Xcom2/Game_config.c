@@ -238,6 +238,10 @@ void Game_ReadConfig(void)
                 {
                     Game_MidiSubsystem = 11;
                 }
+                else if ( strcasecmp(param, "awe32-emu8k") == 0 ) // param equals "awe32-emu8k"
+                {
+                    Game_MidiSubsystem = 12;
+                }
                 else if ( strcasecmp(param, "mt32-nativewindows") == 0 ) // param equals "mt32-nativewindows"
                 {
                     Game_MidiSubsystem = 31;
@@ -263,6 +267,15 @@ void Game_ReadConfig(void)
                 if (*param != 0)
                 {
                     Game_MT32RomsPath = strdup(param);
+                }
+            }
+            else if ( strcasecmp(str, "AWE32_Rom_Path") == 0 ) // str equals "AWE32_Rom_Path"
+            {
+                // path to AWE32 rom
+
+                if (*param != 0)
+                {
+                    Game_AWE32RomPath = strdup(param);
                 }
             }
             else if ( strcasecmp(str, "MIDI_Device") == 0 ) // str equals "MIDI_Device"

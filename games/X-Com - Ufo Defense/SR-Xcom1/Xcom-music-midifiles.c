@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -115,6 +115,8 @@ int Game_ReadSong(const char *catalog_name, int index, uint8_t *buf)
     uint32_t num_files, file_offset, file_size, next_offset;
     uint8_t name_length;
 
+    Game_SongLength = 0;
+
     if (index < 0) return 0;
 
     if ((Game_MidiSubsystem < 10) || (Game_MidiSubsystem > 20 && Game_MidiSubsystem <= 30))
@@ -165,6 +167,8 @@ int Game_ReadSong(const char *catalog_name, int index, uint8_t *buf)
     }
 
     if (fread(buf, 1, file_size, f) != file_size) goto read_song_error;
+
+    Game_SongLength = file_size;
 
     if (Game_MidiRemapGM2MT32)
     {

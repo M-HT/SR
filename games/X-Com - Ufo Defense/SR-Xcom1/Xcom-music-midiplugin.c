@@ -456,6 +456,7 @@ int MidiPlugin_Startup(void)
     else if (Game_MidiSubsystem == 3) plugin_name = ".\\midi-adlmidi.dll";
     else if (Game_MidiSubsystem == 10) plugin_name = ".\\adlib-dosbox_opl.dll";
     else if (Game_MidiSubsystem == 11) plugin_name = ".\\mt32-munt.dll";
+    else if (Game_MidiSubsystem == 12) plugin_name = ".\\awe32-emu8k.dll";
     else
     {
         fprintf(stderr, "%s: error: %s\n", "midi", "unknown plugin");
@@ -479,6 +480,7 @@ int MidiPlugin_Startup(void)
     else if (Game_MidiSubsystem == 3) plugin_name = "./midi-adlmidi.so";
     else if (Game_MidiSubsystem == 10) plugin_name = "./adlib-dosbox_opl.so";
     else if (Game_MidiSubsystem == 11) plugin_name = "./mt32-munt.so";
+    else if (Game_MidiSubsystem == 12) plugin_name = "./awe32-emu8k.so";
     else
     {
         fprintf(stderr, "%s: error: %s\n", "midi", "unknown plugin");
@@ -511,6 +513,7 @@ int MidiPlugin_Startup(void)
     MP_parameters.opl3_emulator = Game_OPL3Emulator;
     MP_parameters.resampling_quality = Game_ResamplingQuality;
     MP_parameters.sampling_rate = Game_AudioRate;
+    MP_parameters.awe32_rom_path = Game_AWE32RomPath;
 
     vfs_get_real_name("C:\\SOUND\\DRIVERS.CAT", (char *) &temp_str, NULL);
     MP_parameters.drivers_cat_path = (char *) &temp_str;
@@ -684,7 +687,7 @@ void MidiPlugin_start_sequence(uint8_t *seq)
 
             MP_sequence.loop_count = 1;
 
-            MP_sequence.midi = MP_functions.open_buffer(seq, 33000);
+            MP_sequence.midi = MP_functions.open_buffer(seq, Game_SongLength ? Game_SongLength : 33000);
         }
         else if (strcmp((const char *)seq, "MIDI") == 0)
         {

@@ -34,6 +34,7 @@ typedef struct _midi_plugin_parameters_ {
     int opl3_emulator;
     int resampling_quality;
     unsigned int sampling_rate;
+    char const *awe32_rom_path;
 } midi_plugin_parameters;
 
 typedef struct _midi_plugin_functions_ {

@@ -58,9 +58,20 @@ g++ -c -fpic -fvisibility=hidden -O3 -Wall -fno-exceptions sha1.cpp
 cd ../../../..
 gcc -shared -Wl,-soname,mt32-munt.so -o mt32-munt.so *.o src/*.o src/munt-2.7.0/mt32emu/*.o src/munt-2.7.0/mt32emu/sha1/*.o -lm $SPEEXDSP_LINK -lstdc++ -L../lib/arm
 
-rm *.o
 rm src/*.o
 rm src/munt-2.7.0/mt32emu/*.o
 rm src/munt-2.7.0/mt32emu/sha1/*.o
+
+cd src
+gcc -c -fpic -fvisibility=hidden -O3 -Wall -Wno-maybe-uninitialized -DDRIVER=EMU8000 $SPEEXDSP_COMPILE emu_x86.c -I$CURDIR/include -I../../include
+gcc -c -fpic -fvisibility=hidden -O2 -Wall emu_awe32.c
+cd pcem_emu8k
+gcc -c -fpic -fvisibility=hidden -O3 -Wall sound_emu8k.c
+cd ../..
+gcc -shared -Wl,-soname,awe32-emu8k.so -o awe32-emu8k.so *.o src/*.o src/pcem_emu8k/*.o -lm $SPEEXDSP_LINK -L../lib/arm
+
+rm *.o
+rm src/*.o
+rm src/pcem_emu8k/*.o
 
 cd ..

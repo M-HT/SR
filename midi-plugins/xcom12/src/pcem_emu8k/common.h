@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,24 +22,15 @@
  *
  */
 
-#if !defined(_EMU_X86_H_INCLUDED_)
-#define _EMU_X86_H_INCLUDED_
+#if !defined(_COMMON_H_INCLUDED_)
+#define _COMMON_H_INCLUDED_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define MAXSOUNDBUFLEN 640
 
-int emu_x86_initialize(unsigned int rate, char const *drivers_cat, char const *mt32_roms, char const *awe32_rom, int opl3_emulator, int resampling_quality);
-int emu_x86_setvolume(unsigned char volume);
-int emu_x86_playsequence(void const *sequence, int size);
-int emu_x86_getdata(void *buffer, int size);
-int emu_x86_rewindsequence(void);
-int emu_x86_stopsequence(void);
-void emu_x86_shutdown(void);
+uint16_t emu8k_inw(uint16_t addr, void *p);
+void emu8k_outw(uint16_t addr, uint16_t val, void *p);
 
-#ifdef __cplusplus
-}
-#endif
+FILE *emu8k_romfopen(char *fn, char *mode);
 
-#endif /* _EMU_X86_H_INCLUDED_ */
+#endif /* _COMMON_H_INCLUDED_ */
 

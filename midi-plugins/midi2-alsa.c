@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -33,7 +33,7 @@
 #include <stdint.h>
 #include "midi-plugins2.h"
 
-static unsigned char *reset_controller_events = NULL;
+static int midi_type;
 
 #if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 typedef struct {
@@ -62,12 +62,13 @@ static int src_client_id, src_port_id, dst_client_id, dst_port_id;
 static int midi_queue;
 static pthread_t midi_thread;
 static unsigned char *initial_sysex_events = NULL;
+static unsigned char *reset_controller_events = NULL;
 
 static volatile int midi_quit = 0;
 static volatile int midi_loaded = 0;
 static volatile int midi_playing = 0;
-static volatile int midi_current_volume = 128;
-static volatile int midi_new_volume = 128;
+static volatile int midi_current_volume = 127;
+static volatile int midi_new_volume = 127;
 static volatile int midi_loop_count = 0;
 static volatile int midi_eof = 0;
 
@@ -673,14 +674,27 @@ static void *midi_thread_proc(void *arg)
 
                             reset_playing();
 
-                            if (midi_loaded && (midi_current_event > 1) && !midi_eof)
+                            if (midi_loaded && !midi_eof)
                             {
-                                // play song from the beginning
-                                current_event = midi_current_event;
-                                events = (midi_event_info *) midi_events;
-                                midi_current_event = 1;
-                                midi_base_tick += events[current_event].tick;
-                                midi_base_time += events[current_event].time;
+                                for (chan = 0; chan < MIDI_CHANNELS; chan++)
+                                {
+                                    channel_volume[chan] = 100;
+                                }
+
+                                // set current volume to a different value than new volume in order to set the channel volume at start of playing
+                                midi_current_volume = midi_new_volume ^ 1;
+
+                                memset(channel_notes, 0, 128*MIDI_CHANNELS*sizeof(int));
+
+                                if (midi_current_event > 1)
+                                {
+                                    // play song from the beginning
+                                    current_event = midi_current_event;
+                                    events = (midi_event_info *) midi_events;
+                                    midi_current_event = 1;
+                                    midi_base_tick += events[current_event].tick;
+                                    midi_base_time += events[current_event].time;
+                                }
                             }
 
                             if (was_playing)
@@ -1014,7 +1028,8 @@ static void reset_playing(void)
         {
             snd_seq_ev_set_fixed(&event);
             event.data.control.channel = chan;
-            event.data.control.param = MIDI_CTL_ALL_SOUNDS_OFF; // All sounds off (abrupt stop of sound on channel)
+            // MT-32 doesn't support All sounds off, so Omni off is used instead
+            event.data.control.param = midi_type ? MIDI_CTL_OMNI_OFF : MIDI_CTL_ALL_SOUNDS_OFF; // Omni off / All sounds off (abrupt stop of sound on channel)
             event.data.control.value = 0;
 
             snd_seq_event_output(midi_seq, &event);
@@ -1030,6 +1045,15 @@ static void reset_playing(void)
             event.data.control.channel = chan;
             event.data.control.param = MIDI_CTL_ALL_NOTES_OFF; // All notes off (this message stops all the notes that are currently playing)
             event.data.control.value = 0;
+
+            snd_seq_event_output(midi_seq, &event);
+
+            // All controllers off doesn't set volume and pan to default values
+            // Volume is set at start of playing, so only pan is set to default value
+            snd_seq_ev_set_fixed(&event);
+            event.data.control.channel = chan;
+            event.data.control.param = MIDI_CTL_MSB_PAN; // Pan
+            event.data.control.value = 64;
 
             snd_seq_event_output(midi_seq, &event);
 
@@ -1121,7 +1145,7 @@ static int create_src_port(void)
     return 0;
 }
 
-static int find_dst_port(const char *midi_address, int midi_type)
+static int find_dst_port(const char *midi_address)
 {
     snd_seq_client_info_t *cinfo;
     snd_seq_port_info_t *pinfo;
@@ -1305,10 +1329,11 @@ static int play(void const *midibuffer, long int size, int loop_count)
 
         for (chan = 0; chan < MIDI_CHANNELS; chan++)
         {
-            channel_volume[chan] = 127;
+            channel_volume[chan] = 100;
         }
 
-        midi_current_volume = 128;
+        // set current volume to a different value than new volume in order to set the channel volume at start of playing
+        midi_current_volume = midi_new_volume ^ 1;
 
         snd_seq_queue_tempo_set_tempo(queue_tempo, 500000); // 120 BPM
         snd_seq_queue_tempo_set_ppq(queue_tempo, timediv);
@@ -1557,56 +1582,27 @@ static void shutdown_plugin(void)
         dst_address = NULL;
     }
 
+    if (reset_controller_events != NULL)
+    {
+        free(reset_controller_events);
+        reset_controller_events = NULL;
+    }
+
     if (initial_sysex_events != NULL)
     {
         free(initial_sysex_events);
         initial_sysex_events = NULL;
     }
 #endif
-
-    if (reset_controller_events != NULL)
-    {
-        free(reset_controller_events);
-        reset_controller_events = NULL;
-    }
 }
 
 
 __attribute__ ((visibility ("default")))
 int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plugin2_functions *functions)
 {
-    char const *address;
-    unsigned char const *sysex_events, *controller_events;
-    int midi_type, events_len;
-
     if (functions == NULL) return -3;
 
-    address = NULL;
-    sysex_events = NULL;
-    controller_events = NULL;
-    midi_type = 0;
-    if (parameters != NULL)
-    {
-        address = parameters->midi_device_name;
-        sysex_events = parameters->initial_sysex_events;
-        controller_events = parameters->reset_controller_events;
-        midi_type = parameters->midi_type;
-    }
-
-    if (controller_events != NULL && *controller_events == 0xb0)
-    {
-        events_len = 1;
-        while (controller_events[events_len] != 0xff) events_len++;
-
-        if (events_len > 1)
-        {
-            reset_controller_events = (unsigned char *)malloc(events_len);
-            if (reset_controller_events != NULL)
-            {
-                memcpy(reset_controller_events, controller_events + 1, events_len);
-            }
-        }
-    }
+    midi_type = (parameters != NULL) ? parameters->midi_type : 0;
 
     functions->play = &play;
     functions->pause = &pause_0;
@@ -1616,12 +1612,25 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
     functions->set_loop_count = &set_loop_count;
     functions->shutdown_plugin = &shutdown_plugin;
 
-    memset(channel_notes, 0, 128*MIDI_CHANNELS*sizeof(int));
-
 #if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 {
+    char const *address;
+    unsigned char const *sysex_events, *controller_events;
+    int events_len;
     pthread_attr_t thread_attr;
     pthread_mutexattr_t mutex_attr;
+
+    address = NULL;
+    sysex_events = NULL;
+    controller_events = NULL;
+    if (parameters != NULL)
+    {
+        address = parameters->midi_device_name;
+        sysex_events = parameters->initial_sysex_events;
+        controller_events = parameters->reset_controller_events;
+    }
+
+    memset(channel_notes, 0, 128*MIDI_CHANNELS*sizeof(int));
 
     if (snd_seq_open(&midi_seq, "default", SND_SEQ_OPEN_DUPLEX, 0) < 0)
     {
@@ -1646,7 +1655,7 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
         return -4;
     }
 
-    if (find_dst_port(address, midi_type) < 0)
+    if (find_dst_port(address) < 0)
     {
         snd_seq_close(midi_seq);
         midi_seq = NULL;
@@ -1717,6 +1726,21 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
             if (initial_sysex_events != NULL)
             {
                 memcpy(initial_sysex_events, sysex_events, events_len);
+            }
+        }
+    }
+
+    if (controller_events != NULL && *controller_events == 0xb0)
+    {
+        events_len = 1;
+        while (controller_events[events_len] != 0xff) events_len++;
+
+        if (events_len > 1)
+        {
+            reset_controller_events = (unsigned char *)malloc(events_len);
+            if (reset_controller_events != NULL)
+            {
+                memcpy(reset_controller_events, controller_events + 1, events_len);
             }
         }
     }

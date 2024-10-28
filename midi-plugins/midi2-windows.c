@@ -36,7 +36,7 @@
 #include <stdint.h>
 #include "midi-plugins2.h"
 
-static unsigned char *reset_controller_events = NULL;
+static int midi_type;
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 // Multimedia Class Scheduler Service Functions
@@ -58,6 +58,7 @@ static HANDLE midi_thread_handle = NULL;
 static char *midi_stream_name = NULL;
 static LPWSTR lpDeviceInterfaceName = NULL;
 static unsigned char *initial_sysex_events = NULL;
+static unsigned char *reset_controller_events = NULL;
 
 static HMODULE hAvrt = NULL;
 static AvSetMmThreadCharacteristicsWFunc dyn_AvSetMmThreadCharacteristicsW;
@@ -828,10 +829,14 @@ static void reset_playing(void)
 
 	for (chan = 0xb0; chan <= 0xbf; chan++)
 	{
-		midiOutShortMsg((HMIDIOUT)hStream, chan | (0x78 << 8) | (0x00 << 16)); // All sounds off (abrupt stop of sound on channel)
+		// MT-32 doesn't support All sounds off, so Omni off is used instead
+		midiOutShortMsg((HMIDIOUT)hStream, chan | ((midi_type ? 0x7c : 0x78) << 8) | (0x00 << 16)); // Omni off / All sounds off (abrupt stop of sound on channel)
 		// running status
 		midiOutShortMsg((HMIDIOUT)hStream, 0x79 | (0x00 << 8)); // All controllers off (this message clears all the controller values for this channel, back to their default values)
 		midiOutShortMsg((HMIDIOUT)hStream, 0x7b | (0x00 << 8)); // All notes off (this message stops all the notes that are currently playing)
+		// All controllers off doesn't set volume and pan to default values
+		// Volume is set at start of playing, so only pan is set to default value
+		midiOutShortMsg((HMIDIOUT)hStream, 0x0a | (0x40 << 8)); // Pan
 
 		if (reset_controller_events != NULL)
 		{
@@ -1181,7 +1186,7 @@ static int set_volume(unsigned char volume) // volume = 0 - 127
 		DWORD volparam;
 		int ok;
 
-		volparam = 33818125;
+		volparam = 33818640; // = 0xffffffff / 127
 		volparam = (volparam * volume) >> 16;
 		volparam |= volparam << 16;
 
@@ -1287,6 +1292,12 @@ static void shutdown_plugin(void)
 		midi_stream_name = NULL;
 	}
 
+	if (reset_controller_events != NULL)
+	{
+		free(reset_controller_events);
+		reset_controller_events = NULL;
+	}
+
 	if (initial_sysex_events != NULL)
 	{
 		free(initial_sysex_events);
@@ -1296,48 +1307,15 @@ static void shutdown_plugin(void)
 	DeleteCriticalSection(&notification_critical_section);
 	DeleteCriticalSection(&midi_critical_section);
 #endif
-
-    if (reset_controller_events != NULL)
-    {
-        free(reset_controller_events);
-        reset_controller_events = NULL;
-    }
 }
 
 
 __attribute__ ((visibility ("default")))
 int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plugin2_functions *functions)
 {
-    char const *device_name;
-    unsigned char const *sysex_events, *controller_events;
-    int events_len;
-
     if (functions == NULL) return -3;
 
-    device_name = NULL;
-    sysex_events = NULL;
-    controller_events = NULL;
-    if (parameters != NULL)
-    {
-        device_name = parameters->midi_device_name;
-        sysex_events = parameters->initial_sysex_events;
-        controller_events = parameters->reset_controller_events;
-    }
-
-    if (controller_events != NULL && *controller_events == 0xb0)
-    {
-        events_len = 1;
-        while (controller_events[events_len] != 0xff) events_len++;
-
-        if (events_len > 1)
-        {
-            reset_controller_events = (unsigned char *)malloc(events_len);
-            if (reset_controller_events != NULL)
-            {
-                memcpy(reset_controller_events, controller_events + 1, events_len);
-            }
-        }
-    }
+    midi_type = (parameters != NULL) ? parameters->midi_type : 0;
 
     functions->play = &play;
     functions->pause = &pause;
@@ -1349,9 +1327,22 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 {
+	char const *device_name;
+	unsigned char const *sysex_events, *controller_events;
+	int events_len;
 	int numDevices, devid;
 	MIDIOUTCAPS midicaps;
 	UINT uDeviceID;
+
+	device_name = NULL;
+	sysex_events = NULL;
+	controller_events = NULL;
+	if (parameters != NULL)
+	{
+		device_name = parameters->midi_device_name;
+		sysex_events = parameters->initial_sysex_events;
+		controller_events = parameters->reset_controller_events;
+	}
 
 	InitializeCriticalSection(&midi_critical_section);
 	InitializeCriticalSection(&notification_critical_section);
@@ -1439,6 +1430,21 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 			if (initial_sysex_events != NULL)
 			{
 				memcpy(initial_sysex_events, sysex_events, events_len);
+			}
+		}
+	}
+
+	if (controller_events != NULL && *controller_events == 0xb0)
+	{
+		events_len = 1;
+		while (controller_events[events_len] != 0xff) events_len++;
+
+		if (events_len > 1)
+		{
+			reset_controller_events = (unsigned char *)malloc(events_len);
+			if (reset_controller_events != NULL)
+			{
+				memcpy(reset_controller_events, controller_events + 1, events_len);
 			}
 		}
 	}

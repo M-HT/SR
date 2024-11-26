@@ -24,10 +24,10 @@ IF NOT "%LOCAL_USE_SPEEXDSP%" == "" (
   SET SPEEXDSP_LINK=
 )
 
-gcc -s -shared -o midi-wildmidi.dll -m32 -O2 -Wall %SPEEXDSP_COMPILE% midi-wildmidi.c midi.def -I./include -lWildMidi %SPEEXDSP_LINK% -L./lib/x86
+gcc -s -shared -static-libgcc -o midi-wildmidi.dll -m32 -O2 -Wall %SPEEXDSP_COMPILE% midi-wildmidi.c midi.def -I./include -lWildMidi %SPEEXDSP_LINK% -L./lib/x86
 gcc -s -shared -o midi-bassmidi.dll -m32 -O2 -Wall midi-bassmidi.c midi.def -I./include -lbassmidi -lbass -L./lib/x86
-gcc -s -shared -o midi-adlmidi.dll -m32 -O2 -Wall %SPEEXDSP_COMPILE% midi-adlmidi.c midi.def -I./include -lADLMIDI %SPEEXDSP_LINK% -L./lib/x86
-gcc -s -shared -o midi2-windows.dll -m32 -O2 -Wall midi2-windows.c midi2.def -lwinmm
+gcc -s -shared -static-libgcc -o midi-adlmidi.dll -m32 -O2 -Wall %SPEEXDSP_COMPILE% midi-adlmidi.c midi.def -I./include -lADLMIDI %SPEEXDSP_LINK% -L./lib/x86
+gcc -s -shared -static-libgcc -o midi2-windows.dll -m32 -O2 -Wall midi2-windows.c midi2.def -lwinmm
 
 cd xcom12
 
@@ -41,7 +41,7 @@ cd ..
 cd nuked_opl3
 gcc -c -m32 -march=x86-64 -O3 -Wall -DDISABLE_UNUSED_FUNCTIONS opl3.c
 cd ../..
-gcc -s -shared -o adlib-dosbox_opl.dll -m32 *.o src/*.o src/dosbox_opl/*.o src/nuked_opl3/*.o ../midi.def -lm %SPEEXDSP_LINK% -L../lib/x86
+gcc -s -shared -static-libgcc -o adlib-dosbox_opl.dll -m32 *.o src/*.o src/dosbox_opl/*.o src/nuked_opl3/*.o ../midi.def -lm %SPEEXDSP_LINK% -L../lib/x86
 
 del src\*.o
 del src\dosbox_opl\*.o
@@ -55,7 +55,7 @@ g++ -c -m32 -O3 -Wall -fno-exceptions *.cpp
 cd sha1
 g++ -c -m32 -O3 -Wall -fno-exceptions sha1.cpp
 cd ../../../..
-gcc -s -shared -o mt32-munt.dll -m32 *.o src/*.o src/munt-2.7.0/mt32emu/*.o src/munt-2.7.0/mt32emu/sha1/*.o ../midi.def -lstdc++ -lm %SPEEXDSP_LINK% -L../lib/x86
+gcc -s -shared -static-libgcc -o mt32-munt.dll -m32 *.o src/*.o src/munt-2.7.0/mt32emu/*.o src/munt-2.7.0/mt32emu/sha1/*.o ../midi.def -lstdc++ -lm %SPEEXDSP_LINK% -L../lib/x86
 
 del src\*.o
 del src\munt-2.7.0\mt32emu\*.o
@@ -67,7 +67,7 @@ gcc -c -m32 -O2 -Wall -fno-exceptions emu_awe32.c
 cd pcem_emu8k
 gcc -c -m32 -march=x86-64 -O3 -Wall sound_emu8k.c
 cd ../..
-gcc -s -shared -o awe32-emu8k.dll -m32 *.o src/*.o src/pcem_emu8k/*.o ../midi.def -lm %SPEEXDSP_LINK% -L../lib/x86
+gcc -s -shared -static-libgcc -o awe32-emu8k.dll -m32 *.o src/*.o src/pcem_emu8k/*.o ../midi.def -lm %SPEEXDSP_LINK% -L../lib/x86
 
 del *.o
 del src\*.o

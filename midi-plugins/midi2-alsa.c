@@ -582,7 +582,7 @@ static void *midi_thread_proc(void *arg)
     midi_event_info *events;
     unsigned int current_event, base_tick, num_events;
     uint64_t base_time;
-    int do_sleep, num_input_events, dst_port_exists;
+    int do_sleep, num_input_events, dst_port_exists, chan;
     snd_seq_queue_status_t *queue_status;
     snd_seq_port_info_t *port_info;
     const snd_seq_real_time_t *real_time;
@@ -772,10 +772,8 @@ static void *midi_thread_proc(void *arg)
             midi_base_time = base_time;
         }
 
-        if ((midi_new_volume != midi_current_volume) && (events[current_event].tick != 0))
+        if (midi_new_volume != midi_current_volume)
         {
-            int chan;
-
             midi_current_volume = midi_new_volume;
 
             snd_seq_ev_set_fixed(&event);

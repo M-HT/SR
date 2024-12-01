@@ -80,6 +80,7 @@ static char *midi_stream_name = NULL;
 static LPWSTR lpDeviceInterfaceName = NULL;
 static unsigned char *initial_sysex_events = NULL;
 static unsigned char *reset_controller_events = NULL;
+static int mt32_delay;
 
 static HMODULE hAvrt = NULL;
 static AvSetMmThreadCharacteristicsWFunc dyn_AvSetMmThreadCharacteristicsW;
@@ -295,6 +296,8 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
 	midi_event_info event;
 	unsigned int tempo, tempo_tick;
 	uint64_t tempo_time, last_time;
+	div_t divres;
+	uint32_t next_sysex_time;
 
 	retval = readmidi(midi, midilen, &number_of_tracks, &time_division, &tracks);
 	if (retval) return retval;
@@ -328,6 +331,7 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
 	tempo = 500000; // 500000 MPQN = 120 BPM
 	tempo_tick = 0;
 	tempo_time = 0;
+	next_sysex_time = 0;
 	while (1)
 	{
 		curtrack = NULL;
@@ -351,7 +355,27 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
 			}
 		}
 
-		if (curtrack == NULL) break;
+		if (curtrack == NULL)
+		{
+			if (mt32_delay && (events[events[0].event].time < next_sysex_time))
+			{
+				// add extra event
+				midi_track_info extra_track;
+
+				extra_track.ptr = &(extra_track.event_status);
+				extra_track.len = 1;
+				extra_track.delta = ( ( ((next_sysex_time * (uint64_t)1000000 - tempo_time) * time_division + (tempo * (uint64_t) 1000 - 1)) / (tempo * (uint64_t) 1000) ) + tempo_tick ) - last_tick;
+				extra_track.event_status = 0xf4; // unused/invalid midi event type
+				extra_track.eot = 0;
+
+				curtrack = &extra_track;
+				lasttracknum = -1;
+			}
+			else
+			{
+				break;
+			}
+		}
 
 		// update deltas
 		if (curtrack->delta != 0)
@@ -369,18 +393,14 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
 		event.sysex = NULL;
 
 		// calculate event time in nanoseconds
-		{
-			div_t divres;
+		divres = div(last_tick - tempo_tick, time_division);
 
-			divres = div(last_tick - tempo_tick, time_division);
+		last_time = ( ((1000 * divres.rem) * (uint64_t)tempo) / time_division )
+		          + ( (divres.quot * (uint64_t)tempo) * 1000 )
+		          + tempo_time
+		          ;
 
-			last_time = ( ((1000 * divres.rem) * (uint64_t)tempo) / time_division )
-			          + ( (divres.quot * (uint64_t)tempo) * 1000 )
-			          + tempo_time
-			          ;
-
-			//last_time = ( (((last_tick - tempo_tick) * (uint64_t) 1000) * tempo) / time_division ) + tempo_time;
-		}
+		//last_time = ( (((last_tick - tempo_tick) * (uint64_t) 1000) * tempo) / time_division ) + tempo_time;
 
 		// calculate event time in milliseconds
 		event.time = last_time / 1000000;
@@ -515,6 +535,30 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
 								curtrack->len -= varlen;
 
 								eventextralen = 1 + curtrack->ptr - startevent;
+
+								if (mt32_delay)
+								{
+									if (event.time < next_sysex_time)
+									{
+										// calculate new event tick
+										last_tick = event.tick = ( ((next_sysex_time * (uint64_t)1000000 - tempo_time) * time_division + (tempo * (uint64_t) 1000 - 1)) / (tempo * (uint64_t) 1000) ) + tempo_tick;
+
+										// calculate new event time in nanoseconds
+										divres = div(last_tick - tempo_tick, time_division);
+
+										last_time = ( ((1000 * divres.rem) * (uint64_t)tempo) / time_division )
+										          + ( (divres.quot * (uint64_t)tempo) * 1000 )
+										          + tempo_time
+										          ;
+
+										//last_time = ( (((last_tick - tempo_tick) * (uint64_t) 1000) * tempo) / time_division ) + tempo_time;
+
+										// calculate new event time in milliseconds
+										event.time = last_time / 1000000;
+									}
+
+									next_sysex_time = event.time + (40 + 10 + ((MEVT_EVENTPARM(event.event) * 10000 + 31249) / 31250));
+								}
 							}
 							else
 							{
@@ -531,6 +575,11 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
 				}
 				else
 				{
+					if ((curtrack->event_status == 0xf4) && mt32_delay) // extra event
+					{
+						event.event = MEVT_NOP << 24;
+						eventextralen = 0;
+					}
 					curtrack->len = 0;
 					curtrack->eot = 1;
 				}
@@ -1019,32 +1068,212 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 
 static int send_initial_sysex_events(unsigned char const *sysex_events)
 {
-	int events_len;
+	int events_len, len;
+	uint32_t next_sysex_delta;
+	midi_queue_info *current_queue_wait, *current_queue_send;
+	MIDIEVENT *event;
+	MMTIME mmtime;
 
 	if (hStream == NULL) return 0;
 
 	events_len = 0;
 
-	while (*sysex_events == 0xf0)
+	EnterCriticalSection(&midi_critical_section);
+
+	if (!midi_playing)
 	{
-		int len;
-		MIDIHDR midihdr;
+		if (MMSYSERR_NOERROR == midiStreamRestart(hStream))
+		{
+			midi_playing = 1;
+		}
 
-		len = 2;
-		while (sysex_events[len - 1] != 0xf7) len++;
+		mmtime.wType = TIME_MS;
+		if (MMSYSERR_NOERROR != midiStreamPosition(hStream, &mmtime, sizeof(MMTIME)))
+		{
+			if (MMSYSERR_NOERROR == midiStreamPause(hStream))
+			{
+				midi_playing = 0;
+			}
+			LeaveCriticalSection(&midi_critical_section);
+			return 0;
+		}
 
-		midihdr.lpData = (LPSTR)sysex_events;
-		midihdr.dwBufferLength = len;
-		midihdr.dwBytesRecorded = len;
-		midihdr.dwFlags = 0;
+		midi_base_time = mmtime.u.ms;
+	}
 
-		sysex_events += len;
-		events_len += len;
+	if (midi_playing)
+	{
+		current_queue_wait = (midi_queue_info *) midi_queue_wait;
+		current_queue_send = (midi_queue_info *) midi_queue_send;
+		while (current_queue_wait != current_queue_send)
+		{
+			if (current_queue_wait->header.dwFlags & MHDR_DONE)
+			{
+				current_queue_wait->header.dwFlags &= ~MHDR_DONE;
+				current_queue_wait = current_queue_wait->next;
+			}
+			else
+			{
+				Sleep(1);
+			}
+		}
 
-		midiOutPrepareHeader((HMIDIOUT)hStream, &midihdr, sizeof(midihdr));
-		midiOutLongMsg((HMIDIOUT)hStream, &midihdr, sizeof(midihdr));
-		midiOutUnprepareHeader((HMIDIOUT)hStream, &midihdr, sizeof(midihdr));
-	};
+		current_queue_send->header.dwBytesRecorded = 0;
+		next_sysex_delta = 0;
+
+		if (mt32_delay)
+		{
+			MIDIPROPTIMEDIV miditimediv;
+
+			miditimediv.cbStruct = sizeof(miditimediv);
+			if (MMSYSERR_NOERROR != midiStreamProperty(hStream, (LPBYTE)&miditimediv, MIDIPROP_GET | MIDIPROP_TIMEDIV))
+			{
+				if (MMSYSERR_NOERROR == midiStreamPause(hStream))
+				{
+					midi_playing = 0;
+				}
+				LeaveCriticalSection(&midi_critical_section);
+				return 0;
+			}
+
+			mmtime.wType = TIME_MS;
+			if (MMSYSERR_NOERROR != midiStreamPosition(hStream, &mmtime, sizeof(MMTIME)))
+			{
+				if (MMSYSERR_NOERROR == midiStreamPause(hStream))
+				{
+					midi_playing = 0;
+				}
+				LeaveCriticalSection(&midi_critical_section);
+				return 0;
+			}
+
+			next_sysex_delta = (mmtime.u.ms - midi_base_time) + 40 + 10 + 10;
+
+			event = (MIDIEVENT *) &(current_queue_send->buffer[current_queue_send->header.dwBytesRecorded]);
+			event->dwDeltaTime = 0;
+			event->dwStreamID = 0;
+			event->dwEvent = (MEVT_TEMPO << 24) | (miditimediv.dwTimeDiv * 1000);
+
+			current_queue_send->header.dwBytesRecorded += offsetof(MIDIEVENT, dwParms);
+		}
+
+		while (*sysex_events == 0xf0)
+		{
+			len = 2;
+			while (sysex_events[len - 1] != 0xf7) len++;
+
+			if ((len > 0xffffff) || (offsetof(MIDIEVENT, dwParms) + ((len + 3) & ~3) > sizeof(current_queue_send->buffer)))
+			{
+				// too long sysex - skip it
+				sysex_events += len;
+				events_len += len;
+				continue;
+			}
+
+			if (current_queue_send->header.dwBytesRecorded + offsetof(MIDIEVENT, dwParms) + ((len + 3) & ~3) > sizeof(current_queue_send->buffer))
+			{
+				if (MMSYSERR_NOERROR == midiStreamOut(hStream, &(current_queue_send->header), sizeof(MIDIHDR)))
+				{
+					current_queue_send = current_queue_send->next;
+				}
+
+				current_queue_send->header.dwBytesRecorded = 0;
+
+				while (current_queue_wait != current_queue_send)
+				{
+					if (current_queue_wait->header.dwFlags & MHDR_DONE)
+					{
+						current_queue_wait->header.dwFlags &= ~MHDR_DONE;
+						current_queue_wait = current_queue_wait->next;
+					}
+					else
+					{
+						Sleep(1);
+					}
+				}
+			}
+
+			event = (MIDIEVENT *) &(current_queue_send->buffer[current_queue_send->header.dwBytesRecorded]);
+			event->dwDeltaTime = next_sysex_delta;
+			event->dwStreamID = 0;
+			event->dwEvent = MEVT_F_LONG | len;
+
+			memcpy(event->dwParms, sysex_events, len);
+			current_queue_send->header.dwBytesRecorded += offsetof(MIDIEVENT, dwParms) + ((len + 3) & ~3);
+
+			sysex_events += len;
+			events_len += len;
+
+			if (mt32_delay)
+			{
+				next_sysex_delta = 40 + 10 + ((len * 10000 + 31249) / 31250);
+			}
+		};
+
+		if (mt32_delay)
+		{
+			if (current_queue_send->header.dwBytesRecorded + offsetof(MIDIEVENT, dwParms) > sizeof(current_queue_send->buffer))
+			{
+				if (MMSYSERR_NOERROR == midiStreamOut(hStream, &(current_queue_send->header), sizeof(MIDIHDR)))
+				{
+					current_queue_send = current_queue_send->next;
+				}
+
+				current_queue_send->header.dwBytesRecorded = 0;
+
+				while (current_queue_wait != current_queue_send)
+				{
+					if (current_queue_wait->header.dwFlags & MHDR_DONE)
+					{
+						current_queue_wait->header.dwFlags &= ~MHDR_DONE;
+						current_queue_wait = current_queue_wait->next;
+					}
+					else
+					{
+						Sleep(1);
+					}
+				}
+			}
+
+			event = (MIDIEVENT *) &(current_queue_send->buffer[current_queue_send->header.dwBytesRecorded]);
+			event->dwDeltaTime = next_sysex_delta;
+			event->dwStreamID = 0;
+			event->dwEvent = MEVT_NOP << 24;
+
+			current_queue_send->header.dwBytesRecorded += offsetof(MIDIEVENT, dwParms);
+		}
+
+		if (current_queue_send->header.dwBytesRecorded)
+		{
+			if (MMSYSERR_NOERROR == midiStreamOut(hStream, &(current_queue_send->header), sizeof(MIDIHDR)))
+			{
+				current_queue_send = current_queue_send->next;
+			}
+		}
+
+		while (current_queue_wait != current_queue_send)
+		{
+			if (current_queue_wait->header.dwFlags & MHDR_DONE)
+			{
+				current_queue_wait->header.dwFlags &= ~MHDR_DONE;
+				current_queue_wait = current_queue_wait->next;
+			}
+			else
+			{
+				Sleep(1);
+			}
+		}
+
+		midi_queue_wait = current_queue_wait;
+		midi_queue_send = current_queue_send;
+
+		if (MMSYSERR_NOERROR == midiStreamPause(hStream))
+		{
+			midi_playing = 0;
+		}
+	}
+
+	LeaveCriticalSection(&midi_critical_section);
 
 	return events_len;
 }
@@ -1698,11 +1927,13 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 	device_name = NULL;
 	sysex_events = NULL;
 	controller_events = NULL;
+	mt32_delay = 0;
 	if (parameters != NULL)
 	{
 		device_name = parameters->midi_device_name;
 		sysex_events = parameters->initial_sysex_events;
 		controller_events = parameters->reset_controller_events;
+		if (midi_type) mt32_delay = parameters->mt32_delay;
 	}
 
 	memset(channel_notes, 0, 128*16*sizeof(int));

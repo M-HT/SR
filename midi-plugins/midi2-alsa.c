@@ -63,6 +63,7 @@ static int midi_queue;
 static pthread_t midi_thread;
 static unsigned char *initial_sysex_events = NULL;
 static unsigned char *reset_controller_events = NULL;
+static int mt32_delay;
 
 static volatile int midi_quit = 0;
 static volatile int midi_loaded = 0;
@@ -275,7 +276,8 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
     int retval, lasttracknum, eventextralen;
     midi_event_info event;
     unsigned int tempo, tempo_tick;
-    uint64_t tempo_time;
+    uint64_t tempo_time, next_sysex_time;
+    div_t divres;
 
     retval = readmidi(midi, midilen, &number_of_tracks, &time_division, &tracks);
     if (retval) return retval;
@@ -310,6 +312,7 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
     tempo = 500000; // 500000 MPQN = 120 BPM
     tempo_tick = 0;
     tempo_time = 0;
+    next_sysex_time = 0;
     while (1)
     {
         curtrack = NULL;
@@ -333,7 +336,27 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
             }
         }
 
-        if (curtrack == NULL) break;
+        if (curtrack == NULL)
+        {
+            if (mt32_delay && (events[events[0].len].time < next_sysex_time))
+            {
+                // add extra event
+                midi_track_info extra_track;
+
+                extra_track.ptr = &(extra_track.event_status);
+                extra_track.len = 1;
+                extra_track.delta = ( ( ((next_sysex_time - tempo_time) * time_division + (tempo * (uint64_t) 1000 - 1)) / (tempo * (uint64_t) 1000) ) + tempo_tick ) - last_tick;
+                extra_track.event_status = 0xf4; // unused/invalid midi event type
+                extra_track.eot = 0;
+
+                curtrack = &extra_track;
+                lasttracknum = -1;
+            }
+            else
+            {
+                break;
+            }
+        }
 
         // update deltas
         if (curtrack->delta != 0)
@@ -351,18 +374,14 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
         event.sysex = NULL;
 
         // calculate event time in nanoseconds
-        {
-            div_t divres;
+        divres = div(event.tick - tempo_tick, time_division);
 
-            divres = div(event.tick - tempo_tick, time_division);
+        event.time = ( ((1000 * divres.rem) * (uint64_t)tempo) / time_division )
+                   + ( (divres.quot * (uint64_t)tempo) * 1000 )
+                   + tempo_time
+                   ;
 
-            event.time = ( ((1000 * divres.rem) * (uint64_t)tempo) / time_division )
-                       + ( (divres.quot * (uint64_t)tempo) * 1000 )
-                       + tempo_time
-                       ;
-
-            //event.time = ( (((event.tick - tempo_tick) * (uint64_t) 1000) * tempo) / time_division ) + tempo_time;
-        }
+        //event.time = ( (((event.tick - tempo_tick) * (uint64_t) 1000) * tempo) / time_division ) + tempo_time;
 
         eventextralen = -1;
 
@@ -504,6 +523,27 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
                             curtrack->len -= varlen;
 
                             eventextralen = 1 + curtrack->ptr - startevent;
+
+                            if (mt32_delay)
+                            {
+                                if (event.time < next_sysex_time)
+                                {
+                                    // calculate new event tick
+                                    last_tick = event.tick = ( ((next_sysex_time - tempo_time) * time_division + (tempo * (uint64_t) 1000 - 1)) / (tempo * (uint64_t) 1000) ) + tempo_tick;
+
+                                    // calculate new event time in nanoseconds
+                                    divres = div(event.tick - tempo_tick, time_division);
+
+                                    event.time = ( ((1000 * divres.rem) * (uint64_t)tempo) / time_division )
+                                               + ( (divres.quot * (uint64_t)tempo) * 1000 )
+                                               + tempo_time
+                                               ;
+
+                                    //event.time = ( (((event.tick - tempo_tick) * (uint64_t) 1000) * tempo) / time_division ) + tempo_time;
+                                }
+
+                                next_sysex_time = event.time + (40 + 10 + ((event.len * 10000 + 31249) / 31250)) * 1000000;
+                            }
                         }
                     }
                     else
@@ -514,6 +554,11 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
                 }
                 else
                 {
+                    if ((curtrack->event_status == 0xf4) && mt32_delay) // extra event
+                    {
+                        event.type = SND_SEQ_EVENT_NONE;
+                        eventextralen = 0;
+                    }
                     curtrack->len = 0;
                     curtrack->eot = 1;
                 }
@@ -887,6 +932,9 @@ static void *midi_thread_proc(void *arg)
                     event.data.queue.queue = midi_queue;
                     event.data.queue.param.value = events[current_event].tempo;
                     break;
+                case SND_SEQ_EVENT_NONE:
+                    snd_seq_ev_set_fixed(&event);
+                    break;
             }
 
             snd_seq_event_output(midi_seq, &event);
@@ -948,6 +996,30 @@ static int send_initial_sysex_events(unsigned char const *sysex_events)
         event.dest.client = dst_client_id;
         event.dest.port = dst_port_id;
 
+        if (mt32_delay)
+        {
+            snd_seq_queue_status_t *queue_status;
+            const snd_seq_real_time_t *real_time;
+
+            snd_seq_queue_status_alloca(&queue_status);
+
+            if (0 > snd_seq_get_queue_status(midi_seq, midi_queue, queue_status))
+            {
+                return 0;
+            }
+
+            real_time = snd_seq_queue_status_get_real_time(queue_status);
+
+            event.flags = SND_SEQ_TIME_STAMP_REAL | SND_SEQ_TIME_MODE_ABS;
+            event.time.time.tv_sec = real_time->tv_sec;
+            event.time.time.tv_nsec = real_time->tv_nsec + (40 + 10 + 10) * 1000000;
+            if (event.time.time.tv_nsec >= 1000000000)
+            {
+                event.time.time.tv_sec++;
+                event.time.time.tv_nsec -= 1000000000;
+            }
+        }
+
         while (*sysex_events == 0xf0)
         {
             int len;
@@ -959,9 +1031,26 @@ static int send_initial_sysex_events(unsigned char const *sysex_events)
             sysex_events += len;
             events_len += len;
             snd_seq_event_output(midi_seq, &event);
+
+            if (mt32_delay)
+            {
+                event.time.time.tv_nsec += (40 + 10 + ((len * 10000 + 31249) / 31250)) * 1000000;
+                if (event.time.time.tv_nsec >= 1000000000)
+                {
+                    event.time.time.tv_sec++;
+                    event.time.time.tv_nsec -= 1000000000;
+                }
+            }
         };
 
         snd_seq_ev_set_fixed(&event);
+
+        if (mt32_delay)
+        {
+            event.type = SND_SEQ_EVENT_NONE;
+            snd_seq_event_output(midi_seq, &event);
+        }
+
         event.type = SND_SEQ_EVENT_STOP;
         event.dest.client = SND_SEQ_CLIENT_SYSTEM;
         event.dest.port = SND_SEQ_PORT_SYSTEM_TIMER;
@@ -1621,11 +1710,13 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
     address = NULL;
     sysex_events = NULL;
     controller_events = NULL;
+    mt32_delay = 0;
     if (parameters != NULL)
     {
         address = parameters->midi_device_name;
         sysex_events = parameters->initial_sysex_events;
         controller_events = parameters->reset_controller_events;
+        if (midi_type) mt32_delay = parameters->mt32_delay;
     }
 
     memset(channel_notes, 0, 128*MIDI_CHANNELS*sizeof(int));

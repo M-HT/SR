@@ -481,8 +481,8 @@ int MidiPlugin2_Startup(void)
     #define free_library FreeLibrary
     #define get_proc_address GetProcAddress
 
-    if (Game_MidiSubsystem == 11) plugin_name = ".\\midi2-windows.dll";
-    else if (Game_MidiSubsystem == 12) plugin_name = ".\\midi2-alsa.dll";
+    if (Game_MidiSubsystem == 11 || Game_MidiSubsystem == 21) plugin_name = ".\\midi2-windows.dll";
+    else if (Game_MidiSubsystem == 12 || Game_MidiSubsystem == 22) plugin_name = ".\\midi2-alsa.dll";
     else
     {
         fprintf(stderr, "%s: error: %s\n", "midi2", "unknown plugin");
@@ -501,8 +501,8 @@ int MidiPlugin2_Startup(void)
     #define free_library dlclose
     #define get_proc_address dlsym
 
-    if (Game_MidiSubsystem == 11) plugin_name = "./midi2-windows.so";
-    else if (Game_MidiSubsystem == 12) plugin_name = "./midi2-alsa.so";
+    if (Game_MidiSubsystem == 11 || Game_MidiSubsystem == 21) plugin_name = "./midi2-windows.so";
+    else if (Game_MidiSubsystem == 12 || Game_MidiSubsystem == 22) plugin_name = "./midi2-alsa.so";
     else
     {
         fprintf(stderr, "%s: error: %s\n", "midi2", "unknown plugin");
@@ -530,6 +530,11 @@ int MidiPlugin2_Startup(void)
 
     memset(&MP2_parameters, 0, sizeof(MP2_parameters));
     MP2_parameters.midi_device_name = Game_MidiDevice;
+    if (Game_MidiSubsystem > 20)
+    {
+        MP2_parameters.midi_type = 2;
+    }
+    MP2_parameters.mt32_delay = Game_MT32DelaySysex;
 
     if (MP2_initialize(&MP2_parameters, &MP2_functions))
     {

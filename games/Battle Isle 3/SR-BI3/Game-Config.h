@@ -40,7 +40,9 @@ GAME_CONFIG_STORAGE int Audio_MidiSubsystem;            /* MIDI subsystem
                                                            2: BASSMIDI
                                                            3: ADLMIDI
                                                            11: native Windows
-                                                           12: ALSA */
+                                                           12: ALSA
+                                                           21: MT32 - native Windows
+                                                           22: MT32 - ALSA */
 GAME_CONFIG_STORAGE int Audio_MidiVolume;               /* MIDI volume (0-127) */
 GAME_CONFIG_STORAGE const char *Audio_SoundFontPath;    /* Path to SoundFont file */
 GAME_CONFIG_STORAGE const char *Audio_MidiDevice;       /* MIDI device */
@@ -51,6 +53,7 @@ GAME_CONFIG_STORAGE int Audio_OPL3Emulator;             /* OPL3 emulator
 GAME_CONFIG_STORAGE int Audio_MidiResamplingQuality;    /* MIDI resampling quality
                                                            0: normal quality
                                                            1: higher quality */
+GAME_CONFIG_STORAGE int Audio_MT32DelaySysex;           /* Add delays when sending sysex messages on MT-32 ? (to prevent buffer overflow with Rev.0 MT-32) */
 
 GAME_CONFIG_STORAGE int Display_Width;
 GAME_CONFIG_STORAGE int Display_Height;

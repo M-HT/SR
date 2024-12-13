@@ -1149,12 +1149,14 @@ static int Game_Initialize(void)
 
     Game_VolumeDelta = 0;
 
+    Game_LoadMidiFiles = 0;
     Game_SoundFontPath = NULL;
     Game_MT32RomsPath = NULL;
     Game_AWE32RomPath = NULL;
     Game_MidiDevice = NULL;
     Game_OPL3BankNumber = 77;
     Game_OPL3Emulator = 0;
+    Game_MT32DelaySysex = 0;
     Game_SongLength = 0;
 
     if (Game_ConfigFilename[0] == 0)
@@ -1417,11 +1419,33 @@ static void Game_Initialize2(void)
 
             if (audio_ok)
             {
+                FILE *f;
+
                 Game_AudioRate = frequency;
                 Game_AudioFormat = format;
                 Game_AudioChannels = channels;
 
                 Mix_AllocateChannels(1);
+
+                if (Music)
+                {
+                    if ((Game_MidiSubsystem < 10) || (Game_MidiSubsystem > 20 && Game_MidiSubsystem <= 30))
+                    {
+                        Game_LoadMidiFiles = 1;
+                    }
+                    else if (Game_MidiSubsystem > 30)
+                    {
+                        f = Game_fopen("C:\\SOUND\\ROLAND.CAT", "rb");
+                        if (f == NULL)
+                        {
+                            Game_LoadMidiFiles = 1;
+                        }
+                        else
+                        {
+                            Game_fclose(f);
+                        }
+                    }
+                }
 
                 if (Music && Game_MidiSubsystem)
                 {
@@ -1481,7 +1505,7 @@ static void Game_Initialize2(void)
             Game_SoundCfg.MusicDriver = 0;          // adlib / soundblaster fm
             Game_SoundCfg.MusicBasePort = 0x0388;   // adlib base port
         }
-        else if (Game_MidiSubsystem == 11 || Game_MidiSubsystem > 30)
+        else if (Game_MidiSubsystem == 11 || (Game_MidiSubsystem > 30 && !Game_LoadMidiFiles))
         {
             Game_SoundCfg.MusicDriver = 1;          // roland lapc-1 / mt32
             Game_SoundCfg.MusicBasePort = 0x0330;   // MT32 base port

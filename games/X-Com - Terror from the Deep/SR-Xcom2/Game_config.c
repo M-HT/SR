@@ -311,6 +311,19 @@ void Game_ReadConfig(void)
                     Game_OPL3Emulator = 1;
                 }
             }
+            else if ( strcasecmp(str, "MT32_Delay_Sysex") == 0 ) // str equals "MT32_Delay_Sysex"
+            {
+                // add delays when sending sysex messages on MT-32
+
+                if ( strcasecmp(param, "yes") == 0 ) // param equals "yes"
+                {
+                    Game_MT32DelaySysex = 1;
+                }
+                else if ( strcasecmp(param, "no") == 0 ) // param equals "no"
+                {
+                    Game_MT32DelaySysex = 0;
+                }
+            }
 
         }
         else if ( strncasecmp(str, "Sound", 5) == 0 ) // str begins with "Sound"

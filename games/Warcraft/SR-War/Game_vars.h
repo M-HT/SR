@@ -144,12 +144,15 @@ EXTERNAL_VARIABLE int Game_MidiSubsystem;			/* MIDI subsystem
                                                        2: BASSMIDI
                                                        3: ADLMIDI
                                                        11: native Windows
-                                                       12: ALSA */
+                                                       12: ALSA
+                                                       21: MT32 - native Windows
+                                                       22: MT32 - ALSA */
 EXTERNAL_VARIABLE char *Game_SoundFontPath;			/* Path to SoundFont file */
 EXTERNAL_VARIABLE char *Game_MidiDevice;			/* MIDI device name */
 EXTERNAL_VARIABLE int Game_OPL3Emulator;			/* OPL3 emulator
                                                        0: fast - DOSBox
                                                        1: precise - Nuked OPL3 */
+EXTERNAL_VARIABLE int Game_MT32DelaySysex;			/* Add delays when sending sysex messages on MT-32 ? (to prevent buffer overflow with Rev.0 MT-32) */
 
 
 EXTERNAL_VARIABLE Game_sample *Game_SampleCache[GAME_SAMPLE_CACHE_SIZE];

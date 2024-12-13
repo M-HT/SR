@@ -170,6 +170,7 @@ EXTERNAL_VARIABLE int Game_MidiSubsystem;			/* MIDI subsystem
                                                        22: ALSA
                                                        31: MT32 - native Windows
                                                        32: MT32 - ALSA */
+EXTERNAL_VARIABLE int Game_LoadMidiFiles;			// Load midi files from disk ?
 EXTERNAL_VARIABLE int Game_MidiRemapGM2MT32;		// Remap General MIDI to MT32
 EXTERNAL_VARIABLE char *Game_SoundFontPath;			/* Path to SoundFont file */
 EXTERNAL_VARIABLE char *Game_MT32RomsPath;			/* Path to MT32 roms */
@@ -179,6 +180,7 @@ EXTERNAL_VARIABLE int Game_OPL3BankNumber;			/* OPL3 bank number (0-77) */
 EXTERNAL_VARIABLE int Game_OPL3Emulator;			/* OPL3 emulator
                                                        0: fast - DOSBox
                                                        1: precise - Nuked OPL3 */
+EXTERNAL_VARIABLE int Game_MT32DelaySysex;			/* Add delays when sending sysex messages on MT-32 ? (to prevent buffer overflow with Rev.0 MT-32) */
 EXTERNAL_VARIABLE int Game_SongLength;				/* Length of last loaded song */
 
 

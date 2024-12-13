@@ -204,6 +204,14 @@ void Game_ReadConfig(void)
                 {
                     Game_MidiSubsystem = 12;
                 }
+                else if ( strcasecmp(param, "mt32-nativewindows") == 0 ) // param equals "mt32-nativewindows"
+                {
+                    Game_MidiSubsystem = 21;
+                }
+                else if ( strcasecmp(param, "mt32-alsa") == 0 ) // param equals "mt32-alsa"
+                {
+                    Game_MidiSubsystem = 22;
+                }
                 else if ( strcasecmp(param, "sdl_mixer") == 0 ) // param equals "sdl_mixer"
                 {
                     Game_MidiSubsystem = 0;
@@ -238,6 +246,19 @@ void Game_ReadConfig(void)
                 else if ( strcasecmp(param, "precise") == 0 ) // param equals "precise"
                 {
                     Game_OPL3Emulator = 1;
+                }
+            }
+            else if ( strcasecmp(str, "MT32_Delay_Sysex") == 0 ) // str equals "MT32_Delay_Sysex"
+            {
+                // add delays when sending sysex messages on MT-32
+
+                if ( strcasecmp(param, "yes") == 0 ) // param equals "yes"
+                {
+                    Game_MT32DelaySysex = 1;
+                }
+                else if ( strcasecmp(param, "no") == 0 ) // param equals "no"
+                {
+                    Game_MT32DelaySysex = 0;
                 }
             }
 

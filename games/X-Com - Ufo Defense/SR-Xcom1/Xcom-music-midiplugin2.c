@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2024 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -54,7 +54,7 @@ typedef struct _MP_midi_ {
 static const unsigned char roland_canvas_initial_sysex[] = {
     0xF0, 0x41, 0x10, 0x42, 0x12, // sysex event header
     0x40, 0x01, 0x30, 0x02, 0x04, 0x00, 0x40, 0x40, 0x00, 0x00, // reverb settings
-    0x09, // checkum
+    0x09, // checksum
     0xF7, // end of sysex event
     0xFF  // end of sysex events list
 };
@@ -229,7 +229,7 @@ static int prepare_roland_mt32_sysex(void)
         file_offset++;
     } while (lapc1_pat[file_offset] != 0xff);
 
-    *cur_sysex = 0xf7;
+    *cur_sysex = 0xff;
 
     free(lapc1_pat);
 
@@ -303,19 +303,27 @@ int MidiPlugin2_Startup(void)
     }
     else
     {
-        if (roland_mt32_initial_sysex == NULL)
+        if (Game_LoadMidiFiles)
         {
-            if (0 != prepare_roland_mt32_sysex())
-            {
-                fprintf(stderr, "%s: error: %s\n", "midi2", "failed to prepare MT-32 sysex");
-                free_library(MP2_handle);
-                return 4;
-            }
+            MP2_parameters.midi_type = 2;
         }
-        MP2_parameters.initial_sysex_events = roland_mt32_initial_sysex;
-        MP2_parameters.reset_controller_events = roland_mt32_reset_controller;
-        MP2_parameters.midi_type = 1;
+        else
+        {
+            if (roland_mt32_initial_sysex == NULL)
+            {
+                if (0 != prepare_roland_mt32_sysex())
+                {
+                    fprintf(stderr, "%s: error: %s\n", "midi2", "failed to prepare MT-32 sysex");
+                    free_library(MP2_handle);
+                    return 4;
+                }
+            }
+            MP2_parameters.initial_sysex_events = roland_mt32_initial_sysex;
+            MP2_parameters.reset_controller_events = roland_mt32_reset_controller;
+            MP2_parameters.midi_type = 1;
+        }
     }
+    MP2_parameters.mt32_delay = Game_MT32DelaySysex;
 
     if (MP2_initialize(&MP2_parameters, &MP2_functions))
     {

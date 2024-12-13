@@ -116,7 +116,7 @@ int Game_ReadSong(const char *catalog_name, int index, uint8_t *buf)
 
    if (index < 0) return 0;
 
-    if ((Game_MidiSubsystem < 10) || (Game_MidiSubsystem > 20 && Game_MidiSubsystem <= 30))
+    if (Game_LoadMidiFiles)
     {
         if (Game_FindMidiFile(index, buf))
         {

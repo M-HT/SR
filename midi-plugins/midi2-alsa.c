@@ -323,6 +323,11 @@ static void *midi_thread_proc(void *arg)
 
                             snd_seq_connect_to(midi_seq, src_port_id, dst_client_id, dst_port_id);
 
+                            if (midi_type == 2)
+                            {
+                                mt32_initialize_gm();
+                            }
+
                             if (initial_sysex_events != NULL)
                             {
                                 send_initial_sysex_events(initial_sysex_events);
@@ -332,6 +337,11 @@ static void *midi_thread_proc(void *arg)
 
                             if (midi_loaded && !midi_eof)
                             {
+                                if (midi_type == 2)
+                                {
+                                    mt32_reinstall_timbres();
+                                }
+
                                 for (chan = 0; chan < MIDI_CHANNELS; chan++)
                                 {
                                     channel_volume[chan] = 100;

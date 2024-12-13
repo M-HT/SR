@@ -393,6 +393,11 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 						get_device_interface_name(uDeviceID);
 						register_notifications();
 
+						if (midi_type == 2)
+						{
+							mt32_initialize_gm();
+						}
+
 						if (initial_sysex_events != NULL && *initial_sysex_events == 0xf0)
 						{
 							send_initial_sysex_events(initial_sysex_events);
@@ -402,6 +407,11 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 
 						if (midi_loaded && !midi_eof)
 						{
+							if (midi_type == 2)
+							{
+								mt32_reinstall_timbres();
+							}
+
 							midiStreamProperty(hStream, (LPBYTE)&miditimediv, MIDIPROP_SET | MIDIPROP_TIMEDIV);
 
 							midiStreamProperty(hStream, (LPBYTE)&miditempo, MIDIPROP_SET | MIDIPROP_TEMPO);

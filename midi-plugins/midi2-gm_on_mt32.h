@@ -47,6 +47,8 @@ static int8_t mt32_chan_timbs[MT32_NUM_CHANS]; // indexes used by channels 1-16 
 
 static int8_t mt32_timbre_index[256];
 
+static int8_t mt32_song_timbre_index[256]; // timbres used by currently playing song
+
 static struct {
     uint8_t mt32_channel;
     uint8_t rpn_flags;
@@ -1762,11 +1764,69 @@ static void mt32_shutdown_gm(void)
     send_initial_sysex_events(buffer);
 }
 
+static int mt32_prepare_timbre_in_slot(uint8_t *buffer, uint8_t bank, uint8_t num, int local_index)
+{
+    int bank_index, index, num_partials, buf_len;
+    uint32_t addr;
+    uint8_t temp_buf[5];
+
+    bank_index = num;
+    if (bank == 0x7f) bank_index += 128;
+
+    mt32_timbre_index[bank_index] = local_index;
+
+    // found free/LRU timbre, update its timestamp and replace it
+    mt32_timb_data[local_index].hist = mt32_timbre_event;
+    mt32_timb_data[local_index].num = num; // record global # in slot
+    mt32_timb_data[local_index].bank = bank;
+    mt32_timb_data[local_index].attribs = 0b10000000; // mark timbre "in use/unprotected"
+
+    num_partials = 0;
+    for (index = 3; index >= 0; index--)
+    {
+        if (mt32_timbres[bank_index]->common_parameter.partial_mute & (1 << index))
+        {
+            num_partials = index + 1;
+            break;
+        }
+    }
+
+    buf_len = 0;
+
+    // addr: 08 00 00 - 08 7e 00 - Timbre memory
+    buf_len += mt32_prepare_sysex(buffer + buf_len, 0x08, local_index * 2, 0x00, (const uint8_t *)mt32_timbres[bank_index], sizeof(mt32_timbres[0]->common_parameter) + num_partials * sizeof(mt32_timbres[0]->partial_parameter[0]), 0);
+
+    if (bank == 0x7f)
+    {
+        temp_buf[0] = local_index;  // timbre: 0-93/127 (i01-i64,r01-r30/r63,OFF)
+        temp_buf[1] = 100;          // output level: 0-100
+
+        addr = 0x90 + 4 * (num - 24);
+
+        // addr: 03 01 10 - 03 xx yy - Rhythm Setup Temporary Area
+        buf_len += mt32_prepare_sysex(buffer + buf_len, 0x03, addr >> 7, addr & 0x7f, temp_buf, 2, 0);
+    }
+    else
+    {
+        temp_buf[0] = 2;            // timbre group: 0-3 (a, b, i, r)
+        temp_buf[1] = local_index;  // timbre number: 0-63
+        temp_buf[2] = 24;           // key shift: 0-48 (-24 - 24)
+        temp_buf[3] = 50;           // fine tune: 0-100 (-50 - 50)
+        temp_buf[4] = 2;            // bender range: 0-24
+
+        addr = 8 * num;
+
+        // addr: 05 00 00 - 05 xx yy - Patch Memory
+        buf_len += mt32_prepare_sysex(buffer + buf_len, 0x05, addr >> 7, addr & 0x7f, temp_buf, 5, 0);
+    }
+
+    return buf_len;
+}
+
 static int mt32_prepare_timbre(uint8_t *buffer, uint8_t bank, uint8_t num)
 {
-    int bank_index, local_index, index, num_partials, buf_len;
-    uint32_t min_hist, addr;
-    uint8_t temp_buf[5];
+    int bank_index, local_index, index;
+    uint32_t min_hist;
 
     bank_index = num;
     if (bank == 0x7f) bank_index += 128;
@@ -1819,54 +1879,7 @@ static int mt32_prepare_timbre(uint8_t *buffer, uint8_t bank, uint8_t num)
         }
     }
 
-    mt32_timbre_index[bank_index] = local_index;
-
-    // found free/LRU timbre, update its timestamp and replace it
-    mt32_timb_data[local_index].hist = mt32_timbre_event;
-    mt32_timb_data[local_index].num = num; // record global # in slot
-    mt32_timb_data[local_index].bank = bank;
-    mt32_timb_data[local_index].attribs = 0b10000000; // mark timbre "in use/unprotected"
-
-    num_partials = 0;
-    for (index = 3; index >= 0; index--)
-    {
-        if (mt32_timbres[bank_index]->common_parameter.partial_mute & (1 << index))
-        {
-            num_partials = index + 1;
-            break;
-        }
-    }
-
-    buf_len = 0;
-
-    // addr: 08 00 00 - 08 7e 00 - Timbre memory
-    buf_len += mt32_prepare_sysex(buffer + buf_len, 0x08, local_index * 2, 0x00, (const uint8_t *)mt32_timbres[bank_index], sizeof(mt32_timbres[0]->common_parameter) + num_partials * sizeof(mt32_timbres[0]->partial_parameter[0]), 0);
-
-    if (bank == 0x7f)
-    {
-        temp_buf[0] = local_index;  // timbre: 0-93/127 (i01-i64,r01-r30/r63,OFF)
-        temp_buf[1] = 100;          // output level: 0-100
-
-        addr = 0x90 + 4 * (num - 24);
-
-        // addr: 03 01 10 - 03 xx yy - Rhythm Setup Temporary Area
-        buf_len += mt32_prepare_sysex(buffer + buf_len, 0x03, addr >> 7, addr & 0x7f, temp_buf, 2, 0);
-    }
-    else
-    {
-        temp_buf[0] = 2;            // timbre group: 0-3 (a, b, i, r)
-        temp_buf[1] = local_index;  // timbre number: 0-63
-        temp_buf[2] = 24;           // key shift: 0-48 (-24 - 24)
-        temp_buf[3] = 50;           // fine tune: 0-100 (-50 - 50)
-        temp_buf[4] = 2;            // bender range: 0-24
-
-        addr = 8 * num;
-
-        // addr: 05 00 00 - 05 xx yy - Patch Memory
-        buf_len += mt32_prepare_sysex(buffer + buf_len, 0x05, addr >> 7, addr & 0x7f, temp_buf, 5, 0);
-    }
-
-    return buf_len;
+    return mt32_prepare_timbre_in_slot(buffer, bank, num, local_index);
 }
 
 static void mt32_init_vars_and_install_timbres(unsigned int number_of_tracks, const midi_track_info *midi_tracks)
@@ -1923,6 +1936,11 @@ static void mt32_init_vars_and_install_timbres(unsigned int number_of_tracks, co
 
     // prepare timbres
 
+    for (index = 0; index < 256; index++)
+    {
+        mt32_song_timbre_index[index] = -1;
+    }
+
     if (number_of_tracks == 1)
     {
         track = midi_tracks[0];
@@ -1955,7 +1973,7 @@ static void mt32_init_vars_and_install_timbres(unsigned int number_of_tracks, co
     }
     programs[9] = 0;
 
-    while (num_timbres < 64)
+    while (num_timbres < MT32_NUM_TIMBS)
     {
         curtrack = NULL;
 
@@ -2145,6 +2163,41 @@ static void mt32_init_vars_and_install_timbres(unsigned int number_of_tracks, co
         if (used_timbres[index + 128])
         {
             buf_len += mt32_prepare_timbre(buffer + buf_len, 0x7f, index);
+        }
+    }
+
+    if (buf_len)
+    {
+        buffer[buf_len] = 0xff;
+
+        send_initial_sysex_events(buffer);
+
+        for (index = 0; index < 256; index++)
+        {
+            if (used_timbres[index] && (mt32_timbre_index[index] >= 0))
+            {
+                mt32_song_timbre_index[index] = mt32_timbre_index[index];
+            }
+        }
+    }
+}
+
+static void mt32_reinstall_timbres(void)
+{
+    int index, buf_len;
+    uint8_t buffer[17348];
+
+    buf_len = 0;
+
+    for (index = 0; index < 128; index++)
+    {
+        if (mt32_song_timbre_index[index] >= 0)
+        {
+            buf_len += mt32_prepare_timbre_in_slot(buffer + buf_len, 0, index, mt32_song_timbre_index[index]);
+        }
+        if (mt32_song_timbre_index[index + 128] >= 0)
+        {
+            buf_len += mt32_prepare_timbre_in_slot(buffer + buf_len, 0x7f, index, mt32_song_timbre_index[index]);
         }
     }
 

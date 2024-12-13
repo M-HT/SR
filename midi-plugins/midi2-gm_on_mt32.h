@@ -1704,9 +1704,12 @@ static int mt32_prepare_sysex(uint8_t *buffer, uint8_t addr_a, uint8_t addr_b, u
 static void mt32_initialize_gm(void)
 {
     int buf_len, index;
-    uint8_t buffer[440];
+    uint8_t buffer[452];
 
     buf_len = 0;
+
+    // addr: 20 01 00 - Display - DISPLAY RESET
+    buf_len += mt32_prepare_sysex(buffer + buf_len, 0x20, 0x01, 0x00, mt32_part_chans, 1, 0); // remove message from display
 
     // addr: 7f 00 00 - All parameters Reset
     buf_len += mt32_prepare_sysex(buffer + buf_len, 0x7f, 0x00, 0x00, mt32_part_chans, 1, 290); // reset all internal parameters/patches
@@ -1749,9 +1752,12 @@ static void mt32_initialize_gm(void)
 static void mt32_shutdown_gm(void)
 {
     int buf_len;
-    uint8_t buffer[36];
+    uint8_t buffer[44];
 
     buf_len = 0;
+
+    // addr: 20 01 00 - Display - DISPLAY RESET
+    buf_len += mt32_prepare_sysex(buffer + buf_len, 0x20, 0x01, 0x00, mt32_part_chans, 1, 0); // remove message from display
 
     // addr: 7f 00 00 - All parameters Reset
     buf_len += mt32_prepare_sysex(buffer + buf_len, 0x7f, 0x00, 0x00, mt32_part_chans, 1, 290); // reset all internal parameters/patches
@@ -1948,10 +1954,10 @@ static void mt32_init_vars_and_install_timbres(unsigned int number_of_tracks, co
     }
     else
     {
-        tracks = (midi_track_info *)malloc(number_of_tracks * sizeof(midi_tracks));
+        tracks = (midi_track_info *)malloc(number_of_tracks * sizeof(midi_track_info));
         if (tracks == NULL) return;
 
-        memcpy(tracks, midi_tracks, number_of_tracks * sizeof(midi_tracks));
+        memcpy(tracks, midi_tracks, number_of_tracks * sizeof(midi_track_info));
     }
 
     // prepare tracks
@@ -2197,7 +2203,7 @@ static void mt32_reinstall_timbres(void)
         }
         if (mt32_song_timbre_index[index + 128] >= 0)
         {
-            buf_len += mt32_prepare_timbre_in_slot(buffer + buf_len, 0x7f, index, mt32_song_timbre_index[index]);
+            buf_len += mt32_prepare_timbre_in_slot(buffer + buf_len, 0x7f, index, mt32_song_timbre_index[index + 128]);
         }
     }
 

@@ -251,14 +251,16 @@ static midi_queue_info *allocate_queue_info(void);
 static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 {
 	midi_event_info *events;
-	unsigned int current_event, num_events, current_notification_events;
+	unsigned int current_event, num_events, current_notification_events, insert_events;
 	uint32_t base_time, stream_time;
 	int do_sleep, midi_stream_exists, chan;
 	midi_queue_info *current_queue_wait, *current_queue_send, *qinfo;
 	HANDLE AvrtHandle;
-	DWORD TaskIndex;
+	DWORD TaskIndex, BaseTicks;
 	MMTIME mmtime;
 	MIDIEVENT *event;
+
+	BaseTicks = GetTickCount();
 
 	AvrtHandle = NULL;
 	TaskIndex = 0;
@@ -480,6 +482,13 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 
 		EnterCriticalSection(&midi_critical_section);
 
+		if ((!midi_loaded) || (!midi_playing) || (midi_eof))
+		{
+			LeaveCriticalSection(&midi_critical_section);
+			do_sleep = 1;
+			continue;
+		}
+
 		events = (midi_event_info *) midi_events;
 		current_event = midi_current_event;
 		base_time = midi_base_time;
@@ -495,13 +504,6 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 				current_queue_wait = current_queue_wait->next;
 			} while (current_queue_wait->header.dwFlags & MHDR_DONE);
 			midi_queue_wait = current_queue_wait;
-		}
-
-		if ((!midi_loaded) || (!midi_playing) || (midi_eof))
-		{
-			LeaveCriticalSection(&midi_critical_section);
-			do_sleep = 1;
-			continue;
 		}
 
 		if (current_event > num_events)
@@ -534,10 +536,23 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 			midi_base_time = base_time;
 		}
 
+		insert_events = 0;
 		if (midi_new_volume != midi_current_volume)
 		{
 			midi_current_volume = midi_new_volume;
+			insert_events |= 1;
+		}
+		if (state_mt32_display == 5)
+		{
+			if (GetTickCount() - BaseTicks >= 5000)
+			{
+				state_mt32_display = 2;
+				insert_events |= 2;
+			}
+		}
 
+		if (insert_events)
+		{
 			current_queue_send = (midi_queue_info *) midi_queue_send;
 			if (current_queue_send->next == current_queue_wait)
 			{
@@ -555,15 +570,29 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 
 			current_queue_send->header.dwBytesRecorded = 0;
 
-			for (chan = 0; chan < MIDI_CHANNELS; chan++)
+			if (insert_events & 1)
+			{
+				for (chan = 0; chan < MIDI_CHANNELS; chan++)
+				{
+					event = (MIDIEVENT *) &(current_queue_send->buffer[current_queue_send->header.dwBytesRecorded]);
+
+					event->dwDeltaTime = 0;
+					event->dwStreamID = 0;
+					event->dwEvent = MEVT_F_SHORT | 0xb0 | chan | (7 << 8) | (((midi_current_volume * channel_volume[chan]) / 127) << 16);
+
+					current_queue_send->header.dwBytesRecorded += offsetof(MIDIEVENT, dwParms);
+				}
+			}
+			if (insert_events & 2)
 			{
 				event = (MIDIEVENT *) &(current_queue_send->buffer[current_queue_send->header.dwBytesRecorded]);
 
 				event->dwDeltaTime = 0;
 				event->dwStreamID = 0;
-				event->dwEvent = MEVT_F_SHORT | 0xb0 | chan | (7 << 8) | (((midi_current_volume * channel_volume[chan]) / 127) << 16);
+				event->dwEvent = MEVT_F_LONG | 11;
 
-				current_queue_send->header.dwBytesRecorded += offsetof(MIDIEVENT, dwParms);
+				memcpy(event->dwParms, sysex_mt32_reset_display, 11);
+				current_queue_send->header.dwBytesRecorded += offsetof(MIDIEVENT, dwParms) + ((11 + 3) & ~3);
 			}
 
 			if (MMSYSERR_NOERROR == midiStreamOut(hStream, &(current_queue_send->header), sizeof(MIDIHDR)))
@@ -1351,10 +1380,21 @@ static int pause(void)
 		}
 		midi_queue_wait = current_queue_wait;
 
-		if (MMSYSERR_NOERROR == midiStreamPause(hStream))
+		if (state_mt32_display == 2 && !mt32_delay)
 		{
-			midi_playing = 0;
+			state_mt32_display = 4;
+			send_initial_sysex_events(sysex_mt32_display);
+		}
+		else
+		{
+			if (MMSYSERR_NOERROR == midiStreamPause(hStream))
+			{
+				midi_playing = 0;
+			}
+		}
 
+		if (!midi_playing)
+		{
 			// stop playing notes on all channels
 			for (chan = 0; chan < MIDI_CHANNELS; chan++)
 			{
@@ -1388,6 +1428,12 @@ static int resume(void)
 	if (!midi_playing)
 	{
 		EnterCriticalSection(&midi_critical_section);
+
+		if (state_mt32_display == 4)
+		{
+			state_mt32_display = 2;
+			send_initial_sysex_events(sysex_mt32_reset_display);
+		}
 
 		if (MMSYSERR_NOERROR == midiStreamRestart(hStream))
 		{
@@ -1499,6 +1545,14 @@ static void shutdown_plugin(void)
 		{
 			mt32_shutdown_gm();
 		}
+		else if (midi_type)
+		{
+			if (state_mt32_display >= 4)
+			{
+				state_mt32_display = 2;
+				send_initial_sysex_events(sysex_mt32_reset_display);
+			}
+		}
 		deinitialize_queue();
 		midiStreamClose(hStream);
 		hStream = NULL;
@@ -1568,6 +1622,7 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 		if (midi_type != 2) sysex_events = parameters->initial_sysex_events;
 		if (midi_type != 2) controller_events = parameters->reset_controller_events;
 		if (midi_type) mt32_delay = parameters->mt32_delay;
+		prepare_mt32_display_sysex(parameters->mt32_display_text);
 	}
 
 	InitializeCriticalSection(&midi_critical_section);
@@ -1659,6 +1714,14 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 	{
 		mt32_initialize_gm();
 	}
+	else if (midi_type)
+	{
+		if (state_mt32_display == 1)
+		{
+			state_mt32_display = (mt32_delay) ? 4 : 5;
+			send_initial_sysex_events(sysex_mt32_display);
+		}
+	}
 
 	if (sysex_events != NULL && *sysex_events == 0xf0)
 	{
@@ -1691,7 +1754,7 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
 
 	reset_playing();
 
-	midi_thread_handle = CreateThread(NULL, 4096, &MidiThreadProc, NULL, 0, NULL);
+	midi_thread_handle = CreateThread(NULL, 65536, &MidiThreadProc, NULL, 0, NULL);
 	if (midi_thread_handle == NULL)
 	{
 		if (midi_type == 2)

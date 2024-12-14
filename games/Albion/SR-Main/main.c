@@ -1134,7 +1134,7 @@ static void Game_ReadCDPath(void)
                 }
             }
         }
-        fclose(f);
+        Game_fclose(f);
     }
 }
 
@@ -1190,14 +1190,14 @@ static void Game_ReadFontData(void)
     items = fread(buf8, 1, 8, f);
     if ((items != 8) || (buf8[6] != 2))
     {
-        fclose(f);
+        Game_fclose(f);
         return;
     }
     items = fread(&size1, 1, 4, f);
     items = fread(&size2, 1, 4, f);
     if (items != 4)
     {
-        fclose(f);
+        Game_fclose(f);
         return;
     }
 
@@ -1205,14 +1205,14 @@ static void Game_ReadFontData(void)
 
     if (albion_font == NULL)
     {
-        fclose(f);
+        Game_fclose(f);
         return;
     }
 
     fseek(f, size1, SEEK_CUR);
     items = fread(albion_font, 1, size2, f);
 
-    fclose(f);
+    Game_fclose(f);
 
     if (items != size2)
     {

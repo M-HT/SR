@@ -40,6 +40,7 @@ static volatile int midi_current_volume = 127;
 static volatile int midi_new_volume = 127;
 static volatile int midi_loop_count = 0;
 static volatile int midi_eof = 0;
+static volatile int state_mt32_display = 0;
 
 #if !defined(MIDI_CHANNELS)
 #define MIDI_CHANNELS 16
@@ -47,6 +48,9 @@ static volatile int midi_eof = 0;
 
 static int channel_volume[MIDI_CHANNELS];
 static int channel_notes[MIDI_CHANNELS][128];
+
+static uint8_t sysex_mt32_display[31] = { 0xf0, 0x41, 0x10, 0x16, 0x12, 0x20, 0x00, 0x00, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x60, 0xf7, 0xff };
+const static uint8_t sysex_mt32_reset_display[12] = { 0xf0, 0x41, 0x10, 0x16, 0x12, 0x20, 0x01, 0x00, 0x00, 0x5f, 0xf7, 0xff };
 
 #define GETU32FBE(buf) (                    \
             (uint32_t) ( (buf)[0] ) << 24 | \
@@ -220,6 +224,14 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
     if (midi_type == 2)
     {
         mt32_init_vars_and_install_timbres(number_of_tracks, tracks);
+    }
+    else if (midi_type)
+    {
+        if (state_mt32_display == 4)
+        {
+            state_mt32_display = 2;
+            send_initial_sysex_events(sysex_mt32_reset_display);
+        }
     }
 
     // prepare tracks
@@ -446,3 +458,22 @@ midi_error_1:
     return retval;
 }
 
+static void prepare_mt32_display_sysex(const char *text)
+{
+    int index;
+
+    if ((midi_type == 0) || (text == NULL)) return;
+
+    state_mt32_display = 1;
+
+    for (index = 0; index < 20 && text[index] != 0; index++)
+    {
+        sysex_mt32_display[index + 8] = ((text[index] >= 32) && (text[index] <= 127)) ? text[index] : ' ';
+    }
+    for (; index < 20; index++)
+    {
+        sysex_mt32_display[index + 8] = ' ';
+    }
+
+    sysex_mt32_display[28] = mt32_calculate_checksum(sysex_mt32_display + 5, 23);
+}

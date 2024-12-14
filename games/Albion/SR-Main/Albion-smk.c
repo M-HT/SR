@@ -27,6 +27,7 @@
 #include "Game_scalerplugin.h"
 #include "Game_thread.h"
 #include "Albion-smk.h"
+#include "Albion-proc.h"
 #include "Albion-proc-vfs.h"
 #include "Albion-music-midiplugin.h"
 #include "Albion-music-midiplugin2.h"
@@ -1621,7 +1622,7 @@ SMK_exit4:
 SMK_exit3:
     SmackClose(Smack);
 SMK_exit2:
-    fclose(f);
+    Game_fclose(f);
 SMK_exit1:
     if (Thread_Exit)
     {

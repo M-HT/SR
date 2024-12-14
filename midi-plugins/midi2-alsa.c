@@ -236,7 +236,7 @@ static void reset_playing(void);
 static void *midi_thread_proc(void *arg)
 {
     midi_event_info *events;
-    unsigned int current_event, base_tick, num_events;
+    unsigned int current_event, base_tick, num_events, insert_events;
     uint64_t base_time;
     int do_sleep, num_input_events, dst_port_exists, chan;
     snd_seq_queue_status_t *queue_status;
@@ -245,6 +245,9 @@ static void *midi_thread_proc(void *arg)
     int64_t time_diff, base_diff;
     snd_seq_event_t event;
     snd_seq_event_t *input_event;
+    struct timespec _tp, base_tp;
+
+    clock_gettime(CLOCK_MONOTONIC, &base_tp);
 
     snd_seq_queue_status_alloca(&queue_status);
     snd_seq_port_info_alloca(&port_info);
@@ -263,8 +266,6 @@ static void *midi_thread_proc(void *arg)
         if (do_sleep)
         {
             do_sleep = 0;
-
-            struct timespec _tp;
 
             _tp.tv_sec = 0;
             _tp.tv_nsec = 10000000; // 10ms
@@ -438,21 +439,47 @@ static void *midi_thread_proc(void *arg)
             midi_base_time = base_time;
         }
 
+        insert_events = 0;
         if (midi_new_volume != midi_current_volume)
         {
             midi_current_volume = midi_new_volume;
+            insert_events |= 1;
+        }
+        if (state_mt32_display == 5)
+        {
+            clock_gettime(CLOCK_MONOTONIC, &_tp);
+            _tp.tv_sec -= base_tp.tv_sec;
+            if (_tp.tv_nsec < base_tp.tv_nsec) _tp.tv_sec--;
+            if (_tp.tv_sec >= 5)
+            {
+                state_mt32_display = 2;
+                insert_events |= 2;
+            }
+        }
 
-            snd_seq_ev_set_fixed(&event);
-            event.type = SND_SEQ_EVENT_CONTROLLER;
+        if (insert_events)
+        {
             event.time.tick = base_tick + events[current_event - 1].tick;
             event.dest.client = dst_client_id;
             event.dest.port = dst_port_id;
-            event.data.control.param = MIDI_CTL_MSB_MAIN_VOLUME;
 
-            for (chan = 0; chan < MIDI_CHANNELS; chan++)
+            if (insert_events & 1)
             {
-                event.data.control.channel = chan;
-                event.data.control.value = (midi_current_volume * channel_volume[chan]) / 127;
+                snd_seq_ev_set_fixed(&event);
+                event.type = SND_SEQ_EVENT_CONTROLLER;
+                event.data.control.param = MIDI_CTL_MSB_MAIN_VOLUME;
+
+                for (chan = 0; chan < MIDI_CHANNELS; chan++)
+                {
+                    event.data.control.channel = chan;
+                    event.data.control.value = (midi_current_volume * channel_volume[chan]) / 127;
+                    snd_seq_event_output(midi_seq, &event);
+                }
+            }
+            if (insert_events & 2)
+            {
+                snd_seq_ev_set_variable(&event, 11, (uint8_t *)sysex_mt32_reset_display);
+                event.type = SND_SEQ_EVENT_SYSEX;
                 snd_seq_event_output(midi_seq, &event);
             }
 
@@ -1121,13 +1148,23 @@ static int pause_0(void)
         event.source.port = src_port_id;
         event.flags = SND_SEQ_TIME_STAMP_TICK | SND_SEQ_TIME_MODE_ABS;
 
-        event.type = SND_SEQ_EVENT_NOTEOFF;
         event.dest.client = dst_client_id;
         event.dest.port = dst_port_id;
 
         pthread_mutex_lock(&midi_mutex);
 
         event.time.tick = midi_last_tick;
+
+        if (state_mt32_display == 2 && !mt32_delay)
+        {
+            state_mt32_display = 4;
+            snd_seq_ev_set_variable(&event, 30, (uint8_t *)sysex_mt32_display);
+            event.type = SND_SEQ_EVENT_SYSEX;
+            snd_seq_event_output(midi_seq, &event);
+        }
+
+        snd_seq_ev_set_fixed(&event);
+        event.type = SND_SEQ_EVENT_NOTEOFF;
 
         // stop playing notes on all channels
         for (chan = 0; chan < MIDI_CHANNELS; chan++)
@@ -1137,7 +1174,6 @@ static int pause_0(void)
                 if (channel_notes[chan][note] > 0)
                 for (num = channel_notes[chan][note]; num != 0; num--)
                 {
-                    snd_seq_ev_set_fixed(&event);
                     event.data.note.channel = chan;
                     event.data.note.note = note;
                     event.data.note.velocity = 0;
@@ -1217,6 +1253,17 @@ static int resume(void)
             snd_seq_sync_output_queue(midi_seq);
         }
 
+        if (state_mt32_display == 4)
+        {
+            state_mt32_display = 2;
+            snd_seq_ev_set_variable(&event, 11, (uint8_t *)sysex_mt32_reset_display);
+            event.dest.client = dst_client_id;
+            event.dest.port = dst_port_id;
+            event.type = SND_SEQ_EVENT_SYSEX;
+            snd_seq_event_output(midi_seq, &event);
+            snd_seq_drain_output(midi_seq);
+        }
+
         pthread_mutex_unlock(&midi_mutex);
 
         if (!midi_playing) return -3;
@@ -1292,6 +1339,14 @@ static void shutdown_plugin(void)
         {
             mt32_shutdown_gm();
         }
+        else if (midi_type)
+        {
+            if (state_mt32_display >= 4)
+            {
+                state_mt32_display = 2;
+                send_initial_sysex_events(sysex_mt32_reset_display);
+            }
+        }
 
         snd_seq_disconnect_to(midi_seq, src_port_id, dst_client_id, dst_port_id);
         snd_seq_free_queue(midi_seq, midi_queue);
@@ -1357,6 +1412,7 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
         if (midi_type != 2) sysex_events = parameters->initial_sysex_events;
         if (midi_type != 2) controller_events = parameters->reset_controller_events;
         if (midi_type) mt32_delay = parameters->mt32_delay;
+        prepare_mt32_display_sysex(parameters->mt32_display_text);
     }
 
     if (snd_seq_open(&midi_seq, "default", SND_SEQ_OPEN_DUPLEX, 0) < 0)
@@ -1446,6 +1502,14 @@ int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plug
     if (midi_type == 2)
     {
         mt32_initialize_gm();
+    }
+    else if (midi_type)
+    {
+        if (state_mt32_display == 1)
+        {
+            state_mt32_display = (mt32_delay) ? 4 : 5;
+            send_initial_sysex_events(sysex_mt32_display);
+        }
     }
 
     if (sysex_events != NULL && *sysex_events == 0xf0)

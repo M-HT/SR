@@ -31,6 +31,7 @@ typedef struct _midi_plugin2_parameters_ {
     unsigned char const *reset_controller_events;
     int midi_type; // 0 = GM, 1 = MT-32, 2 = GM data on MT-32 device
     int mt32_delay;
+    char const *mt32_display_text;
 } midi_plugin2_parameters;
 
 typedef struct _midi_plugin2_functions_ {

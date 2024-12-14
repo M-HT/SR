@@ -535,6 +535,7 @@ int MidiPlugin2_Startup(void)
         MP2_parameters.midi_type = 2;
     }
     MP2_parameters.mt32_delay = Game_MT32DelaySysex;
+    MP2_parameters.mt32_display_text = "  A  L  B  I  O  N";
 
     if (MP2_initialize(&MP2_parameters, &MP2_functions))
     {

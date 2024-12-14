@@ -41,6 +41,7 @@
 #include "Game_defs.h"
 #include "Game_scalerplugin.h"
 #include "Game_vars.h"
+#include "Albion-proc.h"
 #include "Albion-proc-vfs.h"
 #include "display/overlay.h"
 
@@ -2289,7 +2290,7 @@ void Game_save_screenshot(const char *filename)
     if (f != NULL)
     {
         fwrite(buffer, 1, curptr - buffer, f);
-        fclose(f);
+        Game_fclose(f);
     }
 
     if (filename2 != NULL) free(filename2);

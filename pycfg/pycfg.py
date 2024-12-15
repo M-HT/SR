@@ -211,8 +211,8 @@ class ConfigFile:
             if game == "xcom1" or game == "xcom2":
                 midi_values += "/adlib-dosbox_opl"
                 if platform == "pc" or platform == "pyra":
-                    midi_values += "/mt32-munt"
-                midi_values += "/mt32-alsa"
+                    midi_values += "/mt32-munt/awe32-emu8k"
+            midi_values += "/mt32-alsa"
             self.AddEntry("Audio_MIDI_Subsystem", midi_values, "adlmidi")
 
             if "alsa" in midi_values or "mt32-alsa" in midi_values:
@@ -224,8 +224,14 @@ class ConfigFile:
             if "mt32-munt" in midi_values:
                 self.AddEntry("Audio_MT32_Roms_Path", "*", "")
 
+            if "awe32-emu8k" in midi_values:
+                self.AddEntry("Audio_AWE32_Rom_Path", "*", "")
+
             if game == "xcom1" or game == "xcom2":
                 self.AddEntry("Audio_OPL3_BankNumber", "0-77", "77")
+
+            if "mt32-alsa" in midi_values:
+                self.AddEntry("Audio_MT32_Delay_Sysex", "yes/no", "no")
 
         if platform == "pc" or platform == "pyra":
             self.AddEntry("Audio_OPL3_Emulator", "fast/precise", "precise" if platform == "pc" else "fast")
@@ -504,9 +510,9 @@ class ConfigGUI:
         if self.CfgFile.HasEntry("Audio_Channels"):
             vbox = self.AddPageFrameVBox(notebook, "Audio", "Audio parameters")
 
-            self.CreateRadioSet(vbox, "Channels:", "Audio_Channels", "Number of audio channels.")
+            self.CreateRadioSet2(vbox, "Channels:", "Audio_Channels", None, "Number of audio channels.")
             self.CreateSeparator(vbox)
-            self.CreateRadioSet(vbox, "Resolution:", "Audio_Resolution", "Audio resolution - 8 or 16 bits.")
+            self.CreateRadioSet2(vbox, "Resolution:", "Audio_Resolution", None, "Audio resolution - 8 or 16 bits.")
             self.CreateSeparator(vbox)
             self.CreateRadioSet2(vbox, "Sample Rate:", "Audio_Sample_Rate", "11025/22050/44100/48000/96000/192000/384000", "Audio frequency in Hz.")
             self.CreateSeparator(vbox)
@@ -523,7 +529,7 @@ class ConfigGUI:
                 description = "Select whether to swap left and right sound channel or not."
                 if game == "albion":
                     description += "\nAlbion has the channels swapped, so swapping them corrects it."
-                self.CreateRadioSet(vbox, "Swap Channels ?", "Audio_Swap_Channels", description)
+                self.CreateRadioSet2(vbox, "Swap Channels ?", "Audio_Swap_Channels", None, description)
 
             if self.CfgFile.HasEntry("Audio_Music_Volume"):
                 self.CreateSeparator(vbox)
@@ -548,9 +554,6 @@ class ConfigGUI:
             if "alsa" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
                 description += "\nALSA sequencer can use hardware or software synth (like Fluidsynth or TiMidity++)."
 
-            if game == "albion":
-                description += "\nSDL_mixer can only play one MIDI stream simultaneously."
-
             description += "\nWildMIDI uses GUS patch files for playback."
             if self.CfgFile.HasEntry("Audio_SoundFont_Path"):
                 description += "\nBASSMIDI uses soundfont for playback."
@@ -566,10 +569,21 @@ class ConfigGUI:
 
             if self.CfgFile.HasEntry("Audio_MT32_Roms_Path"):
                 description += "\nMT-32 music is played using MUNT emulator or ALSA sequencer. (DOS game version)"
-            elif "mt32-alsa" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
-                description += "\nMT-32 music is played using ALSA sequencer. (DOS game version)"
 
-            self.CreateRadioSet(vbox, "MIDI Subsystem:", "Audio_MIDI_Subsystem", description)
+            if "awe32-emu8k" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
+                description += "\nGeneral MIDI music can be played using AWE32 emulator. (DOS game version)"
+
+            if "mt32-alsa" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
+                if "adlib-dosbox_opl" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
+                    description += "\nMusic can be played on MT-32 synth using ALSA sequencer.\n  (MT-32 music in DOS game version / General MIDI music in Gold edition)"
+                else:
+                    description += "\nMusic can be played on MT-32 synth using ALSA sequencer."
+
+            self.CreateRadioSet2(vbox, "MIDI Subsystem:", "Audio_MIDI_Subsystem", (2 if self.CfgFile.HasEntry("Audio_MT32_Roms_Path") else 1), description)
+
+            if self.CfgFile.HasEntry("Audio_MT32_Delay_Sysex"):
+                self.CreateSeparator(vbox)
+                self.CreateRadioSet2(vbox, "MT32 Delay Sysex:", "Audio_MT32_Delay_Sysex", None, "Add delays when sending sysex messages on MT-32 ? (to prevent buffer overflow with Rev.0 MT-32)")
 
             num_extra_options = 0
 
@@ -577,6 +591,9 @@ class ConfigGUI:
                 num_extra_options += 1
 
             if self.CfgFile.HasEntry("Audio_SoundFont_Path"):
+                num_extra_options += 1
+
+            if self.CfgFile.HasEntry("Audio_AWE32_Rom_Path"):
                 num_extra_options += 1
 
             if self.CfgFile.HasEntry("Audio_MT32_Roms_Path"):
@@ -588,9 +605,7 @@ class ConfigGUI:
             if self.CfgFile.HasEntry("Audio_OPL3_Emulator"):
                 num_extra_options += 1
 
-            if num_extra_options == 1:
-                self.CreateSeparator(vbox)
-            elif num_extra_options > 1:
+            if num_extra_options >= 1:
                 vbox = self.AddPageFrameVBox(notebook, "MIDI 2", "MIDI")
 
             if self.CfgFile.HasEntry("Audio_MIDI_Device"):
@@ -602,8 +617,12 @@ class ConfigGUI:
             if self.CfgFile.HasEntry("Audio_SoundFont_Path"):
                 self.CreateSoundfontSelector(vbox, "SoundFont Path:", "Audio_SoundFont_Path", "Set path to soundfont file. No value = autodetection in game's directory.\nThis is used when MIDI playback using BASSMIDI is selected.")
                 num_extra_options -= 1
-                if num_extra_options == 1:
+                if num_extra_options >= 1:
                     self.CreateSeparator(vbox)
+
+            if self.CfgFile.HasEntry("Audio_AWE32_Rom_Path"):
+                self.CreateROMFileSelector(vbox, "AWE32 Rom Path:", "Audio_AWE32_Rom_Path", "Set path to AWE32 rom file. (Default filename is awe32.raw)\nThis is necessary when MIDI playback using AWE32 emulator is selected.")
+                num_extra_options -= 1
 
             if num_extra_options >= 2:
                 vbox = self.AddPageFrameVBox(notebook, "MIDI 3", "MIDI")
@@ -631,7 +650,7 @@ class ConfigGUI:
                     description += "Adlib music"
 
                 description = "Use fast (DOSBox) or precise (Nuked) OPL3 emulator.\nThis is used when " + description + " is selected."
-                self.CreateRadioSet(vbox, "OPL3 Emulator:", "Audio_OPL3_Emulator", description)
+                self.CreateRadioSet2(vbox, "OPL3 Emulator:", "Audio_OPL3_Emulator", None, description)
                 num_extra_options -= 1
                 if num_extra_options != 0:
                     self.CreateSeparator(vbox)
@@ -648,28 +667,28 @@ class ConfigGUI:
                 else:
                     description += "\nOriginal game resolution is 320x200 displayed with aspect ratio 4:3.\ndouble_pixels = 640x400\nfullscreen = 800x480\ncorrect_aspect_ratio = 640x480"
 
-                self.CreateRadioSet(vbox, "Display Mode:", "Display_Mode", description)
+                self.CreateRadioSet2(vbox, "Display Mode:", "Display_Mode", None, description)
             elif self.CfgFile.HasEntry("Tvout_Scaling"):
                 IsFirst = False
-                self.CreateRadioSet(vbox, "Tvout Scaling:", "Tvout_Scaling", "If the TV-output mode of the GP2X is being used, this setting allows to select\nwhether the image will be scaled down from a width of 360 to 320 or just left at 360.\nMost users will want to leave this on.")
+                self.CreateRadioSet2(vbox, "Tvout Scaling:", "Tvout_Scaling", None, "If the TV-output mode of the GP2X is being used, this setting allows to select\nwhether the image will be scaled down from a width of 360 to 320 or just left at 360.\nMost users will want to leave this on.")
             elif self.CfgFile.HasEntry("Display"):
                 IsFirst = False
                 description = "Select whether game is displayed in original resolution or stretched to fullscreen."
                 if self.CfgFile.HasEntry("Touchscreen"):
                     description += "\nNote: Display is forced into stretched mode on F200s when using touchscreen."
 
-                self.CreateRadioSet(vbox, "Display:", "Display", description)
+                self.CreateRadioSet2(vbox, "Display:", "Display", None, description)
             elif self.CfgFile.HasEntry("Display_Fullscreen"):
                 IsFirst = False
                 self.CreateRadioSet2(vbox, "Display Scaled Width:", "Display_ScaledWidth", ("640/720" if game == "albion" else "640") + "/960/1280/1600/1920/2240/2560/2880/3840", "Default value is " + ("720" if game == "albion" else "640") + ". Correct display aspect ratio is 4:3.")
                 self.CreateSeparator(vbox)
                 self.CreateRadioSet2(vbox, "Display Scaled Height:", "Display_ScaledHeight", ("480" if game == "albion" else "400/480") + "/720/960/1080/1200/1440/1680/1920/2160", "Default value is " + ("480" if game == "albion" else "400") + ". Correct display aspect ratio is 4:3.")
                 self.CreateSeparator(vbox)
-                self.CreateRadioSet(vbox, "Display Fullscreen:", "Display_Fullscreen", "Select whether game is displayed fullscreen or in a window.")
+                self.CreateRadioSet2(vbox, "Display Fullscreen:", "Display_Fullscreen", None, "Select whether game is displayed fullscreen or in a window.")
 
                 if self.CfgFile.HasEntry("Display_MouseCursor"):
                     self.CreateSeparator(vbox)
-                    self.CreateRadioSet(vbox, "Display MouseCursor:", "Display_MouseCursor", "Select mouse cursor type when the game is displayed in a window.")
+                    self.CreateRadioSet2(vbox, "Display MouseCursor:", "Display_MouseCursor", None, "Select mouse cursor type when the game is displayed in a window.")
                     if self.CfgFile.HasEntry("Display_Enhanced_3D_Rendering") or self.CfgFile.HasEntry("Display_Scaling"):
                         vbox = self.AddPageFrameVBox(notebook, "Display 2", "Display")
 
@@ -705,13 +724,10 @@ class ConfigGUI:
         if self.CfgFile.HasEntry("Screenshot_Format"):
             vbox = self.AddPageFrameVBox(notebook, "Screenshots", "Screenshot settings")
 
-            self.CreateRadioSet(vbox, "Screenshot Format:", "Screenshot_Format", "Original = original image format (LBM)\nLBM = image format is LBM\nLBM_pad16 = image format is LBM with lines in file padded to 16 bytes\nTGA = image format is TGA\nBMP = image format is BMP\nPNG = image format is PNG (requires zlib library)")
-
-            vbox = self.AddPageFrameVBox(notebook, "Screenshots 2", "Screenshot settings")
-
-            self.CreateRadioSet(vbox, "Screenshot Enhanced Resolution:", "Screenshot_Enhanced_Resolution", "if enabled then create screenshots in enhanced resolution (720x480) when it's possible,\notherwise create screenshots in original resolution (360x240)")
-            self.CreateRadioSet(vbox, "Screenshot Enabled ?", "Screenshot_Enabled", "select whether making screenshots (using F4 key) is enabled without entering developer mode")
-            self.CreateRadioSet(vbox, "Screenshot Automatic Filename ?", "Screenshot_Automatic_Filename", "select whether screenshot filename is generated automatically (Screenshot????.???) or not")
+            self.CreateRadioSet2(vbox, "Screenshot Format:", "Screenshot_Format", None, "Original = original image format (LBM)\nLBM/TGA/BMP = image format is LBM/TGA/BMP\nLBM_pad16 = image format is LBM with lines in file padded to 16 bytes\nPNG = image format is PNG (requires zlib library)")
+            self.CreateRadioSet2(vbox, "Screenshot Enhanced Resolution:", "Screenshot_Enhanced_Resolution", None, "Create screenshots in enhanced (when it's possible) or original (360x240) resolution.")
+            self.CreateRadioSet2(vbox, "Screenshot Enabled ?", "Screenshot_Enabled", None, "Select whether making screenshots (using F4 key) is enabled without entering developer mode.")
+            self.CreateRadioSet2(vbox, "Screenshot Automatic Filename ?", "Screenshot_Automatic_Filename", None, "Select whether screenshot filename is generated automatically (Screenshot????.???) or not.")
 
         if self.CfgFile.HasEntry("Keys_WSAD"):
             vbox = self.AddPageFrameVBox(notebook, "Keys", "Keys")
@@ -1008,6 +1024,34 @@ class ConfigGUI:
         parentvbox.pack_start(vbox, False, False, 5)
         vbox.show()
 
+    def CreateROMFileSelector(self, parentvbox, entry_label, entry_name, entry_description = None):
+        vbox = gtk.VBox(homogeneous=False, spacing=0)
+        self.CreateEntryLabel(vbox, entry_label, 5)
+
+        hbox = gtk.HBox(homogeneous=False, spacing=0)
+        vbox.pack_start(hbox, False, False, 5)
+        hbox.show()
+
+        entry = gtk.Entry()
+        entry.set_max_length(256)
+        entry.set_text(self.CfgFile.GetEntryValue(entry_name))
+        entry.connect("changed", self.EntryChanged, entry_name)
+        hbox.pack_start(entry, True, True, 5)
+        entry.show()
+
+        self.widgets.append(("entry", entry_name, entry))
+
+        button = gtk.Button(label="Select ROM file")
+        button.connect("clicked", self.SelectROMFile, entry)
+        hbox.pack_start(button, False, False, 5)
+        button.show()
+
+        if not entry_description is None:
+            self.CreateEntryLabel(vbox, entry_description, 20)
+
+        parentvbox.pack_start(vbox, False, False, 5)
+        vbox.show()
+
     def CreateROMsDirectorySelector(self, parentvbox, entry_label, entry_name, entry_description = None):
         vbox = gtk.VBox(homogeneous=False, spacing=0)
         self.CreateEntryLabel(vbox, entry_label, 5)
@@ -1074,9 +1118,13 @@ class ConfigGUI:
         vbox = gtk.VBox(homogeneous=False, spacing=0)
         self.CreateEntryLabel(vbox, entry_label, 5)
 
+        num_lines = 1
         current_value = self.CfgFile.GetEntryValue(entry_name).lower()
         if entry_values is None:
             entry_format = self.CfgFile.GetEntryFormat(entry_name).split("/")
+        elif isinstance(entry_values, int):
+            entry_format = self.CfgFile.GetEntryFormat(entry_name).split("/")
+            num_lines = entry_values
         else:
             entry_format = entry_values.split("/")
             if not current_value in entry_format:
@@ -1089,6 +1137,8 @@ class ConfigGUI:
 
         buttons = []
 
+        num_values = len(entry_format)
+        value_num = 0
         for entry_value in entry_format:
             button = gtk.RadioButton(group=group, label=entry_value)
             button.set_use_underline(False)
@@ -1101,6 +1151,16 @@ class ConfigGUI:
 
             if group is None:
                 group = button
+
+            value_num = value_num + 1
+            if num_lines > 1 and value_num * num_lines >= num_values:
+                hbox = gtk.HBox(homogeneous=False, spacing=0)
+                vbox.pack_start(hbox, False, False, 0)
+                hbox.show()
+
+                num_lines = num_lines - 1
+                num_values = num_values - value_num
+                value_num = 0
 
         self.widgets.append(("radioset", entry_name, buttons))
 
@@ -1236,6 +1296,35 @@ class ConfigGUI:
         dialog_filter = gtk.FileFilter()
         dialog_filter.set_name("Soundfonts (*.sf2)")
         dialog_filter.add_pattern("*.sf2")
+        dialog.add_filter(dialog_filter)
+
+        dialog_filter = gtk.FileFilter()
+        dialog_filter.set_name("All files (*)")
+        dialog_filter.add_pattern("*")
+        dialog.add_filter(dialog_filter)
+
+        response = dialog.run()
+
+        if response == GTK_RESPONSE_OK:
+            entry.set_text(dialog.get_filename())
+
+        dialog.destroy()
+
+    def SelectROMFile(self, widget, entry=None):
+        dialog = gtk.FileChooserDialog(title="Select ROM file", parent=self.window, action=GTK_FILE_CHOOSER_ACTION_OPEN)
+        dialog.add_buttons(gtk.STOCK_CANCEL,GTK_RESPONSE_CANCEL, gtk.STOCK_OK,GTK_RESPONSE_OK);
+
+        dialog.set_local_only(True)
+
+        filename = entry.get_text()
+        if filename is None or filename == "":
+            dialog.set_current_folder(os.getcwd())
+        else:
+            dialog.set_filename(filename)
+
+        dialog_filter = gtk.FileFilter()
+        dialog_filter.set_name("ROM file (awe32.raw)")
+        dialog_filter.add_pattern("awe32.raw")
         dialog.add_filter(dialog_filter)
 
         dialog_filter = gtk.FileFilter()

@@ -1,5 +1,5 @@
 Battle Isle 3 for Windows (x86)
-Version 1.0.4
+Version 1.0.5
 
 Original Battle Isle 3 is required for playing.
 (version from GOG.com can be used for playing)
@@ -28,6 +28,7 @@ WildMIDI requires GUS patches for MIDI playback,
 BASSMIDI requires a soundfont for MIDI playback,
 libADLMIDI uses OPL3 emulator for MIDI playback,
 original uses Windows 3.1 compatible method for MIDI playback.
+Music can be played on MT-32 synth using NativeWindows.
 
 NativeWindows can use the default synth or it can be selected in the configuration file.
 
@@ -63,6 +64,12 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 
 Changes
 -------
+
+v1.0.5 (2024-12-15)
+* add option to play music on MT-32 synth
+* add french resource texts
+* bug fixes
+
 
 v1.0.4 (2024-09-15)
 * add option to use higher quality midi resampling in libADLMIDI, WildMIDI, BASSMIDI libraries

@@ -71,7 +71,6 @@ gcc -s -shared -static-libgcc -o awe32-emu8k.dll -m32 *.o src/*.o src/pcem_emu8k
 
 del *.o
 del src\*.o
-del src\munt-2.7.0\mt32emu\*.o
-del src\munt-2.7.0\mt32emu\sha1\*.o
+del src\pcem_emu8k\*.o
 
 cd ..

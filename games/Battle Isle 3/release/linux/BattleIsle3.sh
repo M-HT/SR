@@ -15,5 +15,11 @@ fi
 # Uncomment and set SDI_CD_PATH to contain path to the directory where the game CDs are copied (in case it's not in the DATA subdirectory of the directory where the game is installed)
 # export SDI_CD_PATH="/path/to/game/cd/directory"
 
-wine SR-BI3.exe.so
+# Set SDI_LANG to change the language in game (text only)
+# 0 = german (deutsch)
+# 1 = english
+# 2 = french (français) - use only when your CD contains french resources (i.e. FRA directory)
+SDI_LANG=1
+
+wine SR-BI3.exe.so -$SDI_LANG
 sync

@@ -1,5 +1,5 @@
 Warcraft: Orcs & Humans for Linux (x86)
-Version 1.4.0
+Version 1.4.1
 
 Original DOS Warcraft CD version is required for playing.
 (version from GOG.com can be used for playing)
@@ -55,6 +55,7 @@ libADLMIDI requires no additional files for MIDI playback,
 WildMIDI requires GUS patches for MIDI playback,
 BASSMIDI requires a soundfont for MIDI playback,
 libADLMIDI uses OPL3 emulator for MIDI playback.
+Music can be played on MT-32 synth using ALSA sequencer.
 
 ALSA sequencer can detect usable synth automatically or it can be selected in the configuration file.
 
@@ -111,6 +112,10 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 
 Changes
 -------
+
+v1.4.1 (2024-12-16)
+* add option to play music on MT-32 synth
+* bug fixes
 
 v1.4.0 (2024-09-21)
 * add option to use higher quality audio resampling

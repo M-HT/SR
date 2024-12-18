@@ -1,5 +1,5 @@
 Albion for Windows (x86)
-Version 1.8.0
+Version 1.8.1
 
 Original Albion version 1.38 is required for playing.
 (English version preferred, but other languages should also work)
@@ -55,6 +55,7 @@ libADLMIDI and NativeWindows don't require additional files for MIDI playback,
 WildMIDI requires GUS patches for MIDI playback,
 BASSMIDI requires a soundfont for MIDI playback,
 libADLMIDI uses OPL3 emulator for MIDI playback.
+Music can be played on MT-32 synth using NativeWindows.
 
 NativeWindows can use the default synth or it can be selected in the configuration file.
 
@@ -120,6 +121,11 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 
 Changes
 -------
+
+v1.8.1 (2024-12-18)
+* add option to play music on MT-32 synth
+* bug fixes
+
 
 v1.8.0 (2024-09-26)
 * add option to use higher quality audio resampling

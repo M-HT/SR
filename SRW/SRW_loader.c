@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2021 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -1112,9 +1112,13 @@ int SRW_LoadFile(const char *fname)
                         ProcName = "InitCommonControls";
                     }
 
-                    if (((*LookupTable & 0xffff) == 1) && (strcasecmp(DllName, "dsound.dll") == 0))
+                    if (strcasecmp(DllName, "dsound.dll") == 0)
                     {
-                        ProcName = "DirectSoundCreate";
+                        switch(*LookupTable & 0xffff)
+                        {
+                            case 1: ProcName = "DirectSoundCreate"; break;
+                            case 2: ProcName = "DirectSoundEnumerateA"; break;
+                        }
                     }
 
                     if (strcasecmp(DllName, "WSOCK32.dll") == 0)

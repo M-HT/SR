@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -143,7 +143,7 @@ func_struct[string] func_list;
 proc_struct[string] proc_list;
 string[] local_proc_names;
 
-bool used_ctlz_intrinsics, used_bswap_intrinsics, used_sqrt_intrinsics, used_sin_intrinsics, used_cos_intrinsics, used_log_intrinsics, used_log10_intrinsics, used_fabs_intrinsics, used_round_intrinsics, used_pow_intrinsics, used_log2_intrinsics, create_ctor_function;
+bool used_ctlz_intrinsics, used_bswap_intrinsics, used_sqrt_intrinsics, used_sin_intrinsics, used_cos_intrinsics, used_tan_intrinsics, used_log_intrinsics, used_log10_intrinsics, used_fabs_intrinsics, used_round_intrinsics, used_pow_intrinsics, used_log2_intrinsics, create_ctor_function;
 
 int num_output_lines;
 string[] output_lines;
@@ -262,6 +262,7 @@ string[] instructions_float2_list = [
     "FMODR_VOID",
     "FSIN_VOID",
     "FCOS_VOID",
+    "FTAN_VOID",
     "FLOG_VOID",
     "FLOG10_VOID",
     "FROUND_VOID",
@@ -438,6 +439,7 @@ void initialize()
     used_sqrt_intrinsics = false;
     used_sin_intrinsics = false;
     used_cos_intrinsics = false;
+    used_tan_intrinsics = false;
     used_log_intrinsics = false;
     used_log10_intrinsics = false;
     used_fabs_intrinsics = false;
@@ -757,6 +759,9 @@ bool check_instruction_pass1(ref input_line_struct instr_line)
                 break;
             case "FCOS_VOID":
                 used_cos_intrinsics = true;
+                break;
+            case "FTAN_VOID":
+                used_tan_intrinsics = true;
                 break;
             case "FLOG_VOID":
                 used_log_intrinsics = true;
@@ -2312,6 +2317,13 @@ bool process_proc_body(string proc_name)
                 // update list of used registers in procedure
                 used_reg_list["st_top"] = true;
                 break;
+            case "FTAN_VOID":
+                proc_instr_info[linenum].write_reg[0] = "st_sw_cond";
+                proc_instr_info[linenum].write_reg[1] = "st_top";
+                proc_instr_info[linenum].write_float_reg[0] = current_float_stack_top;
+                current_float_stack_top = (current_float_stack_top + 7) & 7;
+                proc_instr_info[linenum].write_float_reg[1] = current_float_stack_top;
+                break;
             case "FXCH_ST": // FXCH_ST const
                 proc_instr_info[linenum].write_reg[0] = "st_sw_cond";
                 proc_instr_info[linenum].write_float_reg[0] = current_float_stack_top;
@@ -3425,6 +3437,27 @@ bool process_proc_body(string proc_name)
                     add_output_line(dst ~ " = call double @llvm." ~ instr ~ ".f64(double " ~ src ~ ")");
 
                     store_temporary_register_to_float_reg(dst, top, 0, current_float_stack_top, last_float_reg_write[0]);
+                    store_temporary_register_to_reg("0", "st_sw_cond", last_reg_write[0]);
+                }
+                break;
+            case "FTAN_VOID":
+                {
+                    string top1 = get_parameter_read_value(param_struct("reg", "st_top"));
+                    string src = get_float_reg_value(top1, 0, current_float_stack_top);
+                    string dst = get_new_temporary_register();
+
+                    add_output_line(dst ~ " = call double @llvm.tan.f64(double " ~ src ~ ")");
+
+                    store_temporary_register_to_float_reg(dst, top1, 0, current_float_stack_top, last_float_reg_write[0]);
+
+                    string tmp2 = get_new_temporary_register();
+                    string top2 = get_new_temporary_register();
+
+                    add_output_line(tmp2 ~ " = add i32 " ~ top1 ~ ", 7");
+                    add_output_line(top2 ~ " = and i32 " ~ tmp2 ~ ", 7");
+
+                    store_temporary_register_to_float_reg("1.0", top2, 0, (current_float_stack_top + 7) & 7, last_float_reg_write[1]);
+                    store_temporary_register_to_reg(top2, "st_top", last_reg_write[1]);
                     store_temporary_register_to_reg("0", "st_sw_cond", last_reg_write[0]);
                 }
                 break;
@@ -4900,6 +4933,10 @@ public int main(string[] args)
     {
         add_output_line("declare double @llvm.cos.f64(double)");
     }
+    if (used_tan_intrinsics)
+    {
+        add_output_line("declare double @llvm.tan.f64(double)");
+    }
     if (used_log_intrinsics)
     {
         add_output_line("declare double @llvm.log.f64(double)");
@@ -4931,7 +4968,7 @@ public int main(string[] args)
     {
         auto proc = proc_list[proc_name];
 
-        add_output_line("define " ~ ((proc.ispublic || proc.isglobal)?"":"private ") ~ "fastcc " ~ ((no_tail_calls)?"i8*":"void") ~ " @" ~ proc_name ~ "(%_cpu* %cpu) nounwind {");
+        add_output_line("define " ~ ((proc.ispublic)?"":"private ") ~ "fastcc " ~ ((no_tail_calls)?"i8*":"void") ~ " @" ~ proc_name ~ "(%_cpu* %cpu) nounwind {");
 
         if (!process_proc_body(proc_name))
         {

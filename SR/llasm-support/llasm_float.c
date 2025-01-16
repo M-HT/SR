@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -338,6 +338,92 @@ EXTERNC void x87_fninit_void(CPU)
     st_cw = 0x037f;
 }
 
+EXTERNC int32_t x87_fist_int32(CPU)
+{
+    double dval, orig;
+    int32_t ival;
+
+    switch ((st_cw >> X87_RC_SHIFT) & 3)
+    {
+    case 0: // Round to nearest (even)
+        orig = ST0;
+        dval = floor(orig);
+        if (orig - dval > 0.5)
+        {
+            dval += 1.0;
+        }
+        else if (!(orig - dval < 0.5))
+        {
+            CLEAR_X87_FLAGS;
+            if ((dval < 2147483648.0) && (dval > -2147483648.0))
+            {
+                ival = (int32_t) dval;
+                ival += ival & 1;
+            }
+            else
+            {
+                ival = 0x80000000;
+            }
+            return ival;
+        }
+        break;
+    case 1: // Round down (toward -infinity)
+        dval = floor(ST0);
+        break;
+    case 2: // Round up (toward +infinity)
+        dval = ceil(ST0);
+        break;
+    case 3: // Round toward zero (Truncate)
+        dval = trunc(ST0);
+        break;
+    }
+    CLEAR_X87_FLAGS;
+    return ((dval < 2147483648.0) && (dval > -2147483648.0))?((int32_t) dval):0x80000000;
+}
+
+EXTERNC int16_t x87_fistp_int16(CPU)
+{
+    double dval, orig;
+    int16_t ival;
+
+    switch ((st_cw >> X87_RC_SHIFT) & 3)
+    {
+    case 0: // Round to nearest (even)
+        orig = ST0;
+        dval = floor(orig);
+        if (orig - dval > 0.5)
+        {
+            dval += 1.0;
+        }
+        else if (!(orig - dval < 0.5))
+        {
+            POP_REGS;
+            if ((dval < 32768.0) && (dval > -32768.0))
+            {
+                ival = (int16_t) dval;
+                ival += ival & 1;
+            }
+            else
+            {
+                ival = 0x8000;
+            }
+            return ival;
+        }
+        break;
+    case 1: // Round down (toward -infinity)
+        dval = floor(ST0);
+        break;
+    case 2: // Round up (toward +infinity)
+        dval = ceil(ST0);
+        break;
+    case 3: // Round toward zero (Truncate)
+        dval = trunc(ST0);
+        break;
+    }
+    POP_REGS;
+    return ((dval < 32768.0) && (dval > -32768.0))?((int16_t) dval):0x8000;
+}
+
 EXTERNC int32_t x87_fistp_int32(CPU)
 {
     double dval, orig;
@@ -550,6 +636,14 @@ EXTERNC void x87_fmulp_st(CPU, int num)
 {
     ST(num) *= ST0;
     POP_REGS;
+}
+
+EXTERNC void x87_fptan_void(CPU)
+{
+    ST0 = tan(ST0);
+    PUSH_REGS;
+    ST0 = const_1_0;
+    CLEAR_X87_FLAGS;
 }
 
 EXTERNC void x87_fsin_void(CPU)

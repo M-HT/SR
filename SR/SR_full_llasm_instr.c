@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -6891,6 +6891,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
         case UD_Ifldln2:
         case UD_Ifldz:
         case UD_Ifninit:
+        case UD_Ifptan:
         case UD_Ifsin:
         case UD_Ifsqrt:
         case UD_Ifucompp:
@@ -6914,6 +6915,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                 else if (ud_obj.mnemonic == UD_Ifldln2) instr = "FLDLN2";
                 else if (ud_obj.mnemonic == UD_Ifldz) instr = "FLDZ";
                 else if (ud_obj.mnemonic == UD_Ifninit) instr = "FNINIT";
+                else if (ud_obj.mnemonic == UD_Ifptan) instr = "FPTAN";
                 else if (ud_obj.mnemonic == UD_Ifsin) instr = "FSIN";
                 else if (ud_obj.mnemonic == UD_Ifsqrt) instr = "FSQRT";
                 else if (ud_obj.mnemonic == UD_Ifucompp) instr = "FUCOMPP";
@@ -7201,6 +7203,35 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
 
             }
             break;
+        case UD_Ifist:
+            {
+                /* no flags affected */
+
+                //if (flags_to_write)
+                //{
+                //    fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, cur_ofs, output->str);
+                //}
+
+                if (ud_obj.operand[1].type == UD_NONE)
+                {
+                    if (ud_obj.operand[0].type == UD_OP_REG)
+                    {
+                    }
+                    else if (ud_obj.operand[0].type == UD_OP_MEM)
+                    {
+                        if (ud_obj.operand[0].size == 32)
+                        {
+                            OUTPUT_STRING("FIST_INT32\n");
+
+                            SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_WRITE, ZERO_EXTEND, &memadr);
+
+                            SR_disassemble_write_mem_word(cOutput, &memadr, LR_TMP0);
+                        }
+                    }
+                }
+
+            }
+            break;
         case UD_Ifistp:
             {
                 /* no flags affected */
@@ -7236,6 +7267,14 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                             SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_WRITE, ZERO_EXTEND, &memadr);
 
                             SR_disassemble_write_mem_word(cOutput, &memadr, LR_TMP0);
+                        }
+                        else if (ud_obj.operand[0].size == 16)
+                        {
+                            OUTPUT_STRING("FISTP_INT16\n");
+
+                            SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_WRITE, ZERO_EXTEND, &memadr);
+
+                            SR_disassemble_write_mem_halfword(cOutput, &memadr, LR_TMP0);
                         }
                     }
                 }

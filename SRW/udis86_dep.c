@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -91,6 +91,7 @@ int init_udis86_dep(void)
 	SET_FLAGS(UD_Ifidivr, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifild, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifimul, FL_NONE, FL_NONE);
+	SET_FLAGS(UD_Ifist, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifistp, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifisub, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifisubr, FL_NONE, FL_NONE);
@@ -105,6 +106,7 @@ int init_udis86_dep(void)
 	SET_FLAGS(UD_Ifninit, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifnstcw, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifnstsw, FL_NONE, FL_NONE);
+	SET_FLAGS(UD_Ifptan, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifsin, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifsqrt, FL_NONE, FL_NONE);
 	SET_FLAGS(UD_Ifst, FL_NONE, FL_NONE);

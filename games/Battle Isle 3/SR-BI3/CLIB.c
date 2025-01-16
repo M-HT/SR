@@ -29,7 +29,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#if (defined(__WIN32__) || (__WINDOWS__)) && !defined(_WIN32)
+#if (defined(__WIN32__) || defined(__WINDOWS__)) && !defined(_WIN32)
 #define _WIN32
 #endif
 

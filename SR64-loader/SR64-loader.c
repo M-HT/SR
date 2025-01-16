@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2022-2023 Roman Pauer
+ *  Copyright (C) 2022-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -892,7 +892,7 @@ static int load_elf_segments(int fd, Elf64_Phdr *program_headers, int num_header
         if (program_headers[index].p_type != PT_LOAD) continue;
 
         page_offset = program_headers[index].p_vaddr & (page_size - 1);
-        start = (program_headers[index].p_vaddr + (dynamic ? (uint64_t)base_addr : 0)) & ~(page_size - 1);
+        start = ((program_headers[index].p_vaddr - min_addr) + (dynamic ? (uint64_t)base_addr : 0)) & ~(page_size - 1);
         length = (page_offset + program_headers[index].p_memsz + (page_size - 1)) & ~(page_size - 1);
 
         prot = PROT_NONE;

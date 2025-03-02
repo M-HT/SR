@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -708,6 +708,9 @@ int SR_LoadFile(const char *fname)
 						case 8:
 							FixupType = FT_SELFREL;
 							break;
+						case 19:
+							FixupType = FT_SEGOFS16;
+							break;
 						default:
 							fprintf(stderr, "Error: Unknown fixup source type: %i - %i (%i: %i)\n", FixupRecordTable[CurIndex], FixupRecordTable[CurIndex + 1], Entry, (ObjectTable[Entry].NumPageTableEntries - RemainingPages) * Header->PageSize + *((int16_t *) &(FixupRecordTable[CurIndex + 2])));
 							unload_file(&mf);
@@ -772,6 +775,18 @@ int SR_LoadFile(const char *fname)
                         }
 
                         FixupType = FT_NORMAL;
+                    }
+                    else if (FixupType == FT_SEGOFS16)
+                    {
+                        ret = add_fixup(Entry, SourceOffset + 2, TargetObject, 0x80000000, FT_SEGMENT);
+
+                        if (ret)
+                        {
+                            unload_file(&mf);
+                            return ret;
+                        }
+
+                        FixupType = FT_16BITOFS;
                     }
 
 					ret = add_fixup(Entry, SourceOffset, TargetObject, TargetOffset, FixupType);

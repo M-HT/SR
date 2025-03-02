@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -592,6 +592,44 @@ int SR_disassemble_offset_dos(unsigned int Entry, uint_fast32_t offset)
                         cResult[7] = ' ';
 
                         index = 8;
+                        while ((cResult[index] != ':') && (cResult[index] != 0))
+                        {
+                            cResult[index] = ' ';
+                            index++;
+                        }
+                        if (cResult[index] == ':') cResult[index] = ' ';
+                    }
+
+                    output->str = strdup(cResult);
+#ifdef DISPLAY_DISASSEMBLY
+                    printf("\t%s\n", output->str);
+#endif
+                }
+                else if (fixup != NULL &&
+                         fixup2 != NULL &&
+                         fixup->type == FT_16BITOFS &&
+                         fixup2->type == FT_SEGMENT &&
+                         ud_obj.operand[0].type == UD_OP_PTR)
+                {
+                    extrn = section_extrn_list_FindEntryEqual(fixup->tsec, fixup->tofs);
+
+                    ret = SR_disassemble_convert_fixup(ud_insn_asm(&ud_obj), cResult, fixup, extrn, Entry, offset, decoded_length);
+
+                    if (ret) return ret;
+
+                    {
+                        int index;
+
+                        cResult[0] = 'j';
+                        cResult[1] = 'm';
+                        cResult[2] = 'p';
+                        cResult[3] = ' ';
+                        cResult[4] = 'f';
+                        cResult[5] = 'a';
+                        cResult[6] = 'r';
+                        cResult[7] = ' ';
+
+                        index = 13;
                         while ((cResult[index] != ':') && (cResult[index] != 0))
                         {
                             cResult[index] = ' ';

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -71,7 +71,8 @@ typedef enum _fixup_type_ {
     FT_SELFREL  = 1,
     FT_SEGMENT  = 2,
     FT_16BITOFS = 3,
-    FT_SEGOFS32 = 4
+    FT_SEGOFS32 = 4,
+    FT_SEGOFS16 = 5
 } fixup_type;
 
 

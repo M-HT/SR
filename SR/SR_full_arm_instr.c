@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -130,30 +130,30 @@ static uint_fast32_t Tflags_to_write;
 */
 
 
-static inline const char *x86regstr(enum ud_type reg) __attribute__ ((pure));
-static inline int x87regnum(enum ud_type reg) __attribute__ ((const));
-static inline const char *armregstr(enum arm_regs reg) __attribute__ ((pure));
+static INLINE const char *x86regstr(enum ud_type reg) PURE_FUNCTION;
+static INLINE int x87regnum(enum ud_type reg) CONST_FUNCTION;
+static INLINE const char *armregstr(enum arm_regs reg) PURE_FUNCTION;
 
-static inline enum arm_regs x86322armreg(enum ud_type reg) __attribute__ ((pure));
-static inline enum arm_regs x86162armreg(enum ud_type reg) __attribute__ ((pure));
-static inline enum arm_regs x868l2armreg(enum ud_type reg) __attribute__ ((pure));
-static inline enum arm_regs x868h2armreg(enum ud_type reg) __attribute__ ((pure));
+static INLINE enum arm_regs x86322armreg(enum ud_type reg) PURE_FUNCTION;
+static INLINE enum arm_regs x86162armreg(enum ud_type reg) PURE_FUNCTION;
+static INLINE enum arm_regs x868l2armreg(enum ud_type reg) PURE_FUNCTION;
+static INLINE enum arm_regs x868h2armreg(enum ud_type reg) PURE_FUNCTION;
 
-static inline enum arm_regs x862armreg(enum ud_type reg) __attribute__ ((pure));
-static inline const char *x862armstr(enum ud_type reg) __attribute__ ((pure));
+static INLINE enum arm_regs x862armreg(enum ud_type reg) PURE_FUNCTION;
+static INLINE const char *x862armstr(enum ud_type reg) PURE_FUNCTION;
 
-static inline int armtempreg(enum arm_regs reg) __attribute__ ((const));
+static INLINE int armtempreg(enum arm_regs reg) CONST_FUNCTION;
 
-static inline const char *x86regstr(enum ud_type reg) { return ud_reg_tab[reg - UD_R_AL]; }
-static inline int x87regnum(enum ud_type reg) { return reg - UD_R_ST0; }
-static inline const char *armregstr(enum arm_regs reg) { return arm_regs_str[reg]; }
+static INLINE const char *x86regstr(enum ud_type reg) { return ud_reg_tab[reg - UD_R_AL]; }
+static INLINE int x87regnum(enum ud_type reg) { return reg - UD_R_ST0; }
+static INLINE const char *armregstr(enum arm_regs reg) { return arm_regs_str[reg]; }
 
-static inline enum arm_regs x86322armreg(enum ud_type reg) { return arm_regs_table[reg - UD_R_EAX]; }
-static inline enum arm_regs x86162armreg(enum ud_type reg) { return arm_regs_table[reg - UD_R_AX]; }
-static inline enum arm_regs x868l2armreg(enum ud_type reg) { return arm_regs_table[reg - UD_R_AL]; }
-static inline enum arm_regs x868h2armreg(enum ud_type reg) { return arm_regs_table[reg - UD_R_AH]; }
+static INLINE enum arm_regs x86322armreg(enum ud_type reg) { return arm_regs_table[reg - UD_R_EAX]; }
+static INLINE enum arm_regs x86162armreg(enum ud_type reg) { return arm_regs_table[reg - UD_R_AX]; }
+static INLINE enum arm_regs x868l2armreg(enum ud_type reg) { return arm_regs_table[reg - UD_R_AL]; }
+static INLINE enum arm_regs x868h2armreg(enum ud_type reg) { return arm_regs_table[reg - UD_R_AH]; }
 
-static inline enum arm_regs x862armreg(enum ud_type reg)
+static INLINE enum arm_regs x862armreg(enum ud_type reg)
 {
     return (reg >= UD_R_EAX && reg <= UD_R_EDI)?( arm_regs_table[reg - UD_R_EAX] ):(
            (reg >= UD_R_AX && reg <= UD_R_DI)?( arm_regs_table[reg - UD_R_AX] ):(
@@ -162,9 +162,9 @@ static inline enum arm_regs x862armreg(enum ud_type reg)
            AR_NONE
            ))));
 }
-static inline const char *x862armstr(enum ud_type reg) { return arm_regs_str[x862armreg(reg)]; }
+static INLINE const char *x862armstr(enum ud_type reg) { return arm_regs_str[x862armreg(reg)]; }
 
-static inline int armtempreg(enum arm_regs reg) { return 0x0000841f & (1 << ( (unsigned int) reg) ); }
+static INLINE int armtempreg(enum arm_regs reg) { return 0x0000841f & (1 << ( (unsigned int) reg) ); }
 
 #define X86REGSTR(x) x86regstr(x)
 #define X87REGNUM(x) x87regnum(x)
@@ -470,7 +470,7 @@ static void SR_arm_load_imm_inv(enum arm_regs dst, uint32_t value, unsigned int 
 #undef OUTPUT_PARAMSTRING
 }
 
-static inline void SR_arm_load_imm_val(enum arm_regs dst, uint32_t value, unsigned int len1, unsigned int len2)
+static INLINE void SR_arm_load_imm_val(enum arm_regs dst, uint32_t value, unsigned int len1, unsigned int len2)
 {
     if (len1 <= len2)
     {
@@ -482,7 +482,7 @@ static inline void SR_arm_load_imm_val(enum arm_regs dst, uint32_t value, unsign
     }
 }
 
-static inline void SR_arm_load_imm32(enum arm_regs dst, uint32_t value)
+static INLINE void SR_arm_load_imm32(enum arm_regs dst, uint32_t value)
 {
     SR_arm_load_imm_val(dst, value, SR_get_imm_length(value), SR_get_imm_length(~value));
 }
@@ -1507,7 +1507,7 @@ static void SR_disassemble_get_memory_address(char *ostr, enum arm_regs madrreg,
 // trashes AR_TMPLR, AR_TMP3, AR_TMP9
 static void SR_disassemble_read_mem_doubleword(char *cResult, struct madr_result *res, uint_fast32_t preserved_flags)
 {
-    int len;
+    size_t len;
 
     len = strlen(cResult);
     cResult += len;
@@ -1609,7 +1609,7 @@ static void SR_disassemble_read_mem_word(char *cResult, struct madr_result *res,
     dst != AR_TMPADR
     dst != AR_TMPLR
 */
-    int len;
+    size_t len;
     enum arm_regs tmpreg1, tmpreg2;
 
     if (dst == AR_TMPADR || dst == AR_TMPLR)
@@ -1705,7 +1705,7 @@ static void SR_disassemble_read_mem_halfword(char *cResult, struct madr_result *
         dst != AR_EIP
         tmpreg1 != tmpreg2
     */
-    int len;
+    size_t len;
 
     if (dst == AR_EIP || dst == tmpreg1 || dst == tmpreg2 || tmpreg1 == tmpreg2)
     {
@@ -1805,7 +1805,7 @@ static void SR_disassemble_read_mem_byte(char *cResult, struct madr_result *res,
         dst != tmpreg1
         dst != AR_EIP
     */
-    int len;
+    size_t len;
 
     if (dst == AR_EIP || dst == tmpreg1)
     {
@@ -1860,7 +1860,7 @@ static void SR_disassemble_read_mem_byte(char *cResult, struct madr_result *res,
 // trashes AR_TMPLR, AR_TMP3
 static void SR_disassemble_write_mem_doubleword(char *cResult, struct madr_result *res, uint_fast32_t preserved_flags)
 {
-    int len;
+    size_t len;
 
     len = strlen(cResult);
     cResult += len;
@@ -1966,7 +1966,7 @@ static void SR_disassemble_write_mem_word(char *cResult, struct madr_result *res
     src != AR_TMPLR
     src != AR_EIP
 */
-    int len;
+    size_t len;
     enum arm_regs tmpreg1;
 
     if (src == AR_TMPADR || src == AR_TMPLR || src == AR_EIP)
@@ -2050,7 +2050,7 @@ static void SR_disassemble_write_mem_halfword(char *cResult, struct madr_result 
         src != tmpreg1
         src != AR_EIP
     */
-    int len;
+    size_t len;
 
     if (src == AR_EIP || src == tmpreg1)
     {
@@ -2098,7 +2098,7 @@ static void SR_disassemble_write_mem_byte(char *cResult, struct madr_result *res
         src != tmpreg1
         src != AR_EIP
     */
-    int len;
+    size_t len;
 
     if (src == AR_EIP || src == tmpreg1)
     {
@@ -2177,7 +2177,7 @@ static uint32_t SR_disassemble_get_value(const ud_operand_t *op, enum extend_mod
 static void SR_disassemble_change_arm_flags(char *cResult, uint_fast32_t toclear, uint_fast32_t toset, uint_fast32_t toinvert, enum arm_regs tmpreg1)
 {
     uint_fast32_t flags;
-    int len;
+    size_t len;
 
     if ( ( (toclear | toset | toinvert) & (FL_CARRY | FL_ZERO | FL_SIGN | FL_OVERFLOW) ) == 0) return;
 
@@ -2232,7 +2232,7 @@ static void SR_disassemble_calculate_parity_adjust_flags(char *cResult, enum arm
     /*
         res != opertmp
     */
-    int len;
+    size_t len;
 
     if ((tocalculate & (FL_ADJUST | FL_PARITY)) == 0) return;
 
@@ -2326,7 +2326,7 @@ static void SR_disassemble_calculate_parity_flag(char *cResult, enum arm_regs re
     /*
         res != tmpreg1
     */
-    int len;
+    size_t len;
 
     if (res == tmpreg1)
     {

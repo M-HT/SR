@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,26 +22,11 @@
  *
  */
 
+#if defined(USE_JUDY)
+
 #include <string.h>
 #include "SR_defs.h"
 #include "SR_vars.h"
-
-/* code2data_list */
-void section_code2data_list_ForEach(unsigned int SecNum, void (*proc)(Word_t Index, void *data), void *data)
-{
-    int Rc_int;
-    Word_t search_index;
-
-    search_index = 0;
-    J1F(Rc_int, section[SecNum].code2data_list, search_index);
-    while (Rc_int)
-    {
-        proc(search_index, data);
-
-        J1N(Rc_int, section[SecNum].code2data_list, search_index);
-    }
-}
-
 
 /* extrn_list */
 extrn_data *section_extrn_list_Insert(unsigned int SecNum, Word_t Index, const char *proc, const char *altaction)
@@ -51,7 +36,7 @@ extrn_data *section_extrn_list_Insert(unsigned int SecNum, Word_t Index, const c
     extrn = (extrn_data *)malloc(sizeof(extrn_data) + strlen(proc));
     if (extrn == NULL) return NULL;
 
-    extrn->ofs = Index;
+    extrn->ofs = (uint_fast32_t)Index;
     strcpy(extrn->proc, proc);
 
     JLI(extrn_value, section[SecNum].extrn_list, Index);
@@ -90,6 +75,23 @@ void section_extrn_list_ForEach(unsigned int SecNum, void (*proc)(extrn_data *ex
     }
 }
 
+static void section_extrn_list_FreeCallback(extrn_data *extrn, void *data)
+{
+    if (extrn->altaction != NULL)
+    {
+        free(extrn->altaction);
+    }
+    free(extrn);
+}
+
+void section_extrn_list_Free(unsigned int SecNum)
+{
+    Word_t Rc_word;
+
+    section_extrn_list_ForEach(SecNum, section_extrn_list_FreeCallback, NULL);
+
+    JLFA(Rc_word, section[SecNum].extrn_list);
+}
 
 /* alias_list */
 alias_data *section_alias_list_Insert(unsigned int SecNum, Word_t Index, const char *proc)
@@ -99,7 +101,7 @@ alias_data *section_alias_list_Insert(unsigned int SecNum, Word_t Index, const c
     alias = (alias_data *)malloc(sizeof(alias_data) + strlen(proc));
     if (alias == NULL) return NULL;
 
-    alias->ofs = Index;
+    alias->ofs = (uint_fast32_t)Index;
     strcpy(alias->proc, proc);
 
     JLI(alias_value, section[SecNum].alias_list, Index);
@@ -134,7 +136,22 @@ void section_alias_list_ForEach(unsigned int SecNum, void (*proc)(alias_data *al
     }
 }
 
+static void section_alias_list_FreeCallback(alias_data *alias, void *data)
+{
+    free(alias);
+}
 
+void section_alias_list_Free(unsigned int SecNum)
+{
+    Word_t Rc_word;
+
+    section_alias_list_ForEach(SecNum, section_alias_list_FreeCallback, NULL);
+
+    JLFA(Rc_word, section[SecNum].alias_list);
+}
+
+
+/* ignored_list */
 void section_ignored_list_ForEach(unsigned int SecNum, void (*proc)(Word_t Index, int Value, void *data), void *data)
 {
     int *Value;
@@ -159,7 +176,7 @@ replace_data *section_replace_list_Insert(unsigned int SecNum, Word_t Index, con
     replace = (replace_data *)malloc(sizeof(replace_data) + strlen(instr));
     if (replace == NULL) return NULL;
 
-    replace->ofs = Index;
+    replace->ofs = (uint_fast32_t)Index;
     replace->length = instr_len;
     replace->empty = instr_empty;
     strcpy(replace->instr, instr);
@@ -196,6 +213,20 @@ void section_replace_list_ForEach(unsigned int SecNum, void (*proc)(replace_data
     }
 }
 
+static void section_replace_list_FreeCallback(replace_data *replace, void *data)
+{
+    free(replace);
+}
+
+void section_replace_list_Free(unsigned int SecNum)
+{
+    Word_t Rc_word;
+
+    section_replace_list_ForEach(SecNum, section_replace_list_FreeCallback, NULL);
+
+    JLFA(Rc_word, section[SecNum].replace_list);
+}
+
 
 /* iflags_list */
 bound_data *section_iflags_list_Insert(unsigned int SecNum, Word_t Index, int begin, int end)
@@ -217,11 +248,30 @@ bound_data *section_iflags_list_Insert(unsigned int SecNum, Word_t Index, int be
         *iflags_value = iflags;
     }
 
-    iflags->ofs = Index;
+    iflags->ofs = (uint_fast32_t)Index;
     iflags->begin = begin;
     iflags->end = end;
 
     return iflags;
+}
+
+void section_iflags_list_Free(unsigned int SecNum)
+{
+    Word_t index, Rc_word;
+    bound_data **iflags_value;
+
+    index = 0;
+    JLF(iflags_value, section[SecNum].iflags_list, index);
+    while (iflags_value != NULL)
+    {
+        if (*iflags_value != NULL)
+        {
+            free(*iflags_value);
+        }
+        JLN(iflags_value, section[SecNum].iflags_list, index);
+    }
+
+    JLFA(Rc_word, section[SecNum].iflags_list);
 }
 
 
@@ -248,7 +298,7 @@ bound_data *section_bound_list_Insert(unsigned int SecNum, Word_t Index)
         bound->end = 0;
     }
 
-    bound->ofs = Index;
+    bound->ofs = (uint_fast32_t)Index;
 
     return bound;
 }
@@ -266,6 +316,42 @@ void section_bound_list_ForEach(unsigned int SecNum, void (*proc)(bound_data *bo
 
         JLN(bound_value, section[SecNum].bound_list, search_index);
     }
+}
+
+void section_bound_list_Delete(unsigned int SecNum, Word_t Index)
+{
+    bound_data *bound, **bound_value;
+    int Rc_int;
+
+    JLG(bound_value, section[SecNum].bound_list, Index);
+
+    if (bound_value != NULL)
+    {
+        bound = *bound_value;
+        if (bound != NULL)
+        {
+            free(bound);
+        }
+
+        JLD(Rc_int, section[SecNum].bound_list, Index);
+    }
+}
+
+static void section_bound_list_FreeCallback(bound_data *bound, void *data)
+{
+    if (bound != NULL)
+    {
+        free(bound);
+    }
+}
+
+void section_bound_list_Free(unsigned int SecNum)
+{
+    Word_t Rc_word;
+
+    section_bound_list_ForEach(SecNum, section_bound_list_FreeCallback, NULL);
+
+    JLFA(Rc_word, section[SecNum].bound_list);
 }
 
 
@@ -293,7 +379,7 @@ fixup_data *section_fixup_list_Insert(unsigned int SecNum, Word_t Index)
         fixup->type = FT_NORMAL;
     }
 
-    fixup->sofs = Index;
+    fixup->sofs = (uint_fast32_t)Index;
 
     return fixup;
 }
@@ -311,6 +397,23 @@ void section_fixup_list_ForEach(unsigned int SecNum, void (*proc)(fixup_data *fi
 
         JLN(fixup_value, section[SecNum].fixup_list, search_index);
     }
+}
+
+static void section_fixup_list_FreeCallback(fixup_data *fixup, void *data)
+{
+    if (fixup != NULL)
+    {
+        free(fixup);
+    }
+}
+
+void section_fixup_list_Free(unsigned int SecNum)
+{
+    Word_t Rc_word;
+
+    section_fixup_list_ForEach(SecNum, section_fixup_list_FreeCallback, NULL);
+
+    JLFA(Rc_word, section[SecNum].fixup_list);
 }
 
 
@@ -340,7 +443,7 @@ output_data *section_output_list_Insert(unsigned int SecNum, Word_t Index)
         output->type = OT_UNKNOWN;
     }
 
-    output->ofs = Index;
+    output->ofs = (uint_fast32_t)Index;
 
     return output;
 }
@@ -383,6 +486,27 @@ void section_output_list_Delete(unsigned int SecNum, Word_t Index)
     }
 }
 
+static void section_output_list_FreeCallback(output_data *output, void *data)
+{
+    if (output != NULL)
+    {
+        if (output->str != NULL)
+        {
+            free(output->str);
+        }
+        free(output);
+    }
+}
+
+void section_output_list_Free(unsigned int SecNum)
+{
+    Word_t Rc_word;
+
+    section_output_list_ForEach(SecNum, section_output_list_FreeCallback, NULL);
+
+    JLFA(Rc_word, section[SecNum].output_list);
+}
+
 
 /* region_list */
 region_data *section_region_list_Insert(unsigned int SecNum, Word_t Index, uint_fast32_t end_ofs)
@@ -392,7 +516,7 @@ region_data *section_region_list_Insert(unsigned int SecNum, Word_t Index, uint_
     region = (region_data *)malloc(sizeof(region_data));
     if (region == NULL) return NULL;
 
-    region->begin_ofs = Index;
+    region->begin_ofs = (uint_fast32_t)Index;
     region->end_ofs = end_ofs;
 
     JLI(region_value, section[SecNum].region_list, Index);
@@ -412,6 +536,23 @@ region_data *section_region_list_Insert(unsigned int SecNum, Word_t Index, uint_
     return region;
 }
 
+void section_region_list_Free(unsigned int SecNum)
+{
+    Word_t index, Rc_word;
+    region_data **region_value;
+
+    index = 0;
+    JLF(region_value, section[SecNum].region_list, index);
+    while (region_value != NULL)
+    {
+        free(*region_value);
+        JLN(region_value, section[SecNum].region_list, index);
+    }
+
+    JLFA(Rc_word, section[SecNum].region_list);
+}
+
+
 /* export_list */
 export_data *section_export_list_Insert(unsigned int SecNum, Word_t Index, uint_fast32_t ordinal, const char *name)
 {
@@ -420,7 +561,7 @@ export_data *section_export_list_Insert(unsigned int SecNum, Word_t Index, uint_
     export = (export_data *)malloc(sizeof(export_data) + ((name)?strlen(name):0));
     if (export == NULL) return NULL;
 
-    export->ofs = Index;
+    export->ofs = (uint_fast32_t)Index;
     export->ordinal = ordinal;
     export->next = NULL;
     export->internal = NULL;
@@ -507,6 +648,32 @@ void section_export_list_Delete(unsigned int SecNum, Word_t Index)
     }
 }
 
+static void section_export_list_FreeCallback(export_data *export, void *data)
+{
+    export_data *next;
+
+    do
+    {
+        if (export->internal != NULL)
+        {
+            free(export->internal);
+        }
+        next = export->next;
+        free(export);
+        export = next;
+    } while (export != NULL);
+}
+
+void section_export_list_Free(unsigned int SecNum)
+{
+    Word_t Rc_word;
+
+    section_export_list_ForEach(SecNum, section_export_list_FreeCallback, NULL);
+
+    JLFA(Rc_word, section[SecNum].export_list);
+}
+
+
 /* import_list */
 import_data *import_list_Insert(Word_t Index)
 {
@@ -531,7 +698,7 @@ import_data *import_list_Insert(Word_t Index)
         import->ProcName = NULL;
     }
 
-    import->num = Index;
+    import->num = (uint_fast32_t)Index;
 
     return import;
 }
@@ -550,4 +717,27 @@ void import_list_ForEach(void (*proc)(import_data *import, void *data), void *da
         JLN(import_value, import_list, search_index);
     }
 }
+
+static void import_list_FreeCallback(import_data *import, void *data)
+{
+    if (import != NULL)
+    {
+        if (import->ProcAdrName != NULL)
+        {
+            free(import->ProcAdrName);
+        }
+        free(import);
+    }
+}
+
+void import_list_Free(void)
+{
+    Word_t Rc_word;
+
+    import_list_ForEach(import_list_FreeCallback, NULL);
+
+    JLFA(Rc_word, import_list);
+}
+
+#endif
 

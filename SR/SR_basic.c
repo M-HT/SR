@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -234,7 +234,7 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
             code16_area_value = section_code16_list_FindEntryEqualOrLowerIndex(item->tsec, item->tofs, &code16_area_index);
             if (code16_area_value != NULL)
             {
-                if (code16_area_index + *code16_area_value <= item->tofs)
+                if ((int_fast32_t)(code16_area_index + *code16_area_value) <= item->tofs)
                 {
                     code16_area_value = NULL;
                 }
@@ -314,7 +314,7 @@ static void SR_apply_fixup_data_offset(fixup_data *item, void *data)
             if (validenttry)
             {
                 replace = section_replace_list_FindEntryEqualOrLower(item->tsec, item->tofs);
-                if ((replace != NULL) && (replace->ofs + replace->length > item->tofs)) // target is in replaced area
+                if ((replace != NULL) && ((int_fast32_t)(replace->ofs + replace->length) > item->tofs)) // target is in replaced area
                 {
                     replace = section_replace_list_FindEntryEqualOrLower(DATA->Entry, item->sofs);
                     if ((replace != NULL) && (replace->ofs + replace->length > item->sofs)) // source is in replaced area

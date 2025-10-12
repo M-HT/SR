@@ -28,8 +28,12 @@
 #include "SR_defs.h"
 #include "SR_vars.h"
 
-#ifdef WIN32
-    #define WIN32_LEAN_AND_MEAN
+#if (defined(__WIN32__) || defined(__WINDOWS__)) && !defined(_WIN32)
+#define _WIN32
+#endif
+
+#ifdef _WIN32
+	#define WIN32_LEAN_AND_MEAN
 
 	#include <windows.h>
 #else
@@ -39,7 +43,7 @@
 #endif
 
 #pragma pack(1)
-typedef struct __attribute__ ((__packed__)) _LEHeader_ {
+typedef struct PACKED _LEHeader_ {
 	uint16_t Signature;
 	uint8_t  ByteOrdering;
 	uint8_t  WordOrdering;
@@ -88,7 +92,7 @@ typedef struct __attribute__ ((__packed__)) _LEHeader_ {
 	uint32_t HeapSize;
 } LEHeader;
 
-typedef struct __attribute__ ((__packed__)) _ObjectTableEntry_ {
+typedef struct PACKED _ObjectTableEntry_ {
 	uint32_t VirtualSize;
 	uint32_t RelocationBaseAddress;
 	uint32_t ObjectFlags;
@@ -97,7 +101,7 @@ typedef struct __attribute__ ((__packed__)) _ObjectTableEntry_ {
 	uint32_t Reserved;
 } ObjectTableEntry;
 
-typedef struct __attribute__ ((__packed__)) _ObjectPageMapTableEntry_ {
+typedef struct PACKED _ObjectPageMapTableEntry_ {
 	uint8_t  Unknown;
 	uint8_t  FixupTableIndex_HB; // high byte
 	uint8_t  FixupTableIndex_LB; // low byte
@@ -109,7 +113,7 @@ typedef struct __attribute__ ((__packed__)) _ObjectPageMapTableEntry_ {
 typedef struct _memory_file_ {
 	int64_t len;
 	void *mem;
-#ifdef WIN32
+#ifdef _WIN32
 	HANDLE file, fmap;
 #else
 	int fd;
@@ -128,7 +132,7 @@ static int load_file(memory_file *mem_file, const char *fname)
 
 	mem_file->mem_allocated = 0;
 	mem_file->mem = NULL;
-#ifdef WIN32
+#ifdef _WIN32
 
 	mem_file->fmap = INVALID_HANDLE_VALUE;
 
@@ -214,12 +218,12 @@ LOAD_FILE_MAP_ERROR:
 		mem_file->len = (int64_t) len2;
 	}
 
-	mem_file->mem = malloc(mem_file->len);
+	mem_file->mem = malloc((size_t)mem_file->len);
 	if (mem_file->mem == NULL) goto LOAD_FILE_READ_ERROR;
 
 	mem_file->mem_allocated = 1;
 
-	if (fread(mem_file->mem, 1, mem_file->len, mf) != mem_file->len) goto LOAD_FILE_READ_ERROR;
+	if (fread(mem_file->mem, 1, (size_t)mem_file->len, mf) != mem_file->len) goto LOAD_FILE_READ_ERROR;
 
     fclose(mf);
 
@@ -253,7 +257,7 @@ static void unload_file(memory_file *mem_file)
 			mem_file->mem = NULL;
 		}
 	}
-#ifdef WIN32
+#ifdef _WIN32
 	else
 	{
 		if (mem_file->mem != NULL)
@@ -300,7 +304,8 @@ static int LoadBssBorder(void)
     char *str1;
     FILE *file;
     uint_fast32_t BssObject, BssOffset;
-    int items, length, BssAlignMinus;
+    size_t length;
+    int items, BssAlignMinus;
     unsigned int BssAddress;
 
     file = fopen("bssborder.csv", "rt");
@@ -309,10 +314,10 @@ static int LoadBssBorder(void)
     while (!feof(file))
     {
         // read enters
-        items = fscanf(file, "%8192[\n]", buf);
+        items = fscanf(file, "%8191[\n]", buf);
         // read line
         buf[0] = 0;
-        items = fscanf(file, "%8192[^\n]", buf);
+        items = fscanf(file, "%8191[^\n]", buf);
         if (items <= 0) continue;
         length = strlen(buf);
         if (length != 0 && buf[length - 1] == '\r')
@@ -489,7 +494,7 @@ int SR_LoadFile(const char *fname)
 		Header = (LEHeader *) LEfile;
 
 		// check if file is big enough to contain LE EXE header
-		if (SR_FileSize <= HeaderOffset + sizeof(LEHeader))
+		if (SR_FileSize <= (int64_t)(HeaderOffset + sizeof(LEHeader)))
 		{
 			unload_file(&mf);
 			fprintf(stderr, "Error: File too small\n");
@@ -591,8 +596,6 @@ int SR_LoadFile(const char *fname)
 			section[Entry].code16_list  = NULL;
 			section[Entry].ua_ebp_list  = NULL;
 			section[Entry].ua_esp_list  = NULL;
-			section[Entry].code2data_list = NULL;
-			section[Entry].data2code_list = NULL;
 
 			if ( (Header->ESPObjectNum - 1) == Entry )
 			{
@@ -753,7 +756,7 @@ int SR_LoadFile(const char *fname)
 
                     if (TargetOffset != 0x80000000)
                     {
-                        if (TargetOffset >= section[TargetObject - 1].size)
+                        if ((uint_fast32_t)TargetOffset >= section[TargetObject - 1].size)
                         {
                             uint_fast32_t SecNum, RelAdr;
                             if (SR_get_section_reladr(section[TargetObject - 1].start + TargetOffset, &SecNum, &RelAdr))

@@ -28,11 +28,19 @@
 #if !defined(__USE_ISOC99)
     #define __USE_ISOC99
 #endif
+#if !defined(_USE_MATH_DEFINES)
+    #define _USE_MATH_DEFINES
+#endif
 #include <math.h>
 
-#ifdef __FLOAT_WORD_ORDER__
+#if defined(_MSC_VER)
 
-#if (__FLOAT_WORD_ORDER__ == __ORDER_BIG_ENDIAN__)
+#undef BIG_ENDIAN_FLOAT_WORD_ORDER
+#undef BIG_ENDIAN_BYTE_ORDER
+
+#elif defined(__BYTE_ORDER__)
+
+#if (defined(__FLOAT_WORD_ORDER__) && (__FLOAT_WORD_ORDER__ == __ORDER_BIG_ENDIAN__)) || (!defined(__FLOAT_WORD_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__))
 #define BIG_ENDIAN_FLOAT_WORD_ORDER
 #else
 #undef BIG_ENDIAN_FLOAT_WORD_ORDER
@@ -328,7 +336,7 @@ EXTERNC void x87_fild_int64(CPU, uint32_t num_low, uint32_t num_high)
     num.low = num_low;
     num.high = num_high;
     PUSH_REGS;
-    ST0 = num.i;
+    ST0 = (double)num.i;
 }
 
 EXTERNC void x87_fninit_void(CPU)
@@ -484,7 +492,7 @@ EXTERNC uint32_t x87_fistp_int64(CPU)
     if ((orig >= 9223372036854775808.0) || (orig <= -9223372036854775808.0))
     {
 #ifdef BIG_ENDIAN_BYTE_ORDER
-        uval.i = __INT64_C(0x8000000000000000);
+        uval.i = INT64_C(0x8000000000000000);
 
         presult = (le_int *)&(st_result);
 
@@ -493,7 +501,7 @@ EXTERNC uint32_t x87_fistp_int64(CPU)
 
         return (uint32_t)(uintptr_t)presult;
 #else
-        st_result = __INT64_C(0x8000000000000000);
+        st_result = INT64_C(0x8000000000000000);
         return (uint32_t)(uintptr_t)&(st_result);
 #endif
     }
@@ -662,7 +670,7 @@ EXTERNC int32_t x87_fst_float(CPU)
     float_int ret;
 
     CLEAR_X87_FLAGS;
-    ret.f = ST0;
+    ret.f = (float)ST0;
 
     return ret.i;
 }
@@ -701,7 +709,7 @@ EXTERNC int32_t x87_fstp_float(CPU)
 {
     float_int ret;
 
-    ret.f = ST0;
+    ret.f = (float)ST0;
     POP_REGS;
     return ret.i;
 }
@@ -1023,7 +1031,7 @@ EXTERNC uint32_t x87_ftol_int64(CPU)
     int_int ret;
     le_int *presult;
 
-    ret.i = ((orig < 9223372036854775808.0) && (orig > -9223372036854775808.0))?((int64_t) trunc(orig)):__INT64_C(0x8000000000000000);
+    ret.i = ((orig < 9223372036854775808.0) && (orig > -9223372036854775808.0))?((int64_t) trunc(orig)):INT64_C(0x8000000000000000);
 
     presult = (le_int *)&(st_result);
 
@@ -1032,7 +1040,7 @@ EXTERNC uint32_t x87_ftol_int64(CPU)
 
     return (uint32_t)(uintptr_t)presult;
 #else
-    st_result = ((orig < 9223372036854775808.0) && (orig > -9223372036854775808.0))?((int64_t) trunc(orig)):__INT64_C(0x8000000000000000);
+    st_result = ((orig < 9223372036854775808.0) && (orig > -9223372036854775808.0))?((int64_t) trunc(orig)):INT64_C(0x8000000000000000);
     return (uint32_t)(uintptr_t)&(st_result);
 #endif
 }

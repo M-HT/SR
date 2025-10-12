@@ -28,7 +28,11 @@
 #include "SR_defs.h"
 #include "SR_vars.h"
 
-#ifdef WIN32
+#if (defined(__WIN32__) || defined(__WINDOWS__)) && !defined(_WIN32)
+#define _WIN32
+#endif
+
+#ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
 
     #include <windows.h>
@@ -42,7 +46,7 @@
 
 #pragma pack(1)
 
-typedef struct __attribute__ ((__packed__)) __IMAGE_FILE_HEADER {
+typedef struct PACKED __IMAGE_FILE_HEADER {
     uint16_t Machine;
     uint16_t NumberOfSections;
     uint32_t TimeDateStamp;
@@ -52,12 +56,12 @@ typedef struct __attribute__ ((__packed__)) __IMAGE_FILE_HEADER {
     uint16_t Characteristics;
 } _IMAGE_FILE_HEADER, *P_IMAGE_FILE_HEADER;
 
-typedef struct __attribute__ ((__packed__)) __IMAGE_DATA_DIRECTORY {
+typedef struct PACKED __IMAGE_DATA_DIRECTORY {
     uint32_t VirtualAddress;
     uint32_t Size;
 } _IMAGE_DATA_DIRECTORY, *P_IMAGE_DATA_DIRECTORY;
 
-typedef struct __attribute__ ((__packed__)) __IMAGE_OPTIONAL_HEADER {
+typedef struct PACKED __IMAGE_OPTIONAL_HEADER {
     uint16_t Magic;
     uint8_t  MajorLinkerVersion;
     uint8_t  MinorLinkerVersion;
@@ -107,13 +111,13 @@ typedef struct __attribute__ ((__packed__)) __IMAGE_OPTIONAL_HEADER {
 } _IMAGE_OPTIONAL_HEADER, *P_IMAGE_OPTIONAL_HEADER;
 
 
-typedef struct __attribute__ ((__packed__)) __IMAGE_NT_HEADERS {
+typedef struct PACKED __IMAGE_NT_HEADERS {
     uint32_t Signature;
     struct __IMAGE_FILE_HEADER FileHeader;
     struct __IMAGE_OPTIONAL_HEADER OptionalHeader;
 } _IMAGE_NT_HEADERS, *P_IMAGE_NT_HEADERS;
 
-typedef struct __attribute__ ((__packed__)) __IMAGE_SECTION_HEADER {
+typedef struct PACKED __IMAGE_SECTION_HEADER {
     uint8_t  Name[8];
     uint32_t VirtualSize;
     uint32_t VirtualAddress;
@@ -126,12 +130,12 @@ typedef struct __attribute__ ((__packed__)) __IMAGE_SECTION_HEADER {
     uint32_t Characteristics;
 } _IMAGE_SECTION_HEADER, *P_IMAGE_SECTION_HEADER;
 
-typedef struct __attribute__ ((__packed__)) __IMAGE_IMPORT_BY_NAME {
+typedef struct PACKED __IMAGE_IMPORT_BY_NAME {
     uint16_t Hint;
     uint8_t  Name[];
 } _IMAGE_IMPORT_BY_NAME, *P_IMAGE_IMPORT_BY_NAME;
 
-typedef struct __attribute__ ((__packed__)) __IMAGE_IMPORT_DESCRIPTOR {
+typedef struct PACKED __IMAGE_IMPORT_DESCRIPTOR {
     uint32_t ImportLookupTable;
     uint32_t TimeDateStamp;
     uint32_t ForwarderChain;
@@ -139,7 +143,7 @@ typedef struct __attribute__ ((__packed__)) __IMAGE_IMPORT_DESCRIPTOR {
     uint32_t ImportAddressTable;
 } _IMAGE_IMPORT_DESCRIPTOR, *P_IMAGE_IMPORT_DESCRIPTOR;
 
-typedef struct __attribute__ ((__packed__)) __IMAGE_EXPORT_DIRECTORY {
+typedef struct PACKED __IMAGE_EXPORT_DIRECTORY {
     uint32_t Characteristics;
     uint32_t TimeDateStamp;
     uint16_t MajorVersion;
@@ -165,7 +169,7 @@ typedef struct _Import_Check_ {
 typedef struct _memory_file_ {
     int64_t len;
     void *mem;
-#ifdef WIN32
+#ifdef _WIN32
     HANDLE file, fmap;
 #else
     int fd;
@@ -184,7 +188,7 @@ static int load_file(memory_file *mem_file, const char *fname)
 
     mem_file->mem_allocated = 0;
     mem_file->mem = NULL;
-#ifdef WIN32
+#ifdef _WIN32
 
     mem_file->fmap = INVALID_HANDLE_VALUE;
 
@@ -270,12 +274,12 @@ LOAD_FILE_MAP_ERROR:
         mem_file->len = (int64_t) len2;
     }
 
-    mem_file->mem = malloc(mem_file->len);
+    mem_file->mem = malloc((size_t)mem_file->len);
     if (mem_file->mem == NULL) goto LOAD_FILE_READ_ERROR;
 
     mem_file->mem_allocated = 0;
 
-    if (fread(mem_file->mem, 1, mem_file->len, mf) != mem_file->len) goto LOAD_FILE_READ_ERROR;
+    if (fread(mem_file->mem, 1, (size_t)mem_file->len, mf) != mem_file->len) goto LOAD_FILE_READ_ERROR;
 
     fclose(mf);
 
@@ -309,7 +313,7 @@ static void unload_file(memory_file *mem_file)
             mem_file->mem = NULL;
         }
     }
-#ifdef WIN32
+#ifdef _WIN32
     else
     {
         if (mem_file->mem != NULL)
@@ -381,7 +385,8 @@ static int LoadBssBorder(void)
     char *str1;
     FILE *file;
     uint_fast32_t BssObject, BssOffset;
-    int items, length, BssAlignMinus;
+    size_t length;
+    int items, BssAlignMinus;
     unsigned int BssAddress;
 
     file = fopen("bssborder.csv", "rt");
@@ -390,10 +395,10 @@ static int LoadBssBorder(void)
     while (!feof(file))
     {
         // read enters
-        items = fscanf(file, "%8192[\n]", buf);
+        items = fscanf(file, "%8191[\n]", buf);
         // read line
         buf[0] = 0;
-        items = fscanf(file, "%8192[^\n]", buf);
+        items = fscanf(file, "%8191[^\n]", buf);
         if (items <= 0) continue;
         length = strlen(buf);
         if (length != 0 && buf[length - 1] == '\r')
@@ -463,7 +468,8 @@ static int LoadRelocations(P_IMAGE_NT_HEADERS Header)
     char *str1, *str2;
     FILE *file;
     uint_fast32_t SourceObject, SourceOffset, TargetObject, TargetOffset;
-    int items, length;
+    size_t length;
+    int items;
     unsigned int FixupAddress, TargetAddress;
     fixup_type FixupType;
     fixup_data *fixup;
@@ -478,10 +484,10 @@ static int LoadRelocations(P_IMAGE_NT_HEADERS Header)
     while (!feof(file))
     {
         // read enters
-        items = fscanf(file, "%8192[\n]", buf);
+        items = fscanf(file, "%8191[\n]", buf);
         // read line
         buf[0] = 0;
-        items = fscanf(file, "%8192[^\n]", buf);
+        items = fscanf(file, "%8191[^\n]", buf);
         if (items <= 0) continue;
         length = strlen(buf);
         if (length != 0 && buf[length - 1] == '\r')
@@ -615,7 +621,7 @@ int SRW_LoadFile(const char *fname)
         Header = (P_IMAGE_NT_HEADERS) PEfile;
 
         // check if file is big enough to contain PE EXE header
-        if (SR_FileSize <= HeaderOffset + sizeof(_IMAGE_NT_HEADERS))
+        if (SR_FileSize <= (int64_t)(HeaderOffset + sizeof(_IMAGE_NT_HEADERS)))
         {
             unload_file(&mf);
             fprintf(stderr, "Error: File too small\n");
@@ -769,8 +775,6 @@ int SRW_LoadFile(const char *fname)
             section[Entry].code16_list  = NULL;
             section[Entry].ua_ebp_list  = NULL;
             section[Entry].ua_esp_list  = NULL;
-            section[Entry].code2data_list = NULL;
-            section[Entry].data2code_list = NULL;
             section[Entry].export_list  = NULL;
 
             section[Entry].name[8] = 0;
@@ -942,7 +946,7 @@ int SRW_LoadFile(const char *fname)
                         }
                         else
                         {
-                            int Entry_size;
+                            unsigned int Entry_size;
 
                             if (ending == 1)
                             {
@@ -1304,7 +1308,7 @@ int SRW_LoadFile(const char *fname)
                             if ((at != NULL) && (at[1] >= '0') && (at[1] <= '9'))
                             {
                                 uint_fast32_t internal_length;
-                                internal_length = (at - ExportName) - 1;
+                                internal_length = (uint_fast32_t)((at - ExportName) - 1);
                                 export->internal = (char *) malloc(internal_length + 1);
                                 if (export->internal == NULL)
                                 {

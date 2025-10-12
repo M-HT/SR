@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -443,7 +443,7 @@ int SR_full_disassembly(void)
                 finished = 0;
 
 #if (OUTPUT_TYPE != OUT_ORIG)
-                offset = entry_index;
+                offset = (uint_fast32_t)entry_index;
 #endif
                 section_entry_list_Delete(index, entry_index);
 

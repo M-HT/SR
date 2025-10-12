@@ -118,30 +118,30 @@ static uint_fast32_t Tflags_to_write;
 */
 
 
-static inline const char *x86regstr(enum ud_type reg) __attribute__ ((pure));
-static inline int x87regnum(enum ud_type reg) __attribute__ ((const));
-static inline const char *llregstr(enum ll_regs reg) __attribute__ ((pure));
+static INLINE const char *x86regstr(enum ud_type reg) PURE_FUNCTION;
+static INLINE int x87regnum(enum ud_type reg) CONST_FUNCTION;
+static INLINE const char *llregstr(enum ll_regs reg) PURE_FUNCTION;
 
-static inline enum ll_regs x86322llreg(enum ud_type reg) __attribute__ ((pure));
-static inline enum ll_regs x86162llreg(enum ud_type reg) __attribute__ ((pure));
-static inline enum ll_regs x868l2llreg(enum ud_type reg) __attribute__ ((pure));
-static inline enum ll_regs x868h2llreg(enum ud_type reg) __attribute__ ((pure));
+static INLINE enum ll_regs x86322llreg(enum ud_type reg) PURE_FUNCTION;
+static INLINE enum ll_regs x86162llreg(enum ud_type reg) PURE_FUNCTION;
+static INLINE enum ll_regs x868l2llreg(enum ud_type reg) PURE_FUNCTION;
+static INLINE enum ll_regs x868h2llreg(enum ud_type reg) PURE_FUNCTION;
 
-static inline enum ll_regs x862llreg(enum ud_type reg) __attribute__ ((pure));
-static inline const char *x862llstr(enum ud_type reg) __attribute__ ((pure));
+static INLINE enum ll_regs x862llreg(enum ud_type reg) PURE_FUNCTION;
+static INLINE const char *x862llstr(enum ud_type reg) PURE_FUNCTION;
 
-static inline int lltempreg(enum ll_regs reg) __attribute__ ((const));
+static INLINE int lltempreg(enum ll_regs reg) CONST_FUNCTION;
 
-static inline const char *x86regstr(enum ud_type reg) { return ud_reg_tab[reg - UD_R_AL]; }
-static inline int x87regnum(enum ud_type reg) { return reg - UD_R_ST0; }
-static inline const char *llregstr(enum ll_regs reg) { return ll_regs_str[reg]; }
+static INLINE const char *x86regstr(enum ud_type reg) { return ud_reg_tab[reg - UD_R_AL]; }
+static INLINE int x87regnum(enum ud_type reg) { return reg - UD_R_ST0; }
+static INLINE const char *llregstr(enum ll_regs reg) { return ll_regs_str[reg]; }
 
-static inline enum ll_regs x86322llreg(enum ud_type reg) { return ll_regs_table[reg - UD_R_EAX]; }
-static inline enum ll_regs x86162llreg(enum ud_type reg) { return ll_regs_table[reg - UD_R_AX]; }
-static inline enum ll_regs x868l2llreg(enum ud_type reg) { return ll_regs_table[reg - UD_R_AL]; }
-static inline enum ll_regs x868h2llreg(enum ud_type reg) { return ll_regs_table[reg - UD_R_AH]; }
+static INLINE enum ll_regs x86322llreg(enum ud_type reg) { return ll_regs_table[reg - UD_R_EAX]; }
+static INLINE enum ll_regs x86162llreg(enum ud_type reg) { return ll_regs_table[reg - UD_R_AX]; }
+static INLINE enum ll_regs x868l2llreg(enum ud_type reg) { return ll_regs_table[reg - UD_R_AL]; }
+static INLINE enum ll_regs x868h2llreg(enum ud_type reg) { return ll_regs_table[reg - UD_R_AH]; }
 
-static inline enum ll_regs x862llreg(enum ud_type reg)
+static INLINE enum ll_regs x862llreg(enum ud_type reg)
 {
     return (reg >= UD_R_EAX && reg <= UD_R_EDI)?( ll_regs_table[reg - UD_R_EAX] ):(
            (reg >= UD_R_AX && reg <= UD_R_DI)?( ll_regs_table[reg - UD_R_AX] ):(
@@ -150,9 +150,9 @@ static inline enum ll_regs x862llreg(enum ud_type reg)
            LR_NONE
            ))));
 }
-static inline const char *x862llstr(enum ud_type reg) { return ll_regs_str[x862llreg(reg)]; }
+static INLINE const char *x862llstr(enum ud_type reg) { return ll_regs_str[x862llreg(reg)]; }
 
-static inline int lltempreg(enum ll_regs reg) { return 0x0001fc00 & (1 << ( (unsigned int) reg) ); }
+static INLINE int lltempreg(enum ll_regs reg) { return 0x0001fc00 & (1 << ( (unsigned int) reg) ); }
 
 #define X86REGSTR(x) x86regstr(x)
 #define X87REGNUM(x) x87regnum(x)
@@ -862,7 +862,7 @@ static void SR_disassemble_get_memory_address(char *ostr, enum ll_regs madrreg, 
 // trashes LR_TMP3
 static void SR_disassemble_read_mem_doubleword(char *cResult, const struct madr_result *res)
 {
-    int len;
+    size_t len;
 
     len = strlen(cResult);
     cResult += len;
@@ -881,7 +881,7 @@ static void SR_disassemble_read_mem_word(char *cResult, const struct madr_result
 /*
     dst != LR_TMPADR
 */
-    int len;
+    size_t len;
 
     if (dst == LR_TMPADR)
     {
@@ -911,7 +911,7 @@ static void SR_disassemble_read_mem_halfword(char *cResult, const struct madr_re
         dst != LR_TMPADR
         dst != LR_TMP0
     */
-    int len;
+    size_t len;
 
     if ((dst == LR_TMPADR) || (dst == LR_TMP0))
     {
@@ -957,7 +957,7 @@ static void SR_disassemble_read_mem_byte(char *cResult, const struct madr_result
         dst != LR_TMPADR
         dst != LR_TMP0
     */
-    int len;
+    size_t len;
 
     if ((dst == LR_TMPADR) || (dst == LR_TMP0))
     {
@@ -1012,7 +1012,7 @@ static void SR_disassemble_read_mem_byte(char *cResult, const struct madr_result
 // trashes LR_TMP3
 static void SR_disassemble_write_mem_doubleword(char *cResult, const struct madr_result *res)
 {
-    int len;
+    size_t len;
 
     len = strlen(cResult);
     cResult += len;
@@ -1031,7 +1031,7 @@ static void SR_disassemble_write_mem_word(char *cResult, const struct madr_resul
     /*
         src != LR_TMPADR
     */
-    int len;
+    size_t len;
 
     if (src == LR_TMPADR)
     {
@@ -1054,7 +1054,7 @@ static void SR_disassemble_write_mem_halfword(char *cResult, const struct madr_r
     /*
         src != LR_TMPADR
     */
-    int len;
+    size_t len;
 
     if (src == LR_TMPADR)
     {
@@ -1083,7 +1083,7 @@ static void SR_disassemble_write_mem_byte(char *cResult, const struct madr_resul
         src != LR_TMPADR
         src != LR_TMP0
     */
-    int len;
+    size_t len;
 
     if ((src == LR_TMPADR) || (src == LR_TMP0))
     {
@@ -1161,7 +1161,8 @@ static uint32_t SR_disassemble_get_value(const ud_operand_t *op, enum extend_mod
 static void SR_disassemble_change_flags(char *cResult, uint_fast32_t toclear, uint_fast32_t toset, uint_fast32_t toinvert)
 {
     uint_fast32_t flags[3];
-    int numops, numflags, numflags2, len, counter;
+    int numops, numflags, numflags2, counter;
+    size_t len;
 
     flags[0] = toclear  & (FL_CARRY | FL_ZERO | FL_SIGN | FL_OVERFLOW | FL_PARITY | FL_ADJUST);
     flags[1] = toset    & (FL_CARRY | FL_ZERO | FL_SIGN | FL_OVERFLOW | FL_PARITY | FL_ADJUST);
@@ -1301,7 +1302,7 @@ static void SR_disassemble_set_flags_AZSP(char *cResult, enum ll_regs res, enum 
         res != LR_TMP0
         opertmp != LR_TMP0
     */
-    int len;
+    size_t len;
 
     if ((tocalculate & (FL_ADJUST | FL_ZERO | FL_SIGN | FL_PARITY )) == 0) return;
 

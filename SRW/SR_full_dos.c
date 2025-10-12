@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2022 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -86,7 +86,7 @@ int SR_disassemble_convert_cjump(char *dst, const char *modifier, uint_fast32_t 
 {
     char cbuf[32];
     const char *ostr, *str1;
-    int length1;
+    intptr_t length1;
 
     ostr = ud_insn_asm(&ud_obj);
 
@@ -130,7 +130,7 @@ int SR_disassemble_convert_fixup(const char *ostr, char *dst, fixup_data *fixup,
     int *label_value;
     output_data *output;
     uint_fast32_t sec, ofs;
-    int length1;
+    intptr_t length1;
 
     if (fixup->type == FT_SEGMENT)
     {

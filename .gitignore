@@ -4,6 +4,8 @@
 *.a
 *.exe
 *.EXE
+*.obj
+*.OBJ
 *.so
 .sconsign.dblite
 llasm/llasm

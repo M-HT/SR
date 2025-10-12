@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -27,8 +27,12 @@
 #include <time.h>
 #include <string.h>
 
-#ifdef WIN32
-    #define WIN32_LEAN_AND_MEAN
+#if (defined(__WIN32__) || defined(__WINDOWS__)) && !defined(_WIN32)
+#define _WIN32
+#endif
+
+#ifdef _WIN32
+	#define WIN32_LEAN_AND_MEAN
 
 	#include <windows.h>
 #else
@@ -41,7 +45,7 @@
 	#include "SR_vars.h"
 #undef DEFINE_VARIABLES
 
-#if defined(__MINGW32__)
+#if defined(_WIN32)
 
 static void write_log_time(FILE *fout)
 {
@@ -115,7 +119,7 @@ int SR_get_section_reladr(uint_fast32_t Address, uint_fast32_t *SecNum, uint_fas
 
 static char *trim_string(char *buf)
 {
-    int len;
+    size_t len;
 
     while (*buf == ' ') buf++;
 
@@ -151,11 +155,11 @@ static void read_cfg(void)
     while (!feof(f))
     {
         /* skip empty lines */
-        items = fscanf(f, "%8192[\n\r]", buf);
+        items = fscanf(f, "%8191[\n\r]", buf);
 
         /* read line */
         buf[0] = 0;
-        items = fscanf(f, "%8192[^\n^\r]", buf);
+        items = fscanf(f, "%8191[^\n^\r]", buf);
         if (items <= 0) continue;
 
         /* trim line */
@@ -204,115 +208,34 @@ static void read_cfg(void)
     fclose(f);
 }
 
-static void free_output_entry(void *entry)
-{
-    output_data *output;
-    output = (output_data *)entry;
-    if (output->str != NULL)
-    {
-        free(output->str);
-    }
-}
-
-static void free_extrn_entry(void *entry)
-{
-    extrn_data *extrn;
-    extrn = (extrn_data *)entry;
-    if (extrn->altaction != NULL)
-    {
-        free(extrn->altaction);
-    }
-}
-
-static void free_export_entry(void *entry)
-{
-    export_data *export, *next;
-    export = (export_data *)entry;
-    if (export->internal != NULL)
-    {
-        free(export->internal);
-    }
-    export = export->next;
-    while (export != NULL)
-    {
-        if (export->internal != NULL)
-        {
-            free(export->internal);
-        }
-        next = export->next;
-        free(export);
-        export = next;
-    };
-}
-
-static void free_import_entry(void *entry)
-{
-    import_data *import;
-    import = (import_data *)entry;
-    if (import->ProcAdrName != NULL)
-    {
-        free(import->ProcAdrName);
-    }
-}
-
-static void free_judy_array_entries(Pvoid_t judy_array, void (*free_callback)(void*))
-{
-    Word_t index;
-    void **judy_value;
-
-    index = 0;
-    JLF(judy_value, judy_array, index);
-    while (judy_value != NULL)
-    {
-        if (free_callback != NULL)
-        {
-            free_callback(*judy_value);
-        }
-        free(*judy_value);
-        JLN(judy_value, judy_array, index);
-    }
-}
-
 static void deinitialize_values(void)
 {
 	unsigned int Entry;
 
 	for (Entry = 0; Entry < num_sections; Entry++)
 	{
-		Word_t Rc_word;
-
-		free_judy_array_entries(section[Entry].fixup_list, NULL);
-		JLFA(Rc_word, section[Entry].fixup_list);
-		free_judy_array_entries(section[Entry].output_list, &free_output_entry);
-		JLFA(Rc_word, section[Entry].output_list);
-		J1FA(Rc_word, section[Entry].entry_list);
-		J1FA(Rc_word, section[Entry].code_list);
-		JLFA(Rc_word, section[Entry].label_list);
-		J1FA(Rc_word, section[Entry].noret_list);
-		free_judy_array_entries(section[Entry].extrn_list, &free_extrn_entry);
-		JLFA(Rc_word, section[Entry].extrn_list);
-		free_judy_array_entries(section[Entry].alias_list, NULL);
-		JLFA(Rc_word, section[Entry].alias_list);
-		JLFA(Rc_word, section[Entry].ignored_list);
-		free_judy_array_entries(section[Entry].replace_list, NULL);
-		JLFA(Rc_word, section[Entry].replace_list);
-		free_judy_array_entries(section[Entry].bound_list, NULL);
-		JLFA(Rc_word, section[Entry].bound_list);
-		free_judy_array_entries(section[Entry].region_list, NULL);
-		JLFA(Rc_word, section[Entry].region_list);
-		J1FA(Rc_word, section[Entry].nocode_list);
-		free_judy_array_entries(section[Entry].iflags_list, NULL);
-		JLFA(Rc_word, section[Entry].iflags_list);
-		JLFA(Rc_word, section[Entry].code16_list);
-		JLFA(Rc_word, section[Entry].ua_ebp_list);
-		JLFA(Rc_word, section[Entry].ua_esp_list);
-		J1FA(Rc_word, section[Entry].code2data_list);
-		J1FA(Rc_word, section[Entry].data2code_list);
-		free_judy_array_entries(section[Entry].export_list, &free_export_entry);
+		section_fixup_list_Free(Entry);
+		section_output_list_Free(Entry);
+		section_entry_list_Free(Entry);
+		section_code_list_Free(Entry);
+		section_label_list_Free(Entry);
+		section_noret_list_Free(Entry);
+		section_extrn_list_Free(Entry);
+		section_alias_list_Free(Entry);
+		section_ignored_list_Free(Entry);
+		section_replace_list_Free(Entry);
+		section_bound_list_Free(Entry);
+		section_region_list_Free(Entry);
+		section_nocode_list_Free(Entry);
+		section_iflags_list_Free(Entry);
+		section_code16_list_Free(Entry);
+		section_ua_ebp_list_Free(Entry);
+		section_ua_esp_list_Free(Entry);
+		section_export_list_Free(Entry);
 	}
 	num_sections = 0;
 
-	free_judy_array_entries(import_list, &free_import_entry);
+	import_list_Free();
 
 	if (SR_CodeBase != NULL)
 	{
@@ -344,10 +267,10 @@ int main (int argc, char *argv[])
 	int ret;
 	char *input_name, *output_name;
 
-#ifdef WIN32
+#ifdef _WIN32
 	SetPriorityClass(GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS);
 #else
-	if (-1 == nice(1));
+	if (-1 == nice(1)) {}
 #endif
 
 #if (OUTPUT_TYPE == OUT_ORIG)

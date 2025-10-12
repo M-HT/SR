@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,8 +25,16 @@
 #if !defined(_SR_DEFS_H_INCLUDED_)
 #define _SR_DEFS_H_INCLUDED_
 
-#include <inttypes.h>
-#include <Judy.h>
+#include <stdint.h>
+#if defined(USE_JUDY)
+    #if defined(_MSC_VER)
+        #define JU_WIN
+    #endif
+    #include <Judy.h>
+#else
+    typedef void * Pvoid_t;
+    typedef uintptr_t Word_t;
+#endif
 
 #define MAX_SECTIONS 32
 
@@ -40,6 +48,28 @@
 #if (OUTPUT_TYPE == OUT_LLASM)
     #define EMULATE_FPU 1
 #endif
+
+
+#if defined(__GNUC__)
+    #define INLINE __inline__
+    #define PACKED __attribute__ ((__packed__))
+    #define PURE_FUNCTION __attribute__ ((pure))
+    #define CONST_FUNCTION __attribute__ ((const))
+#elif defined(_MSC_VER)
+    #define INLINE __inline
+    #define PACKED
+    #define PURE_FUNCTION
+    #define CONST_FUNCTION
+    #define strcasecmp _stricmp
+    #define strncasecmp _strnicmp
+    #define strdup _strdup
+#else
+    #define INLINE inline
+    #define PACKED
+    #define PURE_FUNCTION
+    #define CONST_FUNCTION
+#endif
+
 
 typedef enum _output_type_ {
     OT_UNITIALIZED = -1,
@@ -145,8 +175,6 @@ typedef struct _section_data_ {
     Pvoid_t code16_list;        // list of 16-bit code areas
     Pvoid_t ua_ebp_list;        // list of unaligned ebp areas
     Pvoid_t ua_esp_list;        // list of unaligned esp areas
-    Pvoid_t code2data_list;     // list of targets of references from instructions to data
-    Pvoid_t data2code_list;     // list of targets of references from data to instructions
     Pvoid_t export_list;        // list of exports for section
     section_type type;          // section type: 0 - code, 1 - data, 2 - stack, 3 - uninitialized data
 //    int edata;                  // contains export data

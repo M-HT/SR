@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,6 +22,10 @@
  *
  */
 
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 #include "../Game_defs.h"
 #include "../Game_vars.h"
 
@@ -37,9 +41,6 @@ static uint32_t Game_SelectGroupOnMove;
 static int Game_SelectGroupX, Game_SelectGroupY, Game_SelectGroupTreshold;
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-
 static int keypad_xor_value_known = 0;
 static int keypad_xor_value = 0;
 #endif
@@ -819,12 +820,12 @@ void Handle_Timer_Input_Event(void)
             controller_mouse_last_time = tick;
 
             tx = (((int64_t)cx) * diff) * Game_VideoAspectXR + controller_frac_x;
-            deltax = tx >> 29;
-            controller_frac_x = tx - (((int64_t)deltax) << 29);
+            deltax = (int)(tx >> 29);
+            controller_frac_x = (int)(tx - (((int64_t)deltax) << 29));
 
             ty = (((int64_t)cy) * diff) * Game_VideoAspectYR + controller_frac_y;
-            deltay = ty >> 29;
-            controller_frac_y = ty - (((int64_t)deltay) << 29);
+            deltay = (int)(ty >> 29);
+            controller_frac_y = (int)(ty - (((int64_t)deltay) << 29));
 
             event.type = SDL_USEREVENT;
             event.user.code = EC_MOUSE_MOVE;

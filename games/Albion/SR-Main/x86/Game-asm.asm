@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2019 Roman Pauer
+;;  Copyright (C) 2016-2015 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -26,14 +26,10 @@
 %ifidn __OUTPUT_FORMAT__, win32
     %define Game_ESP_Original_Value _Game_ESP_Original_Value
     %define Game_MouseTable _Game_MouseTable
-    %define Game_Palette_Or _Game_Palette_Or
-    %define Game_Palette _Game_Palette
 %endif
 
 extern Game_ESP_Original_Value
 extern Game_MouseTable
-extern Game_Palette_Or
-extern Game_Palette
 
 extern main_
 extern mouse_pos

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2024 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,10 +22,13 @@
  *
  */
 
+#ifdef DEBUG_DDRAW
 #include <inttypes.h>
+#endif
 #include "WinApi-ddraw.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <SDL.h>
 #include "Game-Config.h"
 
@@ -557,25 +560,27 @@ uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsur
         lpDDS_c->lpBackbuffer->lpBackbuffer = NULL;
 
 #if SDL_VERSION_ATLEAST(2,0,0)
-        Uint32 format;
-        int width, height;
-
-        if (0 == SDL_QueryTexture(lpThis->Texture[0], &format, NULL, &width, &height))
         {
-            int bpp;
-            Uint32 Rmask, Gmask, Bmask, Amask;
-            if (SDL_PixelFormatEnumToMasks(format, &bpp, &Rmask, &Gmask, &Bmask, &Amask))
+            Uint32 format;
+            int width, height;
+
+            if (0 == SDL_QueryTexture(lpThis->Texture[0], &format, NULL, &width, &height))
             {
-                lpDDS_c->lpBackbuffer->Surface = SDL_CreateRGBSurface(
-                    SDL_SWSURFACE,
-                    width,
-                    height,
-                    bpp,
-                    Rmask,
-                    Gmask,
-                    Bmask,
-                    Amask
-                );
+                int bpp;
+                Uint32 Rmask, Gmask, Bmask, Amask;
+                if (SDL_PixelFormatEnumToMasks(format, &bpp, &Rmask, &Gmask, &Bmask, &Amask))
+                {
+                    lpDDS_c->lpBackbuffer->Surface = SDL_CreateRGBSurface(
+                        SDL_SWSURFACE,
+                        width,
+                        height,
+                        bpp,
+                        Rmask,
+                        Gmask,
+                        Bmask,
+                        Amask
+                    );
+                }
             }
         }
 #else
@@ -830,6 +835,9 @@ uint32_t IDirectDraw_SetCooperativeLevel_c(struct IDirectDraw_c *lpThis, void * 
 
 uint32_t IDirectDraw_SetDisplayMode_c(struct IDirectDraw_c *lpThis, uint32_t dwWidth, uint32_t dwHeight, uint32_t dwBPP)
 {
+    Uint32 window_format, texture_format;
+    int index;
+
 #ifdef DEBUG_DDRAW
     eprintf("IDirectDraw_SetDisplayMode: 0x%" PRIxPTR ", %i, %i, %i - ", (uintptr_t)lpThis, dwWidth, dwHeight, dwBPP);
 #endif
@@ -897,7 +905,6 @@ uint32_t IDirectDraw_SetDisplayMode_c(struct IDirectDraw_c *lpThis, uint32_t dwW
         return DDERR_UNSUPPORTEDMODE;
     }
 
-    Uint32 window_format, texture_format;
     window_format = SDL_GetWindowPixelFormat(lpThis->Window);
     texture_format = SDL_PIXELFORMAT_RGB565;
     if (window_format != SDL_PIXELFORMAT_UNKNOWN)
@@ -910,7 +917,6 @@ uint32_t IDirectDraw_SetDisplayMode_c(struct IDirectDraw_c *lpThis, uint32_t dwW
         }
     }
 
-    int index;
     for (index = 0; index < 3; index++)
     {
         lpThis->Texture[index] = SDL_CreateTexture(lpThis->Renderer, texture_format, SDL_TEXTUREACCESS_STREAMING, dwWidth, dwHeight);

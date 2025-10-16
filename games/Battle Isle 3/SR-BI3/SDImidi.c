@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2024 Roman Pauer
+ *  Copyright (C) 2020-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,6 +26,7 @@
 #include "midi-plugins.h"
 #include "midi-plugins2.h"
 #include "Game-Config.h"
+#include "platform.h"
 #include <windows.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -40,6 +41,9 @@
     #include <dlfcn.h>
 #endif
 
+#if !defined(WAVE_FORMAT_96S16)
+    #define WAVE_FORMAT_96S16 0x00080000
+#endif
 
 #define MS_STOPPED 0
 #define MS_OPENED  1
@@ -123,7 +127,7 @@ static DWORD WINAPI MP_ProcessData(LPVOID lpParameter)
 
                             write_buffer = MP_sequence.write_buffer & 1;
 
-                            MP_sequence.bytes_left[write_buffer] = MP_functions.get_data(MP_sequence.midi, (char *) MP_sequence.buffer[write_buffer], BUFFER_SIZE);
+                            MP_sequence.bytes_left[write_buffer] = (uint16_t)MP_functions.get_data(MP_sequence.midi, (char *) MP_sequence.buffer[write_buffer], BUFFER_SIZE);
                             if (MP_sequence.bytes_left[write_buffer] != BUFFER_SIZE)
                             {
                                 MP_functions.rewind_midi(MP_sequence.midi);
@@ -174,7 +178,7 @@ static DWORD WINAPI MP_ProcessData(LPVOID lpParameter)
 
                         write_buffer = MP_sequence.write_buffer & 1;
 
-                        MP_sequence.bytes_left[write_buffer] = MP_functions.get_data(MP_sequence.midi, (char *) MP_sequence.buffer[write_buffer], BUFFER_SIZE);
+                        MP_sequence.bytes_left[write_buffer] = (uint16_t)MP_functions.get_data(MP_sequence.midi, (char *) MP_sequence.buffer[write_buffer], BUFFER_SIZE);
 
                         if (MP_sequence.read_buffer == MP_sequence.write_buffer)
                         {
@@ -512,7 +516,7 @@ static void MP2_Shutdown(void)
 }
 
 
-int midi_PluginStartup(void) __attribute__((noinline));
+NOINLINE int midi_PluginStartup(void);
 int midi_PluginStartup(void)
 {
     if (Audio_MidiSubsystem == 0) return 0;
@@ -864,13 +868,13 @@ int midi_CloseTestMusic(void)
 
 int midi_GetErrorString(int error, char *text, unsigned int length)
 {
+    const char *errorText;
+
     // change:
     if (Audio_MidiSubsystem == 0)
     {
         return mciGetErrorStringA(error, text, length);
     }
-
-    const char *errorText;
 
     if (text == NULL) return 0;
 

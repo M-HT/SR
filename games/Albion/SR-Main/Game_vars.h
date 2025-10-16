@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -273,7 +273,7 @@ extern uint8_t keyboard_keys[0x80];
 
 
 extern int Game_Main_Asm(int argc, PTR32(char) argv[]);
-extern void Game_StopMain_Asm(void) __attribute__ ((__noreturn__));
+extern NORETURN void Game_StopMain_Asm(void);
 
 
 extern uint32_t Game_MouseMove(uint32_t state, uint32_t x, uint32_t y);

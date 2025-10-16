@@ -4968,7 +4968,7 @@ public int main(string[] args)
     {
         auto proc = proc_list[proc_name];
 
-        add_output_line("define " ~ ((proc.ispublic)?"":"private ") ~ "fastcc " ~ ((no_tail_calls)?"i8*":"void") ~ " @" ~ proc_name ~ "(%_cpu* %cpu) nounwind {");
+        add_output_line("define " ~ ((proc.ispublic || proc.isglobal)?"":"private ") ~ "fastcc " ~ ((no_tail_calls)?"i8*":"void") ~ " @" ~ proc_name ~ "(%_cpu* %cpu) nounwind {");
 
         if (!process_proc_body(proc_name))
         {

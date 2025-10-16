@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021-2024 Roman Pauer
+ *  Copyright (C) 2021-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -100,7 +100,7 @@ int ScalerPlugin_Startup(void)
 
     if (SP_handle == NULL)
     {
-        fprintf(stderr, "%s: load error: 0x%x\n", "scaler", GetLastError());
+        fprintf(stderr, "%s: load error: 0x%x\n", "scaler", (unsigned int)GetLastError());
         return 2;
     }
 #else
@@ -195,13 +195,11 @@ int ScalerPlugin_Startup(void)
             break;
         }
 
-        extra_threads[index].thread = SDL_CreateThread(
-            (int (*)(void *))ScalerPlugin_Thread,
 #if SDL_VERSION_ATLEAST(2,0,0)
-            "scaler",
+        extra_threads[index].thread = SDL_CreateThread((int (*)(void *))ScalerPlugin_Thread, "scaler", &extra_threads[index]);
+#else
+        extra_threads[index].thread = SDL_CreateThread((int (*)(void *))ScalerPlugin_Thread, &extra_threads[index]);
 #endif
-            &extra_threads[index]
-        );
         if (extra_threads[index].thread == NULL)
         {
             SDL_DestroySemaphore(extra_threads[index].finishcmd);

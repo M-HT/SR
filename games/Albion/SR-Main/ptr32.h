@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2022-2023 Roman Pauer
+ *  Copyright (C) 2022-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -386,7 +386,11 @@ public:
 #else
 
 #define PTR32(t) t*
+#if defined(_MSC_VER)
+#define PTR32_ALIGN(t,a) t*
+#else
 #define PTR32_ALIGN(t,a) t* __attribute__ ((aligned (a)))
+#endif
 
 #endif
 

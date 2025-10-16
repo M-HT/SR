@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2020 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -29,6 +29,9 @@
 #include "smack.h"
 #include "smk_defs.h"
 
+#if defined(_MSC_VER)
+    #define strncasecmp _strnicmp
+#endif
 
 typedef void (*change_vol_func)(uint8_t *dst, uint8_t *src, int len);
 
@@ -316,7 +319,7 @@ static void BufferToScreen(void)
 	/* display frame */
 #if (DISPLAY_RES == DR_640x480x32)
 	{
-		int x, y, w;
+		unsigned int x, y, w;
 		uint8_t *psrc;
 		uint32_t *pdst;
 		uint32_t Width, Height;
@@ -395,7 +398,7 @@ static void BufferToScreen(void)
 				screen->w
 			);
 #else
-			int x, y, w;
+			unsigned int x, y, w;
 			uint8_t *psrc;
 			uint16_t *pdst;
 			uint32_t Width, Height;
@@ -441,7 +444,7 @@ static void BufferToScreen(void)
 				screen->w
 			);
 #else
-			int x, y, w;
+			unsigned int x, y, w;
 			uint8_t *psrc;
 			uint16_t *pdst;
 			uint32_t Width, Height;
@@ -472,7 +475,7 @@ static void BufferToScreen(void)
 	}
 #elif (DISPLAY_RES == DR_800x480x16)
 	{
-		int x, y, w;
+		unsigned int x, y, w;
 		uint8_t *psrc;
 		uint16_t *pdst;
 		uint32_t Width, Height;
@@ -551,6 +554,8 @@ static void change_volume_u8(uint8_t *dst, uint8_t *src, int len)
 	}
 }
 
+#if (SDL_BYTEORDER == SDL_LIL_ENDIAN)
+
 static void change_volume_s16lsb_nat(int16_t *dst, int16_t *src, int len)
 {
 	int volume;
@@ -563,6 +568,8 @@ static void change_volume_s16lsb_nat(int16_t *dst, int16_t *src, int len)
 		dst++;
 	}
 }
+
+#else
 
 static void change_volume_s16lsb_nonnat(int8_t *dst, int8_t *src, int len)
 {
@@ -579,6 +586,8 @@ static void change_volume_s16lsb_nonnat(int8_t *dst, int8_t *src, int len)
 		dst+=2;
 	}
 }
+
+#endif
 
 /* callback procedure for filling audio data */
 static void fill_audio(void *udata, Uint8 *stream, int len)
@@ -680,7 +689,7 @@ int main(int argc, char *argv[])
 	if (Smack->PaddedWidth == 0 ||
 		Smack->PaddedWidth > 320 ||
 		Smack->PaddedHeight == 0 ||
-		Smack->PaddedHeight > ( (Smack->Flags & 4)?120:240 ) ||
+		Smack->PaddedHeight > ( (Smack->Flags & 4)?120u:240u ) ||
 		Smack->Frames == 0)
 	{
 		fclose(Smack->File);

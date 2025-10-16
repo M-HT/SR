@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016-2023 Roman Pauer
+#  Copyright (C) 2016-2025 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -20,7 +20,10 @@
 #  SOFTWARE.
 #
 
+import os
 import re
+import shutil
+import sys
 
 Import('device', 'executable', 'env')
 
@@ -30,10 +33,9 @@ def nasmfile_scan(node, env, path):
     contents = node.get_text_contents()
     includes = include_re.findall(contents)
     if len(includes) > 0:
-        dirparts = node.dir.path.split('/')
+        dirparts = node.dir.path.split(os.sep)
         if len(dirparts) >= 2 and dirparts[0] == 'x86':
-            parentdir = node.Dir('..')
-            includes = ['../' + include if not node.File(include).exists() and parentdir.File(include).exists() else include for include in includes]
+            includes = ['../' + include if not node.File(include).exists() and node.File('../' + include).exists() else include for include in includes]
     return includes
 
 nasmscan = Scanner(function = nasmfile_scan,
@@ -42,20 +44,34 @@ nasmscan = Scanner(function = nasmfile_scan,
 
 SourceFileScanner.add_scanner('.asm', nasmscan)
 
-if device == 'pc-linux':
-    env2 = Environment(tools=['nasm'], ASFLAGS = ' -felf32 -Ox -w+orphan-labels -ix86/')
+env1 = Environment(tools=['nasm'], ASFLAGS = ('-felf32' if device == 'pc-linux' else '-fwin32') + ' -w+orphan-labels -w-number-overflow -ix86/')
+env1_path = env1['ENV']['PATH'].split(os.pathsep)
+if sys.version_info >= (3, 3):
+    nasm_path = shutil.which('nasm')
+    if nasm_path is not None:
+        nasm_dir = os.path.dirname(nasm_path)
+        if nasm_dir not in env1_path:
+            env1_path.append(nasm_dir)
 else:
-    env2 = Environment(tools=['nasm'], ASFLAGS = ' -fwin32 -Ox -w+orphan-labels -ix86/')
+    for path_dir in os.environ['PATH'].split(os.pathsep):
+        if path_dir not in env1_path:
+            env1_path.append(path_dir)
+env1['ENV']['PATH'] = os.pathsep.join(env1_path)
+env2 = env1.Clone()
+env1.Append(ASFLAGS = ' -Ox')
+env2.Append(ASFLAGS = ' -O1')
+if env['CC'] == 'cl':
+    env1.Append(ASFLAGS = ' -d_strcasecmp=_stricmp')
 
-obj = env.Object(Glob('*.c')) + env2.Object(Glob('*.asm'))
+obj = env.Object(Glob('*.c')) + env1.Object(Glob('*.asm'))
 
 if executable == 'combined' or executable == 'geoscape':
-    obj = obj + SConscript('geoscape/SConscript', exports='device')
+    obj = obj + SConscript('geoscape/SConscript', exports='env2')
 
 if executable == 'combined' or executable == 'tactical':
-    obj = obj + SConscript('tactical/SConscript', exports='device')
+    obj = obj + SConscript('tactical/SConscript', exports='env2')
 
 if executable == 'combined' or executable == 'intro':
-    obj = obj + SConscript('intro/SConscript', exports='device')
+    obj = obj + SConscript('intro/SConscript', exports='env2')
 
 Return('obj')

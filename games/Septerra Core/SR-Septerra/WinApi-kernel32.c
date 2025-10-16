@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2024 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -27,14 +27,18 @@
 #define _DEFAULT_SOURCE 1
 #define _FILE_OFFSET_BITS 64
 #define _TIME_BITS 64
+#ifdef DEBUG_KERNEL32
 #include <inttypes.h>
+#endif
 #include "WinApi-kernel32.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 #include <sys/stat.h>
 #include <errno.h>
+#if !defined(_MSC_VER)
+#include <strings.h>
+#endif
 
 #if (defined(__WIN32__) || defined(__WINDOWS__)) && !defined(_WIN32)
 #define _WIN32
@@ -48,6 +52,7 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <direct.h>
 #else
 #define USE_OLD_GETTIME 0
 
@@ -79,6 +84,7 @@ static clockid_t monotonic_clock_id;
 #endif
 
 #endif
+#include "platform.h"
 
 
 #ifndef _WIN32
@@ -143,7 +149,7 @@ typedef struct _large_integer {
 } large_integer;
 
 #pragma pack(2)
-typedef struct __attribute__ ((__packed__)) _systemtime {
+typedef struct PACKED _systemtime {
     uint16_t wYear;
     uint16_t wMonth;
     uint16_t wDayOfWeek;
@@ -421,13 +427,7 @@ uint32_t CreateDirectoryA_c(const char *lpPathName, void *lpSecurityAttributes)
     }
 
 #ifdef _WIN32
-    if (0 !=
-#if defined(__MINGW32__)
-        mkdir(lpPathName)
-#else
-        mkdir(lpPathName, 0777)
-#endif
-    )
+    if (0 != mkdir(lpPathName))
 #else
     char buf[8192];
 

@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016-2023 Roman Pauer
+#  Copyright (C) 2016-2025 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -22,12 +22,9 @@
 
 Import('version', 'env')
 
-env3 = env.Clone()
-env3.Prepend(LLASMFLAGS = ' -I ..')
-
 if version == 'gog':
-    obj = env3.llasm('geoscape-asm-gog.llasm')
+    obj = env.llasm('geoscape-asm-gog.llasm')
 else:
-    obj = env3.llasm('geoscape-asm.llasm')
+    obj = env.llasm('geoscape-asm.llasm')
 
 Return('obj')

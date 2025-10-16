@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021-2023 Roman Pauer
+ *  Copyright (C) 2021-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -34,6 +34,7 @@
 #if defined(USE_QUICKTIMELIB) && !defined(__WINE__)
 #include <stdlib.h>
 #endif
+#include "platform.h"
 
 
 static const char * const SDI_INI_name = "SDI.INI";
@@ -436,7 +437,7 @@ error:
     return 0;
 }
 
-int SDI_LocatePaths(void) __attribute__((noinline));
+NOINLINE int SDI_LocatePaths(void);
 int SDI_LocatePaths(void)
 {
     DWORD dwAttrib, dwLength;

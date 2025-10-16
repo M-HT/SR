@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2024 Roman Pauer
+ *  Copyright (C) 2020-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -23,6 +23,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include "Game_vars.h"
 #include "Game_scalerplugin.h"
 #include "Game_thread.h"
@@ -936,19 +937,6 @@ static void eventloop_flip(void)
 #elif defined(ALLOW_OPENGL)
     if (Game_UseOpenGL)
     {
-        glBindTexture(GL_TEXTURE_2D, SMK_GLTexture[SMK_CurrentTexture]);
-
-        if (Scaler_ScaleTextureData)
-        {
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SMK_ScaleFactor * 320, SMK_ScaleFactor * 200, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, SMK_ScaledTextureData);
-        }
-        else
-        {
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ((SMK_double_pixels)?640:320), ((SMK_double_pixels)?400:200), GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, SMK_TextureData);
-        }
-
-        glEnable(GL_TEXTURE_2D);
-
         static const GLfloat QuadVertices[2*4] = {
             -1.0f,  1.0f,
              1.0f,  1.0f,
@@ -967,6 +955,19 @@ static void eventloop_flip(void)
             1.0f, 0.0f,
             0.0f, 0.0f,
         };
+
+        glBindTexture(GL_TEXTURE_2D, SMK_GLTexture[SMK_CurrentTexture]);
+
+        if (Scaler_ScaleTextureData)
+        {
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SMK_ScaleFactor * 320, SMK_ScaleFactor * 200, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, SMK_ScaledTextureData);
+        }
+        else
+        {
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ((SMK_double_pixels)?640:320), ((SMK_double_pixels)?400:200), GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, SMK_TextureData);
+        }
+
+        glEnable(GL_TEXTURE_2D);
 
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -1332,7 +1333,7 @@ static void play_smk(const char *filename)
     if (Smack->PaddedWidth == 0 ||
         Smack->PaddedWidth > 320 ||
         Smack->PaddedHeight == 0 ||
-        Smack->PaddedHeight > ( (Smack->Flags & 4)?120:240 ) ||
+        Smack->PaddedHeight > ( (Smack->Flags & 4)?120u:240u ) ||
         Smack->Frames == 0)
     {
         goto SMK_exit3;

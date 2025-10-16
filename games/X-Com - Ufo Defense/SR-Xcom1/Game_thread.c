@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
-#include <unistd.h>
 #if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
     #ifndef __USE_GNU
         #define __USE_GNU 1
@@ -56,7 +55,7 @@ static void ChangeThreadPriority(void)
 #endif
 }
 
-static __attribute__ ((noinline)) void Game_CleanAfterMain(void)
+static NOINLINE void Game_CleanAfterMain(void)
 {
     Game_Executable = 0;
 
@@ -92,7 +91,7 @@ static __attribute__ ((noinline)) void Game_CleanAfterMain(void)
 }
 
 #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_GEOSCAPE))
-static __attribute__ ((noinline)) int Game_Main_Geoscape(const char *arg1)
+static NOINLINE int Game_Main_Geoscape(const char *arg1)
 {
     const static char main_filename[] = "GEOSCAPE.EXE";
     PTR32(char) main_argv[3];
@@ -120,7 +119,7 @@ static __attribute__ ((noinline)) int Game_Main_Geoscape(const char *arg1)
 #endif
 
 #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_TACTICAL))
-static __attribute__ ((noinline)) int Game_Main_Tactical(const char *arg1)
+static NOINLINE int Game_Main_Tactical(const char *arg1)
 {
     const static char main_filename[] = "TACTICAL.EXE";
     PTR32(char) main_argv[3];
@@ -148,7 +147,7 @@ static __attribute__ ((noinline)) int Game_Main_Tactical(const char *arg1)
 #endif
 
 #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_INTRO))
-static __attribute__ ((noinline)) int Game_Main_Intro(void)
+static NOINLINE int Game_Main_Intro(void)
 {
     const static char main_filename[] = "INTRO.EXE";
     PTR32(char) main_argv[2];

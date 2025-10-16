@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,6 +26,7 @@
 #define _BBBLEV_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #define BBBLEV_TYPE_KEYDOWN 1
 #define BBBLEV_TYPE_KEYUP 2
@@ -73,7 +74,7 @@
 
 #pragma pack(1)
 
-typedef struct __attribute__ ((__packed__)) _BLEV_Event {
+typedef struct PACKED _BLEV_Event {
     uint32_t type;
     void *screen;
     uint32_t buttonState;

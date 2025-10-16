@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -24,7 +24,13 @@
 
 #define _FILE_OFFSET_BITS 64
 #define _TIME_BITS 64
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#include <io.h>
+#include <sys/timeb.h>
+#else
 #include <unistd.h>
+#include <sys/time.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,16 +39,13 @@
 #include <ctype.h>
 #include <signal.h>
 #include <time.h>
-#include <sys/time.h>
+#include <sys/types.h>
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Warcraft-proc.h"
 #include "Warcraft-timer.h"
 #include "Game_thread.h"
 
-#if defined(__MINGW32__)
-    #include <sys/timeb.h>
-#endif
 
 
 #define SIGNAL_NUM 8
@@ -114,7 +117,7 @@ void Game_delay(uint32_t milliseconds)
 void Game_dos_gettime(void *dtime)
 {
 #pragma pack(1)
-    struct __attribute__ ((__packed__)) watcom_dostime_t {
+    struct PACKED watcom_dostime_t {
         uint8_t hour; /* 0-23 */
         uint8_t minute; /* 0-59 */
         uint8_t second; /* 0-59 */
@@ -126,7 +129,7 @@ void Game_dos_gettime(void *dtime)
 
     struct tm *lt;
 
-#if defined(__MINGW32__)
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     struct timeb tb;
 
     ftime(&tb);
@@ -266,9 +269,9 @@ int32_t Game_time(int32_t *tloc)
 
     t = time(NULL);
 
-    if (tloc != NULL) *tloc = t;
+    if (tloc != NULL) *tloc = (int32_t)t;
 
-    return t;
+    return (int32_t)t;
 }
 
 void Game_FlipScreen(void)

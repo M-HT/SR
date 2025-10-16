@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2024 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,7 +22,9 @@
  *
  */
 
+#ifdef DEBUG_USER32
 #include <inttypes.h>
+#endif
 #include "WinApi-user32.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -242,7 +244,7 @@ static unsigned int message_time = 0;
 static int mouse_right_button_mod = 0;
 // doubleclick detection - BEGIN
 static const int mouse_doubleclick_max_distance = 10;
-static const int mouse_doubleclick_max_time = 500;
+static const unsigned int mouse_doubleclick_max_time = 500;
 
 static int mouse_doubleclick = 0;
 static uint32_t mouse_last_time[3], mouse_current_time[3];
@@ -1738,8 +1740,8 @@ static int find_event(SDL_Event *event, int remove, int wait)
 
                     SDL_RenderGetViewport(mouse_renderer, &viewport);
 
-                    mouse_x = SDL_floorf(event->tfinger.x * viewport.w);
-                    mouse_y = SDL_floorf(event->tfinger.y * viewport.h);
+                    mouse_x = (int)SDL_floorf(event->tfinger.x * viewport.w);
+                    mouse_y = (int)SDL_floorf(event->tfinger.y * viewport.h);
                 }
                 else if (event->type == SDL_FINGERDOWN)
                 {
@@ -1931,8 +1933,10 @@ static void translate_mouse_motion(lpmsg lpMsg)
     if (mouse_buttons & SDL_BUTTON_LMASK) lpMsg->wParam |= MK_LBUTTON;
     if (mouse_buttons & SDL_BUTTON_RMASK) lpMsg->wParam |= MK_RBUTTON;
     if (mouse_buttons & SDL_BUTTON_MMASK) lpMsg->wParam |= MK_MBUTTON;
+#if defined(MK_XBUTTON1)
     if (mouse_buttons & SDL_BUTTON_X1MASK) lpMsg->wParam |= MK_XBUTTON1;
     if (mouse_buttons & SDL_BUTTON_X2MASK) lpMsg->wParam |= MK_XBUTTON2;
+#endif
     if (keyboard_mods & KMOD_SHIFT) lpMsg->wParam |= MK_SHIFT;
     if (keyboard_mods & KMOD_CTRL) lpMsg->wParam |= MK_CONTROL;
 
@@ -1957,8 +1961,10 @@ static void translate_mouse_button(lpmsg lpMsg, int pressed, int mouse_button, i
     if (mouse_buttons & SDL_BUTTON_LMASK) lpMsg->wParam |= MK_LBUTTON;
     if (mouse_buttons & SDL_BUTTON_RMASK) lpMsg->wParam |= MK_RBUTTON;
     if (mouse_buttons & SDL_BUTTON_MMASK) lpMsg->wParam |= MK_MBUTTON;
+#if defined(MK_XBUTTON1)
     if (mouse_buttons & SDL_BUTTON_X1MASK) lpMsg->wParam |= MK_XBUTTON1;
     if (mouse_buttons & SDL_BUTTON_X2MASK) lpMsg->wParam |= MK_XBUTTON2;
+#endif
     if (keyboard_mods & KMOD_SHIFT) lpMsg->wParam |= MK_SHIFT;
     if (keyboard_mods & KMOD_CTRL) lpMsg->wParam |= MK_CONTROL;
 

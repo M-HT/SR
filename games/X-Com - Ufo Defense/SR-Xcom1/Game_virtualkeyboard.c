@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2024 Roman Pauer
+ *  Copyright (C) 2024-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,6 +22,7 @@
  *
  */
 
+#include <string.h>
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Game_virtualkeyboard.h"
@@ -543,7 +544,7 @@ void VirtualKeyboard_Draw(void)
     {
         if (virtual_keyboard_scaled_surface == NULL)
         {
-            int scale_factor_x, scale_factor_y;
+            unsigned int scale_factor_x, scale_factor_y;
 
             scale_factor_x = Picture_Width / 320;
             if (scale_factor_x == 0) scale_factor_x = 1;

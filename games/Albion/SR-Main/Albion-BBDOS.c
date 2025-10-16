@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2024 Roman Pauer
+ *  Copyright (C) 2018-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -24,6 +24,17 @@
 
 #define _FILE_OFFSET_BITS 64
 #define _TIME_BITS 64
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
+#include <errno.h>
+#include <fcntl.h>
 #include "Albion-BBDOS.h"
 #include "Albion-BBERROR.h"
 #include "Albion-BBBASMEM.h"
@@ -31,12 +42,6 @@
 // todo: remove
 #include "Game_vars.h"
 #include "virtualfs.h"
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <errno.h>
-#include <fcntl.h>
 
 #if !defined(O_RDONLY)
     #define O_RDONLY _O_RDONLY
@@ -350,13 +355,12 @@ int32_t DOS_Write(int32_t file_handle, const void *buffer, uint32_t length)
     if (retval == -1)
     {
         int err;
+        DOS_ErrorStruct data;
 
         err = errno;
 
         // todo: remove
         errno_val = ((err >= 0) && (err < 256))?(errno_rtable[err]):(err);
-
-        DOS_ErrorStruct data;
 
         data.text = "DOS_Write: write() oserror";
 

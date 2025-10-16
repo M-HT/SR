@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2023 Roman Pauer
+ *  Copyright (C) 2023-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -24,6 +24,7 @@
 
 #include "Game-Display.h"
 #include "Game-Config.h"
+#include "platform.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <stdio.h>
@@ -34,7 +35,7 @@ static char primary_device_name[32];
 static DWORD original_width, original_height, original_bpp, original_frequency, original_flags;
 
 
-void SetResolution(void) __attribute__((noinline));
+NOINLINE void SetResolution(void);
 void SetResolution(void)
 {
     DISPLAY_DEVICEA display_device;
@@ -189,7 +190,7 @@ void SetResolution(void)
     fprintf(stderr, "%s: %s: %ix%i, %i bit, %i Hz\n", "display", "error setting resolution", Display_Width, Display_Height, Display_BitsPerPixel, Display_Frequency);
 }
 
-void RestoreResolution(void) __attribute__((noinline));
+NOINLINE void RestoreResolution(void);
 void RestoreResolution(void)
 {
     DEVMODEA devmode;

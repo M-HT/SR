@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2019-2023 Roman Pauer
+#  Copyright (C) 2019-2025 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -28,18 +28,22 @@ vars = Variables('custom.py')
 vars.Add(EnumVariable('debug', 'Set debug level (0 = release version)', '0',
                                  allowed_values=('0', '1', '2'),
                                  ignorecase=2))
+vars.Add(BoolVariable('mingw', 'Set to use MinGW instead of default compiler', False))
 vars.Add(EnumVariable('device', 'Set target device', 'none',
                                  allowed_values=('none', 'pc-windows', 'pc-windows-oldvideo', 'pc-linux', 'arm-linux-llasm', 'pc-linux-llasm'),
                                  ignorecase=2))
 env = Environment(variables = vars)
 
 debug = int(env['debug'])
+mingw = env['mingw']
 device = env['device']
 clean = env.GetOption('clean')
 
 if device == 'none':
     device = 'pc-linux'
-    if env['PLATFORM'] == 'posix':
+    if env['PLATFORM'] == 'win32':
+        device = 'pc-windows'
+    elif env['PLATFORM'] == 'posix':
         if os.uname()[4].startswith('arm'):
             device = 'arm-linux-llasm'
     env['device'] = device
@@ -48,48 +52,82 @@ if device == 'none':
 
 Help(vars.GenerateHelpText(env))
 
-llasm_version = False
-llasm_params = ""
-llvm_params = ""
+Help("""
+Environment variables:
+  - PATH_INC: paths to find include files
+  - PATH_LIB: paths to find library files
+""")
 
+llasm_version = False
 if device.endswith("-llasm"):
     llasm_version = True
     device = device[0:-6]
 
+if mingw:
+    env = Environment(tools = ['mingw'])
+elif env['CC'] == 'cl' and (device == 'pc-windows' or device == 'pc-windows-oldvideo'):
+    env = Environment(TARGET_ARCH = 'x86')
+else:
+    env = Environment(CC = 'winegcc', LINK = 'winegcc')
+
+# default settings
+if env['CC'] == 'cl':
+    env.Append(CCFLAGS = '/O2 /W3 /D_CRT_SECURE_NO_WARNINGS')
+
+    if debug == 1:
+        env.Append(CCFLAGS = '/Zi')
+    elif debug > 1:
+        env.Append(CCFLAGS = '/Zi /D__DEBUG__')
+else:
+    env.Append(CCFLAGS = '-O2 -Wall')
+
+    if debug <= 0:
+        env.Append(LINKFLAGS = '-s')
+    elif debug == 1:
+        env.Append(CCFLAGS = '-g')
+    else:
+        env.Append(CCFLAGS = '-g -D__DEBUG__')
+
+if 'PATH_INC' in os.environ:
+    env.Append(CPPPATH = os.environ['PATH_INC'].split(os.pathsep))
+if 'PATH_LIB' in os.environ:
+    env.Append(LIBPATH = os.environ['PATH_LIB'].split(os.pathsep))
+
+
 if device == 'pc-linux':
     # default settings
-    env = Environment(CC           = 'winegcc',
-                      CCFLAGS      = '-m32 -O2 -Wall',
-                      LINK         = 'winegcc',
-                      LINKFLAGS    = '-m32 -Wl,-z,noexecstack -mwindows',
-                      LIBS         = ['dl', 'quicktime', 'kernel32', 'winmm', 'user32', 'gdi32']
-                     )
+    env.Append(CCFLAGS   = '-m32',
+               LINKFLAGS = '-m32 -Wl,-z,noexecstack -mwindows',
+               LIBS      = ['dl', 'quicktime', 'kernel32', 'winmm', 'user32', 'gdi32', 'shell32']
+              )
     if llasm_version:
-        llasm_params = '-pic -inline-idiv -inline-float'
-        llvm_params = '-mtriple=i686-unknown-linux-gnu -relocation-model=pic'
-        env.Append(CCFLAGS = ' -fpic')
-        env.Append(LINKFLAGS = ' -pic')
-        env.Append(ENV = {'PATH' : os.environ['PATH']})
+        env.Append(CCFLAGS    = '-fpic',
+                   LINKFLAGS  = '-pic',
+                   LLASMFLAGS = '-pic -inline-idiv -inline-float',
+                   LLVMFLAGS  = '-mtriple=i686-unknown-linux-gnu -relocation-model=pic'
+                  )
 elif device == 'arm-linux':
-    env = Environment(CC           = 'winegcc',
-                      CCFLAGS      = '-O2 -Wall -fpic',
-                      LINK         = 'winegcc',
-                      LINKFLAGS    = '-Wl,-z,noexecstack -mwindows -pic',
-                      LIBS         = ['dl', 'quicktime', 'kernel32', 'winmm', 'user32', 'gdi32'],
-                      ENV          = {'PATH' : os.environ['PATH']}
-                     )
-    llasm_params = '-pic -inline-float'
-    llvm_params = '-relocation-model=pic'
-elif device == 'pc-windows':
-    env = Environment(CCFLAGS      = '-m32 -O2 -Wall',
-                      LINKFLAGS    = '-m32 -mwindows',
-                      LIBS         = ['quicktime', 'kernel32', 'winmm', 'user32', 'gdi32']
-                     )
-elif device == 'pc-windows-oldvideo':
-    env = Environment(CCFLAGS      = '-m32 -O2 -Wall -DOLDVIDEO',
-                      LINKFLAGS    = '-m32 -mwindows',
-                      LIBS         = ['kernel32', 'winmm', 'user32', 'gdi32']
-                     )
+    env.Append(CCFLAGS    = '-fpic',
+               LINKFLAGS  = '-Wl,-z,noexecstack -mwindows -pic',
+               LIBS       = ['dl', 'quicktime', 'kernel32', 'winmm', 'user32', 'gdi32', 'shell32'],
+               LLASMFLAGS = '-pic -inline-float',
+               LLVMFLAGS  = '-relocation-model=pic'
+              )
+elif device == 'pc-windows' or device == 'pc-windows-oldvideo':
+    if env['CC'] == 'cl':
+        env.Append(CCFLAGS   = '/MD',
+                   LINKFLAGS = '/SUBSYSTEM:windows'
+                  )
+    else:
+        env.Append(CCFLAGS   = '-m32',
+                   LINKFLAGS = '-m32 -mwindows'
+                  )
+    if device == 'pc-windows':
+        env.Append(LIBS = ['quicktime', 'kernel32', 'winmm', 'user32', 'gdi32', 'shell32'])
+    else:
+        env.Append(CCFLAGS = '-DOLDVIDEO',
+                   LIBS    = ['kernel32', 'winmm', 'user32', 'gdi32', 'shell32']
+                  )
 
 def get_compiler_version(compiler_path, env_path):
     process = subprocess.Popen([compiler_path, '-dumpversion'], stdout=subprocess.PIPE, env={"PATH": env_path})
@@ -114,28 +152,14 @@ def is_version_ge(version, comparand):
             return True
     return True
 
-if not llasm_version and not clean:
+if not llasm_version and not clean and env['CC'] != 'cl':
     compiler_version = get_compiler_version(env['CC'], env['ENV']['PATH'])
     if is_version_ge(compiler_version, [3, 4]):
-        env.Append(CCFLAGS = ' -fno-PIE')
+        env.Append(CCFLAGS = '-fno-PIE')
     if is_version_ge(compiler_version, [6]):
-        env.Append(LINKFLAGS = ' -no-pie')
-
-# debug settings
-if debug <= 0:
-    env.Append(LINKFLAGS = ' -s')
-elif debug == 1:
-    env.Append(CCFLAGS = ' -g')
-else:
-    env.Append(CCFLAGS = ' -g -D__DEBUG__')
+        env.Append(LINKFLAGS = '-no-pie')
 
 if llasm_version:
-    bld = Builder(action = 'llasm $SOURCE -O -I .. ' + llasm_params + ' | opt -O3 | llc -O=3 -filetype=obj ' + llvm_params + ' > $TARGET',
-                  suffix = "$OBJSUFFIX",
-                  src_suffix = '.llasm'
-                 )
-    env.Append(BUILDERS = {'llasm' : bld})
-
     arch_objs = SConscript('llasm/SConscript', exports='device env')
 else:
     arch_objs = SConscript('x86/SConscript', exports='device env')

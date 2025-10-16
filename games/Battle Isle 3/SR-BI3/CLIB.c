@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2024 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -23,8 +23,9 @@
  */
 
 #include <stdlib.h>
-#include <unistd.h>
+#include <ctype.h>
 #include "CLIB.h"
+#include "platform.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -36,6 +37,10 @@
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#endif
+
+#if defined(__WINE__) || !defined(_WIN32)
+#include <unistd.h>
 #endif
 
 

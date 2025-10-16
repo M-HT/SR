@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2019-2021 Roman Pauer
+#  Copyright (C) 2019-2025 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -20,7 +20,10 @@
 #  SOFTWARE.
 #
 
+import os
 import re
+import shutil
+import sys
 
 Import('device env')
 
@@ -29,6 +32,10 @@ include_re = re.compile(r'^%include\s+"(\S+)"\r?$', re.M)
 def nasmfile_scan(node, env, path):
     contents = node.get_text_contents()
     includes = include_re.findall(contents)
+    if len(includes) > 0:
+        dirparts = node.dir.path.split(os.sep)
+        if len(dirparts) >= 2 and dirparts[0] == 'x86':
+            includes = ['../' + include if not node.File(include).exists() and node.File('../' + include).exists() else include for include in includes]
     return includes
 
 nasmscan = Scanner(function = nasmfile_scan,
@@ -37,14 +44,26 @@ nasmscan = Scanner(function = nasmfile_scan,
 
 SourceFileScanner.add_scanner('.asm', nasmscan)
 
-if device == 'pc-linux':
-    env1 = Environment(tools=['nasm'], ASFLAGS = ' -felf32 -Ox -w+orphan-labels -w-number-overflow -ix86/')
+env1 = Environment(tools=['nasm'], ASFLAGS = ('-felf32' if device == 'pc-linux' else '-fwin32') + ' -w+orphan-labels -w-number-overflow -ix86/')
+env1_path = env1['ENV']['PATH'].split(os.pathsep)
+if sys.version_info >= (3, 3):
+    nasm_path = shutil.which('nasm')
+    if nasm_path is not None:
+        nasm_dir = os.path.dirname(nasm_path)
+        if nasm_dir not in env1_path:
+            env1_path.append(nasm_dir)
 else:
-    env1 = Environment(tools=['nasm'], ASFLAGS = ' -fwin32 -Ox -w+orphan-labels -w-number-overflow -ix86/')
+    for path_dir in os.environ['PATH'].split(os.pathsep):
+        if path_dir not in env1_path:
+            env1_path.append(path_dir)
+env1['ENV']['PATH'] = os.pathsep.join(env1_path)
+env2 = env1.Clone()
+env1.Append(ASFLAGS = ' -Ox')
+env2.Append(ASFLAGS = ' -O1')
 
-ms_figtr_objs = SConscript('ms_figtr/SConscript', exports='device')
-sdi_1r_objs = SConscript('sdi_1r/SConscript', exports='device')
-wc_figtr_objs = SConscript('wc_figtr/SConscript', exports='device')
+ms_figtr_objs = SConscript('ms_figtr/SConscript', exports='device env2')
+sdi_1r_objs = SConscript('sdi_1r/SConscript', exports='device env2')
+wc_figtr_objs = SConscript('wc_figtr/SConscript', exports='device env2')
 
 obj = env1.Object(Glob('*.asm')) + env.Object(Glob('*.c')) + ms_figtr_objs + sdi_1r_objs + wc_figtr_objs
 

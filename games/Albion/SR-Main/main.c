@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,10 +22,16 @@
  *
  */
 
+#define _FILE_OFFSET_BITS 64
+#define _TIME_BITS 64
 #include <string.h>
 #include <malloc.h>
 #include <stdlib.h>
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#include <direct.h>
+#else
 #include <unistd.h>
+#endif
 #include <time.h>
 #ifdef USE_SDL2
     #include <SDL2/SDL.h>
@@ -86,12 +92,12 @@ static void Display_RecalculateResolution(int w, int h)
         if ((((double)w) / h) > (((double)Display_Width) / Display_Height))
         {
             Picture_Height = h;
-            Picture_Width = (((double)h) * Display_Width) / Display_Height;
+            Picture_Width = (int32_t)((((double)h) * Display_Width) / Display_Height);
         }
         else
         {
             Picture_Width = w;
-            Picture_Height = (((double)w) * Display_Height) / Display_Width;
+            Picture_Height = (int32_t)((((double)w) * Display_Height) / Display_Width);
         }
     }
     else
@@ -1379,15 +1385,19 @@ static int Game_Initialize(void)
     }
 
 #if SDL_VERSION_ATLEAST(2,0,0)
-    SDL_version linked_version;
+    {
+        SDL_version linked_version;
 
-    SDL_GetVersion(&linked_version);
-    Game_SDLVersionNum = SDL_VERSIONNUM(linked_version.major, linked_version.minor, linked_version.patch);
+        SDL_GetVersion(&linked_version);
+        Game_SDLVersionNum = SDL_VERSIONNUM(linked_version.major, linked_version.minor, linked_version.patch);
+    }
 #else
-    const SDL_version *linked_version;
+    {
+        const SDL_version *linked_version;
 
-    linked_version = SDL_Linked_Version();
-    Game_SDLVersionNum = SDL_VERSIONNUM(linked_version->major, linked_version->minor, linked_version->patch);
+        linked_version = SDL_Linked_Version();
+        Game_SDLVersionNum = SDL_VERSIONNUM(linked_version->major, linked_version->minor, linked_version->patch);
+    }
 #endif
 
 #if (SDL_MAJOR_VERSION == 1)
@@ -1495,13 +1505,14 @@ static void Game_Initialize2(void)
         Game_Sound = 0;
         Game_Music = 0;
 
+        frequency = Game_AudioRate;
+        format = Game_AudioFormat;
+        channels = Game_AudioChannels;
+
+        audio_ok = 0;
+
         if ( SDL_InitSubSystem(SDL_INIT_AUDIO) == 0 )
         {
-            frequency = Game_AudioRate;
-            format = Game_AudioFormat;
-            channels = Game_AudioChannels;
-
-            audio_ok = 0;
 #if SDL_VERSION_ATLEAST(2,0,0) && (SDL_VERSIONNUM(SDL_MIXER_MAJOR_VERSION, SDL_MIXER_MINOR_VERSION, SDL_MIXER_PATCHLEVEL) >= SDL_VERSIONNUM(2, 0, 2))
             const SDL_version *link_version = Mix_Linked_Version();
             if (SDL_VERSIONNUM(link_version->major, link_version->minor, link_version->patch) >= SDL_VERSIONNUM(2,0,2))
@@ -1684,13 +1695,11 @@ static void Game_Event_Loop(void)
 #endif
 
 
-    TimerThread = SDL_CreateThread(
-        Game_TimerThread,
 #if SDL_VERSION_ATLEAST(2,0,0)
-        "timer",
+    TimerThread = SDL_CreateThread(Game_TimerThread, "timer", NULL);
+#else
+    TimerThread = SDL_CreateThread(Game_TimerThread, NULL);
 #endif
-        NULL
-    );
 
     if (TimerThread == NULL)
     {
@@ -1698,13 +1707,11 @@ static void Game_Event_Loop(void)
         return;
     }
 
-    FlipThread = SDL_CreateThread(
-        Game_FlipThread,
 #if SDL_VERSION_ATLEAST(2,0,0)
-        "flip",
+    FlipThread = SDL_CreateThread(Game_FlipThread, "flip", NULL);
+#else
+    FlipThread = SDL_CreateThread(Game_FlipThread, NULL);
 #endif
-        NULL
-    );
 
     if (FlipThread == NULL)
     {
@@ -1718,13 +1725,11 @@ static void Game_Event_Loop(void)
         return;
     }
 
-    MainThread = SDL_CreateThread(
-        Game_MainThread,
 #if SDL_VERSION_ATLEAST(2,0,0)
-        "main",
+    MainThread = SDL_CreateThread(Game_MainThread, "main", NULL);
+#else
+    MainThread = SDL_CreateThread(Game_MainThread, NULL);
 #endif
-        NULL
-    );
 
     if (MainThread == NULL)
     {
@@ -2057,19 +2062,6 @@ static void Game_Event_Loop(void)
                         #elif defined(ALLOW_OPENGL)
                             if (Game_UseOpenGL)
                             {
-                                glBindTexture(GL_TEXTURE_2D, Game_GLTexture[Game_CurrentTexture]);
-
-                                if (Scaler_ScaleTextureData)
-                                {
-                                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Scaler_ScaleFactor * Render_Width, Scaler_ScaleFactor * Render_Height, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Game_ScaledTextureData);
-                                }
-                                else
-                                {
-                                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Render_Width, Render_Height, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Game_TextureData);
-                                }
-
-                                glEnable(GL_TEXTURE_2D);
-
                                 static const GLfloat QuadVertices[2*4] = {
                                     -1.0f,  1.0f,
                                      1.0f,  1.0f,
@@ -2088,6 +2080,19 @@ static void Game_Event_Loop(void)
                                     1.0f, 0.0f,
                                     0.0f, 0.0f,
                                 };
+
+                                glBindTexture(GL_TEXTURE_2D, Game_GLTexture[Game_CurrentTexture]);
+
+                                if (Scaler_ScaleTextureData)
+                                {
+                                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Scaler_ScaleFactor * Render_Width, Scaler_ScaleFactor * Render_Height, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Game_ScaledTextureData);
+                                }
+                                else
+                                {
+                                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Render_Width, Render_Height, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Game_TextureData);
+                                }
+
+                                glEnable(GL_TEXTURE_2D);
 
                                 glEnableClientState(GL_VERTEX_ARRAY);
                                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);

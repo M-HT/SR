@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -75,7 +75,7 @@ uint32_t GetPrivateProfileStringA_c(const char * lpAppName, const char * lpKeyNa
     if (0 == lstrcmpiA(lpAppName, "FILES"))
     {
         const char *path;
-        int len;
+        unsigned int len;
 
         if ((0 == lstrcmpiA(lpKeyName, "SDIPATH")) || (0 == lstrcmpiA(lpKeyName, "PATH2")))
         {
@@ -134,12 +134,12 @@ void GlobalMemoryStatus_c(void * lpBuffer)
     if (GlobalMemoryStatusEx(&status))
     {
         ((LPMEMORYSTATUS)lpBuffer)->dwMemoryLoad = status.dwMemoryLoad;
-        ((LPMEMORYSTATUS)lpBuffer)->dwTotalPhys     = (status.ullTotalPhys     <= MAXLONG   ) ? status.ullTotalPhys     : MAXLONG;
-        ((LPMEMORYSTATUS)lpBuffer)->dwAvailPhys     = (status.ullAvailPhys     <= 1000000000) ? status.ullAvailPhys     : 1000000000;
-        ((LPMEMORYSTATUS)lpBuffer)->dwTotalPageFile = (status.ullTotalPageFile <= MAXLONG   ) ? status.ullTotalPageFile : MAXLONG;
-        ((LPMEMORYSTATUS)lpBuffer)->dwAvailPageFile = (status.ullAvailPageFile <= 1000000000) ? status.ullAvailPageFile : 1000000000;
-        ((LPMEMORYSTATUS)lpBuffer)->dwTotalVirtual  = (status.ullTotalVirtual  <= MAXLONG   ) ? status.ullTotalVirtual  : MAXLONG;
-        ((LPMEMORYSTATUS)lpBuffer)->dwAvailVirtual  = (status.ullAvailVirtual  <= 1000000000) ? status.ullAvailVirtual  : 1000000000;
+        ((LPMEMORYSTATUS)lpBuffer)->dwTotalPhys     = (status.ullTotalPhys     <= MAXLONG   ) ? (SIZE_T)status.ullTotalPhys     : MAXLONG;
+        ((LPMEMORYSTATUS)lpBuffer)->dwAvailPhys     = (status.ullAvailPhys     <= 1000000000) ? (SIZE_T)status.ullAvailPhys     : 1000000000;
+        ((LPMEMORYSTATUS)lpBuffer)->dwTotalPageFile = (status.ullTotalPageFile <= MAXLONG   ) ? (SIZE_T)status.ullTotalPageFile : MAXLONG;
+        ((LPMEMORYSTATUS)lpBuffer)->dwAvailPageFile = (status.ullAvailPageFile <= 1000000000) ? (SIZE_T)status.ullAvailPageFile : 1000000000;
+        ((LPMEMORYSTATUS)lpBuffer)->dwTotalVirtual  = (status.ullTotalVirtual  <= MAXLONG   ) ? (SIZE_T)status.ullTotalVirtual  : MAXLONG;
+        ((LPMEMORYSTATUS)lpBuffer)->dwAvailVirtual  = (status.ullAvailVirtual  <= 1000000000) ? (SIZE_T)status.ullAvailVirtual  : 1000000000;
     }
     else
     {

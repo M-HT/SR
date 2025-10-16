@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2022 Roman Pauer
+ *  Copyright (C) 2020-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -357,7 +357,7 @@ void OPM_HorLine_c(OPM_struct *pixel_map, int x, int y, unsigned int length, uin
     }
 
     length2 = pixel_map->clip_x + pixel_map->clip_width - x;
-    if (length2 >= length)
+    if (length2 >= (int)length)
     {
         length2 = length;
     }
@@ -387,7 +387,7 @@ void OPM_VerLine_c(OPM_struct *pixel_map, int x, int y, unsigned int length, uin
     }
 
     length2 = pixel_map->clip_y + pixel_map->clip_height - y;
-    if (length2 >= length)
+    if (length2 >= (int)length)
     {
         length2 = length;
     }
@@ -405,7 +405,7 @@ void OPM_VerLine_c(OPM_struct *pixel_map, int x, int y, unsigned int length, uin
 
 void OPM_FillBox_c(OPM_struct *pixel_map, int x, int y, unsigned int width, unsigned int height, uint8_t color)
 {
-    int index;
+    unsigned int index;
 
     height = (uint16_t)height;
 

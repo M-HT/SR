@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -410,7 +410,7 @@ int FX_PlaySample_c(int lib_handle, int sample_number, int priority, int volume,
     num_samples = GETLE16(library, 8);
     // change: fix condition
     //if (sample_number > num_samples)
-    if (sample_number >= num_samples)
+    if ((unsigned int)sample_number >= num_samples)
     {
         return -1;
     }

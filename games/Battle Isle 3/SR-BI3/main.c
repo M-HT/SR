@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021-2024 Roman Pauer
+ *  Copyright (C) 2021-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -36,21 +36,12 @@ void X86_InitializeExceptions(void);
 #ifdef __cplusplus
 extern "C" {
 #endif
-#if defined(__WINE__)
 extern int WinMain_asm(
   void *hInstance,
   void *hPrevInstance,
   char *lpCmdLine,
   int   nCmdShow
 );
-#else
-extern int CALLBACK WinMain_(
-  HINSTANCE hInstance,
-  HINSTANCE hPrevInstance,
-  LPSTR     lpCmdLine,
-  int       nCmdShow
-);
-#endif
 #ifdef __cplusplus
 }
 #endif
@@ -79,11 +70,7 @@ int CALLBACK WinMain(
 
     SetResolution();
 
-#if defined(__WINE__)
     return_value = WinMain_asm(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
-#else
-    return_value = WinMain_(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
-#endif
 
     RestoreResolution();
 

@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016-2021 Roman Pauer
+@@  Copyright (C) 2016-2025 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -27,8 +27,6 @@
 
 .extern Game_ESP_Original_Value
 .extern Game_MouseTable
-.extern Game_Palette_Or
-.extern Game_Palette
 
 .extern main_
 .extern mouse_pos

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -27,6 +27,7 @@
 #include "xmi2mid.h"
 #include "Albion-music-xmiplayer.h"
 #include <math.h>
+#include <string.h>
 #ifdef USE_SPEEXDSP_RESAMPLER
 #include <speex/speex_resampler.h>
 #endif
@@ -134,12 +135,12 @@ typedef struct _xmi_player {
     } while (___data & 0x80);                   }
 
 
-static inline int32_t S8toS16(uint8_t a)
+static INLINE int32_t S8toS16(uint8_t a)
 {
     return (int16_t)((a << 8) | (a ^ 0x80));
 }
 
-static inline int32_t U8toS16(uint8_t a)
+static INLINE int32_t U8toS16(uint8_t a)
 {
     return ((a << 8) | a) - 32768;
 }
@@ -232,28 +233,28 @@ static void update_channel_instrument(const WAVE_ENTRY *wave_synthetizer, midi_c
                     case 2: // 8-bit, stereo, unsigned
                         for (index = 0; index < converted_length; index++)
                         {
-                            channel->converted_data[index] = U8toS16(((uint8_t *)channel->sample_data)[index]);
+                            channel->converted_data[index] = (float)U8toS16(((uint8_t *)channel->sample_data)[index]);
                         }
                         break;
                     case 1: // 16-bit, mono, unsigned
                     case 3: // 16-bit, stereo, unsigned
                         for (index = 0; index < converted_length; index++)
                         {
-                            channel->converted_data[index] = ((uint16_t *)channel->sample_data)[index] - 32768;
+                            channel->converted_data[index] = (float)(((uint16_t *)channel->sample_data)[index] - 32768);
                         }
                         break;
                     case 4: // 8-bit, mono, signed
                     case 6: // 8-bit, stereo, signed
                         for (index = 0; index < converted_length; index++)
                         {
-                            channel->converted_data[index] = S8toS16(((uint8_t *)channel->sample_data)[index]);
+                            channel->converted_data[index] = (float)S8toS16(((uint8_t *)channel->sample_data)[index]);
                         }
                         break;
                     case 5: // 16-bit, mono, signed
                     case 7: // 16-bit, stereo, signed
                         for (index = 0; index < converted_length; index++)
                         {
-                            channel->converted_data[index] = ((int16_t *)channel->sample_data)[index];
+                            channel->converted_data[index] = (float)(((int16_t *)channel->sample_data)[index]);
                         }
                         break;
                 }
@@ -403,7 +404,7 @@ void xmi_player_set_loop_count(struct _xmi_player *player, int loop_count)
     player->loop_count = loop_count;
 }
 
-static inline int32_t clamp(int32_t value) {
+static INLINE int32_t clamp(int32_t value) {
 #if defined(ARMV8)
     return vqmovns_s32(value);
 #elif defined(ARMV6) && defined(__ARM_ACLE) && __ARM_FEATURE_SAT
@@ -658,7 +659,7 @@ void xmi_player_get_data(struct _xmi_player *player, void *buffer, uint32_t size
                 int err;
                 spx_uint32_t in_len, out_len;
 
-                in_len = channel->sample_length - channel->pos;
+                in_len = (spx_uint32_t)(channel->sample_length - channel->pos);
                 out_len = count;
 
                 if (channel->format & DIG_F_STEREO_MASK)

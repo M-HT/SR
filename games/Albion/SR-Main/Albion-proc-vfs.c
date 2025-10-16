@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,8 +26,15 @@
 #define _TIME_BITS 64
 #include <stdio.h>
 #include <fcntl.h>
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#include <direct.h>
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
+#include <string.h>
 #include <time.h>
+#include <ctype.h>
 #include <sys/stat.h>
 #include "Game_defs.h"
 #include "Game_vars.h"
@@ -295,7 +302,7 @@ int32_t Game_mkdir(const char *pathname)
     fprintf(stderr, "mkdir: real name: %s (%i)\n", (char *) &temp_str, vfs_err);
 #endif
 
-#if defined(__MINGW32__)
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     ret = mkdir((char *) &temp_str);
 #else
     ret = mkdir((char *) &temp_str, 0777);

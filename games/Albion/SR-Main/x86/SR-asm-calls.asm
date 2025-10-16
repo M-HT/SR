@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2024 Roman Pauer
+;;  Copyright (C) 2016-2025 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -140,7 +140,7 @@
     %define Game_fclose _Game_fclose
     %define Game_filelength _Game_filelength
     %define free _free
-    %define ftime _ftime
+    %define Game_ftime _Game_ftime
     %define getenv _getenv
     %define isatty _isatty
     %define localtime _localtime
@@ -303,7 +303,7 @@ extern Game_ExitMain_Asm
 extern Game_fclose
 extern Game_filelength
 extern free
-extern ftime
+extern Game_ftime
 extern getenv
 extern isatty
 extern localtime
@@ -1735,7 +1735,7 @@ SR_ftime:
 
 ; eax = struct timeb *timeptr
 
-        Game_Call_Asm_Reg1 ftime,-1
+        Game_Call_Asm_Reg1 Game_ftime,-1
 
 ; end procedure SR_ftime
 

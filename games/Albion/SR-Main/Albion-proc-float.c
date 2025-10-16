@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,6 +22,7 @@
  *
  */
 
+#define _USE_MATH_DEFINES
 #include <math.h>
 #include "Game_defs.h"
 #include "Game_vars.h"
@@ -214,7 +215,7 @@ void Game_FloatProcSqrt2(int32_t *ValuePtr)
 
 #pragma pack(2)
 
-    typedef struct __attribute__ ((__packed__)) {
+    typedef struct PACKED {
         int32_t result;
         int32_t reserved1;
         int16_t op2;
@@ -253,7 +254,7 @@ void Game_FloatProcSqrt4(int32_t *ValuePtr)
 
 #pragma pack(2)
 
-    typedef struct __attribute__ ((__packed__)) {
+    typedef struct PACKED {
         int32_t result;
         int32_t reserved1;
         int32_t reserved2;

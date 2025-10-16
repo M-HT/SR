@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -86,11 +86,11 @@ static MP_midi MP_sequence;
 
 static uint8_t *load_file(char const *midifile, unsigned int *res_midi_size)
 {
-    if (midifile == NULL) return NULL;
-
     FILE *f;
     size_t filelen;
     uint8_t *midibuffer;
+
+    if (midifile == NULL) return NULL;
 
     f = fopen(midifile, "rb");
     if (f == NULL) return NULL;
@@ -261,7 +261,7 @@ int MidiPlugin2_Startup(void)
 
     if (MP2_handle == NULL)
     {
-        fprintf(stderr, "%s: load error: 0x%x\n", "midi2", GetLastError());
+        fprintf(stderr, "%s: load error: 0x%x\n", "midi2", (unsigned int)GetLastError());
         return 2;
     }
 #else

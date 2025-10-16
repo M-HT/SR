@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,11 +22,13 @@
  *
  */
 
+#ifdef DEBUG_MSS
 #include <inttypes.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
+#include "platform.h"
 #include "MSS.h"
 
 #include <mpg123.h>
@@ -112,6 +114,8 @@ uint32_t ASI_shutdown_c (void)
 
 void *ASI_stream_open_mpg123 (void *user, ssize_t (*read_CB)(void *, void *, size_t), off_t (*lseek_CB)(void *, off_t,  int))
 {
+    mpg123_handle *stream;
+
 #ifdef DEBUG_MSS
     eprintf("ASI_stream_open_mpg123: 0x%" PRIxPTR ", 0x%" PRIxPTR ", 0x%" PRIxPTR " - ", (uintptr_t) user, (uintptr_t) read_CB, (uintptr_t) lseek_CB);
 #endif
@@ -123,8 +127,6 @@ void *ASI_stream_open_mpg123 (void *user, ssize_t (*read_CB)(void *, void *, siz
 #endif
         return NULL;
     }
-
-    mpg123_handle *stream;
 
     stream = mpg123_new(NULL, NULL);
     if (stream == NULL)
@@ -208,6 +210,9 @@ uint32_t ASI_stream_close_c (void *stream)
 
 int32_t ASI_stream_process_c (void *stream, void *buffer, int32_t request_size)
 {
+    int32_t original_size;
+    unsigned char *buf;
+
 #ifdef DEBUG_MSS
     eprintf("ASI_stream_process: 0x%" PRIxPTR ", 0x%" PRIxPTR ", %i - ", (uintptr_t) stream, (uintptr_t) buffer, request_size);
 #endif
@@ -228,8 +233,8 @@ int32_t ASI_stream_process_c (void *stream, void *buffer, int32_t request_size)
         return 0;
     }
 
-    int32_t original_size = request_size;
-    unsigned char *buf = (unsigned char *)buffer;
+    original_size = request_size;
+    buf = (unsigned char *)buffer;
 
     while (request_size > 0)
     {

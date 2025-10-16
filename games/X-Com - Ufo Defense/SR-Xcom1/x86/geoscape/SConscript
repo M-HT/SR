@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016-2023 Roman Pauer
+#  Copyright (C) 2016-2025 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -20,12 +20,10 @@
 #  SOFTWARE.
 #
 
-Import('device')
+Import('env2')
 
-if device == 'pc-linux':
-    env3 = Environment(tools=['nasm'], ASFLAGS = ' -felf32 -O1 -w+orphan-labels -w-number-overflow -ix86/geoscape/ -ix86/')
-else:
-    env3 = Environment(tools=['nasm'], ASFLAGS = ' -fwin32 -O1 -w+orphan-labels -w-number-overflow -ix86/geoscape/ -ix86/')
+env3 = env2.Clone()
+env3.Append(ASFLAGS = ' -ix86/geoscape/')
 
 obj = env3.Object('geoscape-asm.asm')
 

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -264,7 +264,7 @@ extern const uint32_t errno_table[ERRNO_NUM];
 
 
 extern int Game_Main_Asm(int argc, PTR32(char) argv[], void *main_proc);
-extern void Game_StopMain_Asm(void) __attribute__ ((__noreturn__));
+extern NORETURN void Game_StopMain_Asm(void);
 
 extern void Game_RunTimer_Asm(void *timer_proc);
 

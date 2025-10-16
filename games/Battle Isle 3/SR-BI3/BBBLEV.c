@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -24,7 +24,7 @@
 
 #include "BBBLEV.h"
 #include "BBSYSTEM.h"
-#include <strings.h>
+#include <string.h>
 
 
 static int BLEV_initialized = 0;

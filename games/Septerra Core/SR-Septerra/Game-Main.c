@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2024 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -29,7 +29,11 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#if defined(_MSC_VER)
+#include <direct.h>
+#else
 #include <unistd.h>
+#endif
 #endif
 
 #define _FILE_OFFSET_BITS 64
@@ -39,6 +43,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "Game-Config.h"
+#include "platform.h"
 
 #if (SDL_MAJOR_VERSION == 1) && SDL_VERSION_ATLEAST(1, 2, 50)
 #warning Compilation using sdl12-compat detected.
@@ -138,7 +143,7 @@ static void prepare_command_line(void)
 
 static void init_security_cookie(void)
 {
-    srand(time(NULL));
+    srand((int)time(NULL));
 
     security_cookie_ ^= rand();
     security_cookie_ ^= rand() << 15;

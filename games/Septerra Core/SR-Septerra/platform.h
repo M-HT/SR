@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2023-2025 Roman Pauer
+ *  Copyright (C) 2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,31 +22,31 @@
  *
  */
 
-#include <SDL.h>
-#include <string.h>
-#include "Game-Patch.h"
-#include "Game-Config.h"
+#if !defined(_PLATFORM_H_INCLUDED_)
+#define _PLATFORM_H_INCLUDED_
 
-int32_t Patch_PreselectCharacters;
-uint8_t Patch_IsPreselected[4];
-uint32_t Patch_PreselectTime[3];
-uint32_t Patch_IsBattle;
+#if defined(__GNUC__)
+    #define PACKED __attribute__ ((__packed__))
+#elif defined(_MSC_VER)
+    #define PACKED
+    #define getcwd _getcwd
+    #define mkdir _mkdir
+    #define putenv _putenv
+    #define strcasecmp _stricmp
+    #define strdup _strdup
+    #define strncasecmp _strnicmp
+    #define tzset _tzset
+    #ifdef _WIN64
+        typedef __int64 ssize_t;
+    #else
+        typedef int ssize_t;
+    #endif
+    #if _MSC_VER < 1900
+        #define snprintf _snprintf
+        #define vsscanf _vsscanf
+    #endif
+#else
+    #define PACKED
+#endif
 
-void Patch_PushKeyEvent(uint32_t key)
-{
-    SDL_Event event;
-
-    memset(&event, 0, sizeof(event));
-
-    event.type = SDL_KEYDOWN;
-    event.key.state = SDL_PRESSED;
-    event.key.keysym.sym = key;
-
-    SDL_PushEvent(&event);
-
-    event.type = SDL_KEYUP;
-    event.key.state = SDL_RELEASED;
-
-    SDL_PushEvent(&event);
-}
-
+#endif /* _PLATFORM_H_INCLUDED_ */

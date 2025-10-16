@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -32,10 +32,15 @@
 #else
     #include <unistd.h>
     #include <dirent.h>
-    #include <alloca.h>
+    #if defined(__linux__)
+        #include <alloca.h>
+    #else
+        #include <stdlib.h>
+    #endif
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <zlib.h>
 #include "Game_defs.h"
@@ -89,21 +94,21 @@ static int zlib_state = 0;
 extern uint8_t loc_17E164[1024];
 extern uint16_t loc_182010;
 
-static inline uint8_t *write_16be(uint8_t *ptr, uint16_t value)
+static INLINE uint8_t *write_16be(uint8_t *ptr, uint16_t value)
 {
     ptr[0] = value >> 8;
     ptr[1] = value & 0xff;
     return ptr + 2;
 }
 
-static inline uint8_t *write_16le(uint8_t *ptr, uint16_t value)
+static INLINE uint8_t *write_16le(uint8_t *ptr, uint16_t value)
 {
     ptr[0] = value & 0xff;
     ptr[1] = value >> 8;
     return ptr + 2;
 }
 
-static inline uint8_t *write_32be(uint8_t *ptr, uint32_t value)
+static INLINE uint8_t *write_32be(uint8_t *ptr, uint32_t value)
 {
     ptr[0] = value >> 24;
     ptr[1] = (value >> 16) & 0xff;
@@ -112,7 +117,7 @@ static inline uint8_t *write_32be(uint8_t *ptr, uint32_t value)
     return ptr + 4;
 }
 
-static inline uint8_t *write_32le(uint8_t *ptr, uint32_t value)
+static INLINE uint8_t *write_32le(uint8_t *ptr, uint32_t value)
 {
     ptr[0] = value & 0xff;
     ptr[1] = (value >> 8) & 0xff;

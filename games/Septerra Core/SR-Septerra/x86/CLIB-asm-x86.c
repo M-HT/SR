@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2024 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -29,8 +29,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <malloc.h>
 #include <math.h>
 #include <time.h>
+#include "../platform.h"
 
 
 typedef union {
@@ -52,7 +54,7 @@ void *_alloca_probe_c(uint32_t size)
 #endif
 
     void * volatile addr;
-    int index;
+    unsigned int index;
 
     addr = alloca(size);
 
@@ -86,12 +88,56 @@ int32_t sprintf2_c(char *str, const char *format, va_list ap)
 int32_t sscanf2_c(const char *str, const char *format, va_list ap)
 {
     int res;
+#if defined(_MSC_VER) && _MSC_VER < 1800
+#define MAX_VALUES 2
+    int num, index;
+    void *ptrvals[MAX_VALUES];
+#endif
 
 #ifdef DEBUG_CLIB
     eprintf("sscanf: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s) - ", (uintptr_t) str, str, (uintptr_t) format, format);
 #endif
 
+#if defined(_MSC_VER) && _MSC_VER < 1800
+    num = 0;
+    if (format != NULL)
+    {
+        for (index = 0; format[index] != 0; index++)
+        {
+            if (format[index] == '%')
+            {
+                num++;
+                if (num > MAX_VALUES) break;
+
+                if ((format[index + 1] == 's') || (format[index + 1] == 'd'))
+                {
+                    ptrvals[num - 1] = va_arg(ap, void *);
+                }
+                else
+                {
+                    eprintf("sscanf: unsupported format: %s\n", format);
+                    exit(1);
+                }
+            }
+        }
+    }
+
+    switch (num)
+    {
+        case 1:
+            res = sscanf(str, format, ptrvals[0]);
+            break;
+        case 2:
+            res = sscanf(str, format, ptrvals[0], ptrvals[1]);
+            break;
+        default:
+            eprintf("sscanf: unsupported format: %s\n", format);
+            exit(1);
+    }
+#undef MAX_VALUES
+#else
     res = vsscanf(str, format, ap);
+#endif
 
 #ifdef DEBUG_CLIB
     eprintf("%i\n", res);
@@ -179,18 +225,26 @@ int32_t _ftol2_sse_c(double *num)
 
 int64_t _ftol2_c(double *num)
 {
+#if defined(_MSC_VER) && _MSC_VER < 1800
+    return (int64_t) *num;
+#else
     double dval;
 
     dval = trunc(*num);
-    return ((dval < 9223372036854775808.0) && (dval > -9223372036854775808.0))?((int64_t) dval):__INT64_C(0x8000000000000000);
+    return ((dval < 9223372036854775808.0) && (dval > -9223372036854775808.0))?((int64_t) dval):INT64_C(0x8000000000000000);
+#endif
 }
 
 int64_t _ftol_c(double *num)
 {
+#if defined(_MSC_VER) && _MSC_VER < 1800
+    return (int64_t) *num;
+#else
     double dval;
 
     dval = trunc(*num);
-    return ((dval < 9223372036854775808.0) && (dval > -9223372036854775808.0))?((int64_t) dval):__INT64_C(0x8000000000000000);
+    return ((dval < 9223372036854775808.0) && (dval > -9223372036854775808.0))?((int64_t) dval):INT64_C(0x8000000000000000);
+#endif
 }
 
 

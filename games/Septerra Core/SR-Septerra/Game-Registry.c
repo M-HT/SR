@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2024 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -39,6 +39,7 @@
 #else
 #include "CLIB.h"
 #endif
+#include "platform.h"
 
 #define REGISTRY_BASE "SOFTWARE\\Valkyrie Studios\\Septerra Core"
 #define CONF_NAME "septerra.conf"
@@ -253,7 +254,7 @@ int32_t Registry_SetValueDword(const char *ValueName, uint32_t Value)
     if (Game_Installation == 0)
     {
         HKEY hKey;
-        LSTATUS result;
+        LONG result;
 
         if (ERROR_SUCCESS != RegOpenKeyExA(HKEY_LOCAL_MACHINE, REGISTRY_BASE, 0, KEY_QUERY_VALUE, &hKey))
         {
@@ -288,7 +289,7 @@ int32_t Registry_SetValueDword(const char *ValueName, uint32_t Value)
     if (Game_Installation == 0)
     {
         HKEY hKey;
-        LSTATUS result;
+        LONG result;
 
         if (ERROR_SUCCESS != RegOpenKeyExA(HKEY_LOCAL_MACHINE, REGISTRY_BASE, 0, KEY_QUERY_VALUE, &hKey))
         {
@@ -311,7 +312,7 @@ int32_t Registry_GetValueDword(const char *ValueName, uint32_t *Value)
     if (Game_Installation == 0)
     {
         HKEY hKey;
-        LSTATUS result;
+        LONG result;
         DWORD type, cbData;
 
         *Value = -1;
@@ -360,7 +361,7 @@ int32_t Registry_GetValueString(const char *ValueName, char *Value)
     if (Game_Installation == 0)
     {
         HKEY hKey;
-        LSTATUS result;
+        LONG result;
         DWORD type, cbData;
 
         *Value = 0;

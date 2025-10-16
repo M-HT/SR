@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016-2020 Roman Pauer
+#  Copyright (C) 2016-2025 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -26,18 +26,22 @@ import subprocess
 # set help text
 vars = Variables('custom.py')
 vars.Add(BoolVariable('debug', 'Set to build debug version', False))
+vars.Add(BoolVariable('mingw', 'Set to use MinGW instead of default compiler', False))
 vars.Add(EnumVariable('device', 'Set target device', 'none',
                                  allowed_values=('none', 'pc-windows', 'pc-linux', 'arm-linux', 'gp2x', 'pandora'),
                                  ignorecase=2))
 env = Environment(variables = vars)
 
 debug = env['debug']
+mingw = env['mingw']
 device = env['device']
 clean = env.GetOption('clean')
 
 if device == 'none':
     device = 'pc-linux'
-    if env['PLATFORM'] == 'posix':
+    if env['PLATFORM'] == 'win32':
+        device = 'pc-windows'
+    elif env['PLATFORM'] == 'posix':
         if os.uname()[4].startswith('arm'):
             device = 'arm-linux'
     env['device'] = device
@@ -46,45 +50,81 @@ if device == 'none':
 
 Help(vars.GenerateHelpText(env))
 
-if device == 'pc-windows' or device == 'pc-linux':
-    # default settings
-    env = Environment(CCFLAGS      = '-m32 -O2',
-                      LINKFLAGS    = '-m32',
-                      LIBS         = ['SDL', 'pthread']
-                     )
+Help("""
+Environment variables:
+  - PATH_INC: paths to find include files
+  - PATH_LIB: paths to find library files
+""")
+
+if mingw:
+    env = Environment(tools = ['mingw'])
+elif env['CC'] == 'cl' and device == 'pc-windows':
+    env = Environment(TARGET_ARCH = 'x86')
+
+# default settings
+if env['CC'] == 'cl':
+    env.Append(CCFLAGS = '/O2 /W3 /D_CRT_SECURE_NO_WARNINGS')
+    if debug:
+        env.Append(CCFLAGS = '/Zi /D__DEBUG__')
+else:
+    env.Append(CCFLAGS = '-O2 -Wall')
+    if debug:
+        env.Append(CCFLAGS = '-g -D__DEBUG__')
+    else:
+        env.Append(LINKFLAGS = '-s')
+
+if 'PATH_INC' in os.environ:
+    env.Append(CPPPATH = os.environ['PATH_INC'].split(os.pathsep))
+if 'PATH_LIB' in os.environ:
+    env.Append(LIBPATH = os.environ['PATH_LIB'].split(os.pathsep))
+
+
+if device == 'pc-windows':
+    if env['CC'] == 'cl':
+        env.Append(CCFLAGS   = '/Dmain=SDL_main /MD',
+                   LINKFLAGS = '/SUBSYSTEM:windows',
+                   LIBS      = ['SDLmain', 'SDL']
+                  )
+    else:
+        env.Append(CCFLAGS   = '-m32 -D_GNU_SOURCE=1 -Dmain=SDL_main',
+                   LINKFLAGS = '-m32 -mwindows',
+                   LIBS      = ['mingw32', 'SDLmain', 'SDL']
+                  )
+elif device == 'pc-linux':
+    env.Append(CCFLAGS   = '-m32',
+               LINKFLAGS = '-m32',
+               LIBS      = ['SDL']
+              )
 elif device == 'arm-linux':
-    env = Environment(CCFLAGS      = '-O2',
-                      LINKFLAGS    = '',
-                      LIBS         = ['SDL', 'pthread']
-                     )
+    env.Append(LIBS = ['SDL'])
 elif device == 'gp2x':
     compiler_path = '/opt/open2x/gcc-4.1.1-glibc-2.3.6/'
     compiler_prefix = 'arm-open2x-linux-'
 
-    env = Environment(CC           = compiler_prefix + 'gcc',
-                      CCFLAGS      = '-Os -DGP2X -march=armv4t -mtune=arm920t',
-                      CPPPATH      = [compiler_path + 'include'],
-                      INCPREFIX    = '-I',
-                      LIBPATH      = [compiler_path + 'lib'],
-                      LIBDIRPREFIX = '-L',
-                      LINKFLAGS    = '-static',
-                      LIBS         = ['SDL', 'pthread', 'armmem'],
-                      ENV          = {'PATH' : compiler_path + 'bin:' + os.environ['PATH']}
-                     )
+    env['CC']      = compiler_prefix + 'gcc'
+    env['CXX']     = compiler_prefix + 'g++'
+    env['CPPPATH'] = [compiler_path + 'include']
+    env['LIBPATH'] = [compiler_path + 'lib']
+    env['AS']      = compiler_prefix + 'as'
+    env['ENV']['PATH'] = compiler_path + 'bin' + os.pathsep + env['ENV']['PATH']
+    env.Append(CCFLAGS   = '-DGP2X -march=armv4t -mtune=arm920t',
+               LINKFLAGS = '-static -Wl,-z,noexecstack',
+               LIBS      = ['SDL', 'pthread', 'armmem']
+              )
 elif device == 'pandora':
     compiler_path = os.environ['PNDSDK'] + '/'
     compiler_prefix = 'pandora-'
 
-    env = Environment(CC           = compiler_prefix + 'gcc',
-                      CCFLAGS      = '-Os -DPANDORA -pipe -march=armv7-a -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=vfpv3 -mfloat-abi=softfp',
-                      CPPPATH      = [compiler_path + 'usr/include'],
-                      INCPREFIX    = '-I',
-                      LIBPATH      = [compiler_path + 'usr/lib'],
-                      LIBDIRPREFIX = '-L',
-                      LINKFLAGS    = '-Wl,-z,noexecstack',
-                      LIBS         = ['SDL', 'ts', 'pthread'],
-                      ENV          = {'PATH' : compiler_path + 'bin:' + os.environ['PATH']}
-                     )
+    env['CC']      = compiler_prefix + 'gcc'
+    env['CXX']     = compiler_prefix + 'g++'
+    env['CPPPATH'] = [compiler_path + 'usr/include']
+    env['LIBPATH'] = [compiler_path + 'usr/lib']
+    env['AS']      = compiler_prefix + 'as'
+    env['ENV']['PATH'] = compiler_path + 'bin' + os.pathsep + env['ENV']['PATH']
+    env.Append(CCFLAGS   = '-DPANDORA -pipe -march=armv7-a -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=vfpv3 -mfloat-abi=softfp',
+               LINKFLAGS = '-Wl,-z,noexecstack',
+               LIBS      = ['SDL', 'ts', 'pthread']
+              )
 
 def get_compiler_version(compiler_path, env_path):
     process = subprocess.Popen([compiler_path, '-dumpversion'], stdout=subprocess.PIPE, env={"PATH": env_path})
@@ -109,18 +149,12 @@ def is_version_ge(version, comparand):
             return True
     return True
 
-if not clean:
+if not clean and env['CC'] != 'cl':
     compiler_version = get_compiler_version(env['CC'], env['ENV']['PATH'])
     if is_version_ge(compiler_version, [3, 4]):
-        env.Append(CCFLAGS = ' -fno-PIE')
+        env.Append(CCFLAGS = '-fno-PIE')
     if is_version_ge(compiler_version, [6]):
-        env.Append(LINKFLAGS = ' -no-pie')
-
-# debug settings
-if debug:
-    env.Append(CCFLAGS = ' -g -D__DEBUG__')
-else:
-    env.Append(LINKFLAGS = ' -s')
+        env.Append(LINKFLAGS = '-no-pie')
 
 
 env.Program('smk_play', Glob('*.c'))

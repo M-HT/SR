@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -28,7 +28,11 @@
 #include <string.h>
 #include "smack.h"
 
-#ifdef __BYTE_ORDER__
+#if defined(_MSC_VER)
+
+#undef BIG_ENDIAN_BYTE_ORDER
+
+#elif defined(__BYTE_ORDER__)
 
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
 #define BIG_ENDIAN_BYTE_ORDER

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -100,7 +100,7 @@ typedef struct _SmackFrame_ {
 #pragma pack()
 
 /* status of last function call */
-int SmackError();
+int SmackError(void);
 
 /* SmackOpen initializes a Smacker file for playback */
 SmackStruct *SmackOpen(FILE *SmackFile);

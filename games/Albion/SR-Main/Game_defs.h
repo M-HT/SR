@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -54,8 +54,12 @@
 
 
 #if !defined(MAX_PATH)
-    #if defined(_POSIX_PATH_MAX)
+    #if defined(_MAX_PATH)
+        #define MAX_PATH _MAX_PATH
+    #elif defined(_POSIX_PATH_MAX)
         #define MAX_PATH _POSIX_PATH_MAX
+    #elif defined(PATH_MAX)
+        #define MAX_PATH PATH_MAX
     #else
         #define MAX_PATH 256
     #endif
@@ -77,6 +81,40 @@
 #define EC_SMK_FUNCTION			(8)
 
 
+#if defined(__GNUC__)
+    #define INLINE __inline__
+    #define NORETURN __attribute__ ((__noreturn__))
+    #define PACKED __attribute__ ((__packed__))
+#elif defined(_MSC_VER)
+    #define INLINE __inline
+    #define NORETURN __declspec(noreturn)
+    #define PACKED
+    #define access _access
+    #define chdir _chdir
+    #define close _close
+    #define getcwd _getcwd
+    #define lseek _lseek
+    #define mkdir _mkdir
+    #define open _open
+    #define read _read
+    #define strcasecmp _stricmp
+    #define strdup _strdup
+    #define strncasecmp _strnicmp
+    #define tzset _tzset
+    #define unlink _unlink
+    #define write _write
+    #if _MSC_VER >= 1900
+        #pragma comment(lib, "legacy_stdio_definitions.lib")
+    #else
+        #define snprintf _snprintf
+    #endif
+#else
+    #define INLINE inline
+    #define NORETURN
+    #define PACKED
+#endif
+
+
 typedef enum {
     AL_UNKNOWN = 0,
     AL_ENG_FRE,
@@ -86,7 +124,7 @@ typedef enum {
 
 #pragma pack(1)
 
-typedef struct __attribute__ ((__packed__)) _Game_DPMIDWORDREGS_ {
+typedef struct PACKED _Game_DPMIDWORDREGS_ {
   uint32_t edi;
   uint32_t esi;
   uint32_t ebp;
@@ -105,7 +143,7 @@ typedef struct __attribute__ ((__packed__)) _Game_DPMIDWORDREGS_ {
   uint16_t ss;
 } Game_DPMIDWORDREGS;
 
-typedef struct __attribute__ ((__packed__)) _Game_DPMIWORDREGS_ {
+typedef struct PACKED _Game_DPMIWORDREGS_ {
   uint16_t di, _upper_di;
   uint16_t si, _upper_si;
   uint16_t bp, _upper_bp;
@@ -124,7 +162,7 @@ typedef struct __attribute__ ((__packed__)) _Game_DPMIWORDREGS_ {
   uint16_t ss;
 } Game_DPMIWORDREGS;
 
-typedef struct __attribute__ ((__packed__)) _Game_DPMIBYTEREGS_ {
+typedef struct PACKED _Game_DPMIBYTEREGS_ {
   uint16_t di, _upper_di;
   uint16_t si, _upper_si;
   uint16_t bp, _upper_bp;
@@ -151,7 +189,7 @@ typedef struct __attribute__ ((__packed__)) _Game_DPMIBYTEREGS_ {
   uint16_t ss;
 } Game_DPMIBYTEREGS;
 
-typedef union __attribute__ ((__packed__)) _Game_DPMIREGS_ {
+typedef union PACKED _Game_DPMIREGS_ {
   Game_DPMIDWORDREGS d;
   Game_DPMIWORDREGS w;
   Game_DPMIBYTEREGS h;

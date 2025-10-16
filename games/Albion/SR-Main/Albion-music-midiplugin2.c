@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -105,7 +105,7 @@ static volatile int thread_finish;
 static int last_volume1;
 
 
-static inline void LockSem(SDL_sem *sem)
+static INLINE void LockSem(SDL_sem *sem)
 {
     while (SDL_SemWait(sem));
 }
@@ -494,7 +494,7 @@ int MidiPlugin2_Startup(void)
 
     if (MP2_handle == NULL)
     {
-        fprintf(stderr, "%s: load error: 0x%x\n", "midi2", GetLastError());
+        fprintf(stderr, "%s: load error: 0x%x\n", "midi2", (unsigned int)GetLastError());
         return 2;
     }
 #else
@@ -597,13 +597,11 @@ int MidiPlugin2_Startup(void)
     // start thread
     thread_finish = 0;
 
-    MP_thread = SDL_CreateThread(
-        MidiPlugin2_ProcessData,
 #if SDL_VERSION_ATLEAST(2,0,0)
-        "midi2",
+    MP_thread = SDL_CreateThread(MidiPlugin2_ProcessData, "midi2", NULL);
+#else
+    MP_thread = SDL_CreateThread(MidiPlugin2_ProcessData, NULL);
 #endif
-        NULL
-    );
     if (MP_thread == NULL)
     {
         fprintf(stderr, "%s: error: %s\n", "midi2", "failed to create thread");

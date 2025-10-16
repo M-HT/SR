@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2024 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,7 +22,9 @@
  *
  */
 
+#ifdef DEBUG_DSOUND
 #include <inttypes.h>
+#endif
 #include <SDL.h>
 #include <math.h>
 #include <stdlib.h>
@@ -32,6 +34,7 @@
 #ifdef USE_SPEEXDSP_RESAMPLER
 #include <speex/speex_resampler.h>
 #endif
+#include "platform.h"
 
 
 #define make_hresult(s,f,c) ((uint32_t)(((unsigned long)(s)<<31)|((unsigned long)(f)<<16)|((unsigned long)(c))))
@@ -140,7 +143,7 @@ struct IDirectSoundBuffer_c {
 
 
 #pragma pack(2)
-typedef struct __attribute__ ((__packed__)) twaveformatex {
+typedef struct PACKED twaveformatex {
     uint16_t wFormatTag;
     uint16_t nChannels;
     uint32_t nSamplesPerSec;
@@ -1404,7 +1407,7 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
 
         lpDSB_c->freq = lpwfxFormat->nSamplesPerSec;
         lpDSB_c->format = (lpwfxFormat->wBitsPerSample == 16)?AUDIO_S16LSB:AUDIO_U8;
-        lpDSB_c->channels = lpwfxFormat->nChannels;
+        lpDSB_c->channels = (uint8_t)lpwfxFormat->nChannels;
         lpDSB_c->silence = (lpwfxFormat->wBitsPerSample == 16)?0:0x80;
         lpDSB_c->attenuation = 0;
         lpDSB_c->pan = 0;
@@ -1961,7 +1964,7 @@ uint32_t IDirectSoundBuffer_SetFormat_c(struct IDirectSoundBuffer_c *lpThis, con
 
     desired.freq = pcfxFormat->nSamplesPerSec;
     desired.format = (pcfxFormat->wBitsPerSample == 16)?AUDIO_S16LSB:AUDIO_U8;
-    desired.channels = pcfxFormat->nChannels;
+    desired.channels = (Uint8)pcfxFormat->nChannels;
 
     if ((desired.freq == 22050) && (Audio_ResamplingQuality > 0))
     {

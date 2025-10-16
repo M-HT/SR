@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2024 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -31,11 +31,12 @@
 #else
 #include <pthread.h>
 #include <time.h>
+#include <unistd.h>
 #endif
 
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include "platform.h"
 #include "Game-SoundEngine.h"
 #include "MSS.h"
 #include "Game-DataFiles.h"

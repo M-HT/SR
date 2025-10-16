@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -56,8 +56,12 @@
 
 
 #if !defined(MAX_PATH)
-    #if defined(_POSIX_PATH_MAX)
+    #if defined(_MAX_PATH)
+        #define MAX_PATH _MAX_PATH
+    #elif defined(_POSIX_PATH_MAX)
         #define MAX_PATH _POSIX_PATH_MAX
+    #elif defined(PATH_MAX)
+        #define MAX_PATH PATH_MAX
     #else
         #define MAX_PATH 256
     #endif
@@ -84,6 +88,33 @@
 #define EC_INPUT_KEY 			(7)
 #define EC_INPUT_MOUSE_BUTTON	(8)
 #define EC_DELAY				(9)
+
+
+#if defined(__GNUC__)
+    #define INLINE __inline__
+    #define NORETURN __attribute__ ((__noreturn__))
+    #define PACKED __attribute__ ((__packed__))
+#elif defined(_MSC_VER)
+    #define INLINE __inline
+    #define NORETURN __declspec(noreturn)
+    #define PACKED
+    #define chdir _chdir
+    #define getcwd _getcwd
+    #define lseek _lseek
+    #define open _open
+    #define strcasecmp _stricmp
+    #define strdup _strdup
+    #define strncasecmp _strnicmp
+    #define tzset _tzset
+    #define unlink _unlink
+    #if _MSC_VER >= 1900
+        #pragma comment(lib, "legacy_stdio_definitions.lib")
+    #endif
+#else
+    #define INLINE inline
+    #define NORETURN
+    #define PACKED
+#endif
 
 
 #pragma pack(4)

@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -76,6 +76,22 @@ typedef struct {
 
 // *********************************************************************
 
+#if defined(_MSC_VER)
+
+static __inline uint32_t unaligned_read_32(void *adr)
+{
+    uint32_t __unaligned *uptr = (uint32_t __unaligned *)adr;
+    return *uptr;
+}
+
+static __inline void unaligned_write_32(void *adr, uint32_t val)
+{
+    uint32_t __unaligned *uptr = (uint32_t __unaligned *)adr;
+    *uptr = val;
+}
+
+#else
+
 typedef struct {
     uint32_t u;
 } __attribute__((packed)) _unaligned32;
@@ -92,10 +108,28 @@ static inline void unaligned_write_32(void *adr, uint32_t val)
     uptr->u = val;
 }
 
+#endif
+
 #define UNALIGNED_READ_32(adr) (unaligned_read_32(REG2PTR(adr)))
 #define UNALIGNED_WRITE_32(adr, val) unaligned_write_32(REG2PTR(adr), (val));
 
 // *********************************************************************
+
+#if defined(_MSC_VER)
+
+static __inline uint16_t unaligned_read_16(void *adr)
+{
+    uint16_t __unaligned *uptr = (uint16_t __unaligned *)adr;
+    return *uptr;
+}
+
+static __inline void unaligned_write_16(void *adr, uint16_t val)
+{
+    uint16_t __unaligned *uptr = (uint16_t __unaligned *)adr;
+    *uptr = val;
+}
+
+#else
 
 typedef struct {
     uint16_t u;
@@ -112,6 +146,8 @@ static inline void unaligned_write_16(void *adr, uint16_t val)
     _unaligned16 *uptr = (_unaligned16 *)adr;
     uptr->u = val;
 }
+
+#endif
 
 #define UNALIGNED_READ_16(adr) (unaligned_read_16(REG2PTR(adr)))
 #define UNALIGNED_WRITE_16(adr, val) unaligned_write_16(REG2PTR(adr), (val));

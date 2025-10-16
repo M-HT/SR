@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -28,10 +28,15 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <string.h>
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#include <direct.h>
+#include <io.h>
+#else
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <dirent.h>
+#include <sys/stat.h>
+#endif
+#include <sys/types.h>
 #include <ctype.h>
 #include "virtualfs.h"
 #include "Game_defs.h"
@@ -151,16 +156,28 @@ void vfs_visit_dir(file_entry *vdir)
     vdir->dir_visited = 0;
 
     {
-        DIR *dir;
-        struct dirent *file;
         file_entry *new_child, *last_child;
         int vdir_doslength, vdir_reallength, file_reallength;
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+        intptr_t dir;
+        struct _finddata_t file;
+#else
+        DIR *dir;
+        struct dirent *file;
         struct stat file_stat;
+#endif
         char new_filename[MAX_PATH];
 
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+        if (strlen(vdir->real_fullname) >= MAX_PATH - 4) return;
+        strcpy(new_filename, vdir->real_fullname);
+        strcat(new_filename, "\\*.*");
+        dir = _findfirst(new_filename, &file);
+        if (dir < 0) return;
+#else
         dir = opendir(vdir->real_fullname);
-
         if (dir == NULL) return;
+#endif
 
         last_child = NULL;
         vdir_doslength = strlen(vdir->dos_fullname);
@@ -169,24 +186,32 @@ void vfs_visit_dir(file_entry *vdir)
         strcpy(new_filename, vdir->real_fullname);
         new_filename[vdir_reallength] = '/';
 
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+    #define FILE_NAME file.name
+    #define CLOSE_DIR(a) _findclose(a)
+        do
+#else
+    #define FILE_NAME file->d_name
+    #define CLOSE_DIR(a) closedir(a)
         for (file = readdir(dir); file != NULL; file = readdir(dir))
+#endif
         {
             // skip '.' and '..'
-            if (file->d_name[0] == '.' &&
-                (file->d_name[1] == 0 || (file->d_name[1] == '.' && file->d_name[2] == 0))
+            if (FILE_NAME[0] == '.' &&
+                (FILE_NAME[1] == 0 || (FILE_NAME[1] == '.' && FILE_NAME[2] == 0))
                 )
             {
                 continue;
             }
 
             // skip long names
-            file_reallength = strlen(file->d_name);
+            file_reallength = strlen(FILE_NAME);
             if (file_reallength > 12) continue;
 
             {
                 char *ext;
 
-                ext = strchr(file->d_name, '.');
+                ext = strchr(FILE_NAME, '.');
 
                 if (ext == NULL)
                 {
@@ -200,7 +225,7 @@ void vfs_visit_dir(file_entry *vdir)
                     // file with extension
 
                     // skip long names
-                    if (ext - file->d_name > 8) continue;
+                    if (ext - FILE_NAME > 8) continue;
                     ext++;
 
                     // skip file with more extensions
@@ -211,25 +236,27 @@ void vfs_visit_dir(file_entry *vdir)
                 }
             }
 
-            strcpy(&(new_filename[vdir_reallength + 1]), file->d_name);
+            strcpy(&(new_filename[vdir_reallength + 1]), FILE_NAME);
 
+#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
             if (stat(new_filename, &file_stat)) continue;
 
             // only read regular files and directories
             if (!S_ISREG(file_stat.st_mode) && !S_ISDIR(file_stat.st_mode)) continue;
+#endif
 
             // allocate mem for new file entry
             new_child = (file_entry *) malloc(sizeof(file_entry));
             if (new_child == NULL)
             {
-                closedir(dir);
+                CLOSE_DIR(dir);
                 return;
             }
 
             memset(new_child, 0, sizeof(file_entry));
 
             // set real and dos name
-            strcpy(new_child->real_name, file->d_name);
+            strcpy(new_child->real_name, FILE_NAME);
 
             {
                 int i;
@@ -249,7 +276,7 @@ void vfs_visit_dir(file_entry *vdir)
                 new_child->real_fullname == NULL
                 )
             {
-                closedir(dir);
+                CLOSE_DIR(dir);
                 return;
             }
 
@@ -260,7 +287,11 @@ void vfs_visit_dir(file_entry *vdir)
             strcpy(new_child->real_fullname, new_filename);
 
             // set attributes
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+            new_child->attributes = (file.attrib & _A_SUBDIR)?1:0;
+#else
             new_child->attributes = (S_ISDIR(file_stat.st_mode))?1:0;
+#endif
 
             // set pointers
             new_child->parent = vdir;
@@ -276,10 +307,16 @@ void vfs_visit_dir(file_entry *vdir)
             }
 
             last_child = new_child;
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+        } while (_findnext(dir, &file) >= 0);
+#else
         }
+#endif
 
-        closedir(dir);
+        CLOSE_DIR(dir);
     }
+#undef FILE_NAME
+#undef CLOSE_DIR
 
     vdir->dir_visited = 1;
 }

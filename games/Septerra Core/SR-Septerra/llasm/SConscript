@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2019 Roman Pauer
+#  Copyright (C) 2019-2025 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -20,7 +20,12 @@
 #  SOFTWARE.
 #
 
+import os
 import re
+import shutil
+import sys
+
+Import('env')
 
 llasm_include_re = re.compile(r'^include\s+(\S+)\r?$', re.M)
 
@@ -35,8 +40,25 @@ llasmscan = Scanner(function = llasmfile_scan,
 
 SourceFileScanner.add_scanner('.llasm', llasmscan)
 
+bld = Builder(action = 'llasm $SOURCE -O $LLASMFLAGS | opt -O3 | llc -O=3 -filetype=obj $LLVMFLAGS > $TARGET',
+              suffix = "$OBJSUFFIX",
+              src_suffix = '.llasm'
+             )
+env.Append(BUILDERS = {'llasm' : bld})
 
-Import('device', 'env')
+env_path = env['ENV']['PATH'].split(os.pathsep)
+if sys.version_info >= (3, 3):
+    for util in ['llasm', 'opt', 'llc']:
+        util_path = shutil.which(util)
+        if util_path is not None:
+            util_dir = os.path.dirname(util_path)
+            if util_dir not in env_path:
+                env_path.append(util_dir)
+else:
+    for path_dir in os.environ['PATH'].split(os.pathsep):
+        if path_dir not in env_path:
+            env_path.append(path_dir)
+env['ENV']['PATH'] = os.pathsep.join(env_path)
 
 obj = env.Object(Glob('*.c'))
 

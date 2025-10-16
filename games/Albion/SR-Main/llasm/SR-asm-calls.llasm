@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2024 Roman Pauer
+;;  Copyright (C) 2016-2025 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -143,7 +143,7 @@ funcv Game_ExitMain_Asm status
 func Game_fclose *stream
 func Game_filelength fd
 funcv free *ptr
-func ftime *tp
+func Game_ftime *tp
 func getenv *name
 func isatty fd
 func localtime *timep
@@ -1234,7 +1234,7 @@ proc SR_ftime public
 
 ; eax = struct timeb *timeptr
 
-        Game_Call_Asm_Reg1 ftime,-1
+        Game_Call_Asm_Reg1 Game_ftime,-1
 
 endp ; end procedure SR_ftime
 

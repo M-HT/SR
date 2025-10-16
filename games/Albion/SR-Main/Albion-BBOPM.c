@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2023 Roman Pauer
+ *  Copyright (C) 2018-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -493,7 +493,7 @@ void OPM_CopyOPMOPM(OPM_Struct *src_pixel_map, OPM_Struct *dst_pixel_map, int32_
 
     if (src_pixel_map->flags & BBOPM_TRANSPARENCY)
     {
-        ASM_CopyRectangleWithTransparency(dst, src, src_pixel_map->transparent_color, src_pixel_map->stride - src_width, dst_pixel_map->stride - src_width, src_width, src_height);
+        ASM_CopyRectangleWithTransparency(dst, src, (uint8_t)src_pixel_map->transparent_color, src_pixel_map->stride - src_width, dst_pixel_map->stride - src_width, src_width, src_height);
     }
     else
     {

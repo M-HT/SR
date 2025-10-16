@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,6 +25,17 @@
 #if !defined(_ALBION_PROC_H_INCLUDED_)
 #define _ALBION_PROC_H_INCLUDED_
 
+#pragma pack(1)
+
+typedef struct PACKED {
+    int32_t time;
+    uint16_t millitm;
+    int16_t timezone;
+    int16_t dstflag;
+} watcom_timeb;
+
+#pragma pack()
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -35,6 +46,7 @@ extern void Game_Set_errno_error(int32_t value);
 extern int32_t Game_fclose(FILE *fp);
 extern int32_t Game_fcloseall(void);
 extern int32_t Game_filelength(int32_t fd);
+extern int32_t Game_ftime(watcom_timeb *tp);
 extern uint32_t Game_dos_getvect(const int32_t intnum);
 extern int32_t Game_lseek(int32_t fd, int32_t offset, int32_t whence);
 extern void Game_setbuf(FILE *fp, char *buf);

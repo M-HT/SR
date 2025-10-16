@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,7 +22,9 @@
  *
  */
 
+#if defined(DEBUG_GDI32)
 #include <inttypes.h>
+#endif
 #include "WinApi-gdi32.h"
 #include "WinApi.h"
 #include <stdio.h>

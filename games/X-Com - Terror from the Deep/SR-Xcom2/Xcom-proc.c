@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -24,7 +24,11 @@
 
 #define _FILE_OFFSET_BITS 64
 #define _TIME_BITS 64
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -177,9 +181,9 @@ int32_t Game_time(int32_t *tloc)
 
     t = time(NULL);
 
-    if (tloc != NULL) *tloc = t;
+    if (tloc != NULL) *tloc = (int32_t)t;
 
-    return t;
+    return (int32_t)t;
 }
 
 int32_t Game_dlseek(int32_t fd, int32_t offset, int32_t whence)

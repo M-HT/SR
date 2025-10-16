@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2024 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -27,7 +27,9 @@
 
 #define _FILE_OFFSET_BITS 64
 #define _TIME_BITS 64
+#ifdef DEBUG_QTML
 #include <inttypes.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -37,6 +39,7 @@
 #include <sys/stat.h>
 #include "QTML.h"
 #include "Game-Config.h"
+#include "platform.h"
 
 #if (defined(__WIN32__) || defined(__WINDOWS__)) && !defined(_WIN32)
 #define _WIN32
@@ -52,14 +55,14 @@
 
 
 #pragma pack(1)
-typedef struct __attribute__ ((__packed__)) Rect {
+typedef struct PACKED Rect {
     int16_t                         top;
     int16_t                         left;
     int16_t                         bottom;
     int16_t                         right;
 } Rect;
 
-typedef struct __attribute__ ((__packed__)) EventRecord {
+typedef struct PACKED EventRecord {
     uint16_t                        what;
     uint32_t                        message;
     uint32_t                        when;
@@ -314,7 +317,7 @@ static int decode_more_audio(Movie movie)
 
     if (samples_available >= movie->audio_length - last_position)
     {
-        samples_available = movie->audio_length - last_position;
+        samples_available = (int)(movie->audio_length - last_position);
         movie->audio_eof = 1;
     }
 
@@ -1631,6 +1634,9 @@ void *NewMovieController_c (void *theMovie, const void *movieRect, int32_t someF
         else
         {
             SDL_AudioSpec desired;
+#if SDL_VERSION_ATLEAST(2,0,0)
+            SDL_AudioSpec obtained;
+#endif
 
             desired.freq = movie->audio_sample_rate;
             desired.format = movie->audio_format;
@@ -1640,8 +1646,6 @@ void *NewMovieController_c (void *theMovie, const void *movieRect, int32_t someF
             desired.userdata = movie;
 
 #if SDL_VERSION_ATLEAST(2,0,0)
-            SDL_AudioSpec obtained;
-
             movie->device_id = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, 0);
             if (movie->device_id == 0)
 #else

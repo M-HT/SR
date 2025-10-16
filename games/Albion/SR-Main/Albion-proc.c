@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -24,13 +24,20 @@
 
 #define _FILE_OFFSET_BITS 64
 #define _TIME_BITS 64
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#include <io.h>
+#include <sys/timeb.h>
+#else
 #include <unistd.h>
+#include <sys/time.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
 #include <fcntl.h>		/* needed for procedure Game_openFlags */
 #include <ctype.h>
 #include <time.h>
+#include <sys/types.h>
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Albion-proc.h"
@@ -88,6 +95,31 @@ int32_t Game_filelength(int32_t fd)
     return (endpos < 0 || endpos > 2147483647) ? -1 : endpos;
 }
 
+int32_t Game_ftime(watcom_timeb *tp)
+{
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+    struct timeb tb;
+
+    ftime(&tb);
+
+    tp->time = (int32_t)tb.time;
+    tp->millitm = tb.millitm;
+    tp->timezone = tb.timezone;
+    tp->dstflag = tb.dstflag;
+#else
+    struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+
+    tp->time = (int32_t)tv.tv_sec;
+    tp->millitm = tv.tv_usec / 1000;
+    tp->timezone = 0;
+    tp->dstflag = 0;
+#endif
+
+    return 0;
+}
+
 uint32_t Game_dos_getvect(const int32_t intnum)
 {
     return Game_InterruptTable[intnum & 0xff];
@@ -133,9 +165,9 @@ int32_t Game_time(int32_t *tloc)
 
     t = time(NULL);
 
-    if (tloc != NULL) *tloc = t;
+    if (tloc != NULL) *tloc = (int32_t)t;
 
-    return t;
+    return (int32_t)t;
 }
 
 void Game_Sync(void)

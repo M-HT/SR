@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -23,14 +23,18 @@
  */
 
 #define _XOPEN_SOURCE 700
+#ifdef DEBUG_DATABASE
 #include <inttypes.h>
+#endif
 #include "Game-DataFiles.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 #include <errno.h>
 #include <malloc.h>
+#if !defined(_MSC_VER)
+#include <strings.h>
+#endif
 
 #if (defined(__WIN32__) || defined(__WINDOWS__)) && !defined(_WIN32)
 #define _WIN32
@@ -44,6 +48,7 @@
 #include <pthread.h>
 #include "CLIB.h"
 #endif
+#include "platform.h"
 
 
 #ifdef __cplusplus
@@ -137,6 +142,11 @@ static int32_t LZO1X_DoDecompress(uint8_t *TmpBuffer, uint32_t TmpBufRemaining, 
 void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, uint32_t (*_MessageProc)(const char *, uint32_t, uint32_t))
 {
     char FilePath[256];
+    int len;
+    char *findslash, *buf;
+    long ManifestSize, IndexSize;
+    size_t items;
+    const char *FileName;
 
 #ifdef DEBUG_DATABASE
     eprintf("OpenGameFiles - ");
@@ -149,8 +159,8 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
 
     // get local directory from manifest file path
     strcpy(LocalDirectory, ManifestFilePath);
-    int len = strlen(LocalDirectory);
-    char *findslash = &LocalDirectory[len];
+    len = strlen(LocalDirectory);
+    findslash = &LocalDirectory[len];
     for ( ; len != 0; len-- )
     {
         if ( *findslash == '\\' ) break;
@@ -167,7 +177,7 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
     }
 
     fseek(ManifestFILE, 0, SEEK_END);
-    long ManifestSize = ftell(ManifestFILE);
+    ManifestSize = ftell(ManifestFILE);
     fseek(ManifestFILE, 0, SEEK_SET);
 
     ManifestFileBuffer = (char *) calloc(ManifestSize + 1, 1);
@@ -175,11 +185,11 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
     {
         ExitWithMessage("Unable to allocate memory for manifest file buffer", 103);
     }
-    size_t items = fread(ManifestFileBuffer, 1, ManifestSize, ManifestFILE);
+    items = fread(ManifestFileBuffer, 1, ManifestSize, ManifestFILE);
     if (items == 0) exit(-1);
 
     // replace returns with zeros
-    char *buf = ManifestFileBuffer;
+    buf = ManifestFileBuffer;
     for ( ; ManifestSize != 0; ManifestSize-- )
     {
         if (*buf == '\n') *buf = 0;
@@ -198,7 +208,7 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
         ExitWithMessage(ErrorString, 101);
     }
     fseek(IndexFILE, 0, SEEK_END);
-    long IndexSize = ftell(IndexFILE);
+    IndexSize = ftell(IndexFILE);
     fseek(IndexFILE, 0, SEEK_SET);
 
     IndexFileBuffer = (IndexInfo *) calloc(IndexSize, 1);
@@ -213,16 +223,18 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
     NumberOfRecords = 256;
     RecordBuffer = AllocateRecordBuffer(256);
 
-    const char *FileName = &(ManifestFileBuffer[strlen(ManifestFileBuffer) + 1]);
+    FileName = &(ManifestFileBuffer[strlen(ManifestFileBuffer) + 1]);
     FileName = &(FileName[strlen(FileName) + 1]);
     NumberOfDatabaseFiles = 0;
     for ( ; *FileName != 0; NumberOfDatabaseFiles++, FileName = &(FileName[strlen(FileName) + 1]) )
     {
+        int DataFileRes;
+
         DatabaseFiles[NumberOfDatabaseFiles].Name = FileName;
         DatabaseFiles[NumberOfDatabaseFiles].Flags = 0;
 
         // get data file path
-        int DataFileRes = GetDataFilePath(FileName, FilePath);
+        DataFileRes = GetDataFilePath(FileName, FilePath);
         if ( DataFileRes == -1 )
         {
             DatabaseFiles[NumberOfDatabaseFiles].Flags |= 1;
@@ -239,9 +251,10 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
         DatabaseFiles[NumberOfDatabaseFiles].File = (FILE *)fopen_c(FilePath, "rb");
         for ( ; DatabaseFiles[NumberOfDatabaseFiles].File == NULL; )
         {
+            int fopenerrno;
             if (DatabaseFiles[NumberOfDatabaseFiles].Flags & 1) break;
 
-            int fopenerrno = errno;
+            fopenerrno = errno;
             if ((fopenerrno != ENOENT) && (fopenerrno != EACCES))
             {
                 volatile size_t ErrorSize = sizeof(ErrorString); // avoid compiler warning
@@ -322,6 +335,9 @@ void CloseGameDataFiles(void)
 // sub_445900
 int32_t RecordOpen(uint32_t RecordKey)
 {
+    int32_t IndexNumber;
+    uint32_t result, RecordHandle;
+
 #ifdef DEBUG_DATABASE
     eprintf("RecordOpen - 0x%x - ", RecordKey);
 #endif
@@ -332,8 +348,6 @@ int32_t RecordOpen(uint32_t RecordKey)
 #else
     pthread_mutex_lock(&Mutex);
 #endif
-
-    int32_t IndexNumber;
 
     // binary search for RecordKey in IndexFileBuffer
     if (RecordKey == IndexFileBuffer[0].RecordKey)
@@ -350,9 +364,11 @@ int32_t RecordOpen(uint32_t RecordKey)
     }
     else
     {
+        unsigned int SearchSize;
+
         IndexNumber = NumberOfIndices - 1;
 
-        unsigned int SearchSize = NumberOfIndices;
+        SearchSize = NumberOfIndices;
 
         while (RecordKey != IndexFileBuffer[IndexNumber].RecordKey)
         {
@@ -393,8 +409,7 @@ int32_t RecordOpen(uint32_t RecordKey)
         return -1;
     }
 
-    uint32_t result = 0;
-    uint32_t RecordHandle;
+    result = 0;
     for (RecordHandle = 1; RecordHandle < NumberOfRecords; RecordHandle++)
     {
         if (RecordBuffer[RecordHandle].IndexNumber == -1)
@@ -440,6 +455,8 @@ int32_t RecordOpen(uint32_t RecordKey)
 // sub_445ae0
 int32_t RecordTryOpen(uint32_t RecordKey)
 {
+    int32_t RecordHandle;
+
 #ifdef DEBUG_DATABASE
     eprintf("RecordTryOpen - 0x%x - ", RecordKey);
 #endif
@@ -451,7 +468,7 @@ int32_t RecordTryOpen(uint32_t RecordKey)
 #endif
 
     IsRecordTryOpen = 1;
-    int32_t RecordHandle = RecordOpen(RecordKey);
+    RecordHandle = RecordOpen(RecordKey);
     IsRecordTryOpen = 0;
 
     // finally
@@ -470,12 +487,14 @@ int32_t RecordTryOpen(uint32_t RecordKey)
 // sub_445b60
 const char *RecordGetDataFilePathAndOffset(uint32_t RecordKey, uint32_t *Offset)
 {
+    int32_t RecordHandle;
+
 #ifdef DEBUG_DATABASE
     eprintf("RecordGetDataFilePathAndOffset - 0x%x - 0x%" PRIxPTR " - ", RecordKey, (uintptr_t)Offset);
 #endif
 
     *Offset = 0;
-    int32_t RecordHandle = RecordTryOpen(RecordKey);
+    RecordHandle = RecordTryOpen(RecordKey);
     if ( RecordHandle == -1 )
     {
 #ifdef DEBUG_DATABASE
@@ -485,8 +504,10 @@ const char *RecordGetDataFilePathAndOffset(uint32_t RecordKey, uint32_t *Offset)
     }
     else
     {
+        uint32_t DatabaseNumber;
+
         IndexInfo *Index = &(IndexFileBuffer[RecordBuffer[RecordHandle].IndexNumber]);
-        uint32_t DatabaseNumber = Index->DatabaseNumber;
+        DatabaseNumber = Index->DatabaseNumber;
         *Offset = Index->FileOffset;
 #ifdef DEBUG_DATABASE
         eprintf("(offset = %i) - ", Index->FileOffset);
@@ -549,13 +570,17 @@ void RecordSeek(int32_t RecordHandle, int32_t Offset, int32_t Whence)
 // sub_445c80
 uint32_t RecordRead(int32_t RecordHandle, uint8_t *ReadBuffer, uint32_t NumberOfBytes)
 {
+    uint32_t result, DatabaseNumber, FileOffset;
+    IndexInfo *Index;
+    FILE *DataFILE;
+
 #ifdef DEBUG_DATABASE
     eprintf("RecordRead - %i - 0x%" PRIxPTR " - %i - ", RecordHandle, (uintptr_t)ReadBuffer, NumberOfBytes);
 #endif
 
     // try
     RecordInfo *Record = &(RecordBuffer[RecordHandle]);
-    uint32_t result = 0;
+    result = 0;
 
 #ifdef _WIN32
     EnterCriticalSection(&CriticalSection);
@@ -569,11 +594,11 @@ uint32_t RecordRead(int32_t RecordHandle, uint8_t *ReadBuffer, uint32_t NumberOf
         ExitWithMessage(ErrorString, 101);
     }
 
-    IndexInfo *Index = &(IndexFileBuffer[Record->IndexNumber]);
-    uint32_t DatabaseNumber = Index->DatabaseNumber;
-    FILE *DataFILE = DatabaseFiles[DatabaseNumber].File;
+    Index = &(IndexFileBuffer[Record->IndexNumber]);
+    DatabaseNumber = Index->DatabaseNumber;
+    DataFILE = DatabaseFiles[DatabaseNumber].File;
 
-    uint32_t FileOffset = Record->Offset;
+    FileOffset = Record->Offset;
     switch (Record->NewWhence)
     {
         case 0:
@@ -691,13 +716,16 @@ void RecordClose(int32_t RecordHandle)
 // sub_445f30
 uint32_t RecordGetSize(int32_t RecordHandle)
 {
+    uint32_t result;
+    IndexInfo *Index;
+
 #ifdef DEBUG_DATABASE
     eprintf("RecordGetSize - %i ", RecordHandle);
 #endif
 
     // try
     RecordInfo *Record = &(RecordBuffer[RecordHandle]);
-    uint32_t result = 0;
+    result = 0;
 
 #ifdef _WIN32
     EnterCriticalSection(&CriticalSection);
@@ -711,7 +739,7 @@ uint32_t RecordGetSize(int32_t RecordHandle)
         ExitWithMessage(ErrorString, 101);
     }
 
-    IndexInfo *Index = &(IndexFileBuffer[Record->IndexNumber]);
+    Index = &(IndexFileBuffer[Record->IndexNumber]);
 #ifdef DEBUG_DATABASE
     eprintf("(Compression: %i) - ", Index->CompressionType);
 #endif
@@ -847,11 +875,13 @@ uint32_t GetFirstLevelRecordKey(void)
 //sub_4461f0
 uint32_t GetNextLevelRecordKey(void)
 {
+    uint32_t RecordKey;
+
 #ifdef DEBUG_DATABASE
     eprintf("GetNextLevelRecordKey - ");
 #endif
 
-    uint32_t RecordKey = CurrentIndex->RecordKey;
+    RecordKey = CurrentIndex->RecordKey;
 
     if (RecordKey & 0x1000000)
     {
@@ -873,13 +903,15 @@ uint32_t GetNextLevelRecordKey(void)
 // sub_446210
 static RecordInfo *AllocateRecordBuffer(unsigned int NumRecords)
 {
-    RecordInfo *res = (RecordInfo *) malloc(NumRecords * sizeof(RecordInfo));
+    RecordInfo *res, *item;
+
+    res = (RecordInfo *) malloc(NumRecords * sizeof(RecordInfo));
     if (res == NULL)
     {
         ExitWithMessage("Unable to (re)allocate memory for record buffer", 103);
     }
 
-    RecordInfo *item = res;
+    item = res;
     for ( ; NumRecords != 0; NumRecords--)
     {
         item->IndexNumber = -1;
@@ -892,12 +924,14 @@ static RecordInfo *AllocateRecordBuffer(unsigned int NumRecords)
 // sub_446260
 static uint32_t LZO1X_DecompressRecord(uint8_t *TmpBuffer, uint32_t TmpBufferSize, uint32_t RecordSize, uint8_t *DstBuffer, FILE *DataFILE)
 {
+    uint32_t result, ReadBytes;
+
     DecompressionBufSize = TmpBufferSize;
     DecompressionRemaining = RecordSize;
-    uint32_t result = 0;
+    result = 0;
     DecompressionBufPtr = TmpBuffer;
     DecompressionFILE = DataFILE;
-    uint32_t ReadBytes = LZO1X_DecompressRead();
+    ReadBytes = LZO1X_DecompressRead();
     LZO1X_DoDecompress(TmpBuffer, ReadBytes, DstBuffer, &result, &LZO1X_DecompressRead);
 
     return result;
@@ -1113,10 +1147,8 @@ static int32_t LZO1X_DoDecompress(uint8_t *TmpBuffer, uint32_t TmpBufRemaining, 
 {
     unsigned int SrcVal2 = 0;
     unsigned int SrcVal1 = 0;
-    unsigned int NumCopy;
-    uint8_t *Src2;
-    uint8_t *Src3;
-    unsigned int Value;
+    unsigned int NumCopy, Value;
+    uint8_t *Src2, *Src3, *DstPtr, *TmpBufEnd, *Src1;
 
 #define READ_MORE_DATA { \
     Src1++; \
@@ -1131,9 +1163,9 @@ static int32_t LZO1X_DoDecompress(uint8_t *TmpBuffer, uint32_t TmpBufRemaining, 
 
     *DecompressedSize = 0;
 
-    uint8_t *DstPtr = DstBuffer;
-    uint8_t *TmpBufEnd = TmpBufRemaining + TmpBuffer;
-    uint8_t *Src1 = TmpBuffer;
+    DstPtr = DstBuffer;
+    TmpBufEnd = TmpBufRemaining + TmpBuffer;
+    Src1 = TmpBuffer;
 
     if (*Src1 > 0x11)
     {

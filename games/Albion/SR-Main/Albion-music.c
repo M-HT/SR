@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,7 +22,9 @@
  *
  */
 
+#if defined(__DEBUG__)
 #include <inttypes.h>
+#endif
 #include <malloc.h>
 #include <string.h>
 #include "Game_defs.h"
@@ -124,7 +126,7 @@ static void release_all(AIL_sequence *S)
 
 }
 
-static inline void LockSem(SDL_sem *sem)
+static INLINE void LockSem(SDL_sem *sem)
 {
     while (SDL_SemWait(sem));
 }

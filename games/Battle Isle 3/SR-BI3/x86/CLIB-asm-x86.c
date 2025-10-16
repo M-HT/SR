@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,12 +22,15 @@
  *
  */
 
+#ifdef DEBUG_CLIB
 #include <inttypes.h>
+#endif
 #include "CLIB-asm-x86.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <malloc.h>
 
 
 #define eprintf(...) fprintf(stderr,__VA_ARGS__)
@@ -40,7 +43,7 @@ void *_alloca_probe_c(uint32_t size)
 #endif
 
     void * volatile addr;
-    int index;
+    unsigned int index;
 
     addr = alloca(size);
 
@@ -91,6 +94,10 @@ int32_t sprintf2_c(char *str, const char *format, va_list ap)
 
 int64_t _ftol_c(double *num)
 {
+#if defined(_MSC_VER) && _MSC_VER < 1800
+    return (int64_t) *num;
+#else
     return (int64_t) trunc(*num);
+#endif
 }
 

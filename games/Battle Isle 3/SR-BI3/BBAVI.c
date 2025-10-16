@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2023 Roman Pauer
+ *  Copyright (C) 2020-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -1523,7 +1523,7 @@ int AVI_PlayVideo_c(void *video, int x, int y, int param4, int param5, int volum
 
                 if (samples_available >= video2->audio_length - last_position)
                 {
-                    samples_available = video2->audio_length - last_position;
+                    samples_available = (int)(video2->audio_length - last_position);
                     audio_eof = 1;
                 }
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2003  MaxSt ( maxst@hiend3d.com )
  *
- * Copyright (C) 2021-2023  Roman Pauer
+ * Copyright (C) 2021-2025  Roman Pauer
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,7 @@
 #include <arm_neon.h>
 
 
-static void inline Interp0(uint32_t *pc, uint32_t c1)
+static void INLINE Interp0(uint32_t *pc, uint32_t c1)
 {
 //    *pc = c1;
     uint8x8_t n01;
@@ -35,7 +35,7 @@ static void inline Interp0(uint32_t *pc, uint32_t c1)
     vst1_lane_u32(pc, vreinterpret_u32_u8(n01), 0); // *pc = c1
 }
 
-static void inline Interp1(uint32_t *pc, uint32_t c1, uint32_t c2)
+static void INLINE Interp1(uint32_t *pc, uint32_t c1, uint32_t c2)
 {
 //    *pc = (c1*3+c2) >> 2;
     uint8x8_t n01, n02;
@@ -51,7 +51,7 @@ static void inline Interp1(uint32_t *pc, uint32_t c1, uint32_t c2)
     vst1_lane_u32(pc, vreinterpret_u32_u8(n07), 0); // *pc = (c1 * 3 + c2) >> 2
 }
 
-static void inline Interp2(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
+static void INLINE Interp2(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
 {
 //    *pc = (c1*2+c2+c3) >> 2;
     uint8x8_t n01, n02, n03;
@@ -68,7 +68,7 @@ static void inline Interp2(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
     vst1_lane_u32(pc, vreinterpret_u32_u8(n08), 0); // *pc = (c1 * 2 + c2 + c3) >> 2
 }
 
-static void inline Interp3(uint32_t *pc, uint32_t c1, uint32_t c2)
+static void INLINE Interp3(uint32_t *pc, uint32_t c1, uint32_t c2)
 {
 //    *pc = (c1*7+c2)/8;
     uint8x8_t n01, n02;
@@ -84,7 +84,7 @@ static void inline Interp3(uint32_t *pc, uint32_t c1, uint32_t c2)
     vst1_lane_u32(pc, vreinterpret_u32_u8(n07), 0); // *pc = (c1 * 7 + c2) >> 3
 }
 
-static void inline Interp4(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
+static void INLINE Interp4(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
 {
 //    *pc = (c1*2+(c2+c3)*7)/16;
     uint8x8_t n01, n02, n03;
@@ -103,7 +103,7 @@ static void inline Interp4(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
     vst1_lane_u32(pc, vreinterpret_u32_u8(n10), 0); // *pc = (c1 * 2 + (c2 + c3) * 7) >> 4
 }
 
-static void inline Interp5(uint32_t *pc, uint32_t c1, uint32_t c2)
+static void INLINE Interp5(uint32_t *pc, uint32_t c1, uint32_t c2)
 {
 //    *pc = (c1+c2) >> 1;
     uint8x8_t n01, n02, n03;
@@ -113,7 +113,7 @@ static void inline Interp5(uint32_t *pc, uint32_t c1, uint32_t c2)
     vst1_lane_u32(pc, vreinterpret_u32_u8(n03), 0); // *pc = (c1 + c2) >> 1
 }
 
-static void inline Interp6(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
+static void INLINE Interp6(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
 {
 //    *pc = (c1*5+c2*2+c3)/8;
     uint8x8_t n01, n02, n03;
@@ -132,7 +132,7 @@ static void inline Interp6(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
     vst1_lane_u32(pc, vreinterpret_u32_u8(n10), 0); // *pc = (c1 * 5 + c2 * 2 + c3) >> 3
 }
 
-static void inline Interp7(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
+static void INLINE Interp7(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
 {
 //    *pc = (c1*6+c2+c3)/8;
     uint8x8_t n01, n02, n03;
@@ -151,7 +151,7 @@ static void inline Interp7(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
     vst1_lane_u32(pc, vreinterpret_u32_u8(n10), 0); // *pc = (c1 * 6 + c2 + c3) >> 3
 }
 
-static void inline Interp8(uint32_t *pc, uint32_t c1, uint32_t c2)
+static void INLINE Interp8(uint32_t *pc, uint32_t c1, uint32_t c2)
 {
 //    *pc = (c1*5+c2*3)/8;
     uint8x8_t n01, n02;
@@ -169,7 +169,7 @@ static void inline Interp8(uint32_t *pc, uint32_t c1, uint32_t c2)
     vst1_lane_u32(pc, vreinterpret_u32_u8(n09), 0); // *pc = (c1 * 5 + c2 * 3) >> 3
 }
 
-static void inline Interp9(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
+static void INLINE Interp9(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
 {
 //    *pc = (c1*2+(c2+c3)*3)/8;
     uint8x8_t n01, n02, n03;
@@ -188,7 +188,7 @@ static void inline Interp9(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
     vst1_lane_u32(pc, vreinterpret_u32_u8(n10), 0); // *pc = (c1 * 2 + (c2 + c3) * 3) >> 3
 }
 
-static void inline Interp10(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
+static void INLINE Interp10(uint32_t *pc, uint32_t c1, uint32_t c2, uint32_t c3)
 {
 //    *pc = (c1*14+c2+c3)/16;
     uint8x8_t n01, n02, n03;

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2003  MaxSt ( maxst@hiend3d.com )
  *
- * Copyright (C) 2021-2023  Roman Pauer
+ * Copyright (C) 2021-2025  Roman Pauer
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,8 +21,10 @@
 #include <stdint.h>
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 #include <malloc.h>
-#else
+#elif defined(__linux__)
 #include <alloca.h>
+#else
+#include <stdlib.h>
 #endif
 #include "hqx.h"
 #include "hqx-common.h"

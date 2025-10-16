@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023  Roman Pauer
+ * Copyright (C) 2021-2025  Roman Pauer
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -85,6 +85,15 @@
 #define ALIGNMENT 8
 #endif
 #define ALIGNPTR(ptr) ((void *) ( (((uintptr_t) (ptr)) + (ALIGNMENT - 1)) & ~((uintptr_t)(ALIGNMENT - 1)) ))
+
+
+#if defined(__GNUC__)
+    #define INLINE __inline__
+#elif defined(_MSC_VER)
+    #define INLINE __inline
+#else
+    #define INLINE inline
+#endif
 
 
 #endif

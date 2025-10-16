@@ -30,14 +30,14 @@
 /* Interpolate functions */
 #if defined(ARMV8)
 #define GROW(n64, n32) n64 = (n32 | ((uint64_t)n32) << 32) & UINT64_C(0x0000FF0000FF00FF)
-static uint32_t inline pack(uint64_t n)
+static uint32_t INLINE pack(uint64_t n)
 {
     n &= UINT64_C(0x0000FF0000FF00FF);
     return n | (n >> 32);
 }
 #endif
 
-static uint32_t inline Interp1(uint32_t c1, uint32_t c2)
+static uint32_t INLINE Interp1(uint32_t c1, uint32_t c2)
 {
 //    *pc = (c1*3+c2) >> 2;
 #if defined(X86SSE2) || defined(X64SSE2)
@@ -63,7 +63,7 @@ static uint32_t inline Interp1(uint32_t c1, uint32_t c2)
 #endif
 }
 
-static uint32_t inline Interp2(uint32_t c1, uint32_t c2, uint32_t c3)
+static uint32_t INLINE Interp2(uint32_t c1, uint32_t c2, uint32_t c3)
 {
 //    *pc = (c1*2+c2+c3) >> 2;
 #if defined(X86SSE2) || defined(X64SSE2)
@@ -91,7 +91,7 @@ static uint32_t inline Interp2(uint32_t c1, uint32_t c2, uint32_t c3)
 #endif
 }
 
-static uint32_t inline Interp3(uint32_t c1, uint32_t c2)
+static uint32_t INLINE Interp3(uint32_t c1, uint32_t c2)
 {
 //    *pc = (c1*7+c2)/8;
 #if defined(X86SSE2) || defined(X64SSE2)
@@ -117,7 +117,7 @@ static uint32_t inline Interp3(uint32_t c1, uint32_t c2)
 #endif
 }
 
-static uint32_t inline Interp4(uint32_t c1, uint32_t c2, uint32_t c3)
+static uint32_t INLINE Interp4(uint32_t c1, uint32_t c2, uint32_t c3)
 {
 //    *pc = (c1*2+(c2+c3)*7)/16;
 #if defined(X86SSE2) || defined(X64SSE2)
@@ -147,7 +147,7 @@ static uint32_t inline Interp4(uint32_t c1, uint32_t c2, uint32_t c3)
 #endif
 }
 
-static uint32_t inline Interp5(uint32_t c1, uint32_t c2)
+static uint32_t INLINE Interp5(uint32_t c1, uint32_t c2)
 {
 //    *pc = (c1+c2) >> 1;
 #if defined(X86SSE2) || defined(X64SSE2)
@@ -171,7 +171,7 @@ static uint32_t inline Interp5(uint32_t c1, uint32_t c2)
 #endif
 }
 
-static uint32_t inline Interp6(uint32_t c1, uint32_t c2, uint32_t c3)
+static uint32_t INLINE Interp6(uint32_t c1, uint32_t c2, uint32_t c3)
 {
 //    *pc = (c1*5+c2*2+c3)/8;
 #if defined(X86SSE2) || defined(X64SSE2)
@@ -201,7 +201,7 @@ static uint32_t inline Interp6(uint32_t c1, uint32_t c2, uint32_t c3)
 #endif
 }
 
-static uint32_t inline Interp7(uint32_t c1, uint32_t c2, uint32_t c3)
+static uint32_t INLINE Interp7(uint32_t c1, uint32_t c2, uint32_t c3)
 {
 //    *pc = (c1*6+c2+c3)/8;
 #if defined(X86SSE2) || defined(X64SSE2)
@@ -231,7 +231,7 @@ static uint32_t inline Interp7(uint32_t c1, uint32_t c2, uint32_t c3)
 #endif
 }
 
-static uint32_t inline Interp8(uint32_t c1, uint32_t c2)
+static uint32_t INLINE Interp8(uint32_t c1, uint32_t c2)
 {
 //    *pc = (c1*5+c2*3)/8;
 #if defined(X86SSE2) || defined(X64SSE2)
@@ -260,7 +260,7 @@ static uint32_t inline Interp8(uint32_t c1, uint32_t c2)
 #endif
 }
 
-static uint32_t inline Interp9(uint32_t c1, uint32_t c2, uint32_t c3)
+static uint32_t INLINE Interp9(uint32_t c1, uint32_t c2, uint32_t c3)
 {
 //    *pc = (c1*2+(c2+c3)*3)/8;
 #if defined(X86SSE2) || defined(X64SSE2)
@@ -290,7 +290,7 @@ static uint32_t inline Interp9(uint32_t c1, uint32_t c2, uint32_t c3)
 #endif
 }
 
-static uint32_t inline Interp10(uint32_t c1, uint32_t c2, uint32_t c3)
+static uint32_t INLINE Interp10(uint32_t c1, uint32_t c2, uint32_t c3)
 {
 //    *pc = (c1*14+c2+c3)/16;
 #if defined(X86SSE2) || defined(X64SSE2)

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2003  MaxSt ( maxst@hiend3d.com )
  *
- * Copyright (C) 2021-2023  Roman Pauer
+ * Copyright (C) 2021-2025  Roman Pauer
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -38,7 +38,7 @@
 #define trV   0x00000006
 
 #if !defined(ARMV8) && !defined(ARMV7)
-static inline uint32_t yuv_diff(uint32_t yuv1, uint32_t yuv2)
+static INLINE uint32_t yuv_diff(uint32_t yuv1, uint32_t yuv2)
 {
 #if defined(X86SSE2) || defined(X64SSE2)
     // using mmx registers might be faster than using sse registers, but mmx instructions are deprecated and shouldn't be used in new code

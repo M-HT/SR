@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021-2023 Roman Pauer
+ *  Copyright (C) 2021-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,6 +26,14 @@
 #include <string.h>
 #include "scaler-plugins.h"
 #include "hqx/hqx.h"
+
+#ifdef _MSC_VER
+    #define EXPORT __declspec(dllexport)
+#elif defined __GNUC__
+    #define EXPORT __attribute__ ((visibility ("default")))
+#else
+    #define EXPORT
+#endif
 
 static void scale(int factor, const void *src, void *dst, int src_width, int src_height, int y_first, int y_last)
 {
@@ -61,7 +69,7 @@ static void shutdown_plugin(void)
 {
 }
 
-__attribute__ ((visibility ("default")))
+EXPORT
 int initialize_scaler_plugin(scaler_plugin_functions *functions)
 {
     if (functions == NULL) return -2;

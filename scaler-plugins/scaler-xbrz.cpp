@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021-2023 Roman Pauer
+ *  Copyright (C) 2021-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,9 +25,17 @@
 #include "scaler-plugins.h"
 #include "xbrz/xbrz.h"
 
+#ifdef _MSC_VER
+    #define EXPORT __declspec(dllexport)
+#elif defined __GNUC__
+    #define EXPORT __attribute__ ((visibility ("default")))
+#else
+    #define EXPORT
+#endif
+
 static void scale(int factor, const void *src, void *dst, int src_width, int src_height, int y_first, int y_last)
 {
-    xbrz::scale(factor, (const uint32_t *)src, (uint32_t *)dst, src_width, src_height, xbrz::ColorFormat::RGB, xbrz::ScalerCfg(), y_first, y_last);
+    xbrz::scale((size_t)factor, (const uint32_t *)src, (uint32_t *)dst, src_width, src_height, xbrz::ColorFormat::RGB, xbrz::ScalerCfg(), y_first, y_last);
 }
 
 static int get_maximum_scale_factor(void)
@@ -40,7 +48,7 @@ static void shutdown_plugin(void)
 }
 
 extern "C"
-__attribute__ ((visibility ("default")))
+EXPORT
 int initialize_scaler_plugin(scaler_plugin_functions *functions)
 {
     uint32_t src[8*8], dst[8*2*8*2];

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -167,7 +167,7 @@ static int readmidi(const uint8_t *midi, unsigned int midilen, unsigned int *num
     {
         unsigned int track_len;
 
-        if ((cur_position - midi) + 8 > midilen)
+        if ((uintptr_t)(cur_position - midi) + 8 > midilen)
         {
             // not enough place for track header
             retval = 8;

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -36,15 +36,25 @@
 #include "midi-plugins.h"
 #include "emu_x86.h"
 
+#ifdef _MSC_VER
+    #define EXPORT __declspec(dllexport)
+#elif defined __GNUC__
+    #define EXPORT __attribute__ ((visibility ("default")))
+#else
+    #define EXPORT
+#endif
+
 
 static char const *check_file(char const *filename)
 {
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+    DWORD dwAttrib;
+#endif
+
     if (filename == NULL) return NULL;
     if (*filename == 0) return NULL;
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
-    DWORD dwAttrib;
-
     dwAttrib = GetFileAttributesA(filename);
     if ((dwAttrib == INVALID_FILE_ATTRIBUTES) || (dwAttrib & FILE_ATTRIBUTE_DIRECTORY))
 #else
@@ -74,11 +84,11 @@ static int set_master_volume(unsigned char master_volume) // master_volume = 0 -
 
 static void *open_file(char const *midifile)
 {
-    if (midifile == NULL) return NULL;
-
     FILE *f;
     size_t filelen;
     void *midibuffer;
+
+    if (midifile == NULL) return NULL;
 
     f = fopen(midifile, "rb");
     if (f == NULL) return NULL;
@@ -94,7 +104,7 @@ static void *open_file(char const *midifile)
     if (fread(midibuffer, 1, filelen, f) != filelen) goto open_file_error2;
     fclose(f);
 
-    if (!emu_x86_playsequence(midibuffer, filelen))
+    if (!emu_x86_playsequence(midibuffer, (int)filelen))
     {
         free(midibuffer);
         return NULL;
@@ -115,7 +125,7 @@ static void *open_buffer(void const *midibuffer, long int size)
     if (midibuffer == NULL) return NULL;
     if (size <= 0) return NULL;
 
-    if (!emu_x86_playsequence(midibuffer, size))
+    if (!emu_x86_playsequence(midibuffer, (int)size))
     {
         return NULL;
     }
@@ -130,7 +140,7 @@ static long int get_data(void *handle, void *buffer, long int size)
     if (size < 0) return -4;
     if (size < 4) return 0;
 
-    return emu_x86_getdata(buffer, size);
+    return emu_x86_getdata(buffer, (int)size);
 }
 
 static int rewind_midi(void *handle)
@@ -163,7 +173,7 @@ static void shutdown_plugin(void)
 }
 
 
-__attribute__ ((visibility ("default")))
+EXPORT
 int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const *parameters, midi_plugin_functions *functions)
 {
     char const *drivers_cat;

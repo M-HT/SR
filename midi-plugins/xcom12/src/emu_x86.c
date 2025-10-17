@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -27,9 +27,13 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <memory.h>
-#include <strings.h>
+#include <string.h>
 #ifdef USE_SPEEXDSP_RESAMPLER
 #include <speex/speex_resampler.h>
+#endif
+
+#if defined(_MSC_VER)
+#define strcasecmp _stricmp
 #endif
 
 #define ADLIB 1
@@ -1542,7 +1546,7 @@ static void emulator(void)
                 break;
             case 0x8d: // LEA reg16,mem                 ; o16 8D /r
                 tempptr16 = x86_decode_modrm16();
-                X86_REG_16(x86.modrm_reg) = (uintptr_t)tempptr16 - (uintptr_t)memory;
+                X86_REG_16(x86.modrm_reg) = (uint16_t)((uintptr_t)tempptr16 - (uintptr_t)memory);
                 break;
             case 0x8e: // MOV segreg,r/m16              ; o16 8E /r
                 tempval16 = *x86_decode_modrm16();
@@ -2398,7 +2402,7 @@ int emu_x86_getdata(void *buffer, int size)
 
             if (in_len)
             {
-                for (index = 0; in_len + index < resample_num_samples; index++)
+                for (index = 0; in_len + index < (unsigned int)resample_num_samples; index++)
                 {
                     resample_samples[2 * index] = resample_samples[2 * (in_len + index)];
                     resample_samples[2 * index + 1] = resample_samples[2 * (in_len + index) + 1];
@@ -2458,7 +2462,7 @@ int emu_x86_getdata(void *buffer, int size)
             if (samples_toread > RESAMPLER_BUFFER_LEN) samples_toread = RESAMPLER_BUFFER_LEN;
 
             samples_toread -= resample_num_samples;
-            if (samples_toread > num_samples_left) samples_toread = num_samples_left;
+            if ((unsigned int)samples_toread > num_samples_left) samples_toread = num_samples_left;
 
 #if (DRIVER==ROLAND)
             emu_mt32_getsamples(&(resample_samples[2 * resample_num_samples]), samples_toread);
@@ -2481,7 +2485,7 @@ int emu_x86_getdata(void *buffer, int size)
 
             if (in_len)
             {
-                for (index = 0; in_len + index < resample_num_samples; index++)
+                for (index = 0; in_len + index < (unsigned int)resample_num_samples; index++)
                 {
                     resample_samples[2 * index] = resample_samples[2 * (in_len + index)];
                     resample_samples[2 * index + 1] = resample_samples[2 * (in_len + index) + 1];
@@ -2507,7 +2511,7 @@ int emu_x86_getdata(void *buffer, int size)
                 num_samples_left = SYNTH_BUFFER_LEN;
             }
 
-            samples_toread = (numsamples <= num_samples_left)?numsamples:num_samples_left;
+            samples_toread = ((unsigned int)numsamples <= num_samples_left)?numsamples:num_samples_left;
 
 #if (DRIVER==ROLAND)
             emu_mt32_getsamples(buf, samples_toread);

@@ -37,7 +37,10 @@
 extern "C" {
 #endif
 
-#include <inttypes.h>
+#include <stdint.h>
+#if defined(_MSC_VER)
+#define inline __inline
+#endif
 
 #ifndef OPL_ENABLE_STEREOEXT
 #define OPL_ENABLE_STEREOEXT 0

@@ -116,6 +116,9 @@
 
 #if defined(X86SSE2) || defined(X64SSE2)
 #include <emmintrin.h>
+#if defined(_MSC_VER)
+#include <immintrin.h>
+#endif
 #endif
 #if defined(ARMV7) || defined(ARMV8)
 #include <arm_neon.h>

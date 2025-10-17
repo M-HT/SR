@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -29,12 +29,23 @@
     #include <windows.h>
     #include <cfgmgr32.h>
     #include <mmddk.h>
+    #include <limits.h>
+    #include <stddef.h>
 #endif
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 #include "midi-plugins2.h"
+
+#ifdef _MSC_VER
+    #define EXPORT __declspec(dllexport)
+    #define strdup _strdup
+#elif defined __GNUC__
+    #define EXPORT __attribute__ ((visibility ("default")))
+#else
+    #define EXPORT
+#endif
 
 static int midi_type;
 
@@ -112,7 +123,7 @@ static int send_initial_sysex_events(unsigned char const *sysex_events);
 
 static void calculate_next_sysex_tick(preprocess_state *state)
 {
-	state->last_tick = ( ((state->next_sysex_time * (uint64_t)1000000 - state->tempo_time) * state->time_division + (state->tempo * (uint64_t) 1000 - 1)) / (state->tempo * (uint64_t) 1000) ) + state->tempo_tick;
+	state->last_tick = (unsigned int)( ((state->next_sysex_time * (uint64_t)1000000 - state->tempo_time) * state->time_division + (state->tempo * (uint64_t) 1000 - 1)) / (state->tempo * (uint64_t) 1000) ) + state->tempo_tick;
 }
 
 static void calculate_event_time(preprocess_state *state)
@@ -130,7 +141,7 @@ static void calculate_event_time(preprocess_state *state)
 	//state->last_time = ( (((state->last_tick - state->tempo_tick) * (uint64_t) 1000) * state->tempo) / state->time_division ) + state->tempo_time;
 
 	// calculate event time in milliseconds
-	state->event_time = state->last_time / 1000000;
+	state->event_time = (uint32_t)(state->last_time / 1000000);
 }
 
 static int add_midi_event(preprocess_state *state, uint8_t status, uint8_t byte1, uint8_t byte2, const uint8_t *data_ptr, unsigned int data_len)
@@ -1054,7 +1065,7 @@ static void get_device_interface_name(UINT uDeviceID)
 		return;
 	}
 
-	if (MMSYSERR_NOERROR != midiOutMessage((HMIDIOUT)uDeviceID, DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&uSize, 0))
+	if (MMSYSERR_NOERROR != midiOutMessage((HMIDIOUT)(UINT_PTR)uDeviceID, DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&uSize, 0))
 	{
 		return;
 	}
@@ -1070,7 +1081,7 @@ static void get_device_interface_name(UINT uDeviceID)
 		return;
 	}
 
-	if (MMSYSERR_NOERROR != midiOutMessage((HMIDIOUT)uDeviceID, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)lpDeviceInterfaceName, uSize))
+	if (MMSYSERR_NOERROR != midiOutMessage((HMIDIOUT)(UINT_PTR)uDeviceID, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)lpDeviceInterfaceName, uSize))
 	{
 		free(lpDeviceInterfaceName);
 		lpDeviceInterfaceName = NULL;
@@ -1588,7 +1599,7 @@ static void shutdown_plugin(void)
 }
 
 
-__attribute__ ((visibility ("default")))
+EXPORT
 int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plugin2_functions *functions)
 {
     if (functions == NULL) return -3;

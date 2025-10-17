@@ -75,10 +75,6 @@ static Bit32s vibval_var2[BLOCKBUF_SIZE];
 //static Bit32s vibval_var3[BLOCKBUF_SIZE];
 //static Bit32s vibval_var4[BLOCKBUF_SIZE];
 
-// vibrato/trmolo value table pointers
-static Bit32s *vibval1, *vibval2, *vibval3, *vibval4;
-static Bit32s *tremval1, *tremval2, *tremval3, *tremval4;
-
 
 // key scale level lookup table
 static const fltype kslmul[4] = {
@@ -568,9 +564,9 @@ void adlib_init(Bit32u samplerate) {
 
 	// create tremolo table
 	Bit32s trem_table_int[TREMTAB_SIZE];
-	for (i=0; i<14; i++)	trem_table_int[i] = i-13;		// upwards (13 to 26 -> -0.5/6 to 0)
-	for (i=14; i<41; i++)	trem_table_int[i] = -i+14;		// downwards (26 to 0 -> 0 to -1/6)
-	for (i=41; i<53; i++)	trem_table_int[i] = i-40-26;	// upwards (1 to 12 -> -1/6 to -0.5/6)
+	for (i=0; i<14; i++)	trem_table_int[i] = (Bit32s)(i-13);		// upwards (13 to 26 -> -0.5/6 to 0)
+	for (i=14; i<41; i++)	trem_table_int[i] = (Bit32s)(-i+14);		// downwards (26 to 0 -> 0 to -1/6)
+	for (i=41; i<53; i++)	trem_table_int[i] = (Bit32s)(i-40-26);	// upwards (1 to 12 -> -1/6 to -0.5/6)
 
 	for (i=0; i<TREMTAB_SIZE; i++) {
 		// 0.0 .. -26/26*4.8/6 == [0.0 .. -0.8], 4/53 steps == [1 .. 0.57]
@@ -995,6 +991,10 @@ void adlib_getsample(Bit16s* sndptr, Bits numsamples) {
 	// vibrato/tremolo lookup tables (global, to possibly be used by all operators)
 	Bit32s vib_lut[BLOCKBUF_SIZE];
 	Bit32s trem_lut[BLOCKBUF_SIZE];
+
+	// vibrato/trmolo value table pointers
+	Bit32s *vibval1, *vibval2, *vibval3, *vibval4;
+	Bit32s *tremval1, *tremval2, *tremval3, *tremval4;
 
 	Bits samples_to_process = numsamples;
 

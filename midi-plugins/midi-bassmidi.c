@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -35,9 +35,19 @@
 
 #include <string.h>
 #include <malloc.h>
+#include <stdint.h>
 #include "midi-plugins.h"
 #include "bass.h"
 #include "bassmidi.h"
+
+#ifdef _MSC_VER
+    #define EXPORT __declspec(dllexport)
+    #define strdup _strdup
+#elif defined __GNUC__
+    #define EXPORT __attribute__ ((visibility ("default")))
+#else
+    #define EXPORT
+#endif
 
 static HSOUNDFONT soundfont_handle = 0;
 static int resampling_quality = 0;
@@ -45,12 +55,14 @@ static int resampling_quality = 0;
 
 static int file_exists(char const *filename)
 {
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+    DWORD dwAttrib;
+#endif
+
     if (filename == NULL) return 0;
     if (*filename == 0) return 0;
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
-    DWORD dwAttrib;
-
     dwAttrib = GetFileAttributesA(filename);
     if ((dwAttrib == INVALID_FILE_ATTRIBUTES) || (dwAttrib & FILE_ATTRIBUTE_DIRECTORY))
 #else
@@ -169,7 +181,7 @@ static void shutdown_plugin(void)
 }
 
 
-__attribute__ ((visibility ("default")))
+EXPORT
 int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const *parameters, midi_plugin_functions *functions)
 {
     char const *soundfont_sf2;

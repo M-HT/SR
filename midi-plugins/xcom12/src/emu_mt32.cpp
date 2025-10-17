@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2021 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -32,7 +32,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 #include <mt32emu/mt32emu.h>
 #include "emu_mt32.h"
 
@@ -115,7 +115,7 @@ int emu_mt32_init(unsigned int samplerate, char const *mt32_roms)
         return 2;
     }
 
-    int pathlen = strlen(mt32_roms);
+    size_t pathlen = strlen(mt32_roms);
     if ((pathlen >= 4078) || (pathlen <= 1))
     {
         return 3;

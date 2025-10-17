@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2025 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -29,6 +29,14 @@
 #ifdef USE_SPEEXDSP_RESAMPLER
 #include <speex/speex_resampler.h>
 #include <stdint.h>
+#endif
+
+#ifdef _MSC_VER
+    #define EXPORT __declspec(dllexport)
+#elif defined __GNUC__
+    #define EXPORT __attribute__ ((visibility ("default")))
+#else
+    #define EXPORT
 #endif
 
 
@@ -144,7 +152,7 @@ static long int get_data(void *handle, void *buffer, long int size)
             buffer = (void *)((out_len << 2) + (uintptr_t)buffer);
             num_to_write -= out_len;
 
-            for (index = 0; in_len + index < resample_num_samples; index++)
+            for (index = 0; in_len + index < (unsigned int)resample_num_samples; index++)
             {
                 resample_samples[2 * index] = resample_samples[2 * (in_len + index)];
                 resample_samples[2 * index + 1] = resample_samples[2 * (in_len + index) + 1];
@@ -200,7 +208,7 @@ static void shutdown_plugin(void)
 #endif
 }
 
-__attribute__ ((visibility ("default")))
+EXPORT
 int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const *parameters, midi_plugin_functions *functions)
 {
     int bank_number, emulator;

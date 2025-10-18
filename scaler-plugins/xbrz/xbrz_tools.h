@@ -196,7 +196,7 @@ void bilinearScale(const uint32_t* src, int srcWidth, int srcHeight, int srcPitc
     std::vector<CoeffsX> buf(trgWidth);
     for (int x = 0; x < trgWidth; ++x)
     {
-#if __cplusplus >= 201402L
+#if __cplusplus >= 201402L || _MSVC_LANG >= 201402L
         const int x1 = srcWidth * x / trgWidth;
         int x2 = x1 + 1;
         if (x2 == srcWidth) --x2;

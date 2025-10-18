@@ -39,7 +39,7 @@
     #define UNLIKELY_COND(x) x
 #endif
 
-#if __cplusplus >= 202002L
+#if __cplusplus >= 202002L || (_MSC_VER >= 1926 && _MSVC_LANG >= 202002L)
     #define UNLIKELY_ATTR [[unlikely]]
 #else
     #define UNLIKELY_ATTR
@@ -367,7 +367,7 @@ int USet_Test(void **PSet, Word_t Index)
 
     if (UNLIKELY_COND(USet == nullptr)) UNLIKELY_ATTR return 0;
 
-#if __cplusplus >= 202002L
+#if __cplusplus >= 202002L || _MSVC_LANG >= 202002L
     return USet->contains(Index);
 #else
     return USet->count(Index) != 0;

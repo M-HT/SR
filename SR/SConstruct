@@ -57,7 +57,7 @@ if env['CC'] == 'cl':
     if judy:
         env.Append(CCFLAGS = '/DUSE_JUDY')
     else:
-        env.Append(CCFLAGS = '/EHsc')
+        env.Append(CCFLAGS = '/EHsc /std:c++20')
     if debug:
         env.Append(CCFLAGS = '/Zi /D__DEBUG__')
 else:

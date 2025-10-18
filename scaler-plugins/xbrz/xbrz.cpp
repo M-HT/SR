@@ -88,7 +88,7 @@ namespace
 template <unsigned int M, unsigned int N> inline
 uint32_t gradientRGB(uint32_t pixFront, uint32_t pixBack) //blend front color with opacity M / N over opaque background: https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending
 {
-#if __cplusplus >= 201703L
+#if __cplusplus >= 201703L || _MSVC_LANG >= 201703L
     static_assert(0 < M && M < N && N <= 1000);
 #else
     static_assert(0 < M && M < N && N <= 1000, "");
@@ -105,7 +105,7 @@ uint32_t gradientRGB(uint32_t pixFront, uint32_t pixBack) //blend front color wi
 template <unsigned int M, unsigned int N> inline
 uint32_t gradientARGB(uint32_t pixFront, uint32_t pixBack) //find intermediate color between two colors with alpha channels (=> NO alpha blending!!!)
 {
-#if __cplusplus >= 201703L
+#if __cplusplus >= 201703L || _MSVC_LANG >= 201703L
     static_assert(0 < M && M < N && N <= 1000);
 #else
     static_assert(0 < M && M < N && N <= 1000, "");
@@ -492,7 +492,7 @@ inline void addBottomL  (unsigned char& b, BlendType bt) { b |= (bt << 6); } //
 
 inline bool blendingNeeded(unsigned char b)
 {
-#if __cplusplus >= 201703L
+#if __cplusplus >= 201703L || _MSVC_LANG >= 201703L
     static_assert(BLEND_NONE == 0);
 #else
     static_assert(BLEND_NONE == 0, "");
@@ -618,9 +618,9 @@ public:
 
     void readDhlp(Kernel_4x4& ker, int x) const //(x, y) is at kernel position F
     {
-#if __cplusplus >= 201703L
+#if __cplusplus >= 201703L || _MSVC_LANG >= 201703L
         [[likely]] if (const int x_p2 = x + 2; 0 <= x_p2 && x_p2 < srcWidth_)
-#elif __cplusplus >= 201402L
+#elif __cplusplus >= 201402L || _MSVC_LANG >= 201402L
         const int x_p2 = x + 2;
         [[likely]] if (0 <= x_p2 && x_p2 < srcWidth_)
 #else
@@ -655,7 +655,7 @@ class OobReaderDuplicate
 {
 public:
     OobReaderDuplicate(const uint32_t* src, int srcWidth, int srcHeight, int y) :
-#if __cplusplus >= 201703L
+#if __cplusplus >= 201703L || _MSVC_LANG >= 201703L
         s_m1(src + srcWidth * std::clamp(y - 1, 0, srcHeight - 1)),
         s_0 (src + srcWidth * std::clamp(y,     0, srcHeight - 1)),
         s_p1(src + srcWidth * std::clamp(y + 1, 0, srcHeight - 1)),
@@ -671,7 +671,7 @@ public:
 
     void readDhlp(Kernel_4x4& ker, int x) const //(x, y) is at kernel position F
     {
-#if __cplusplus >= 201703L
+#if __cplusplus >= 201703L || _MSVC_LANG >= 201703L
         const int x_p2 = std::clamp(x + 2, 0, srcWidth_ - 1);
 #else
         const int x_p2 = std__clamp(x + 2, 0, srcWidth_ - 1);
@@ -845,7 +845,7 @@ void scaleImage(const uint32_t* src, uint32_t* trg, int srcWidth, int srcHeight,
                 addTopR(blend_xy1, res.blend_j); //set 2nd known corner for (x, y + 1)
                 preProcBuf[x] = blend_xy1; //store on current buffer position for use on next row
 
-#if __cplusplus >= 201402L
+#if __cplusplus >= 201402L || _MSVC_LANG >= 201402L
                 [[likely]] if (x + 1 < srcWidth)
 #else
                 if (x + 1 < srcWidth)
@@ -1321,7 +1321,7 @@ void xbrz::scale(size_t factor, const uint32_t* src, uint32_t* trg, int srcWidth
         return;
     }
 
-#if __cplusplus >= 201703L
+#if __cplusplus >= 201703L || _MSVC_LANG >= 201703L
     static_assert(SCALE_FACTOR_MAX == 6);
 #else
     static_assert(SCALE_FACTOR_MAX == 6, "");

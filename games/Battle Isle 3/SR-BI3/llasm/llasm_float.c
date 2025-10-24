@@ -33,6 +33,10 @@
 #endif
 #include <math.h>
 
+#if defined(__SSE2__)
+    #include <emmintrin.h>
+#endif
+
 #if defined(_MSC_VER)
 
 #undef BIG_ENDIAN_FLOAT_WORD_ORDER
@@ -980,6 +984,19 @@ EXTERNC void x87_ftan_void(CPU)
 // truncate toward zero
 EXTERNC int32_t x87_ftol_int32(CPU)
 {
+#if defined(__SSE2__)
+    int32_t result;
+
+    result = _mm_cvttsd_si32(_mm_load1_pd(&(ST0)));
+    POP_REGS;
+    return result;
+#elif defined(__ARM_NEON) || defined(__ARM_NEON__)
+    int32_t result;
+
+    result = (int32_t)trunc(ST0);
+    POP_REGS;
+    return result;
+#else
     const static double doublemagic = 6755399441055744.0; // 2^52 * 1.5
 
     double_int result;
@@ -1017,6 +1034,7 @@ EXTERNC int32_t x87_ftol_int32(CPU)
 
         return (int32_t)result.low;
     }
+#endif
 }
 
 // truncate toward zero

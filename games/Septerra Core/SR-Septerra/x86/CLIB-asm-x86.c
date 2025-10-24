@@ -34,6 +34,10 @@
 #include <time.h>
 #include "../platform.h"
 
+#if defined(__SSE2__)
+    #include <emmintrin.h>
+#endif
+
 
 typedef union {
     double d;
@@ -185,6 +189,9 @@ uint64_t _time64_c(uint64_t *t64)
 
 int32_t _ftol2_sse_c(double *num)
 {
+#if defined(__SSE2__)
+    return _mm_cvttsd_si32(_mm_load1_pd(num));
+#else
     //return (int32_t) trunc(*num);
 
     const static double doublemagic = 6755399441055744.0; // 2^52 * 1.5
@@ -221,6 +228,7 @@ int32_t _ftol2_sse_c(double *num)
 
         return (int32_t)result.low;
     }
+#endif
 }
 
 int64_t _ftol2_c(double *num)

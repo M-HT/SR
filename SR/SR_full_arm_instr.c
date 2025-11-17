@@ -8416,6 +8416,7 @@ int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint
                     }
                 }
             }
+            break;
         case UD_Ifst:
             {
                 /* no flags affected */

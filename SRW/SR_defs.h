@@ -42,6 +42,7 @@
 #define OUT_WINDOWS 1
 #define OUT_X86 2
 #define OUT_LLASM 7
+#define OUT_X64 8
 
 #define OUTPUT_TYPE  OUT_X86
 

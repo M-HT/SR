@@ -7400,6 +7400,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                     }
                 }
             }
+            break;
         case UD_Ifst:
         case UD_Ifstp:
             {

@@ -281,6 +281,8 @@ int main (int argc, char *argv[])
 	fprintf(stderr, "Output type: X86 version(s)\n");
 #elif (OUTPUT_TYPE == OUT_LLASM)
 	fprintf(stderr, "Output type: LLasm version\n");
+#elif (OUTPUT_TYPE == OUT_X64)
+	fprintf(stderr, "Output type: X64 version(s)\n");
 #else
 	#error unknown output type
 #endif

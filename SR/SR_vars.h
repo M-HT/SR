@@ -99,9 +99,11 @@ int SR_disassemble_offset_dos(unsigned int Entry, uint_fast32_t offset);
 int SR_disassemble_offset_win32(unsigned int Entry, uint_fast32_t offset);
 int SR_disassemble_region_arm(unsigned int Entry, region_data *region);
 int SR_disassemble_region_llasm(unsigned int Entry, region_data *region);
+int SR_disassemble_region_x64(unsigned int Entry, region_data *region);
 
 int SR_disassemble_arm_instruction(unsigned int Entry, output_data *output, uint_fast32_t flags_to_write, uint_fast32_t *pflags_write, uint_fast32_t *pflags_read);
 int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, uint_fast32_t flags_to_write, uint_fast32_t *pflags_write, uint_fast32_t *pflags_read, int *plast_instruction);
+int SR_disassemble_x64_instruction(unsigned int Entry, output_data *output, region_data *region);
 
 #undef EXTERNAL_VARIABLE
 

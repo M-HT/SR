@@ -4754,7 +4754,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                         }
                         else if (ud_obj.operand[1].base >= UD_R_AH && ud_obj.operand[1].base <= UD_R_BH)
                         {
-                            OUTPUT_PARAMSTRING("lshr tmp1, %s\n", X862LLSTR(ud_obj.operand[1].base));
+                            OUTPUT_PARAMSTRING("lshr tmp1, %s, 8\n", X862LLSTR(ud_obj.operand[1].base));
                             OUTPUT_PARAMSTRING("ext8s %s, tmp1\n", X86REGSTR(ud_obj.operand[0].base));
                         }
                     }
@@ -4785,7 +4785,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                         }
                         else if (ud_obj.operand[1].base >= UD_R_AH && ud_obj.operand[1].base <= UD_R_BH)
                         {
-                            OUTPUT_PARAMSTRING("lshr tmp1, %s\n", X862LLSTR(ud_obj.operand[1].base));
+                            OUTPUT_PARAMSTRING("lshr tmp1, %s, 8\n", X862LLSTR(ud_obj.operand[1].base));
                             OUTPUT_STRING("ext8s tmp1, tmp1\n");
                             OUTPUT_PARAMSTRING("ins16 %s, %s, tmp1\n", X862LLSTR(ud_obj.operand[0].base), X862LLSTR(ud_obj.operand[0].base));
                         }
@@ -7575,6 +7575,7 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                     }
                 }
             }
+            break;
         case UD_Ifst:
         case UD_Ifstp:
             {

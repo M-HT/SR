@@ -43,6 +43,7 @@
 #define OUT_X86 2
 #define OUT_ARM_LINUX 4
 #define OUT_LLASM 7
+#define OUT_X64 8
 
 #define OUTPUT_TYPE  OUT_X86
 

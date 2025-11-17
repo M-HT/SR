@@ -23,12 +23,12 @@ The projects consists of following subprojects (read the readme files in subproj
 
 * **SR**
   * The static recompiler (for DOS executables) itself.
-  * It takes the original executable as an input together with information about the original executable and produces x86 / arm / llasm assembler version of the executable.
-  * The generated x86/arm/llasm assembler version of the executable is not part of the project.
+  * It takes the original executable as an input together with information about the original executable and produces x86 / arm / llasm / x64 assembler version of the executable.
+  * The generated x86/arm/llasm/x64 assembler version of the executable is not part of the project.
 * **SRW**
   * The static recompiler (for Windows executables) itself.
-  * It takes the original executable as an input together with information about the original executable and produces x86 / llasm assembler version of the executable.
-  * The generated x86/llasm assembler version of the executable is not part of the project.
+  * It takes the original executable as an input together with information about the original executable and produces x86 / llasm / x64 assembler version of the executable.
+  * The generated x86/llasm/x64 assembler version of the executable is not part of the project.
 * **llasm**
   * Program which converts *.llasm* file to [LLVM](https://llvm.org/ "LLVM") language-independent intermediate representation, which can be compiled to native code.
 * **SR-games**

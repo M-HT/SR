@@ -116,7 +116,7 @@ static void SR_disassemble_replace_instructions(replace_data *item, void *data)
 }
 #endif
 
-#if ((OUTPUT_TYPE == OUT_X86) || (OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
+#if ((OUTPUT_TYPE == OUT_X86) || (OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM) || (OUTPUT_TYPE == OUT_X64))
 static void SR_remove_nops(unsigned int Entry, uint_fast32_t begin_ofs, uint_fast32_t end_ofs)
 {
     output_data *first;
@@ -287,7 +287,7 @@ static void SR_disassemble_create_aligns_data(output_data *item, void *data)
 }
 #endif
 
-#if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
+#if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM) || (OUTPUT_TYPE == OUT_X64))
 static void SR_disassemble_create_regions(bound_data *item, void *data)
 {
     output_data *output;
@@ -349,11 +349,11 @@ int SR_full_disassembly(void)
 #if (OUTPUT_TYPE != OUT_ORIG && OUTPUT_TYPE != OUT_DOS)
     replace_data *replace;
 #endif
-#if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
+#if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM) || (OUTPUT_TYPE == OUT_X64))
     output_data *output;
     region_data *region;
 #endif
-#if ((OUTPUT_TYPE == OUT_X86) || (OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
+#if ((OUTPUT_TYPE == OUT_X86) || (OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM) || (OUTPUT_TYPE == OUT_X64))
     Entry_region ER;
 #endif
     Word_t entry_index;
@@ -409,7 +409,7 @@ int SR_full_disassembly(void)
 #if (OUTPUT_TYPE == OUT_DOS)
                 ret = SR_disassemble_offset_dos(index, offset);
 #endif
-#if ((OUTPUT_TYPE == OUT_X86) || (OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
+#if ((OUTPUT_TYPE == OUT_X86) || (OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM) || (OUTPUT_TYPE == OUT_X64))
                 ret = SR_disassemble_offset_win32(index, offset);
 #endif
 
@@ -418,7 +418,7 @@ int SR_full_disassembly(void)
         }
     }
 
-#if ((OUTPUT_TYPE == OUT_X86) || (OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
+#if ((OUTPUT_TYPE == OUT_X86) || (OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM) || (OUTPUT_TYPE == OUT_X64))
     // align code and data in code segments
     for (index = 0; index < num_sections; index++)
     {
@@ -438,7 +438,7 @@ int SR_full_disassembly(void)
     }
 #endif
 
-#if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM))
+#if ((OUTPUT_TYPE == OUT_ARM_LINUX) || (OUTPUT_TYPE == OUT_LLASM) || (OUTPUT_TYPE == OUT_X64))
     // create regions from bounds
     for (index = 0; index < num_sections; index++)
     {
@@ -480,6 +480,8 @@ int SR_full_disassembly(void)
                 ret = SR_disassemble_region_arm(index, region);
 #elif (OUTPUT_TYPE == OUT_LLASM)
                 ret = SR_disassemble_region_llasm(index, region);
+#elif (OUTPUT_TYPE == OUT_X64)
+                ret = SR_disassemble_region_x64(index, region);
 #endif
 
                 if (ret) return ret;

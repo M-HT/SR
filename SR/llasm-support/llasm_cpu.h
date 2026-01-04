@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -30,6 +30,11 @@ typedef struct {
     uint32_t _eax, _ecx, _edx, _ebx, _esp, _ebp, _esi, _edi, _eflags;
     uint32_t _st_top, _st_sw_cond, _st_cw;
     double _st[8];
+#ifdef PTROFS_64BIT
+    uint64_t _pointer_offset;
+#else
+    uint64_t _reserved1;
+#endif
     int64_t _st_result;
     void *stack_bottom, *stack_top;
 } _cpu;
@@ -66,7 +71,17 @@ typedef struct {
 #define IF 0x0200
 #define DF 0x0400
 
+#ifdef PTROFS_64BIT
+
+#define REG2PTR(x) ((void *)((uintptr_t)(x) + cpu->_pointer_offset))
+#define PTR2REG(x) ((uint32_t)((uintptr_t)(x) - cpu->_pointer_offset))
+
+#else
+
 #define REG2PTR(x) ((void *)(uintptr_t)(x))
+#define PTR2REG(x) ((uint32_t)(uintptr_t)(x))
+
+#endif
 
 #ifdef __cplusplus
 #define EXTERNC extern "C"

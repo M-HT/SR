@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -503,10 +503,10 @@ EXTERNC uint32_t x87_fistp_int64(CPU)
         presult->low = uval.low;
         presult->high = uval.high;
 
-        return (uint32_t)(uintptr_t)presult;
+        return PTR2REG(presult);
 #else
         st_result = INT64_C(0x8000000000000000);
-        return (uint32_t)(uintptr_t)&(st_result);
+        return PTR2REG(&(st_result));
 #endif
     }
 
@@ -543,10 +543,10 @@ EXTERNC uint32_t x87_fistp_int64(CPU)
     presult->low = uval.low;
     presult->high = uval.high;
 
-    return (uint32_t)(uintptr_t)presult;
+    return PTR2REG(presult);
 #else
     st_result = ival;
-    return (uint32_t)(uintptr_t)&(st_result);
+    return PTR2REG(&(st_result));
 #endif
 }
 
@@ -692,14 +692,14 @@ EXTERNC uint32_t x87_fst_double(CPU)
     presult->low = pst0->low;
     presult->high = pst0->high;
 
-    return (uint32_t)(uintptr_t)presult;
+    return PTR2REG(presult);
 #else
     void *presult;
 
     CLEAR_X87_FLAGS;
     presult = &(ST0);
 
-    return (uint32_t)(uintptr_t)presult;
+    return PTR2REG(presult);
 #endif
 }
 
@@ -731,13 +731,13 @@ EXTERNC uint32_t x87_fstp_double(CPU)
     presult->high = pst0->high;
 
     POP_REGS;
-    return (uint32_t)(uintptr_t)presult;
+    return PTR2REG(presult);
 #else
     void *presult;
 
     presult = &(ST0);
     POP_REGS;
-    return (uint32_t)(uintptr_t)presult;
+    return PTR2REG(presult);
 #endif
 }
 
@@ -1056,10 +1056,10 @@ EXTERNC uint32_t x87_ftol_int64(CPU)
     presult->low = ret.low;
     presult->high = ret.high;
 
-    return (uint32_t)(uintptr_t)presult;
+    return PTR2REG(presult);
 #else
     st_result = ((orig < 9223372036854775808.0) && (orig > -9223372036854775808.0))?((int64_t) trunc(orig)):INT64_C(0x8000000000000000);
-    return (uint32_t)(uintptr_t)&(st_result);
+    return PTR2REG(&(st_result));
 #endif
 }
 

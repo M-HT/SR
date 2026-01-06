@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,47 +22,23 @@
  *
  */
 
-#include <inttypes.h>
-#include "CLIB-asm-llasm.h"
-#include <stdio.h>
-#include "printf_x86.h"
+#if !defined(_CLIB_PROC_H_INCLUDED_)
+#define _CLIB_PROC_H_INCLUDED_
 
+#include <stdint.h>
 
-#define eprintf(...) fprintf(stderr,__VA_ARGS__)
-
-
-int32_t printf2_c(const char *format, uint32_t *ap)
-{
-    int res;
-
-#ifdef DEBUG_CLIB
-    eprintf("printf: 0x%" PRIxPTR " (%s) - ", (uintptr_t) format, format);
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-    res = vfctprintf_x86((void (*)(char, void*))fputc, stdout, format, ap);
+int32_t CLIB_vprintf(const char *format, uint32_t *ap);
+int32_t CLIB_vfprintf(void *stream, const char *format, uint32_t *ap);
+int32_t CLIB_vsprintf(char *str, const char *format, uint32_t *ap);
+int32_t CLIB_vsnprintf(char *str, uint32_t size, const char *format, uint32_t *ap);
 
-#ifdef DEBUG_CLIB
-    eprintf("%i\n", res);
-#endif
-
-    return res;
+#ifdef __cplusplus
 }
-
-
-int32_t sprintf2_c(char *str, const char *format, uint32_t *ap)
-{
-    int res;
-
-#ifdef DEBUG_CLIB
-    eprintf("sprintf: 0x%" PRIxPTR ", 0x%" PRIxPTR " (%s) - ", (uintptr_t) str, (uintptr_t) format, format);
 #endif
 
-    res = vsprintf_x86(str, format, ap);
-
-#ifdef DEBUG_CLIB
-    eprintf("%i (%s)\n", res, str);
 #endif
-
-    return res;
-}
 

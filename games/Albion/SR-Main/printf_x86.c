@@ -32,11 +32,21 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#if defined(_MSC_VER) && _MSC_VER < 1800
+typedef int bool;
+#define false 0
+#define true 1
+#else
 #include <stdbool.h>
+#endif
 #include <stdint.h>
 #include <sys/types.h>
 
 #include "printf_x86.h"
+
+#if defined(_MSC_VER)
+#define inline __inline
+#endif
 
 
 // define this globally (e.g. gcc -DPRINTF_INCLUDE_CONFIG_H ...) to include the
@@ -195,7 +205,8 @@ static size_t _out_rev(out_fct_type out, char* buffer, size_t idx, size_t maxlen
 
   // pad spaces up to given width
   if (!(flags & FLAGS_LEFT) && !(flags & FLAGS_ZEROPAD)) {
-    for (size_t i = len; i < width; i++) {
+    size_t i;
+    for (i = len; i < width; i++) {
       out(' ', buffer, idx++, maxlen);
     }
   }
@@ -335,6 +346,11 @@ static size_t _ftoa(out_fct_type out, char* buffer, size_t idx, size_t maxlen, d
   size_t len  = 0U;
   double diff = 0.0;
 
+  bool negative;
+  int whole;
+  double tmp;
+  unsigned long frac;
+
   // powers of 10
   static const double pow10[] = { 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 };
 
@@ -357,7 +373,7 @@ static size_t _ftoa(out_fct_type out, char* buffer, size_t idx, size_t maxlen, d
   }
 
   // test for negative
-  bool negative = false;
+  negative = false;
   if (value < 0) {
     negative = true;
     value = 0 - value;
@@ -373,9 +389,9 @@ static size_t _ftoa(out_fct_type out, char* buffer, size_t idx, size_t maxlen, d
     prec--;
   }
 
-  int whole = (int)value;
-  double tmp = (value - whole) * pow10[prec];
-  unsigned long frac = (unsigned long)tmp;
+  whole = (int)value;
+  tmp = (value - whole) * pow10[prec];
+  frac = (unsigned long)tmp;
   diff = tmp - frac;
 
   if (diff > 0.5) {
@@ -459,13 +475,23 @@ static size_t _ftoa(out_fct_type out, char* buffer, size_t idx, size_t maxlen, d
 // internal ftoa variant for exponential floating-point type, contributed by Martijn Jasperse <m.jasperse@gmail.com>
 static size_t _etoa(out_fct_type out, char* buffer, size_t idx, size_t maxlen, double value, unsigned int prec, unsigned int width, unsigned int flags)
 {
+  bool negative;
+  union {
+    uint64_t U;
+    double   F;
+  } conv;
+  int exp2, expval;
+  double z, z2;
+  unsigned int minwidth, fwidth;
+  size_t start_idx;
+
   // check for NaN and special values
   if ((value != value) || (value > DBL_MAX) || (value < -DBL_MAX)) {
     return _ftoa(out, buffer, idx, maxlen, value, prec, width, flags);
   }
 
   // determine the sign
-  const bool negative = value < 0;
+  negative = value < 0;
   if (negative) {
     value = -value;
   }
@@ -477,20 +503,16 @@ static size_t _etoa(out_fct_type out, char* buffer, size_t idx, size_t maxlen, d
 
   // determine the decimal exponent
   // based on the algorithm by David Gay (https://www.ampl.com/netlib/fp/dtoa.c)
-  union {
-    uint64_t U;
-    double   F;
-  } conv;
 
   conv.F = value;
-  int exp2 = (int)((conv.U >> 52U) & 0x07FFU) - 1023;           // effectively log2
+  exp2 = (int)((conv.U >> 52U) & 0x07FFU) - 1023;           // effectively log2
   conv.U = (conv.U & ((1ULL << 52U) - 1U)) | (1023ULL << 52U);  // drop the exponent so conv.F is now in [1,2)
   // now approximate log10 from the log2 integer part and an expansion of ln around 1.5
-  int expval = (int)(0.1760912590558 + exp2 * 0.301029995663981 + (conv.F - 1.5) * 0.289529654602168);
+  expval = (int)(0.1760912590558 + exp2 * 0.301029995663981 + (conv.F - 1.5) * 0.289529654602168);
   // now we want to compute 10^expval but we want to be sure it won't overflow
   exp2 = (int)(expval * 3.321928094887362 + 0.5);
-  const double z  = expval * 2.302585092994046 - exp2 * 0.6931471805599453;
-  const double z2 = z * z;
+  z  = expval * 2.302585092994046 - exp2 * 0.6931471805599453;
+  z2 = z * z;
   conv.U = (uint64_t)(exp2 + 1023) << 52U;
   // compute exp(z) using continued fractions, see https://en.wikipedia.org/wiki/Exponential_function#Continued_fractions_for_ex
   conv.F *= 1 + 2 * z / (2 - z + (z2 / (6 + (z2 / (10 + z2 / 14)))));
@@ -501,7 +523,7 @@ static size_t _etoa(out_fct_type out, char* buffer, size_t idx, size_t maxlen, d
   }
 
   // the exponent format is "%+03d" and largest value is "307", so set aside 4-5 characters
-  unsigned int minwidth = ((expval < 100) && (expval > -100)) ? 4U : 5U;
+  minwidth = ((expval < 100) && (expval > -100)) ? 4U : 5U;
 
   // in "%g" mode, "prec" is the number of *significant figures* not decimals
   if (flags & FLAGS_ADAPT_EXP) {
@@ -527,7 +549,7 @@ static size_t _etoa(out_fct_type out, char* buffer, size_t idx, size_t maxlen, d
   }
 
   // will everything fit?
-  unsigned int fwidth = width;
+  fwidth = width;
   if (width > minwidth) {
     // we didn't fall-back so subtract the characters required for the exponent
     fwidth -= minwidth;
@@ -546,7 +568,7 @@ static size_t _etoa(out_fct_type out, char* buffer, size_t idx, size_t maxlen, d
   }
 
   // output the floating part
-  const size_t start_idx = idx;
+  start_idx = idx;
   idx = _ftoa(out, buffer, idx, maxlen, negative ? -value : value, prec, fwidth, flags & ~FLAGS_ADAPT_EXP);
 
   // output the exponent part
@@ -593,9 +615,14 @@ static inline void *_va_ptr(uint32_t **va)
   return (void *)(uintptr_t)value;
 }
 
-#ifdef __FLOAT_WORD_ORDER__
+#if defined(_MSC_VER)
 
-#if (__FLOAT_WORD_ORDER__ == __ORDER_BIG_ENDIAN__)
+#undef BIG_ENDIAN_FLOAT_WORD_ORDER
+#undef BIG_ENDIAN_BYTE_ORDER
+
+#elif defined(__BYTE_ORDER__)
+
+#if (defined(__FLOAT_WORD_ORDER__) && (__FLOAT_WORD_ORDER__ == __ORDER_BIG_ENDIAN__)) || (!defined(__FLOAT_WORD_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__))
 #define BIG_ENDIAN_FLOAT_WORD_ORDER
 #else
 #undef BIG_ENDIAN_FLOAT_WORD_ORDER
@@ -904,7 +931,7 @@ static int _vsnprintf(out_fct_type out, char* buffer, const size_t maxlen, const
       }
 
       case 's' : {
-        const char* p = _va_ptr(&va);
+        const char* p = (const char*) _va_ptr(&va);
         unsigned int l = _strnlen_s(p, precision ? precision : (size_t)-1);
         // pre padding
         if (flags & FLAGS_PRECISION) {
@@ -930,11 +957,14 @@ static int _vsnprintf(out_fct_type out, char* buffer, const size_t maxlen, const
       }
 
       case 'p' : {
+#if defined(PRINTF_SUPPORT_LONG_LONG)
+        bool is_ll;
+#endif
         width = sizeof(void*) * 2U;
         flags |= FLAGS_ZEROPAD | FLAGS_UPPERCASE;
 #if defined(PRINTF_SUPPORT_LONG_LONG)
-        //const bool is_ll = sizeof(uintptr_t) == sizeof(long long);
-        const bool is_ll = false;
+        //is_ll = sizeof(uintptr_t) == sizeof(long long);
+        is_ll = false;
         if (is_ll) {
           idx = _ntoa_long_long(out, buffer, idx, maxlen, (uintptr_t)_va_ptr(&va), false, 16U, precision, width, flags);
         }
@@ -972,7 +1002,7 @@ static int _vsnprintf(out_fct_type out, char* buffer, const size_t maxlen, const
 
 int vsprintf_x86(char* buffer, const char* format, uint32_t *va)
 {
-  return _vsnprintf(_out_buffer, buffer, (size_t)(ssize_t)-1, format, va);
+  return _vsnprintf(_out_buffer, buffer, SIZE_MAX, format, va);
 }
 
 
@@ -985,5 +1015,5 @@ int vsnprintf_x86(char* buffer, size_t count, const char* format, uint32_t *va)
 int vfctprintf_x86(void (*out)(char character, void* arg), void* arg, const char* format, uint32_t *va)
 {
   const out_fct_wrap_type out_fct_wrap = { out, arg };
-  return _vsnprintf(_out_fct, (char*)(uintptr_t)&out_fct_wrap, (size_t)(ssize_t)-1, format, va);
+  return _vsnprintf(_out_fct, (char*)(uintptr_t)&out_fct_wrap, SIZE_MAX, format, va);
 }

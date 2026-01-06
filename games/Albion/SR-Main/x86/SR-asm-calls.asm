@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2025 Roman Pauer
+;;  Copyright (C) 2016-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -25,9 +25,10 @@
 %ifidn __OUTPUT_FORMAT__, win32
     %define Game_errno _Game_errno
 
-    %define vfprintf _vfprintf
-    %define vprintf _vprintf
-    %define vsprintf _vsprintf
+    %define CLIB_vfprintf _CLIB_vfprintf
+    %define CLIB_vprintf _CLIB_vprintf
+    %define CLIB_vsnprintf _CLIB_vsnprintf
+    %define CLIB_vsprintf _CLIB_vsprintf
     %define Game_WaitVerticalRetraceTicks _Game_WaitVerticalRetraceTicks
     %define Game_open _Game_open
     %define Game_openFlags _Game_openFlags
@@ -179,7 +180,6 @@
     %define strncasecmp _strncasecmp
     %define write _write
 
-    %define vsnprintf _vsnprintf
     %define Game_int386x _Game_int386x
 
     %define Game_splitpath _Game_splitpath
@@ -188,9 +188,10 @@
 extern Game_errno
 
 ; stack params
-extern vfprintf
-extern vprintf
-extern vsprintf
+extern CLIB_vfprintf
+extern CLIB_vprintf
+extern CLIB_vsnprintf
+extern CLIB_vsprintf
 extern Game_WaitVerticalRetraceTicks
 extern Game_open
 extern Game_openFlags
@@ -342,7 +343,6 @@ extern strncpy
 extern strncasecmp
 extern write
 ; 4 params
-extern vsnprintf
 extern Game_int386x
 ; 5 params
 extern Game_splitpath
@@ -591,7 +591,7 @@ SR_fprintf:
 ; [esp +   4] = FILE *fp
 ; [esp      ] = return address
 
-        Game_Call_Asm_VariableStack2 vfprintf,-1
+        Game_Call_Asm_VariableStack2 CLIB_vfprintf,-1
 
 ; end procedure SR_fprintf
 
@@ -602,7 +602,7 @@ SR_printf:
 ; [esp +   4] = const char *format
 ; [esp      ] = return address
 
-        Game_Call_Asm_VariableStack1 vprintf,-1
+        Game_Call_Asm_VariableStack1 CLIB_vprintf,-1
 
 ; end procedure SR_printf
 
@@ -615,7 +615,7 @@ SR__bprintf:
 ; [esp +   4] = char *buf
 ; [esp      ] = return address
 
-        Game_Call_Asm_VariableStack3 vsnprintf,-1
+        Game_Call_Asm_VariableStack3 CLIB_vsnprintf,-1
 
 ; end procedure SR__bprintf
 
@@ -627,7 +627,7 @@ SR_sprintf:
 ; [esp +   4] = char *buf
 ; [esp      ] = return address
 
-        Game_Call_Asm_VariableStack2 vsprintf,-1
+        Game_Call_Asm_VariableStack2 CLIB_vsprintf,-1
 
 ; end procedure SR_sprintf
 
@@ -2208,7 +2208,7 @@ SR__vbprintf:
 ; ecx = va_list arg
 
         mov ecx, [ecx]
-        Game_Call_Asm_Reg4 vsnprintf,-1
+        Game_Call_Asm_Reg4 CLIB_vsnprintf,-1
 
 ; end procedure SR__vbprintf
 

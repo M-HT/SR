@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2021 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,7 +26,6 @@
 #define _CLIB_H_INCLUDED_
 
 #include <stdint.h>
-#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,6 +42,9 @@ uint32_t strlen_c(const char *s);
 char *strncpy_c(char *dest, const char *src, uint32_t n);
 int32_t _strnicmp_c(const char *s1, const char *s2, uint32_t n);
 char *strstr_c(const char *haystack, const char *needle);
+
+int32_t printf2_c(const char *format, uint32_t *ap);
+int32_t sprintf2_c(char *str, const char *format, uint32_t *ap);
 
 void ms_srand_c(uint32_t seed);
 int32_t ms_rand_c(void);

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -57,6 +57,7 @@ uint32_t SetWindowPos_c(void * hWnd, void * hWndInsertAfter, int32_t X, int32_t 
 int32_t ShowCursor_c(uint32_t bShow);
 uint32_t ShowWindow_c(void * hWnd, int32_t nCmdShow);
 uint32_t UnregisterClassA_c(const char * lpClassName, void * hInstance);
+int32_t wsprintfA2_c(char * param1, const char * param2, uint32_t *ap);
 
 #ifdef __cplusplus
 }

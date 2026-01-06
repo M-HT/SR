@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,17 +22,17 @@
  *
  */
 
-#if !defined(_WINAPI_USER32_ASM_X86_H_INCLUDED_)
-#define _WINAPI_USER32_ASM_X86_H_INCLUDED_
+#if !defined(_CLIB_PROC_H_INCLUDED_)
+#define _CLIB_PROC_H_INCLUDED_
 
 #include <stdint.h>
-#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int32_t wsprintfA2_c(char * param1, const char * param2, va_list ap);
+int32_t CLIB_vprintf(const char *format, uint32_t *ap);
+int32_t CLIB_vfprintf(void *stream, const char *format, uint32_t *ap);
 
 #ifdef __cplusplus
 }

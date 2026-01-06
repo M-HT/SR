@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016-2025 Roman Pauer
+@@  Copyright (C) 2016-2026 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -26,9 +26,10 @@
 .extern Game_errno
 
 @ stack params
-.extern vfprintf
-.extern vprintf
-.extern vsprintf
+.extern CLIB_vfprintf
+.extern CLIB_vprintf
+.extern CLIB_vsnprintf
+.extern CLIB_vsprintf
 .extern Game_WaitVerticalRetraceTicks
 .extern Game_open
 .extern Game_openFlags
@@ -180,7 +181,6 @@
 .extern strncasecmp
 .extern write
 @ 4 params
-.extern vsnprintf
 .extern Game_int386x
 @ 5 params
 .extern Game_splitpath
@@ -393,7 +393,7 @@ SR_fprintf:
 @ [esp +   4] = FILE *fp
 @ [esp      ] = return address
 
-        Game_Call_Asm_VariableStack2 vfprintf,-1000
+        Game_Call_Asm_VariableStack2 CLIB_vfprintf,-1
 
 @ end procedure SR_fprintf
 
@@ -403,7 +403,7 @@ SR_printf:
 @ [esp +   4] = const char *format
 @ [esp      ] = return address
 
-        Game_Call_Asm_VariableStack1 vprintf,-1000
+        Game_Call_Asm_VariableStack1 CLIB_vprintf,-1
 
 @ end procedure SR_printf
 
@@ -415,7 +415,7 @@ SR__bprintf:
 @ [esp +   4] = char *buf
 @ [esp      ] = return address
 
-        Game_Call_Asm_VariableStack3 vsnprintf,-1000
+        Game_Call_Asm_VariableStack3 CLIB_vsnprintf,-1
 
 @ end procedure SR__bprintf
 
@@ -426,7 +426,7 @@ SR_sprintf:
 @ [esp +   4] = char *buf
 @ [esp      ] = return address
 
-        Game_Call_Asm_VariableStack2 vsprintf,-1000
+        Game_Call_Asm_VariableStack2 CLIB_vsprintf,-1
 
 @ end procedure SR_sprintf
 
@@ -1871,7 +1871,7 @@ SR__vbprintf:
         orr tmp1, tmp1, tmp3, lsl #16
         orr ecx, tmp1, tmpadr, lsl #24
 .endif
-        Game_Call_Asm_Reg4 vsnprintf,-1
+        Game_Call_Asm_Reg4 CLIB_vsnprintf,-1
 
 @ end procedure SR__vbprintf
 

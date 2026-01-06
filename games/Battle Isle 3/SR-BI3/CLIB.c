@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -29,6 +29,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include "printf_x86.h"
 
 #if (defined(__WIN32__) || defined(__WINDOWS__)) && !defined(_WIN32)
 #define _WIN32
@@ -139,6 +140,41 @@ char *strstr_c(const char *haystack, const char *needle)
 #endif
 
     return strstr(haystack, needle);
+}
+
+
+int32_t printf2_c(const char *format, uint32_t *ap)
+{
+    int res;
+
+#ifdef DEBUG_CLIB
+    eprintf("printf: 0x%" PRIxPTR " (%s) - ", (uintptr_t) format, format);
+#endif
+
+    res = vfctprintf_x86((void (*)(char, void*))fputc, stdout, format, ap);
+
+#ifdef DEBUG_CLIB
+    eprintf("%i\n", res);
+#endif
+
+    return res;
+}
+
+int32_t sprintf2_c(char *str, const char *format, uint32_t *ap)
+{
+    int res;
+
+#ifdef DEBUG_CLIB
+    eprintf("sprintf: 0x%" PRIxPTR ", 0x%" PRIxPTR " (%s) - ", (uintptr_t) str, (uintptr_t) format, format);
+#endif
+
+    res = vsprintf_x86(str, format, ap);
+
+#ifdef DEBUG_CLIB
+    eprintf("%i (%s)\n", res, str);
+#endif
+
+    return res;
 }
 
 

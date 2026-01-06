@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,8 +22,10 @@
  *
  */
 
+#if defined(__DEBUG__) && defined(DEBUG_CLIB)
 #include <inttypes.h>
-#include "CLIB-proc-llasm.h"
+#endif
+#include "CLIB-proc.h"
 #include <stdio.h>
 #include "printf_x86.h"
 
@@ -40,7 +42,7 @@ static void file_out(char character, void* arg)
     fputc(character, (FILE *)arg);
 }
 
-int32_t CLIB_vprintf(const char *format, uint32_t *ap)
+int32_t CLIB_vprintf(const char *format, uint32_t *ap)\
 {
     int res;
 
@@ -89,6 +91,23 @@ int32_t CLIB_vsprintf(char *str, const char *format, uint32_t *ap)
 #endif
 
     res = vsprintf_x86(str, format, ap);
+
+#if defined(__DEBUG__) && defined(DEBUG_CLIB)
+    fprintf(stderr, "%i (%s)\n", res, str);
+#endif
+
+    return res;
+}
+
+int32_t CLIB_vsnprintf(char *str, uint32_t size, const char *format, uint32_t *ap)
+{
+    int res;
+
+#if defined(__DEBUG__) && defined(DEBUG_CLIB)
+    fprintf(stderr, "vsnprintf: 0x%" PRIxPTR ", %i, 0x%" PRIxPTR " (%s) - ", (uintptr_t) str, size, (uintptr_t) format, format);
+#endif
+
+    res = vsnprintf_x86(str, size, format, ap);
 
 #if defined(__DEBUG__) && defined(DEBUG_CLIB)
     fprintf(stderr, "%i (%s)\n", res, str);

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,6 +26,7 @@
 #include "SDIresource.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include "printf_x86.h"
 
 uint32_t ClientToScreen_c(void * hWnd, void * lpPoint)
 {
@@ -157,5 +158,10 @@ uint32_t ShowWindow_c(void * hWnd, int32_t nCmdShow)
 uint32_t UnregisterClassA_c(const char * lpClassName, void * hInstance)
 {
     return UnregisterClassA(lpClassName, (HINSTANCE)hInstance);
+}
+
+int32_t wsprintfA2_c(char * param1, const char * param2, uint32_t *ap)
+{
+    return vsprintf_x86(param1, param2, ap);
 }
 

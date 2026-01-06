@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -454,7 +454,7 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
                 needed_samples = ((num_samples * (int64_t)current->resample_step) >> 16) + 4 + (current->resample_step >> 16);
 
                 old_buffer = current->resample_buffer;
-                current->resample_buffer = (int16_t *)realloc(old_buffer, needed_samples * 2 * sizeof(int16_t));
+                current->resample_buffer = (int16_t *)realloc(current->resample_buffer, needed_samples * 2 * sizeof(int16_t));
                 if (current->resample_buffer == NULL)
                 {
                     if (old_buffer != NULL)

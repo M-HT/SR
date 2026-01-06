@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2021 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,16 +26,12 @@
 #define _CLIB_ASM_X86_H_INCLUDED_
 
 #include <stdint.h>
-#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void *_alloca_probe_c(uint32_t size);
-
-int32_t printf2_c(const char *format, va_list ap);
-int32_t sprintf2_c(char *str, const char *format, va_list ap);
 
 int64_t _ftol_c(double *num);
 

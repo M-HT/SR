@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2022-2025 Roman Pauer
+ *  Copyright (C) 2022-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -39,27 +39,27 @@ private:
     uint32_t value __attribute__ ((packed)) __attribute__ ((aligned (A)));
 
 public:
-    ptr32_t<T,A> ()
+    ptr32_t ()
     {
     }
 
-    ptr32_t<T,A> (void *p)
+    ptr32_t (void *p)
     {
         value = (uint32_t)(uintptr_t)p;
     }
 
     template<class Q = T, typename = typename std::enable_if<!std::is_void<Q>::value>::type>
-    ptr32_t<T,A> (T* p) // constructor for T* if T isn't void
+    ptr32_t (T* p) // constructor for T* if T isn't void
     {
         value = (uint32_t)(uintptr_t)p;
     }
 
-    ptr32_t<T,A> (std::nullptr_t)
+    ptr32_t (std::nullptr_t)
     {
         value = 0;
     }
 
-    ptr32_t<T,A> (uintptr_t p)
+    ptr32_t (uintptr_t p)
     {
         value = p;
     }

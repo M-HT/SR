@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,12 +22,22 @@
  *
  */
 
-#include "WinApi-user32-asm-x86.h"
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#if !defined(_CLIB_PROC_H_INCLUDED_)
+#define _CLIB_PROC_H_INCLUDED_
 
-int32_t wsprintfA2_c(char * param1, const char * param2, va_list ap)
-{
-    return wvsprintfA(param1, param2, ap);
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int32_t CLIB_vprintf(const char *format, uint32_t *ap);
+int32_t CLIB_vfprintf(void *stream, const char *format, uint32_t *ap);
+int32_t CLIB_vsprintf(char *str, const char *format, uint32_t *ap);
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif
 

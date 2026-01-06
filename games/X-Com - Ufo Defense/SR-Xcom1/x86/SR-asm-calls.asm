@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2024 Roman Pauer
+;;  Copyright (C) 2016-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -26,8 +26,8 @@
     %define Game_Set_errno_val _Game_Set_errno_val
     %define Game_Set_errno_val_num _Game_Set_errno_val_num
 
-    %define vfprintf _vfprintf
-    %define vprintf _vprintf
+    %define CLIB_vfprintf _CLIB_vfprintf
+    %define CLIB_vprintf _CLIB_vprintf
     %define Game_WaitVerticalRetraceTicks _Game_WaitVerticalRetraceTicks
 
     %define Game_dlseek _Game_dlseek
@@ -86,8 +86,8 @@ extern Game_Set_errno_val_num
 
 
 ; stack params
-extern vfprintf
-extern vprintf
+extern CLIB_vfprintf
+extern CLIB_vprintf
 extern Game_WaitVerticalRetraceTicks
 
 extern Game_dlseek
@@ -304,7 +304,7 @@ SR_fprintf:
 ; [esp +   4] = FILE *fp
 ; [esp      ] = return address
 
-        Game_Call_Asm_VariableStack2 vfprintf,-1
+        Game_Call_Asm_VariableStack2 CLIB_vfprintf,-1
 
 ; end procedure SR_fprintf
 
@@ -316,7 +316,7 @@ SR_printf:
 ; [esp +   4] = const char *format
 ; [esp      ] = return address
 
-        Game_Call_Asm_VariableStack1 vprintf,-1
+        Game_Call_Asm_VariableStack1 CLIB_vprintf,-1
 
 ; end procedure SR_printf
 

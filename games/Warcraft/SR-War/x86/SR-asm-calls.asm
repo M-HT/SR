@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2024 Roman Pauer
+;;  Copyright (C) 2016-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -25,8 +25,9 @@
 %ifidn __OUTPUT_FORMAT__, win32
     %define Game_errno _Game_errno
 
-    %define vfprintf _vfprintf
-    %define vsprintf _vsprintf
+    %define CLIB_vfprintf _CLIB_vfprintf
+    %define CLIB_vprintf _CLIB_vprintf
+    %define CLIB_vsprintf _CLIB_vsprintf
     %define Game_open _Game_open
     %define Game_openFlags _Game_openFlags
 
@@ -86,7 +87,6 @@
     %define strcmp _strcmp
     %define strcpy _strcpy
     %define strrchr _strrchr
-    %define vprintf _vprintf
 
     %define fgets _fgets
     %define fseek _fseek
@@ -115,8 +115,9 @@ extern Game_errno
 
 
 ; stack params
-extern vfprintf
-extern vsprintf
+extern CLIB_vfprintf
+extern CLIB_vprintf
+extern CLIB_vsprintf
 extern Game_open
 extern Game_openFlags
 
@@ -176,7 +177,6 @@ extern strcat
 extern strcmp
 extern strcpy
 extern strrchr
-extern vprintf
 ; 3 params
 extern fgets
 extern fseek
@@ -356,7 +356,7 @@ SR_fprintf:
 ; [esp +   4] = FILE *fp
 ; [esp      ] = return address
 
-        Game_Call_Asm_VariableStack2 vfprintf,-1
+        Game_Call_Asm_VariableStack2 CLIB_vfprintf,-1
 
 ; end procedure SR_fprintf
 
@@ -367,7 +367,7 @@ SR_printf:
 ; [esp +   4] = const char *format
 ; [esp      ] = return address
 
-        Game_Call_Asm_VariableStack1 vprintf,-1
+        Game_Call_Asm_VariableStack1 CLIB_vprintf,-1
 
 ; end procedure SR_printf
 
@@ -379,7 +379,7 @@ SR_sprintf:
 ; [esp +   4] = char *buf
 ; [esp      ] = return address
 
-        Game_Call_Asm_VariableStack2 vsprintf,-1
+        Game_Call_Asm_VariableStack2 CLIB_vsprintf,-1
 
 ; end procedure SR_sprintf
 
@@ -977,7 +977,7 @@ SR_vprintf:
 ; edx = va_list arg
 
         mov edx, [edx]
-        Game_Call_Asm_Reg2 vprintf,-1
+        Game_Call_Asm_Reg2 CLIB_vprintf,-1
 
 ; end procedure SR_vprintf
 

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -69,85 +69,6 @@ void *_alloca_probe_c(uint32_t size)
 
     // return value will be ignored
     return addr;
-}
-
-
-int32_t sprintf2_c(char *str, const char *format, va_list ap)
-{
-    int res;
-
-#ifdef DEBUG_CLIB
-    eprintf("sprintf: 0x%" PRIxPTR ", 0x%" PRIxPTR " (%s) - ", (uintptr_t) str, (uintptr_t) format, format);
-#endif
-
-    res = vsprintf(str, format, ap);
-
-#ifdef DEBUG_CLIB
-    eprintf("%i (%s)\n", res, str);
-#endif
-
-    return res;
-}
-
-int32_t sscanf2_c(const char *str, const char *format, va_list ap)
-{
-    int res;
-#if defined(_MSC_VER) && _MSC_VER < 1800
-#define MAX_VALUES 2
-    int num, index;
-    void *ptrvals[MAX_VALUES];
-#endif
-
-#ifdef DEBUG_CLIB
-    eprintf("sscanf: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s) - ", (uintptr_t) str, str, (uintptr_t) format, format);
-#endif
-
-#if defined(_MSC_VER) && _MSC_VER < 1800
-    num = 0;
-    if (format != NULL)
-    {
-        for (index = 0; format[index] != 0; index++)
-        {
-            if (format[index] == '%')
-            {
-                num++;
-                if (num > MAX_VALUES) break;
-
-                if ((format[index + 1] == 's') || (format[index + 1] == 'd'))
-                {
-                    ptrvals[num - 1] = va_arg(ap, void *);
-                }
-                else
-                {
-                    eprintf("sscanf: unsupported format: %s\n", format);
-                    exit(1);
-                }
-            }
-        }
-    }
-
-    switch (num)
-    {
-        case 1:
-            res = sscanf(str, format, ptrvals[0]);
-            break;
-        case 2:
-            res = sscanf(str, format, ptrvals[0], ptrvals[1]);
-            break;
-        default:
-            eprintf("sscanf: unsupported format: %s\n", format);
-            exit(1);
-    }
-#undef MAX_VALUES
-#else
-    res = vsscanf(str, format, ap);
-#endif
-
-#ifdef DEBUG_CLIB
-    eprintf("%i\n", res);
-#endif
-
-    return res;
 }
 
 

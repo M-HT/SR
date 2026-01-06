@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,8 +22,10 @@
  *
  */
 
+#if defined(__DEBUG__) && defined(DEBUG_CLIB)
 #include <inttypes.h>
-#include "CLIB-proc-llasm.h"
+#endif
+#include "CLIB-proc.h"
 #include <stdio.h>
 #include "printf_x86.h"
 

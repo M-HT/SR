@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016-2020 Roman Pauer
+@@  Copyright (C) 2016-2026 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -51,8 +51,6 @@
 .extern SR_printf
 .extern SR__bprintf
 .extern SR_sprintf
-.extern SR_WaitVerticalRetraceTicks
-.extern SR_open
 
 .extern SR_AIL_mem_use_malloc
 .extern SR_AIL_mem_use_free
@@ -150,10 +148,6 @@
 .extern SR_WaitAfter2ndVerticalRetrace
 .extern SR_WaitFor2ndVerticalRetrace
 @ 1 param
-.extern SR_asctime
-.extern SR_chdir
-.extern SR___close
-.extern SR_j___close
 .extern SR_closedir
 .extern SR_ctime
 .extern SR__dos_findclose
@@ -161,18 +155,10 @@
 .extern SR__dos_getvect
 .extern SR_exit
 .extern SR_fclose
-.extern SR_filelength
-.extern SR__nfree
 .extern SR_ftime
-.extern SR_getenv
-.extern SR_isatty
-.extern SR_localtime
-.extern SR__nmalloc
 .extern SR_opendir
 .extern SR__setjmp
 .extern SR_strlen
-.extern SR_tell
-.extern SR_time
 .extern SR_unlink
 .extern SR_j_unlink
 .extern SR_WaitTimerTicks
@@ -184,9 +170,7 @@
 .extern SR_longjmp
 .extern SR_outp
 .extern SR_rename
-.extern SR_setbuf
 .extern SR_strchr
-.extern SR_strcmp
 .extern SR_strcpy
 .extern SR_strcspn
 .extern SR_strspn
@@ -195,15 +179,12 @@
 @ 3 params
 .extern SR__dos_findfirst
 .extern SR_fgets
-.extern SR_lseek
 .extern SR_memcpy
 .extern SR_memmove
 .extern SR_memset
-.extern SR_read
 .extern SR_strncmp
 .extern SR_strncpy
 .extern SR_strnicmp
-.extern SR_write
 @ 4 params
 .extern SR_int386x
 .extern SR__vbprintf

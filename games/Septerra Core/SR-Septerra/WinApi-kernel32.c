@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -30,7 +30,6 @@
 #ifdef DEBUG_KERNEL32
 #include <inttypes.h>
 #endif
-#include "WinApi-kernel32.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -84,6 +83,8 @@ static clockid_t monotonic_clock_id;
 #endif
 
 #endif
+#include "WinApi-kernel32.h"
+#include "Game-Memory.h"
 #include "platform.h"
 
 
@@ -127,8 +128,13 @@ static clockid_t monotonic_clock_id;
 
 #define eprintf(...) fprintf(stderr,__VA_ARGS__)
 
-#define PSEUDO_HANDLE_CURRENT_PROCESS ((PTR32(void))(uint32_t)-1)
-#define PSEUDO_HANDLE_CURRENT_THREAD ((PTR32(void))(uint32_t)-2)
+#ifdef PTROFS_64BIT
+#define PSEUDO_HANDLE_CURRENT_PROCESS ((void *)(pointer_offset + 0xfffffffful))
+#define PSEUDO_HANDLE_CURRENT_THREAD ((void *)(pointer_offset + 0xfffffffeul))
+#else
+#define PSEUDO_HANDLE_CURRENT_PROCESS ((void *)0xfffffffful)
+#define PSEUDO_HANDLE_CURRENT_THREAD ((void *)0xfffffffeul)
+#endif
 
 
 #if !defined(_WIN32)
@@ -285,7 +291,11 @@ static void Conv_find(win32_find_data *buffer, struct stat *filestat, const char
 
     // file's creation time and date
     dt_result = ((int64_t) filestat->st_ctime) * 10000000;
+#if defined(__APPLE__)
+    dt_result += (filestat->st_ctimensec / 100) & ~1; // set least significant bit to zero to indicate system time
+#else
     dt_result += (filestat->st_ctim.tv_nsec / 100) & ~1; // set least significant bit to zero to indicate system time
+#endif
     dt_result += EPOCH_TIME;
 
     buffer->ftCreationTime.dwLowDateTime = (uint32_t) dt_result;
@@ -293,7 +303,11 @@ static void Conv_find(win32_find_data *buffer, struct stat *filestat, const char
 
     // file's last access time and date
     dt_result = ((int64_t) filestat->st_atime) * 10000000;
+#if defined(__APPLE__)
+    dt_result += (filestat->st_atimensec / 100) & ~1; // set least significant bit to zero to indicate system time
+#else
     dt_result += (filestat->st_atim.tv_nsec / 100) & ~1; // set least significant bit to zero to indicate system time
+#endif
     dt_result += EPOCH_TIME;
 
     buffer->ftLastAccessTime.dwLowDateTime = (uint32_t) dt_result;
@@ -301,7 +315,11 @@ static void Conv_find(win32_find_data *buffer, struct stat *filestat, const char
 
     // file's modification time and date
     dt_result = ((int64_t) filestat->st_mtime) * 10000000;
+#if defined(__APPLE__)
+    dt_result += (filestat->st_mtimensec / 100) & ~1; // set least significant bit to zero to indicate system time
+#else
     dt_result += (filestat->st_mtim.tv_nsec / 100) & ~1; // set least significant bit to zero to indicate system time
+#endif
     dt_result += EPOCH_TIME;
 
     buffer->ftLastWriteTime.dwLowDateTime = (uint32_t) dt_result;
@@ -378,14 +396,14 @@ uint32_t CloseHandle_c(void *hObject)
     switch (((handle)hObject)->handle_type)
     {
         case HT_FILE:
-#define hFile ((file_handle)hObject)
+#define hFile ((file_handle)(void *)hObject)
 
             if (hFile->f != NULL)
             {
                 fclose((FILE *)hFile->f);
             }
 
-            free(hFile);
+            x86_free(hFile);
 
             return 1;
 #undef hFile
@@ -401,7 +419,7 @@ uint32_t CloseHandle_c(void *hObject)
 #endif
             }
 
-            free(hPipe);
+            x86_free(hPipe);
 
             return 1;
 #undef hPipe
@@ -626,7 +644,7 @@ void *CreateFileA_c(const char *lpFileName, uint32_t dwDesiredAccess, uint32_t d
 #endif
     if (ret->fh.f == NULL)
     {
-        free(ret);
+        x86_free(ret);
 #ifdef DEBUG_KERNEL32
         eprintf("error\n");
 #endif
@@ -687,7 +705,7 @@ uint32_t CreatePipe_c(PTR32(void) *hReadPipe, PTR32(void) *hWritePipe, void *lpP
         hwrite = Winapi_AllocHandle();
         if (hwrite == NULL)
         {
-            free(hread);
+            x86_free(hread);
 #ifdef DEBUG_KERNEL32
         eprintf("error\n");
 #endif
@@ -716,8 +734,8 @@ uint32_t CreatePipe_c(PTR32(void) *hReadPipe, PTR32(void) *hWritePipe, void *lpP
 
         if (ret == 0)
         {
-            free(hwrite);
-            free(hread);
+            x86_free(hwrite);
+            x86_free(hread);
 #ifdef DEBUG_KERNEL32
             eprintf("error\n");
 #endif
@@ -903,7 +921,7 @@ uint32_t FindClose_c(void *hFindFile)
         ((handle)hFindFile)->sh.d = NULL;
     }
 
-    free(hFindFile);
+    x86_free(hFindFile);
 
     return 1;
 }
@@ -934,7 +952,7 @@ void *FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
 
     if (ret->sh.d == INVALID_HANDLE_VALUE)
     {
-        free(ret);
+        x86_free(ret);
         return INVALID_HANDLE_VALUE;
     }
 
@@ -1097,7 +1115,7 @@ void *FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
     state = (find_file_state *) malloc(sizeof(find_file_state));
     if (state == NULL)
     {
-        free(ret);
+        x86_free(ret);
         if (dirinfo != NULL) closedir(dirinfo);
         Winapi_SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return INVALID_HANDLE_VALUE;
@@ -1117,7 +1135,7 @@ void *FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
         if (state->directory == NULL)
         {
             free(state);
-            free(ret);
+            x86_free(ret);
             if (dirinfo != NULL) closedir(dirinfo);
             Winapi_SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             return INVALID_HANDLE_VALUE;
@@ -1131,7 +1149,7 @@ void *FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
             {
                 free(state->directory);
                 free(state);
-                free(ret);
+                x86_free(ret);
                 if (dirinfo != NULL) closedir(dirinfo);
                 Winapi_SetLastError(ERROR_NOT_ENOUGH_MEMORY);
                 return INVALID_HANDLE_VALUE;
@@ -1145,7 +1163,7 @@ void *FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
             if (state->filename != NULL) free(state->filename);
             free(state->directory);
             free(state);
-            free(ret);
+            x86_free(ret);
             if (dirinfo != NULL) closedir(dirinfo);
             Winapi_SetLastError(ERROR_ACCESS_DENIED);
             return INVALID_HANDLE_VALUE;
@@ -1269,7 +1287,7 @@ void *GetCurrentThread_c(void)
 
 uint32_t GetFullPathNameA_c(const char *lpFileName, uint32_t nBufferLength, char *lpBuffer, PTR32(char) *lpFilePart)
 {
-    size_t len;
+    uint32_t len;
     char *p1, *p2;
 
 #ifdef DEBUG_KERNEL32
@@ -1282,11 +1300,11 @@ uint32_t GetFullPathNameA_c(const char *lpFileName, uint32_t nBufferLength, char
         return 0;
     }
 
-    len = strlen(lpFileName);
+    len = (uint32_t)strlen(lpFileName);
 
     if (len + 1 > nBufferLength)
     {
-        return len + 1;
+        return (uint32_t)(len + 1);
     }
 
     if (lpBuffer == NULL)
@@ -1323,7 +1341,7 @@ uint32_t GetFullPathNameA_c(const char *lpFileName, uint32_t nBufferLength, char
         *lpFilePart = p1;
     }
 
-    return len;
+    return (uint32_t)len;
 }
 
 uint32_t GetLastError_c(void)
@@ -1392,7 +1410,7 @@ uint32_t GetPrivateProfileStringA_c(const char *lpAppName, const char *lpKeyName
         if (default_length < nSize)
         {
             strcpy(lpReturnedString, lpDefault);
-            return default_length;
+            return (uint32_t)default_length;
         }
         else
         {
@@ -1438,7 +1456,7 @@ uint32_t GetPrivateProfileStringA_c(const char *lpAppName, const char *lpKeyName
                 {
                     strcpy(lpReturnedString, (char *) &(buf[1]));
                     lpReturnedString += length + 1;
-                    remaining_size -= length + 1;
+                    remaining_size -= (unsigned int)(length + 1);
                 }
                 else
                 {
@@ -1498,7 +1516,7 @@ uint32_t GetPrivateProfileStringA_c(const char *lpAppName, const char *lpKeyName
                     {
                         strcpy(lpReturnedString, (char *) &buf);
                         lpReturnedString += length + 1;
-                        remaining_size -= length + 1;
+                        remaining_size -= (unsigned int)(length + 1);
                     }
                     else
                     {
@@ -1547,7 +1565,7 @@ uint32_t GetPrivateProfileStringA_c(const char *lpAppName, const char *lpKeyName
                     if (length < nSize)
                     {
                         strcpy(lpReturnedString, keyvalue);
-                        return length;
+                        return (uint32_t)length;
                     }
                     else
                     {
@@ -1597,7 +1615,7 @@ uint32_t GetPrivateProfileStringA_c(const char *lpAppName, const char *lpKeyName
         if (default_length < nSize)
         {
             strcpy(lpReturnedString, lpDefault);
-            return default_length;
+            return (uint32_t)default_length;
         }
         else
         {
@@ -1772,7 +1790,7 @@ uint32_t ReadFile_c(void *hFile, void *lpBuffer, uint32_t nNumberOfBytesToRead, 
                     clearerr(f);
                 }
                 bytesreadtotal += bytesread;
-                bytes_to_read -= bytesread;
+                bytes_to_read -= (uint32_t)bytesread;
                 lpBuffer = (void *) (((uintptr_t) lpBuffer) + bytesread);
             }
         }
@@ -1781,7 +1799,7 @@ uint32_t ReadFile_c(void *hFile, void *lpBuffer, uint32_t nNumberOfBytesToRead, 
         {
             if (lpNumberOfBytesRead != NULL)
             {
-                *lpNumberOfBytesRead = bytesreadtotal;
+                *lpNumberOfBytesRead = (uint32_t)bytesreadtotal;
             }
 
             return 1;
@@ -1988,7 +2006,7 @@ uint32_t WriteFile_c(void *hFile, const void *lpBuffer, uint32_t nNumberOfBytesT
                     clearerr(f);
                 }
                 byteswrittentotal += byteswritten;
-                bytes_to_write -= byteswritten;
+                bytes_to_write -= (uint32_t)byteswritten;
                 lpBuffer = (void *) (((uintptr_t) lpBuffer) + byteswritten);
             }
         }
@@ -1997,7 +2015,7 @@ uint32_t WriteFile_c(void *hFile, const void *lpBuffer, uint32_t nNumberOfBytesT
         {
             if (lpNumberOfBytesWritten != NULL)
             {
-                *lpNumberOfBytesWritten = byteswrittentotal;
+                *lpNumberOfBytesWritten = (uint32_t)byteswrittentotal;
             }
 
             return 1;

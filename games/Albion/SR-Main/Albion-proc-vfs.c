@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -40,6 +40,7 @@
 #include "Game_vars.h"
 #include "Albion-proc-vfs.h"
 #include "Albion-proc.h"
+#include "Game_memory.h"
 #include "Game_misc.h"
 #include "Game_thread.h"
 #include "virtualfs.h"
@@ -140,27 +141,6 @@ int32_t Game_access(const char *path, int32_t mode)
     }
 }
 
-int32_t Game_chdir(const char *path)
-{
-    file_entry *new_dir;
-
-#if defined(__DEBUG__)
-    fprintf(stderr, "chdir: path: %s\n", path);
-#endif
-
-    new_dir = vfs_set_current_dir(path);
-
-    if (new_dir != NULL)
-    {
-        return 0;
-    }
-    else
-    {
-        Game_Set_errno_error(ENOENT);
-        return -1;
-    }
-}
-
 char *Game_getcwd(char *buf, int32_t size)
 {
     file_entry *cur_dir;
@@ -174,7 +154,7 @@ char *Game_getcwd(char *buf, int32_t size)
 
     cur_dir = vfs_get_current_dir();
 
-    len = strlen(cur_dir->dos_fullname);
+    len = (int)strlen(cur_dir->dos_fullname);
 
     if (cur_dir->dos_fullname[1] == ':' && cur_dir->dos_fullname[2] == 0)
     {
@@ -195,7 +175,7 @@ char *Game_getcwd(char *buf, int32_t size)
     }
     else
     {
-        buf = (char *) malloc(len + addbackslash + 1);
+        buf = (char *) x86_malloc(len + addbackslash + 1);
 
         if (buf == NULL)
         {
@@ -220,10 +200,11 @@ char *Game_getcwd(char *buf, int32_t size)
     return buf;
 }
 
-FILE *Game_fopen(const char *filename, const char *mode)
+void *Game_fopen(const char *filename, const char *mode)
 {
     char temp_str[MAX_PATH];
-    FILE *ret;
+    FILE *fp;
+    void *ret;
     file_entry *realdir;
     int vfs_err;
 
@@ -237,50 +218,42 @@ FILE *Game_fopen(const char *filename, const char *mode)
     fprintf(stderr, "fopen: real name: %s (%i)\n", (char *) &temp_str, vfs_err);
 #endif
 
-    ret = fopen((char *) &temp_str, mode);
+    fp = fopen((char *) &temp_str, mode);
     Game_Set_errno_val();
 
-    if (vfs_err && ret != NULL)
+    if (fp != NULL)
     {
-        vfs_add_file(realdir, (char *) &temp_str, 0);
-    }
+        if (vfs_err)
+        {
+            vfs_add_file(realdir, (char *) &temp_str, 0);
+        }
 
-    if (ret != NULL)
-    {
+        if (sizeof(void *) > 4)
+        {
+            ret = x86_malloc(sizeof(void *));
+            if (ret != NULL)
+            {
+                *(FILE **)ret = fp;
+            }
+            else
+            {
+                fclose(fp);
+                return NULL;
+            }
+        }
+        else ret = fp;
+
         if (!Game_list_insert(&Game_FopenList, (uintptr_t)ret))
         {
-            fclose(ret);
+            fclose(fp);
+            if (sizeof(void *) > 4)
+            {
+                x86_free(ret);
+            }
             return NULL;
         }
     }
-
-    return ret;
-}
-
-int32_t Game_open(const char *pathname, int32_t flags, uint32_t mode)
-{
-    char temp_str[MAX_PATH];
-    int ret;
-    file_entry *realdir;
-    int vfs_err;
-
-#if defined(__DEBUG__)
-    fprintf(stderr, "open: original name: %s\n", pathname);
-#endif
-
-    vfs_err = vfs_get_real_name(pathname, (char *) &temp_str, &realdir);
-
-#if defined(__DEBUG__)
-    fprintf(stderr, "open: real name: %s (%i)\n", (char *) &temp_str, vfs_err);
-#endif
-
-    ret = open((char *) &temp_str, flags, mode);
-    Game_Set_errno_val();
-
-    if (vfs_err && ret != -1)
-    {
-        vfs_add_file(realdir, (char *) &temp_str, 0);
-    }
+    else ret = NULL;
 
     return ret;
 }
@@ -387,6 +360,29 @@ int32_t Game_rename(const char *oldpath, const char *newpath)
     }
 }
 
+static char *x86_strdup(const char *str)
+{
+    int len;
+    char *result;
+
+    if (str == NULL)
+    {
+        errno = 0;
+        return NULL;
+    }
+
+    len = (int)strlen(str);
+    result = (char *)x86_malloc(len + 1);
+    if (result == NULL)
+    {
+        errno = ENOMEM;
+        return NULL;
+    }
+
+    memcpy(result, str, len + 1);
+    return result;
+}
+
 struct watcom_dirent *Game_opendir(const char *dirname)
 {
     char temp_str[MAX_PATH], orig_directory[MAX_PATH];
@@ -443,7 +439,7 @@ struct watcom_dirent *Game_opendir(const char *dirname)
         }
 
         // allocate and fill return structure
-        ret = (struct watcom_dirent *) malloc(sizeof(struct watcom_dirent));
+        ret = (struct watcom_dirent *) x86_malloc(sizeof(struct watcom_dirent));
 
         if (ret == NULL)
         {
@@ -459,10 +455,10 @@ struct watcom_dirent *Game_opendir(const char *dirname)
 
         ret->d_first = 1;
 
-        ret->d_openpath = strdup(dirname);
+        ret->d_openpath = x86_strdup(dirname);
         if (ret->d_openpath == NULL)
         {
-            free(ret);
+            x86_free(ret);
             Game_Set_errno_error(ENOMEM);
             return NULL;
         }
@@ -568,7 +564,7 @@ struct watcom_dirent *Game_opendir(const char *dirname)
         }
 
         // allocate and fill return structure
-        ret = (struct watcom_dirent *) malloc(sizeof(struct watcom_dirent));
+        ret = (struct watcom_dirent *) x86_malloc(sizeof(struct watcom_dirent));
 
         if (ret == NULL)
         {
@@ -584,20 +580,20 @@ struct watcom_dirent *Game_opendir(const char *dirname)
 
         ret->d_first = 1;
 
-        ret->d_openpath = strdup(dirname);
+        ret->d_openpath = x86_strdup(dirname);
         if (ret->d_openpath == NULL)
         {
-            free(ret);
+            x86_free(ret);
             Game_Set_errno_error(ENOMEM);
             return NULL;
         }
 
-        ret->u.v.pattern = strdup(orig_directory);
+        ret->u.v.pattern = x86_strdup(orig_directory);
 
         if (ret->u.v.pattern == NULL)
         {
             free(ret->d_openpath);
-            free(ret);
+            x86_free(ret);
             Game_Set_errno_error(ENOMEM);
             return NULL;
         }
@@ -717,19 +713,19 @@ int32_t Game_closedir(struct watcom_dirent *dirp)
 
     if (dirp->u.v.pattern != NULL)
     {
-        free(dirp->u.v.pattern);
+        x86_free(dirp->u.v.pattern);
         dirp->u.v.pattern = NULL;
     }
 
     if (dirp->d_openpath != NULL)
     {
-        free(dirp->d_openpath);
+        x86_free(dirp->d_openpath);
         dirp->d_openpath = NULL;
     }
 
     dirp->u.v.realdir = NULL;
 
-    free(dirp);
+    x86_free(dirp);
 
     return 0;
 }

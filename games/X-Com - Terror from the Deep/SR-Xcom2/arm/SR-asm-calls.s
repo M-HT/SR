@@ -60,9 +60,9 @@
 @ 1 param
 .extern Game_ExitMain_Asm
 .extern Game_fclose
-.extern feof
-.extern fflush
-.extern fgetc
+.extern Game_feof
+.extern Game_fflush
+.extern Game_fgetc
 .extern Game_filelength2
 .extern Game_free
 .extern Game_inp
@@ -70,8 +70,8 @@
 .extern Game_time
 @ 2 params
 .extern Game_fopen
-.extern fputc
-.extern fputs
+.extern Game_fputc
+.extern Game_fputs
 .extern Game_outp
 .extern strcat
 .extern strcmp
@@ -82,8 +82,8 @@
 .extern memset
 .extern strncmp
 @ 4 params
-.extern fread
-.extern fwrite
+.extern Game_fread
+.extern Game_fwrite
 .extern Game_int386x
 @ 5 params
 
@@ -400,7 +400,7 @@ SR_feof:
 
 @ eax = FILE *fp
 
-        Game_Call_Asm_Reg1 feof,-1
+        Game_Call_Asm_Reg1 Game_feof,-1
 
 @ end procedure SR_feof
 
@@ -408,7 +408,7 @@ SR_fflush:
 
 @ eax = FILE *fp
 
-        Game_Call_Asm_Reg1 fflush,-1000
+        Game_Call_Asm_Reg1 Game_fflush,-1000
 
 @ end procedure SR_fflush
 
@@ -416,7 +416,7 @@ SR_fgetc:
 
 @ eax = FILE *fp
 
-        Game_Call_Asm_Reg1 fgetc,-1000
+        Game_Call_Asm_Reg1 Game_fgetc,-1000
 
 @ end procedure SR_fgetc
 
@@ -486,7 +486,7 @@ SR_fputc:
 @ eax = int c
 @ edx = FILE *fp
 
-    Game_Call_Asm_Reg2 fputc,-1000
+    Game_Call_Asm_Reg2 Game_fputc,-1000
 
 @ end procedure SR_fputc
 
@@ -500,7 +500,7 @@ SR_fputs:
 @ eax = const char *buf
 @ edx = FILE *fp
 
-@	Game_Call_Asm_Reg2 fputs,-1000
+@	Game_Call_Asm_Reg2 Game_fputs,-1000
         stmfd esp!, {eflags}
 
         mov tmp1, eax
@@ -508,7 +508,7 @@ SR_fputs:
 
         ALIGN_STACK
 
-        bl fputs
+        bl Game_fputs
 
         cmp tmp1, #0
         movGE eax, tmp1
@@ -609,7 +609,7 @@ SR_fread:
 @ ebx = size_t nelem
 @ ecx = FILE *fp
 
-        Game_Call_Asm_Reg4 fread,-1000
+        Game_Call_Asm_Reg4 Game_fread,-1000
 
 @ end procedure SR_fread
 
@@ -620,7 +620,7 @@ SR_fwrite:
 @ ebx = size_t nelem
 @ ecx = FILE *fp
 
-        Game_Call_Asm_Reg4 fwrite,-1000
+        Game_Call_Asm_Reg4 Game_fwrite,-1000
 
 @ end procedure SR_fwrite
 

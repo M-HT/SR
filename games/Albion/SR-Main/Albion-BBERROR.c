@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2023 Roman Pauer
+ *  Copyright (C) 2018-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -39,13 +39,13 @@ static ERROR_ErrorStruct ERROR_errors[20];
 static char ERROR_string_buffer[400];
 static ERROR_OutputFuncPtr ERROR_OutputFunc;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 // todo: make static
 extern uint16_t ERROR_num_errors;
 
 // todo: remove
-#ifdef __cplusplus
-extern "C" {
-#endif
 extern uint32_t Game_RunProcReg1_Asm(void *proc_addr, const char *proc_param1);
 extern uint32_t Game_RunProcReg2_Asm(void *proc_addr, const char *proc_param1, const uint8_t *proc_param2);
 #ifdef __cplusplus
@@ -79,14 +79,14 @@ int32_t ERROR_PushError(ERROR_PrintErrorPtr error_print_error_ptr, const char *e
     if (ERROR_num_errors == 20)
     {
         ERROR_num_errors--;
-        ERROR_PushError(BBERROR_LocalPrintError, "BBERROR Library", strlen("STACK FULL") + 1, (const uint8_t *) "STACK FULL");
+        ERROR_PushError(BBERROR_LocalPrintError, "BBERROR Library", (int32_t)strlen("STACK FULL") + 1, (const uint8_t *) "STACK FULL");
 
         return 1;
     }
 
     if (error_data_len > 16)
     {
-        ERROR_PushError(BBERROR_LocalPrintError, "BBERROR Library", strlen("TOO MUCH DATA") + 1, (const uint8_t *) "TOO MUCH DATA");
+        ERROR_PushError(BBERROR_LocalPrintError, "BBERROR Library", (int32_t)strlen("TOO MUCH DATA") + 1, (const uint8_t *) "TOO MUCH DATA");
 
         return 2;
     }
@@ -111,14 +111,14 @@ int32_t ERROR_PushErrorDOS(ERROR_PrintErrorPtr error_print_error_ptr, const char
     if (ERROR_num_errors == 20)
     {
         ERROR_num_errors--;
-        ERROR_PushError(BBERROR_LocalPrintError, "BBERROR Library", strlen("STACK FULL") + 1, (const uint8_t *) "STACK FULL");
+        ERROR_PushError(BBERROR_LocalPrintError, "BBERROR Library", (int32_t)strlen("STACK FULL") + 1, (const uint8_t *) "STACK FULL");
 
         return 1;
     }
 
     if (error_data_len > 16)
     {
-        ERROR_PushError(BBERROR_LocalPrintError, "BBERROR Library", strlen("TOO MUCH DATA") + 1, (const uint8_t *) "TOO MUCH DATA");
+        ERROR_PushError(BBERROR_LocalPrintError, "BBERROR Library", (int32_t)strlen("TOO MUCH DATA") + 1, (const uint8_t *) "TOO MUCH DATA");
 
         return 2;
     }
@@ -174,8 +174,8 @@ void ERROR_PrintAllErrors(uint32_t flags)
         {
             if (ERROR_errors[index].prefix != NULL)
             {
-                sprintf(ERROR_string_buffer + buflen, "%s: ", ERROR_errors[index].prefix);
-                buflen = strlen(ERROR_string_buffer);
+                snprintf(ERROR_string_buffer + buflen, sizeof(ERROR_string_buffer) - buflen, "%s: ", ERROR_errors[index].prefix);
+                buflen = (int)strlen(ERROR_string_buffer);
             }
         }
 
@@ -184,20 +184,20 @@ void ERROR_PrintAllErrors(uint32_t flags)
             if (ERROR_errors[index].PrintError != NULL)
             {
                 ERROR_errors[index].PrintError(ERROR_string_buffer + buflen, ERROR_errors[index].data);
-                buflen = strlen(ERROR_string_buffer);
+                buflen = (int)strlen(ERROR_string_buffer);
             }
             // todo: remove
             else if (ERROR_errors[index].PrintErrorDOS != NULL)
             {
                 Game_RunProcReg2_Asm((void *)ERROR_errors[index].PrintErrorDOS, ERROR_string_buffer + buflen, ERROR_errors[index].data);
-                buflen = strlen(ERROR_string_buffer);
+                buflen = (int)strlen(ERROR_string_buffer);
             }
         }
 
         if (flags & 0x04)
         {
-            sprintf(ERROR_string_buffer + buflen, "\n");
-            buflen = strlen(ERROR_string_buffer);
+            snprintf(ERROR_string_buffer + buflen, sizeof(ERROR_string_buffer) - buflen, "\n");
+            buflen = (int)strlen(ERROR_string_buffer);
         }
 
         if (flags & 0x20)

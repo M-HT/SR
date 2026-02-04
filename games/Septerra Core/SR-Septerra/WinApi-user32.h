@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -46,8 +46,8 @@ uint32_t GetMessageA_c(void *lpMsg, void *hWnd, uint32_t wMsgFilterMin, uint32_t
 uint32_t GetMessagePos_c(void);
 uint32_t GetMessageTime_c(void);
 int32_t GetSystemMetrics_c(int32_t nIndex);
-void *LoadCursorA_c(void *hInstance, const char *lpCursorName);
-void *LoadIconA_c(void *hInstance, const char *lpIconName);
+void *LoadCursorA_c(void *hInstance, PTR32(const char) lpCursorName);
+void *LoadIconA_c(void *hInstance, PTR32(const char) lpIconName);
 void *LoadImageA_c(void *hinst, const char *lpszName, uint32_t uType, int32_t cxDesired, int32_t cyDesired, uint32_t fuLoad);
 uint32_t MessageBoxA_c(void *hWnd, const char *lpText, const char *lpCaption, uint32_t uType);
 uint32_t OffsetRect_c(void *lprc, int32_t dx, int32_t dy);
@@ -56,7 +56,7 @@ uint32_t PostMessageA_c(void *hWnd, uint32_t Msg, uint32_t wParam, uint32_t lPar
 void PostQuitMessage_c(int32_t nExitCode);
 uint32_t PtInRect_c(const void *lprc, int32_t px, int32_t py);
 uint32_t RegisterClassA_c(void *lpWndClass);
-void *SetCursor_c(void *hCursor);
+void *SetCursor_c(PTR32(void) hCursor);
 uint32_t SetCursorPos_c(int32_t X, int32_t Y);
 void *SetFocus_c(void *hWnd);
 int32_t ShowCursor_c(uint32_t bShow);

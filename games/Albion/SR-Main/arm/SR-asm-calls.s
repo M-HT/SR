@@ -30,9 +30,6 @@
 .extern CLIB_vprintf
 .extern CLIB_vsnprintf
 .extern CLIB_vsprintf
-.extern Game_WaitVerticalRetraceTicks
-.extern Game_open
-.extern Game_openFlags
 
 .extern Game_AIL_mem_use_malloc
 .extern Game_AIL_mem_use_free
@@ -130,39 +127,26 @@
 .extern Game_WaitAfter2ndVerticalRetrace
 .extern Game_WaitFor2ndVerticalRetrace
 @ 1 param
-.extern asctime
-.extern Game_chdir
-.extern close
 .extern Game_closedir
-.extern ctime
+.extern Game_ctime2
 .extern Game_dos_findclose
 .extern Game_dos_findnext
 .extern Game_dos_getvect
 .extern Game_ExitMain_Asm
 .extern Game_fclose
-.extern Game_filelength
-.extern free
 .extern Game_ftime
-.extern getenv
-.extern isatty
-.extern localtime
-.extern malloc
 .extern Game_opendir
 .extern strlen
-.extern Game_tell
-.extern Game_time
 .extern Game_unlink
 .extern Game_WaitTimerTicks
 .extern Game_save_screenshot
 @ 2 params
 .extern Game_fopen
-.extern fputs
+.extern Game_fputs
 .extern Game_getcwd
 .extern Game_outp
 .extern Game_rename
-.extern Game_setbuf
 .extern strchr
-.extern strcmp
 .extern strcpy
 .extern strcspn
 .extern strspn
@@ -170,16 +154,13 @@
 .extern Game_dos_setvect
 @ 3 params
 .extern Game_dos_findfirst
-.extern fgets
-.extern Game_lseek
+.extern Game_fgets
 .extern memcpy
 .extern memmove
 .extern memset
-.extern read
 .extern strncmp
 .extern strncpy
 .extern strncasecmp
-.extern write
 @ 4 params
 .extern Game_int386x
 @ 5 params
@@ -198,8 +179,6 @@
 .global SR_printf
 .global SR__bprintf
 .global SR_sprintf
-.global SR_WaitVerticalRetraceTicks
-.global SR_open
 
 .global SR_AIL_mem_use_malloc
 .global SR_AIL_mem_use_free
@@ -297,10 +276,6 @@
 .global SR_WaitAfter2ndVerticalRetrace
 .global SR_WaitFor2ndVerticalRetrace
 @ 1 param
-.global SR_asctime
-.global SR_chdir
-.global SR___close
-.global SR_j___close
 .global SR_closedir
 .global SR_ctime
 .global SR__dos_findclose
@@ -308,18 +283,10 @@
 .global SR__dos_getvect
 .global SR_exit
 .global SR_fclose
-.global SR_filelength
-.global SR__nfree
 .global SR_ftime
-.global SR_getenv
-.global SR_isatty
-.global SR_localtime
-.global SR__nmalloc
 .global SR_opendir
 .global SR__setjmp
 .global SR_strlen
-.global SR_tell
-.global SR_time
 .global SR_unlink
 .global SR_j_unlink
 .global SR_WaitTimerTicks
@@ -331,9 +298,7 @@
 .global SR_longjmp
 .global SR_outp
 .global SR_rename
-.global SR_setbuf
 .global SR_strchr
-.global SR_strcmp
 .global SR_strcpy
 .global SR_strcspn
 .global SR_strspn
@@ -342,15 +307,12 @@
 @ 3 params
 .global SR__dos_findfirst
 .global SR_fgets
-.global SR_lseek
 .global SR_memcpy
 .global SR_memmove
 .global SR_memset
-.global SR_read
 .global SR_strncmp
 .global SR_strncpy
 .global SR_strnicmp
-.global SR_write
 @ 4 params
 .global SR__vbprintf
 .global SR_int386x
@@ -429,58 +391,6 @@ SR_sprintf:
         Game_Call_Asm_VariableStack2 CLIB_vsprintf,-1
 
 @ end procedure SR_sprintf
-
-SR_WaitVerticalRetraceTicks:
-
-@ [esp +   4] = int ticks
-@ [esp      ] = return address
-
-        Game_Call_Asm_Stack1 Game_WaitVerticalRetraceTicks,-1
-
-@ end procedure SR_WaitVerticalRetraceTicks
-
-SR_open:
-
-@ [esp + 3*4] = ...
-@ [esp + 2*4] = int access
-@ [esp +   4] = const char *path
-@ [esp      ] = return address
-
-
-@ errno_val is set inside Game_open
-
-        stmfd esp!, {eflags}
-
-        ldr tmp1, [esp, #(3*4)]				@ access (flags)
-
-        ALIGN_STACK
-
-        bl Game_openFlags
-
-.ifdef ALLOW_UNALIGNED_STACK
-        mov tmp2, tmp1						@ access (flags)
-
-        ldr tmp1, [esp, #(2*4)]				@ path
-        ldr tmp3, [esp, #(4*4)]				@ ...
-.else
-    @ load original esp value from stack
-        ldr tmpadr, [esp]
-
-        mov tmp2, tmp1						@ access (flags)
-
-        ldr tmp1, [tmpadr, #(2*4)]			@ path
-        ldr tmp3, [tmpadr, #(4*4)]			@ ...
-.endif
-
-        bl Game_open
-
-        RESTORE_STACK
-
-        mov eax, tmp1
-
-        ldmfd esp!, {eflags, eip}
-
-@ end procedure SR_open
 
 SR_AIL_mem_use_malloc:
 
@@ -1287,33 +1197,6 @@ SR_WaitFor2ndVerticalRetrace:
 @ end procedure SR_WaitFor2ndVerticalRetrace
 
 @ 1 param
-SR_asctime:
-
-@ eax = const struct tm *timeptr
-
-        Game_Call_Asm_Reg1 asctime,-1
-
-@ end procedure SR_asctime
-
-SR_chdir:
-
-@ eax = const char *path
-
-@ errno_val is set inside Game_chdir
-
-        Game_Call_Asm_Reg1 Game_chdir,-1
-
-@ end procedure SR_chdir
-
-SR___close:
-SR_j___close:
-
-@ eax = int handle
-
-        Game_Call_Asm_Reg1 close,-1000
-
-@ end procedure SR___close
-
 SR_closedir:
 
 @ eax = struct dirent *dirp
@@ -1328,7 +1211,21 @@ SR_ctime:
 
 @ eax = const time_t *timer
 
-        Game_Call_Asm_Reg1 ctime,-1
+        ;Game_Call_Asm_Reg1 ctime,-1
+        stmfd esp!, {eflags}
+
+        mov tmp1, eax
+        LDR tmp2, =asctime_buffer
+        mov tmp3, #28
+
+        ALIGN_STACK
+
+        bl Game_ctime2
+        mov eax, tmp1
+
+        RESTORE_STACK
+
+        ldmfd esp!, {eflags, eip}
 
 @ end procedure SR_ctime
 
@@ -1389,22 +1286,6 @@ SR_fclose:
 
 @ end procedure SR_fclose
 
-SR_filelength:
-
-@ eax = int handle
-
-        Game_Call_Asm_Reg1 Game_filelength,-1000
-
-@ end procedure SR_filelength
-
-SR__nfree:
-
-@ eax = void __near *ptr
-
-        Game_Call_Asm_Reg1 free,-1
-
-@ end procedure SR__nfree
-
 SR_ftime:
 
 @ eax = struct timeb *timeptr
@@ -1412,38 +1293,6 @@ SR_ftime:
         Game_Call_Asm_Reg1 Game_ftime,-1
 
 @ end procedure SR_ftime
-
-SR_getenv:
-
-@ eax = const char *name
-
-        Game_Call_Asm_Reg1 getenv,-1
-
-@ end procedure SR_getenv
-
-SR_isatty:
-
-@ eax = int handle
-
-        Game_Call_Asm_Reg1 isatty,-1000
-
-@ end procedure SR_isatty
-
-SR_localtime:
-
-@ eax = const time_t *timer
-
-        Game_Call_Asm_Reg1 localtime,-1
-
-@ end procedure SR_localtime
-
-SR__nmalloc:
-
-@ eax = size_t size
-
-        Game_Call_Asm_Reg1 malloc,-1
-
-@ end procedure SR__nmalloc
 
 SR_opendir:
 
@@ -1500,22 +1349,6 @@ SR_strlen:
 
 @ end procedure SR_strlen
 
-SR_tell:
-
-@ eax = int handle
-
-        Game_Call_Asm_Reg1 Game_tell,-1000
-
-@ end procedure SR_tell
-
-SR_time:
-
-@ eax = time_t *tloc
-
-        Game_Call_Asm_Reg1 Game_time,-1
-
-@ end procedure SR_time
-
 SR_unlink:
 SR_j_unlink:
 
@@ -1565,7 +1398,7 @@ SR_fputs:
 @ eax = const char *buf
 @ edx = FILE *fp
 
-@	Game_Call_Asm_Reg2 fputs,-1000
+@	Game_Call_Asm_Reg2 Game_fputs,-1000
         stmfd esp!, {eflags}
 
         mov tmp1, eax
@@ -1573,7 +1406,7 @@ SR_fputs:
 
         ALIGN_STACK
 
-        bl fputs
+        bl Game_fputs
 
         movS eax, tmp1
         movEQ eax, #1
@@ -1662,15 +1495,6 @@ SR_rename:
 
 @ end procedure SR_rename
 
-SR_setbuf:
-
-@ eax = FILE *fp
-@ edx = char *buf
-
-        Game_Call_Asm_Reg2 Game_setbuf,-1000
-
-@ end procedure SR_setbuf
-
 SR_strchr:
 
 @ eax = const char *s
@@ -1679,15 +1503,6 @@ SR_strchr:
         Game_Call_Asm_Reg2 strchr,-1
 
 @ end procedure SR_strchr
-
-SR_strcmp:
-
-@ eax = const char *s1
-@ edx = const char *s2
-
-        Game_Call_Asm_Reg2 strcmp,-1
-
-@ end procedure SR_strcmp
 
 SR_strcpy:
 
@@ -1757,19 +1572,9 @@ SR_fgets:
 @ edx = int n
 @ ebx = FILE *fp
 
-        Game_Call_Asm_Reg3 fgets,-1000
+        Game_Call_Asm_Reg3 Game_fgets,-1000
 
 @ end procedure SR_fgets
-
-SR_lseek:
-
-@ eax = int handle
-@ edx = long int offset
-@ ebx = int origin
-
-        Game_Call_Asm_Reg3 Game_lseek,-1000
-
-@ end procedure SR_lseek
 
 SR_memcpy:
 
@@ -1801,16 +1606,6 @@ SR_memset:
 
 @ end procedure SR_memset
 
-SR_read:
-
-@ eax = int handle
-@ edx = void *buffer
-@ ebx = unsigned len
-
-        Game_Call_Asm_Reg3 read,-1000
-
-@ end procedure SR_read
-
 SR_strncmp:
 
 @ eax = const char *s1
@@ -1840,16 +1635,6 @@ SR_strnicmp:
         Game_Call_Asm_Reg3 strncasecmp,-1
 
 @ end procedure SR_strnicmp
-
-SR_write:
-
-@ eax = int handle
-@ edx = void *buffer
-@ ebx = unsigned len
-
-        Game_Call_Asm_Reg3 write,-1
-
-@ end procedure SR_write
 
 @ 4 params
 SR__vbprintf:
@@ -1900,3 +1685,8 @@ SR__splitpath:
         Game_Call_Asm_Reg5 Game_splitpath,-1
 
 @ end procedure SR__splitpath
+
+
+.section .bss
+asctime_buffer:
+.skip 28

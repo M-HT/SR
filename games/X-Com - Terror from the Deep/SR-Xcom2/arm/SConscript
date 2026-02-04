@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016-2023 Roman Pauer
+#  Copyright (C) 2016-2026 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -20,6 +20,7 @@
 #  SOFTWARE.
 #
 
+import os
 import re
 
 include_re = re.compile(r'^.include\s+"(\S+)"\r?$', re.M)
@@ -28,7 +29,7 @@ def asmfile_scan(node, env, path):
     contents = node.get_text_contents()
     includes = include_re.findall(contents)
     if len(includes) > 0:
-        dirparts = node.dir.path.split('/')
+        dirparts = node.dir.path.split(os.sep)
         if len(dirparts) >= 2 and dirparts[0] == 'arm':
             parentdir = node.Dir('..')
             includes = ['../' + include if not node.File(include).exists() and parentdir.File(include).exists() else include for include in includes]

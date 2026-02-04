@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2019-2025 Roman Pauer
+#  Copyright (C) 2019-2026 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -33,7 +33,7 @@ def llasmfile_scan(node, env, path):
     contents = node.get_text_contents()
     includes = llasm_include_re.findall(contents)
     if len(includes) > 0:
-        dirparts = node.dir.path.split('/')
+        dirparts = node.dir.path.split(os.sep)
         if len(dirparts) >= 2 and dirparts[0] == 'llasm':
             parentdir = node.Dir('..')
             includes = ['../' + include if not node.File(include).exists() and parentdir.File(include).exists() else include for include in includes]
@@ -64,6 +64,8 @@ else:
         if path_dir not in env_path:
             env_path.append(path_dir)
 env['ENV']['PATH'] = os.pathsep.join(env_path)
+if env['CC'] == 'cl':
+    env.Append(LLASMFLAGS = ' -func-name strcasecmp=_stricmp')
 
 obj = env.Object(Glob('*.c'))
 

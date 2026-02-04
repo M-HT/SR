@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -91,8 +91,16 @@ static int zlib_state = 0;
 #endif
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern uint8_t loc_17E164[1024];
 extern uint16_t loc_182010;
+
+#ifdef __cplusplus
+}
+#endif
 
 static INLINE uint8_t *write_16be(uint8_t *ptr, uint16_t value)
 {
@@ -954,6 +962,7 @@ void Game_save_screenshot(const char *filename)
     uint8_t *screenshot_src, *buffer, *curptr, *chunk_size_ptr[2];
     uint32_t *buf_scaled;
     unsigned int width, height, width_in_file, palette_index;
+    void *stream;
     FILE *f;
     int image_mode, DrawOverlay;
     const char *extension;
@@ -1129,7 +1138,8 @@ void Game_save_screenshot(const char *filename)
     {
         static int lastnum = 0;
 
-        filename2 = (char *) malloc(10 + 4 + 1 + 3 + 1);
+#define MAX_FILENAME (10 + 4 + 1 + 3 + 1)
+        filename2 = (char *) malloc(MAX_FILENAME);
         if (filename2 == NULL)
         {
             if (buf_scaled != NULL) free(buf_scaled);
@@ -1139,7 +1149,7 @@ void Game_save_screenshot(const char *filename)
 
         if (lastnum != 0)
         {
-            sprintf(filename2, "Screenshot%04d%s", lastnum, extension);
+            snprintf(filename2, MAX_FILENAME, "Screenshot%04d%s", lastnum, extension);
             lastnum++;
 
             // check if file exists
@@ -1160,7 +1170,7 @@ void Game_save_screenshot(const char *filename)
             HANDLE hFindFile;
             WIN32_FIND_DATAA FindFileData;
 
-            sprintf(filename2, "Screenshot*%s", extension);
+            snprintf(filename2, MAX_FILENAME, "Screenshot*%s", extension);
 
             hFindFile = FindFirstFileA(filename2, &FindFileData);
             if (hFindFile != INVALID_HANDLE_VALUE)
@@ -1209,9 +1219,10 @@ void Game_save_screenshot(const char *filename)
 #endif
             // todo: find lastnum
 
-            sprintf(filename2, "Screenshot%04d%s", lastnum, extension);
+            snprintf(filename2, MAX_FILENAME, "Screenshot%04d%s", lastnum, extension);
             lastnum++;
         }
+#undef MAX_FILENAME
     }
     else
     {
@@ -1310,7 +1321,7 @@ void Game_save_screenshot(const char *filename)
         curptr = write_16be(curptr, (image_mode)?480:((Game_ScreenshotFormat == 0)?200:240));
 
         // write "BMHD" chunk size (32-bit Big Endian)
-        write_32be(chunk_size_ptr[1], (curptr - chunk_size_ptr[1]) - 4);
+        write_32be(chunk_size_ptr[1], (uint32_t)(curptr - chunk_size_ptr[1]) - 4);
 
         // write "CMAP" chunk id
         memcpy(curptr, "CMAP", 4);
@@ -1330,7 +1341,7 @@ void Game_save_screenshot(const char *filename)
         }
 
         // write "CMAP" chunk size (32-bit Big Endian)
-        write_32be(chunk_size_ptr[1], (curptr - chunk_size_ptr[1]) - 4);
+        write_32be(chunk_size_ptr[1], (uint32_t)(curptr - chunk_size_ptr[1]) - 4);
 
         // write "BODY" chunk id
         memcpy(curptr, "BODY", 4);
@@ -1758,7 +1769,7 @@ void Game_save_screenshot(const char *filename)
 
         if (Game_ScreenshotFormat == 5)
         {
-            curptr = fill_png_pixel_data_advanced(buf_scaled, width_in_file * height + (2000 - 16) - (curptr - buffer), curptr);
+            curptr = fill_png_pixel_data_advanced(buf_scaled, width_in_file * height + (2000 - 16) - (int)(curptr - buffer), curptr);
             if (curptr == NULL)
             {
                 if (filename2 != NULL) free(filename2);
@@ -1791,7 +1802,7 @@ void Game_save_screenshot(const char *filename)
 #endif
     if (Game_ScreenshotFormat == 5)
     {
-        curptr = fill_png_pixel_data(screenshot_src, image_mode, DrawOverlay, width_in_file * height + (2000 - 16) - (curptr - buffer), curptr);
+        curptr = fill_png_pixel_data(screenshot_src, image_mode, DrawOverlay, width_in_file * height + (2000 - 16) - (int)(curptr - buffer), curptr);
         if (curptr == NULL)
         {
             if (filename2 != NULL) free(filename2);
@@ -2252,10 +2263,10 @@ void Game_save_screenshot(const char *filename)
     if ((Game_ScreenshotFormat == 0) || (Game_ScreenshotFormat == 1) || (Game_ScreenshotFormat == 2))
     {
         // write "BODY" chunk size (32-bit Big Endian)
-        write_32be(chunk_size_ptr[1], (curptr - chunk_size_ptr[1]) - 4);
+        write_32be(chunk_size_ptr[1], (uint32_t)(curptr - chunk_size_ptr[1]) - 4);
 
         // write "FORM" chunk size (32-bit Big Endian)
-        write_32be(chunk_size_ptr[0], (curptr - chunk_size_ptr[0]) - 4);
+        write_32be(chunk_size_ptr[0], (uint32_t)(curptr - chunk_size_ptr[0]) - 4);
     }
     else if (Game_ScreenshotFormat == 4)
     {
@@ -2265,10 +2276,10 @@ void Game_save_screenshot(const char *filename)
     else if (Game_ScreenshotFormat == 5)
     {
         // write "IDAT" chunk size
-        write_32be(chunk_size_ptr[0], (curptr - chunk_size_ptr[0]) - 8);
+        write_32be(chunk_size_ptr[0], (uint32_t)(curptr - chunk_size_ptr[0]) - 8);
 
         // write "IDAT" chunk crc32
-        curptr = write_32be(curptr, zlib_crc32(0, chunk_size_ptr[0] + 4, curptr - (chunk_size_ptr[0] + 4)));
+        curptr = write_32be(curptr, zlib_crc32(0, chunk_size_ptr[0] + 4, (uInt)(curptr - (chunk_size_ptr[0] + 4))));
 
 
         // "IEND" chunk
@@ -2287,15 +2298,21 @@ void Game_save_screenshot(const char *filename)
     if (Game_ScreenshotAutomaticFilename)
     {
         f = fopen(filename2, "wb");
+        if (f != NULL)
+        {
+            fwrite(buffer, 1, curptr - buffer, f);
+            fclose(f);
+        }
     }
     else
     {
-        f = Game_fopen((filename2 != NULL)?filename2:filename, "wb");
-    }
-    if (f != NULL)
-    {
-        fwrite(buffer, 1, curptr - buffer, f);
-        Game_fclose(f);
+        stream = Game_fopen((filename2 != NULL)?filename2:filename, "wb");
+        if (stream != NULL)
+        {
+            f = (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream;
+            fwrite(buffer, 1, curptr - buffer, f);
+            Game_fclose(stream);
+        }
     }
 
     if (filename2 != NULL) free(filename2);

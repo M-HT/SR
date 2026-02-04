@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -44,7 +44,7 @@ extern int32_t Patch_PreselectCharacters;
 
 static char *trim_string(char *buf)
 {
-    int len;
+    size_t len;
 
     while (*buf == ' ') buf++;
 

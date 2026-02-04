@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "Game-Config.h"
+#include "Game-Memory.h"
 #include "platform.h"
 
 #if (SDL_MAJOR_VERSION == 1) && SDL_VERSION_ATLEAST(1, 2, 50)
@@ -78,27 +79,18 @@ extern void init_sleepmode(void);
 #endif
 
 
-static char command_line[16];
+static char *command_line;
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifdef _WIN32
-extern int CALLBACK WinMain_(
-  HINSTANCE hInstance,
-  HINSTANCE hPrevInstance,
-  LPSTR     lpCmdLine,
-  int       nCmdShow
-);
-#else
 extern int WinMain_asm(
   void *hInstance,
   void *hPrevInstance,
   char *lpCmdLine,
   int   nCmdShow
 );
-#endif
 #ifdef __cplusplus
 }
 #endif
@@ -113,6 +105,13 @@ static void apply_cheats(void)
 
 static void prepare_command_line(void)
 {
+    command_line = (char *) x86_malloc(16);
+    if (command_line == NULL)
+    {
+        fprintf(stderr, "Error: Not enough memory\n");
+        exit(1);
+    }
+
     command_line[0] = 0;
 
     if (Option_MovieResolution == 0)
@@ -182,7 +181,15 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Error: The program wasn't compiled correctly for %i-bits\n", (int) (8 * sizeof(void*)));
         return 0;
     }
-    else if (sizeof(void*) != 4)
+
+#ifdef PTROFS_64BIT
+    if (0 != initialize_pointer_offset())
+    {
+        fprintf(stderr, "Error initializing pointer offset\n");
+        return 1;
+    }
+#else
+    if (sizeof(void*) != 4)
     {
         if ((uintptr_t)argv > UINT32_MAX)
         {
@@ -190,6 +197,19 @@ int main(int argc, char *argv[])
             return 0;
         }
     }
+#endif
+
+#if !defined(x86_malloc)
+    if (0 != x86_init_malloc())
+    {
+#ifdef _WIN32
+        MessageBoxA(NULL, "Error initializing memory allocator", "Error", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
+#else
+        eprintf("Error initializing memory allocator");
+#endif
+        exit(1);
+    }
+#endif
 
     tzset();
 
@@ -229,12 +249,10 @@ int main(int argc, char *argv[])
 
     init_security_cookie();
 
-#ifdef _WIN32
-    return WinMain_((void *)1, NULL, command_line, 5); // 5 = SW_SHOW
-#else
+#if !defined(_WIN32)
     Winapi_InitTicks();
+#endif
 
     return WinMain_asm((void *)1, NULL, command_line, 5); // 5 = SW_SHOW
-#endif
 }
 

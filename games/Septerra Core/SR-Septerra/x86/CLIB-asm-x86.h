@@ -48,7 +48,6 @@ void _CIsqrt_c(double *num);
 void _CIfmod_c(double *nums);
 void _CItan_c(double *num);
 void _CIpow_c(double *nums);
-void _CIlog_c(double *num);
 
 #ifdef __cplusplus
 }

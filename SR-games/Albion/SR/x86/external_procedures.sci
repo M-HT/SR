@@ -9,8 +9,6 @@ loc_854BD,SR_fprintf
 loc_837FE,SR_printf
 loc_81F42,SR__bprintf
 loc_ABCEC,SR_sprintf
-loc_ACA99,SR_WaitVerticalRetraceTicks
-loc_AA8CF,SR_open
 
 loc_8156B,SR_AIL_mem_use_malloc
 loc_8157B,SR_AIL_mem_use_free
@@ -104,28 +102,16 @@ loc_F1928,SR_WaitForVerticalRetrace
 loc_F1932,SR_WaitAfter2ndVerticalRetrace
 loc_F1946,SR_WaitFor2ndVerticalRetrace
 
-loc_85618,SR_asctime
-loc_AC1FB,SR_chdir
-loc_AC1C9,SR___close
-loc_AABC1,SR_j___close
 loc_AA5CC,SR_closedir
 loc_85613,SR_ctime
 loc_97689,SR__dos_findclose
 loc_9766D,SR__dos_findnext
 loc_AC2BB,SR__dos_getvect
 loc_85625,SR_fclose
-loc_AABC6,SR_filelength
-loc_AA71D,SR__nfree
 loc_8326A,SR_ftime
-loc_ACD17,SR_getenv
-loc_ACD71,SR_isatty
-loc_AC0C7,SR_localtime
-loc_AA63A,SR__nmalloc
 loc_AA585,SR_opendir
 loc_8516C,SR__setjmp
 loc_91256,SR_strlen
-loc_AC247,SR_tell
-loc_ACDAC,SR_time
 loc_C198F,SR_unlink
 loc_9532B,SR_j_unlink
 loc_8AB50,SR_WaitTimerTicks
@@ -137,9 +123,7 @@ loc_94EF0,SR_getcwd
 loc_851A1,SR_longjmp
 loc_AC2AD,SR_outp
 loc_95330,SR_rename
-loc_ACD8F,SR_setbuf
 loc_950E3,SR_strchr
-loc_AAB20,SR_strcmp
 loc_94F7A,SR_strcpy
 loc_9509F,SR_strcspn
 loc_9505B,SR_strspn
@@ -148,15 +132,12 @@ loc_AC2EF,SR__dos_setvect
 
 loc_97650,SR__dos_findfirst
 loc_94FF8,SR_fgets
-loc_AA77B,SR_lseek
 loc_92BCD,SR_memcpy
 loc_9435A,SR_memmove
 loc_94FE0,SR_memset
-loc_AA7BC,SR_read
 loc_9665A,SR_strncmp
 loc_92BF2,SR_strncpy
 loc_9126F,SR_strnicmp
-loc_AAC03,SR_write
 
 loc_ABDB2,SR_int386x
 loc_81F19,SR__vbprintf

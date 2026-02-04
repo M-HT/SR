@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -61,6 +61,15 @@
 #define BH (regs->h.bh)
 #define CH (regs->h.ch)
 #define DH (regs->h.dh)
+
+#define PTR_EAX (regs->p.eax)
+#define PTR_EBX (regs->p.ebx)
+#define PTR_ECX (regs->p.ecx)
+#define PTR_EDX (regs->p.edx)
+
+#define PTR_ESI (regs->p.esi)
+#define PTR_EDI (regs->p.edi)
+#define PTR_EBP (regs->p.ebp)
 
 #define DS (regs->w.ds)
 #define ES (regs->w.es)

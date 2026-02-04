@@ -62,18 +62,21 @@ int32_t CLIB_vprintf(const char *format, uint32_t *ap)
 int32_t CLIB_vfprintf(void *stream, const char *format, uint32_t *ap)
 {
     int res;
+    FILE *fp;
+
+    fp = (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream;
 
 #if defined(__DEBUG__) && defined(DEBUG_CLIB)
-    if (stream != stderr)
+    if (fp != stderr)
     {
-        fprintf(stderr, "vfprintf: 0x%" PRIxPTR ", 0x%" PRIxPTR " (%s) - (", (uintptr_t) stream, (uintptr_t) format, format);
+        fprintf(stderr, "vfprintf: 0x%" PRIxPTR ", 0x%" PRIxPTR ", 0x%" PRIxPTR " (%s) - (", (uintptr_t) stream, (uintptr_t) fp, (uintptr_t) format, format);
     }
 #endif
 
-    res = vfctprintf_x86(file_out, stream, format, ap);
+    res = vfctprintf_x86(file_out, fp, format, ap);
 
 #if defined(__DEBUG__) && defined(DEBUG_CLIB)
-    if (stream != stderr)
+    if (fp != stderr)
     {
         fprintf(stderr, ") %i\n", res);
     }

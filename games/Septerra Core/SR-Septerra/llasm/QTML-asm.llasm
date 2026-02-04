@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -26,11 +26,11 @@ include asm-calls.llinc
 func InitializeQTML_c flag
 funcv TerminateQTML_c
 
-func CreatePortAssociation_c *theWnd, *storage, flags
+funcp CreatePortAssociation_c *theWnd, *storage, flags
 funcv DestroyPortAssociation_c *cgp
 
 funcv SetGWorld_c *port, *gdh
-func c2pstr_c *aStr
+funcp c2pstr_c *aStr
 func PtrToHand_c *srcPtr, *dstHndl, size
 
 func FSMakeFSSpec_c vRefNum, dirID, *fileName, *spec
@@ -47,12 +47,12 @@ func OpenMovieFile_c *fileSpec, *resRefNum, permission
 func CloseMovieFile_c resRefNum
 func NewMovieFromFile_c *theMovie, resRefNum, *resId, *resName, newMovieFlags, *dataRefWasChanged
 funcv GetMovieBox_c *theMovie, *boxRect
-func NewMovieController_c *theMovie, *movieRect, someFlags
+funcp NewMovieController_c *theMovie, *movieRect, someFlags
 funcv DisposeMovieController_c *mc
 func QTRegisterAccessKey_c *accessKeyType, flags, *accessKey
 func QTUnregisterAccessKey_c *accessKeyType, flags, *accessKey
-func MCIsPlayerEvent_c *mc, *e
-func MCDoAction_c *mc, action, *params
+funcp MCIsPlayerEvent_c *mc, *e
+funcp MCDoAction_c *mc, action, *params
 
 proc InitializeQTML_asm2c public
 

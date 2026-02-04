@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,6 @@
 #define _FILE_OFFSET_BITS 64
 #define _TIME_BITS 64
 #include <string.h>
-#include <malloc.h>
 #include <stdlib.h>
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 #include <direct.h>
@@ -65,6 +64,7 @@
 #include "Warcraft-music-midiplugin.h"
 #include "Warcraft-music-midiplugin2.h"
 #include "Game_config.h"
+#include "Game_memory.h"
 #include "Game_scalerplugin.h"
 #include "Game_thread.h"
 #include "Game_virtualkeyboard.h"
@@ -810,15 +810,6 @@ void Game_CleanState(int imm)
     int i;
     SDL_Event event;
 
-    for (i = 0; i < 256; i++)
-    {
-        if (Game_AllocatedMemory[i] != NULL)
-        {
-            free(Game_AllocatedMemory[i]);
-            Game_AllocatedMemory[i] = NULL;
-        }
-    }
-
     for (i = 0; i < GAME_SAMPLE_CACHE_SIZE; i++)
     {
         if (Game_SampleCache[i] != NULL)
@@ -829,7 +820,6 @@ void Game_CleanState(int imm)
     }
 
     Game_ScreenWindow = Game_FrameBuffer;
-    Game_NextMemory = 0;
 
     Game_MQueueWrite = 0;
     Game_MQueueRead = 0;
@@ -938,15 +928,24 @@ static void Game_Cleanup(void)
         Game_DisplaySem = NULL;
     }
 
-    /*if (Game_ScreenWindow != NULL)
+    if (sizeof(void *) > 4)
     {
-        free(Game_ScreenWindow);
-        Game_ScreenWindow = NULL;
-    }*/
+        if (Game_stdin != NULL)
+        {
+            x86_free(Game_stdin);
+            Game_stdin = NULL;
+        }
+    }
+
+    if (Game_samples != NULL)
+    {
+        x86_free(Game_samples);
+        Game_samples = NULL;
+    }
 
     if (Game_FrameBuffer != NULL)
     {
-        free(Game_FrameBuffer);
+        x86_free(Game_FrameBuffer);
         Game_FrameBuffer = NULL;
     }
 
@@ -1006,7 +1005,6 @@ static int Game_Initialize(void)
 
     Game_FrameBuffer = NULL;
     Game_ScreenWindow = NULL;
-    memset(&Game_AllocatedMemory, 0, sizeof(Game_AllocatedMemory));
 
     Game_TimerRunning = 0;
     Game_TimerTick = 0;
@@ -1038,7 +1036,12 @@ static int Game_Initialize(void)
 
     memset(&Game_SampleCache, 0, sizeof(Game_SampleCache));
     memset(&Game_channels, 0, sizeof(Game_channels));
-    memset(&Game_samples, 0, sizeof(Game_samples));
+    Game_samples = NULL;
+
+    if ((sizeof(void *) > 4))
+    {
+        Game_stdin = NULL;
+    }
 
     Display_ChangeMode = 0;
 
@@ -1144,7 +1147,7 @@ static int Game_Initialize(void)
         return -2;
     }
 
-    Game_FrameBuffer = (uint8_t *) malloc(320*200);
+    Game_FrameBuffer = (uint8_t *) x86_malloc(320*200);
     if (Game_FrameBuffer == NULL)
     {
         fprintf(stderr, "Error: Not enough memory\n");
@@ -1152,12 +1155,27 @@ static int Game_Initialize(void)
         return -3;
     }
 
-/*	Game_ScreenWindow = (uint8_t *) malloc(65536);
-    if (Game_ScreenWindow == NULL)
+    Game_samples = (AIL_sample *) x86_calloc(GAME_SAMPLES_MAXIMUM, sizeof(AIL_sample));
+    if (Game_samples == NULL)
     {
         fprintf(stderr, "Error: Not enough memory\n");
-        return -4;
-    }*/
+        Game_Cleanup();
+        return -3;
+    }
+
+    if (sizeof(void *) > 4)
+    {
+        Game_stdin = x86_malloc(3 * sizeof(void *));
+        if (Game_stdin == NULL)
+        {
+            fprintf(stderr, "Error: Not enough memory\n");
+            Game_Cleanup();
+            return -3;
+        }
+
+        Game_stdout = (void *)(sizeof(void *) + (uintptr_t)(void*)Game_stdin);
+        Game_stderr = (void *)(2 * sizeof(void *) + (uintptr_t)(void*)Game_stdin);
+    }
 
     Game_DisplaySem = SDL_CreateSemaphore(0);
     if (Game_DisplaySem == NULL)
@@ -1185,9 +1203,18 @@ static int Game_Initialize(void)
 
     Game_BuildRTable();
 
-    Game_stdin = stdin;
-    Game_stdout = stdout;
-    Game_stderr = stderr;
+    if ((sizeof(void *) > 4))
+    {
+        *(FILE **)(void *)Game_stdin = stdin;
+        *(FILE **)(void *)Game_stdout = stdout;
+        *(FILE **)(void *)Game_stderr = stderr;
+    }
+    else
+    {
+        Game_stdin = stdin;
+        Game_stdout = stdout;
+        Game_stderr = stderr;
+    }
 
     Game_Sound = 1;
     Game_Music = 1;
@@ -1871,23 +1898,23 @@ static void Game_Event_Loop(void)
 
                             SDL_GetMouseState(&mousex, &mousey);
                         #if SDL_VERSION_ATLEAST(2,0,0)
-                            SDL_WarpMouseInWindow(Game_Window, mousex + (intptr_t) event.user.data1, mousey + (intptr_t) event.user.data2);
+                            SDL_WarpMouseInWindow(Game_Window, mousex + (int)(intptr_t) event.user.data1, mousey + (int)(intptr_t) event.user.data2);
                         #else
-                            SDL_WarpMouse(mousex + (intptr_t) event.user.data1, mousey + (intptr_t) event.user.data2);
+                            SDL_WarpMouse(mousex + (int)(intptr_t) event.user.data1, mousey + (int)(intptr_t) event.user.data2);
                         #endif
                         }
                         break;
                     case EC_MOUSE_SET:
                         {
                         #if SDL_VERSION_ATLEAST(2,0,0)
-                            SDL_WarpMouseInWindow(Game_Window, (intptr_t) event.user.data1, (intptr_t) event.user.data2);
+                            SDL_WarpMouseInWindow(Game_Window, (int)(intptr_t) event.user.data1, (int)(intptr_t) event.user.data2);
                         #else
-                            SDL_WarpMouse((intptr_t) event.user.data1, (intptr_t) event.user.data2);
+                            SDL_WarpMouse((int)(intptr_t) event.user.data1, (int)(intptr_t) event.user.data2);
                         #endif
                         }
                         break;
                     case EC_DELAY:
-                        SDL_Delay((intptr_t) event.user.data1);
+                        SDL_Delay((Uint32)(uintptr_t) event.user.data1);
                         break;
                         // case EC_DELAY:
 
@@ -1905,6 +1932,22 @@ static void Game_Event_Loop(void)
 
 int main (int argc, char *argv[])
 {
+#ifdef PTROFS_64BIT
+    if (0 != initialize_pointer_offset())
+    {
+        fprintf(stderr, "Error initializing pointer offset\n");
+        return 1;
+    }
+#endif
+
+#if !defined(x86_malloc)
+    if (0 != x86_init_malloc())
+    {
+        fprintf(stderr, "Error initializing memory allocator\n");
+        return 1;
+    }
+#endif
+
     Game_ConfigFilename[0] = 0;
     Game_Directory[0] = 0;
 
@@ -1972,6 +2015,10 @@ int main (int argc, char *argv[])
     Cleanup_Input();
     Cleanup_Audio();
     Cleanup_Display();
+
+#if !defined(x86_malloc)
+    x86_deinit_malloc();
+#endif
 
     return Game_ExitCode;
 }

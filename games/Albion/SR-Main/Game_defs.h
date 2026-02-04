@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -124,7 +124,7 @@ typedef enum {
 
 #pragma pack(1)
 
-typedef struct PACKED _Game_DPMIDWORDREGS_ {
+typedef struct _Game_DPMIDWORDREGS_ {
   uint32_t edi;
   uint32_t esi;
   uint32_t ebp;
@@ -143,7 +143,7 @@ typedef struct PACKED _Game_DPMIDWORDREGS_ {
   uint16_t ss;
 } Game_DPMIDWORDREGS;
 
-typedef struct PACKED _Game_DPMIWORDREGS_ {
+typedef struct _Game_DPMIWORDREGS_ {
   uint16_t di, _upper_di;
   uint16_t si, _upper_si;
   uint16_t bp, _upper_bp;
@@ -162,7 +162,7 @@ typedef struct PACKED _Game_DPMIWORDREGS_ {
   uint16_t ss;
 } Game_DPMIWORDREGS;
 
-typedef struct PACKED _Game_DPMIBYTEREGS_ {
+typedef struct _Game_DPMIBYTEREGS_ {
   uint16_t di, _upper_di;
   uint16_t si, _upper_si;
   uint16_t bp, _upper_bp;
@@ -189,10 +189,22 @@ typedef struct PACKED _Game_DPMIBYTEREGS_ {
   uint16_t ss;
 } Game_DPMIBYTEREGS;
 
-typedef union PACKED _Game_DPMIREGS_ {
+typedef struct _Game_DPMIPTR32REGS_ {
+  PTR32_ALIGN(void, 1) edi;
+  PTR32_ALIGN(void, 1) esi;
+  PTR32_ALIGN(void, 1) ebp;
+  PTR32_ALIGN(void, 1) reserved;
+  PTR32_ALIGN(void, 1) ebx;
+  PTR32_ALIGN(void, 1) edx;
+  PTR32_ALIGN(void, 1) ecx;
+  PTR32_ALIGN(void, 1) eax;
+} Game_DPMIPTR32REGS;
+
+typedef union _Game_DPMIREGS_ {
   Game_DPMIDWORDREGS d;
   Game_DPMIWORDREGS w;
   Game_DPMIBYTEREGS h;
+  Game_DPMIPTR32REGS p;
 } Game_DPMIREGS;
 
 #pragma pack()
@@ -208,6 +220,7 @@ typedef union _Game_register_ {
     struct {
         uint8_t l, h, l2, h2;
     } b;
+    PTR32(void) p;
 } Game_register;
 
 
@@ -252,7 +265,7 @@ typedef struct _Game_sample {
     uint32_t len, len_cvt, time;
     int32_t playback_rate;	/* Hz */
     uint32_t orig_data[7];
-    uint8_t data[];
+    uint8_t data;
 } Game_sample;
 
 

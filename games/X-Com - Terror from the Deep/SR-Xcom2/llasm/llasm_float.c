@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -374,7 +374,7 @@ EXTERNC int32_t x87_fist_int32(CPU)
             }
             else
             {
-                ival = 0x80000000;
+                ival = (int32_t) 0x80000000;
             }
             return ival;
         }
@@ -390,7 +390,7 @@ EXTERNC int32_t x87_fist_int32(CPU)
         break;
     }
     CLEAR_X87_FLAGS;
-    return ((dval < 2147483648.0) && (dval > -2147483648.0))?((int32_t) dval):0x80000000;
+    return ((dval < 2147483648.0) && (dval > -2147483648.0))?((int32_t) dval):((int32_t) 0x80000000);
 }
 
 EXTERNC int16_t x87_fistp_int16(CPU)
@@ -417,7 +417,7 @@ EXTERNC int16_t x87_fistp_int16(CPU)
             }
             else
             {
-                ival = 0x8000;
+                ival = (int16_t) 0x8000;
             }
             return ival;
         }
@@ -433,7 +433,7 @@ EXTERNC int16_t x87_fistp_int16(CPU)
         break;
     }
     POP_REGS;
-    return ((dval < 32768.0) && (dval > -32768.0))?((int16_t) dval):0x8000;
+    return ((dval < 32768.0) && (dval > -32768.0))?((int16_t) dval):((int16_t) 0x8000);
 }
 
 EXTERNC int32_t x87_fistp_int32(CPU)
@@ -460,7 +460,7 @@ EXTERNC int32_t x87_fistp_int32(CPU)
             }
             else
             {
-                ival = 0x80000000;
+                ival = (int32_t) 0x80000000;
             }
             return ival;
         }
@@ -476,7 +476,7 @@ EXTERNC int32_t x87_fistp_int32(CPU)
         break;
     }
     POP_REGS;
-    return ((dval < 2147483648.0) && (dval > -2147483648.0))?((int32_t) dval):0x80000000;
+    return ((dval < 2147483648.0) && (dval > -2147483648.0))?((int32_t) dval):((int32_t) 0x80000000);
 }
 
 EXTERNC uint32_t x87_fistp_int64(CPU)
@@ -503,10 +503,10 @@ EXTERNC uint32_t x87_fistp_int64(CPU)
         presult->low = uval.low;
         presult->high = uval.high;
 
-        return (uint32_t)(uintptr_t)presult;
+        return PTR2REG(presult);
 #else
         st_result = INT64_C(0x8000000000000000);
-        return (uint32_t)(uintptr_t)&(st_result);
+        return PTR2REG(&(st_result));
 #endif
     }
 
@@ -543,10 +543,10 @@ EXTERNC uint32_t x87_fistp_int64(CPU)
     presult->low = uval.low;
     presult->high = uval.high;
 
-    return (uint32_t)(uintptr_t)presult;
+    return PTR2REG(presult);
 #else
     st_result = ival;
-    return (uint32_t)(uintptr_t)&(st_result);
+    return PTR2REG(&(st_result));
 #endif
 }
 
@@ -692,14 +692,14 @@ EXTERNC uint32_t x87_fst_double(CPU)
     presult->low = pst0->low;
     presult->high = pst0->high;
 
-    return (uint32_t)(uintptr_t)presult;
+    return PTR2REG(presult);
 #else
     void *presult;
 
     CLEAR_X87_FLAGS;
     presult = &(ST0);
 
-    return (uint32_t)(uintptr_t)presult;
+    return PTR2REG(presult);
 #endif
 }
 
@@ -731,13 +731,13 @@ EXTERNC uint32_t x87_fstp_double(CPU)
     presult->high = pst0->high;
 
     POP_REGS;
-    return (uint32_t)(uintptr_t)presult;
+    return PTR2REG(presult);
 #else
     void *presult;
 
     presult = &(ST0);
     POP_REGS;
-    return (uint32_t)(uintptr_t)presult;
+    return PTR2REG(presult);
 #endif
 }
 
@@ -1007,7 +1007,7 @@ EXTERNC int32_t x87_ftol_int32(CPU)
 
     if (num1 < 0)
     {
-        if (num1 <= -2147483648.0) return 0x80000000;
+        if (num1 <= -2147483648.0) return (int32_t) 0x80000000;
 
         result.d = num1 + doublemagic;  // fast conversion to int,
         num2 = (double)(int32_t)result.low; // result.low contains the result (rounded up or down)
@@ -1021,10 +1021,10 @@ EXTERNC int32_t x87_ftol_int32(CPU)
     }
     else
     {
-        if (num1 >= 2147483648.0) return 0x80000000;
+        if (num1 >= 2147483648.0) return (int32_t) 0x80000000;
 
         result.d = num1 + doublemagic;  // fast conversion to int,
-        if (0 > (int32_t)result.low) return 0x7fffffff;
+        if (0 > (int32_t)result.low) return (int32_t) 0x7fffffff;
         num2 = (double)(int32_t)result.low; // result.low contains the result (rounded up or down)
 
         if (num2 > num1) // compare result with original value and if the result was rounded toward positive infinity, then decrease result (truncate toward 0)
@@ -1056,10 +1056,10 @@ EXTERNC uint32_t x87_ftol_int64(CPU)
     presult->low = ret.low;
     presult->high = ret.high;
 
-    return (uint32_t)(uintptr_t)presult;
+    return PTR2REG(presult);
 #else
     st_result = ((orig < 9223372036854775808.0) && (orig > -9223372036854775808.0))?((int64_t) trunc(orig)):INT64_C(0x8000000000000000);
-    return (uint32_t)(uintptr_t)&(st_result);
+    return PTR2REG(&(st_result));
 #endif
 }
 

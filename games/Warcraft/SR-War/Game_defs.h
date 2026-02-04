@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -127,6 +127,7 @@ typedef union _Game_register_ {
     struct {
         uint8_t l, h, l2, h2;
     } b;
+    PTR32(void) p;
 } Game_register;
 
 typedef struct _Game_SREGS_ {
@@ -176,10 +177,20 @@ typedef struct _Game_BYTEREGS_ {
   uint32_t cflag;
 } Game_BYTEREGS;
 
+typedef struct _Game_PTR32REGS_ {
+  PTR32(void) eax;
+  PTR32(void) ebx;
+  PTR32(void) ecx;
+  PTR32(void) edx;
+  PTR32(void) esi;
+  PTR32(void) edi;
+} Game_PTR32REGS;
+
 typedef union _Game_REGS_ {
   Game_DWORDREGS d;
   Game_WORDREGS w;
   Game_BYTEREGS h;
+  Game_PTR32REGS p;
 } Game_REGS;
 
 
@@ -207,7 +218,7 @@ typedef struct _Game_sample {
     uint32_t len, len_cvt, time;
     int32_t playback_rate;	/* Hz */
     uint32_t orig_data[7];
-    uint8_t data[];
+    uint8_t data;
 } Game_sample;
 
 typedef struct _AIL_sample AIL_sample;

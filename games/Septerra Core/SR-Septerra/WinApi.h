@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -64,7 +64,11 @@ WINAPI_STORAGE __declspec(thread) unsigned int Winapi_LastError;
 #define ERROR_ALREADY_EXISTS 183
 
 
-#define INVALID_HANDLE_VALUE (handle)(-1)
+#ifdef PTROFS_64BIT
+#define INVALID_HANDLE_VALUE (handle)(pointer_offset + 0xfffffffful)
+#else
+#define INVALID_HANDLE_VALUE (handle)(0xfffffffful)
+#endif
 #endif
 
 

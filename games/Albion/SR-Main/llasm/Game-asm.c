@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -45,10 +45,10 @@ extern void c_RunProcECX(CPU);
 }
 #endif
 
-extern uint32_t X86_InterruptFlag;
-extern void *Game_MouseTable[8];
-extern uint32_t mouse_pos[2];
-extern uint16_t mouse_old_pos[9];
+EXTERNCVAR uint32_t X86_InterruptFlag;
+extern uint32_t Game_MouseTable[8];
+EXTERNCVAR uint32_t mouse_pos[2];
+EXTERNCVAR uint16_t mouse_old_pos[9];
 
 static jmp_buf exit_env;
 
@@ -67,7 +67,7 @@ void Game_StopMain_Asm(void)
     longjmp(exit_env, 1);
 }
 
-int Game_Main_Asm(int argc, PTR32(char) argv[])
+int Game_Main_Asm(int argc, char *argv[])
 {
     if (setjmp(exit_env) == 0)
     {
@@ -77,7 +77,7 @@ int Game_Main_Asm(int argc, PTR32(char) argv[])
         cpu = x86_initialize_cpu();
 
         eax = argc;
-        edx = (uintptr_t)argv;
+        edx = PTR2REG(argv);
 
         c_main_(cpu);
 
@@ -135,7 +135,7 @@ EXTERNC void *sub_8B6BB(void *handle)
 
     // ebx, ecx, edx, esi, edi, ebp are saved in the called function
 
-    eax = (uintptr_t)handle;
+    eax = PTR2REG(handle);
 
     c_loc_8B6BB(cpu);
 
@@ -149,7 +149,7 @@ uint32_t Game_MouseMove(uint32_t state, uint32_t x, uint32_t y)
     uint32_t old_eax, old_ecx, old_edx, old_ebx, old_ebp, old_esi, old_edi;
     uint32_t old_InterruptFlag, old_eflags;
 
-    if (Game_MouseTable[0] == NULL)
+    if (Game_MouseTable[0] == 0)
     {
         return 1;
     }
@@ -179,7 +179,7 @@ uint32_t Game_MouseMove(uint32_t state, uint32_t x, uint32_t y)
     esp -= 4;
     *((uint32_t *)REG2PTR(esp)) = 0;    // emulate far call
 
-    ecx = (uintptr_t)Game_MouseTable[0];
+    ecx = Game_MouseTable[0];
     c_RunProcECX(cpu);
 
     eax = old_eax;
@@ -202,7 +202,7 @@ uint32_t Game_MouseButton(uint32_t state, uint32_t action)
     uint32_t old_eax, old_ecx, old_edx, old_ebx, old_ebp, old_esi, old_edi;
     uint32_t old_InterruptFlag, old_eflags;
 
-    if (Game_MouseTable[action] == NULL)
+    if (Game_MouseTable[action] == 0)
     {
         return 1;
     }
@@ -229,7 +229,7 @@ uint32_t Game_MouseButton(uint32_t state, uint32_t action)
     esp -= 4;
     *((uint32_t *)REG2PTR(esp)) = 0;    // emulate far call
 
-    ecx = (uintptr_t)Game_MouseTable[action];
+    ecx = Game_MouseTable[action];
     c_RunProcECX(cpu);
 
     eax = old_eax;
@@ -256,9 +256,9 @@ EXTERNC uint32_t Game_RunProcReg1_Asm(void *proc_addr, const char *proc_param1)
     // ebx, ecx, edx, esi, edi, ebp are saved in the called function
     old_ecx = ecx;
 
-    eax = (uintptr_t)proc_param1;
+    eax = PTR2REG(proc_param1);
 
-    ecx = (uintptr_t)proc_addr;
+    ecx = PTR2REG(proc_addr);
     c_RunProcECX(cpu);
 
     ecx = old_ecx;
@@ -276,10 +276,10 @@ EXTERNC uint32_t Game_RunProcReg2_Asm(void *proc_addr, const char *proc_param1, 
     // ebx, ecx, esi, edi, ebp are saved in the called function
     old_ecx = ecx;
 
-    eax = (uintptr_t)proc_param1;
-    edx = (uintptr_t)proc_param2;
+    eax = PTR2REG(proc_param1);
+    edx = PTR2REG(proc_param2);
 
-    ecx = (uintptr_t)proc_addr;
+    ecx = PTR2REG(proc_addr);
     c_RunProcECX(cpu);
 
     ecx = old_ecx;

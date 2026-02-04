@@ -57,8 +57,8 @@ struct func_parameter_struct {
 }
 
 struct func_struct {
-    string name;
-    bool has_return_value;
+    string real_name;
+    bool has_return_value, return_value_is_pointer;
     func_parameter_struct[] params;
 }
 
@@ -120,6 +120,7 @@ string input_filename, output_filename, input_directory, return_procedure, dispa
 string[] include_directories;
 bool output_preprocessed_file, input_reading_proc, input_reading_dataseg, position_independent_code, old_bitcode, no_tail_calls, pointer_size_64, pointers_with_offset, inline_idiv_instr, inline_float_instr, inline_float2_instr;
 uint global_optimization_level, procedure_optimization_level;
+string[string] function_names;
 
 int file_input_level;
 file_input_struct[] file_input_stack;
@@ -155,7 +156,7 @@ immutable int num_regs64 = 1;
 immutable int regs64_start_num = 13;
 string[] registers_base_list = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", "eflags", "st_top", "st_sw_cond", "st_cw", "tmpadr", "tmpcnd", "tmp0", "tmp1", "tmp2", "tmp3", "tmp4", "tmp5", "tmp6", "tmp7", "tmp8", "tmp9", "tmp10", "tmp11", "tmp12", "tmp13", "tmp14", "tmp15", "tmp16", "tmp17", "tmp18", "tmp19"];
 string[] registers64_base_list = ["ptrofs"];
-string[] keywords_base_list = ["proc", "extern", "define", "macro", "func", "funcv", "include", "endp", "endm", "datasegment", "dlabel", "dalign", "db", "dinclude", "daddr", "dskip", "endd"];
+string[] keywords_base_list = ["proc", "extern", "define", "macro", "func", "funcp", "funcv", "include", "endp", "endm", "datasegment", "dlabel", "dalign", "db", "dinclude", "daddr", "dskip", "endd"];
 string[] instructions_base_list = [
     "mov reg, reg/const/procaddr/externaddr",
     "add reg, reg, reg/const",
@@ -383,6 +384,8 @@ void add_instruction_to_list(string instruction, bool inlined_instr)
 
 void initialize()
 {
+    function_names = function_names.rehash;
+
     foreach(register; registers_base_list)
     {
         registers_list[register] = true;
@@ -1371,7 +1374,7 @@ string get_reg64_value(string name)
     return reg;
 }
 
-string get_int32_to_ptr(string value, string ptrtype = "i8")
+string get_int32_to_ptr(string value, string ptrtype = "i8", bool nullable_pointer = false)
 {
     if (pointers_with_offset)
     {
@@ -1384,7 +1387,20 @@ string get_int32_to_ptr(string value, string ptrtype = "i8")
         add_output_line(addr2 ~ " = add i64 " ~ addr1 ~ ", " ~ ptrofs);
         add_output_line(addr3 ~ " = inttoptr i64 " ~ addr2 ~ " to " ~ ptrtype ~ "*");
 
-        return addr3;
+        if (nullable_pointer)
+        {
+            string cond = get_new_temporary_register();
+            string addr4 = get_new_temporary_register();
+
+            add_output_line(cond ~ " = icmp eq i64 " ~ addr1 ~ ", 0");
+            add_output_line(addr4 ~ " = select i1 " ~ cond ~ ", " ~ ptrtype ~ "* null, " ~ ptrtype ~ "* " ~ addr3);
+
+            return addr4;
+        }
+        else
+        {
+            return addr3;
+        }
     }
     else
     {
@@ -1396,7 +1412,7 @@ string get_int32_to_ptr(string value, string ptrtype = "i8")
     }
 }
 
-string get_addr_to_int32(string value, string ptrtype = "i8")
+string get_addr_to_int32(string value, string ptrtype = "i8", bool nullable_pointer = false)
 {
     if (pointers_with_offset)
     {
@@ -1409,7 +1425,20 @@ string get_addr_to_int32(string value, string ptrtype = "i8")
         add_output_line(addr2 ~ " = sub i64 " ~ addr1 ~ ", " ~ ptrofs);
         add_output_line(addr3 ~ " = trunc i64 " ~ addr2 ~ " to i32");
 
-        return addr3;
+        if (nullable_pointer)
+        {
+            string cond = get_new_temporary_register();
+            string addr4 = get_new_temporary_register();
+
+            add_output_line(cond ~ " = icmp eq i64 " ~ addr1 ~ ", 0");
+            add_output_line(addr4 ~ " = select i1 " ~ cond ~ ", i32 0, i32 " ~ addr3);
+
+            return addr4;
+        }
+        else
+        {
+            return addr3;
+        }
     }
     else
     {
@@ -1417,7 +1446,7 @@ string get_addr_to_int32(string value, string ptrtype = "i8")
     }
 }
 
-string get_parameter_read_value(param_struct param, bool as_pointer = false)
+string get_parameter_read_value(param_struct param, bool as_pointer = false, bool nullable_pointer = false)
 {
     switch (param.type)
     {
@@ -1494,7 +1523,7 @@ string get_parameter_read_value(param_struct param, bool as_pointer = false)
 
             if (as_pointer)
             {
-                return get_int32_to_ptr(reg);
+                return get_int32_to_ptr(reg, "i8", nullable_pointer);
             }
             else
             {
@@ -1553,7 +1582,7 @@ string get_parameter_read_value(param_struct param, bool as_pointer = false)
             {
                 if (pointers_with_offset)
                 {
-                    return get_int32_to_ptr("(" ~ param.value ~ ")");
+                    return get_int32_to_ptr("(" ~ param.value ~ ")", "i8", nullable_pointer);
                 }
                 else
                 {
@@ -2082,7 +2111,7 @@ bool process_proc_body(string proc_name)
 
             if (params[i] in func_list)
             {
-                paramvals[i] = param_struct("funcaddr".idup, params[i]);
+                paramvals[i] = param_struct("funcaddr".idup, func_list[params[i]].real_name);
                 continue;
             }
 
@@ -3043,7 +3072,7 @@ bool process_proc_body(string proc_name)
                     src.length = paramvals.length;
                     for (int i = 0; i < paramvals.length; i++)
                     {
-                        src[i] = get_parameter_read_value(paramvals[i], (func.params[i].type == ParameterType.Pointer));
+                        src[i] = get_parameter_read_value(paramvals[i], (func.params[i].type == ParameterType.Pointer), true);
                     }
 
                     string srcstr = "";
@@ -3096,13 +3125,33 @@ bool process_proc_body(string proc_name)
                     {
                         string dst = get_new_temporary_register();
 
-                        add_output_line(dst ~ " = call i32 @" ~ current_line.param1 ~ "(" ~ srcstr ~ ") nounwind");
+                        add_output_line(dst ~ " = call " ~ (func.return_value_is_pointer ? "i8*" : "i32") ~ " @" ~ func.real_name ~ "(" ~ srcstr ~ ") nounwind");
 
-                        store_temporary_register_to_reg(dst, "tmp0", last_reg_write[0]);
+                        if (func.return_value_is_pointer)
+                        {
+                            string dst2;
+
+                            if (pointers_with_offset)
+                            {
+                                dst2 = get_addr_to_int32(dst, "i8", true);
+                            }
+                            else
+                            {
+                                dst2 = get_new_temporary_register();
+
+                                add_output_line(dst2 ~ " = ptrtoint i8* " ~ dst ~ " to i32");
+                            }
+
+                            store_temporary_register_to_reg(dst2, "tmp0", last_reg_write[0]);
+                        }
+                        else
+                        {
+                            store_temporary_register_to_reg(dst, "tmp0", last_reg_write[0]);
+                        }
                     }
                     else
                     {
-                        add_output_line("call void @" ~ current_line.param1 ~ "(" ~ srcstr ~ ") nounwind");
+                        add_output_line("call void @" ~ func.real_name ~ "(" ~ srcstr ~ ") nounwind");
                     }
                 }
                 break;
@@ -3690,6 +3739,7 @@ void write_usage()
     stderr.writeln("  -inline-idiv    allow inlining integer division instructions");
     stderr.writeln("  -inline-float   allow inlining floating point instructions");
     stderr.writeln("  -inline-float2  allow inlining floating point intrinsics/functions");
+    stderr.writeln("  -func-name A=B  rename function name A to B");
 }
 
 public int main(string[] args)
@@ -3709,6 +3759,7 @@ public int main(string[] args)
     inline_idiv_instr = false;
     inline_float_instr = false;
     inline_float2_instr = false;
+    function_names = new string[string];
     for (int i = 1; i < args.length; i++)
     {
         switch(args[i])
@@ -3766,6 +3817,27 @@ public int main(string[] args)
                 break;
             case "-inline-float2":
                 inline_float2_instr = true;
+                break;
+            case "-func-name":
+                if (i + 1 == args.length)
+                {
+                    stderr.writeln("Missing argument: " ~ args[i]);
+                    write_usage();
+                    return 2;
+                }
+
+                {
+                    auto fname = str_split_strip(args[i + 1], '=');
+                    if (fname.length != 2 || fname[0] == "" || fname[1] == "" || fname[0] in function_names)
+                    {
+                        stderr.writeln("Bad argument: " ~ args[i] ~ " " ~ args[i + 1]);
+                        write_usage();
+                        return 2;
+                    }
+
+                    function_names[fname[0]] = fname[1];
+                    i++;
+                }
                 break;
             default:
                 if (input_filename == "")
@@ -4057,7 +4129,7 @@ public int main(string[] args)
             continue;
         }
 
-        if (current_line.word == "func" || current_line.word == "funcv")
+        if (current_line.word == "func" || current_line.word == "funcp" || current_line.word == "funcv")
         {
             if (input_reading_proc || input_reading_dataseg)
             {
@@ -4085,8 +4157,9 @@ public int main(string[] args)
 
             func_struct newfunc;
 
-            newfunc.name = current_line.param1.idup;
-            newfunc.has_return_value = (current_line.word == "func");
+            newfunc.real_name = (current_line.param1 in function_names) ? function_names[current_line.param1] : current_line.param1.idup;
+            newfunc.has_return_value = (current_line.word == "func" || current_line.word == "funcp");
+            newfunc.return_value_is_pointer = (current_line.word == "funcp");
             newfunc.params = get_functions_params(get_current_params2());
 
             func_list[current_line.param1] = newfunc;
@@ -5045,7 +5118,7 @@ public int main(string[] args)
             func_args ~= datatype;
         }
 
-        add_output_line("declare external ccc " ~ (func.has_return_value?"i32":"void") ~ " @" ~ func_name ~ "(" ~ func_args ~ ") nounwind");
+        add_output_line("declare external ccc " ~ (func.has_return_value?(func.return_value_is_pointer?"i8*":"i32"):"void") ~ " @" ~ func.real_name ~ "(" ~ func_args ~ ") nounwind");
     }
 
 

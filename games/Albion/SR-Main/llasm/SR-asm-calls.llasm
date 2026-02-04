@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2025 Roman Pauer
+;;  Copyright (C) 2016-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -33,12 +33,9 @@ func CLIB_vfprintf *stream, *format, *ap
 func CLIB_vprintf *format, *ap
 func CLIB_vsnprintf *str, size, *format, *ap
 func CLIB_vsprintf *str, *format, *ap
-funcv Game_WaitVerticalRetraceTicks ticks
-func Game_open *pathname, flags, mode
-func Game_openFlags flags
 
-func Game_AIL_mem_use_malloc *fn;
-func Game_AIL_mem_use_free *fn;
+funcp Game_AIL_mem_use_malloc *fn;
+funcp Game_AIL_mem_use_free *fn;
 funcv Game_AIL_startup
 func Game_AIL_register_timer *callback_fn
 funcv Game_AIL_set_timer_frequency timer, hertz
@@ -53,7 +50,7 @@ func Game_AIL_install_DIG_INI *dig
 funcv Game_AIL_uninstall_DIG_driver *dig
 funcv Game_AIL_uninstall_MDI_driver *mdi
 
-func Game_AIL_allocate_sample_handle *dig
+funcp Game_AIL_allocate_sample_handle *dig
 funcv Game_AIL_end_sample *S
 funcv Game_AIL_init_sample *S
 funcv Game_AIL_release_sample_handle *S
@@ -67,8 +64,8 @@ funcv Game_AIL_set_sample_type *S, format, flags
 funcv Game_AIL_set_sample_volume *S, volume
 funcv Game_AIL_start_sample *S
 
-func Game_AIL_allocate_sequence_handle *mdi
-func Game_AIL_create_wave_synthesizer *dig, *mdi, *wave_lib, polyphony
+funcp Game_AIL_allocate_sequence_handle *mdi
+funcp Game_AIL_create_wave_synthesizer *dig, *mdi, *wave_lib, polyphony
 funcv Game_AIL_destroy_wave_synthesizer *W
 funcv Game_AIL_end_sequence *S
 func Game_AIL_init_sequence *S, *start, sequence_num
@@ -94,14 +91,14 @@ funcv ERROR_PrintAllErrors flags
 func BASEMEM_Init
 funcv BASEMEM_Exit
 func BASEMEM_GetFreeMemSize memory_flags
-func BASEMEM_Alloc size, memory_flags
+funcp BASEMEM_Alloc size, memory_flags
 func BASEMEM_Free *mem_ptr
 func BASEMEM_LockRegion *mem_ptr, length
 func BASEMEM_UnlockRegion *mem_ptr, length
 funcv BASEMEM_FillMemByte *dst, length, c
 funcv BASEMEM_FillMemLong *dst, length, c);
 funcv BASEMEM_CopyMem *src, *dst, length
-func BASEMEM_AlignMemptr *mem_ptr
+funcp BASEMEM_AlignMemptr *mem_ptr
 funcv BASEMEM_PrintReport *fp
 
 func DOS_Init
@@ -131,56 +128,40 @@ func Game_fcloseall
 funcv Game_WaitAfterVerticalRetrace
 funcv Game_WaitForVerticalRetrace
 ; 1 param
-func asctime *tm
-func Game_chdir *path
-func close fd
 func Game_closedir *dirp
-func ctime *timep
+funcp Game_ctime2 *timep, *buf, max
 func Game_dos_findclose *buffer
 func Game_dos_findnext *buffer
 func Game_dos_getvect intnum
 funcv Game_ExitMain_Asm status
 func Game_fclose *stream
-func Game_filelength fd
-funcv free *ptr
 func Game_ftime *tp
-func getenv *name
-func isatty fd
-func localtime *timep
-func malloc size
-func Game_opendir *dirname
+funcp Game_opendir *dirname
 func strlen *s
-func Game_tell handle
-func Game_time *tloc
 func Game_unlink *pathname
 funcv Game_WaitTimerTicks ticks
 funcv Game_save_screenshot *filename
 ; 2 params
-func Game_fopen *filename, *mode
-func fputs *s, *stream
-func Game_getcwd *buf, size
+funcp Game_fopen *filename, *mode
+func Game_fputs *s, *stream
+funcp Game_getcwd *buf, size
 func Game_outp port, value
 func Game_rename *oldpath, *newpath
-funcv Game_setbuf *fp, *buf
-func strchr *s, c
-func strcmp *s1, *s2
-func strcpy *dest, *src
+funcp strchr *s, c
+funcp strcpy *dest, *src
 func strcspn *s, *reject
 func strspn *s, *accept
 ; 2/3 params
 funcv Game_dos_setvect intnum, handler_low, handler_high
 ; 3 params
 func Game_dos_findfirst *path, attributes, *buffer
-func fgets *s, size, *stream
-func Game_lseek fd, offset, whence
-func memcpy *dest, *src, n
-func memmove *dest, *src, n
-func memset *s, c, n
-func read fd, *buf, count
+func Game_fgets *s, size, *stream
+funcp memcpy *dest, *src, n
+funcp memmove *dest, *src, n
+funcp memset *s, c, n
 func strncmp *s1, *s2, n
-func strncpy *dest, *src, n
+funcp strncpy *dest, *src, n
 func strncasecmp *s1, *s2, n
-func write fd, *buf, count
 ; 4 params
 func Game_int386x IntNum, *in_regs, *out_regs, *seg_regs
 ; 5 params
@@ -286,41 +267,6 @@ proc SR_sprintf public
         Game_Call_Asm_VariableStack2 CLIB_vsprintf,-1
 
 endp ; end procedure SR_sprintf
-
-proc SR_WaitVerticalRetraceTicks public
-
-; [esp +   4] = int ticks
-; [esp      ] = return address
-
-        Game_Call_Asm_Stack1_void Game_WaitVerticalRetraceTicks,-1
-
-endp ; end procedure SR_WaitVerticalRetraceTicks
-
-proc SR_open public
-
-; [esp + 3*4] = ...
-; [esp + 2*4] = int access
-; [esp +   4] = const char *path
-; [esp      ] = return address
-
-
-; errno_val is set inside Game_open
-
-        add tmp0, esp, 2*4
-        load tmp0, tmp0, 4					; access (flags)
-        call Game_openFlags tmp0
-        mov tmp1, tmp0						; access (flags)
-
-        add tmp0, esp, 4
-        load tmp0, tmp0, 4					; path
-        add tmp2, esp, 3*4
-        load tmp2, tmp2, 4					; ...
-        call Game_open tmp0, tmp1, tmp2
-        mov eax, tmp0
-
-        Game_Call_Asm_Return -1, 0
-
-endp ; end procedure SR_open
 
 proc SR_AIL_mem_use_malloc public
 
@@ -1114,40 +1060,6 @@ proc SR_WaitForVerticalRetrace public
 endp ; end procedure SR_WaitForVerticalRetrace
 
 ; 1 param
-proc SR_asctime public
-
-; eax = const struct tm *timeptr
-
-        Game_Call_Asm_Reg1 asctime,-1
-
-endp ; end procedure SR_asctime
-
-proc SR_chdir public
-
-; eax = const char *path
-
-; errno_val is set inside Game_chdir
-
-        Game_Call_Asm_Reg1 Game_chdir,-1
-
-endp ; end procedure SR_chdir
-
-proc SR_j___close public
-
-; eax = int handle
-
-        tcall SR___close
-
-endp ; end procedure SR_j___close
-
-proc SR___close public
-
-; eax = int handle
-
-        Game_Call_Asm_Reg1 close,-1000
-
-endp ; end procedure SR___close
-
 proc SR_closedir public
 
 ; eax = struct dirent *dirp
@@ -1162,7 +1074,11 @@ proc SR_ctime public
 
 ; eax = const time_t *timer
 
-        Game_Call_Asm_Reg1 ctime,-1
+        ;Game_Call_Asm_Reg1 ctime,-1
+        mov tmp0, asctime_buffer
+        call Game_ctime2 eax, tmp0, 28
+        mov eax, tmp0
+        Game_Call_Asm_Return -1, 0
 
 endp ; end procedure SR_ctime
 
@@ -1214,22 +1130,6 @@ proc SR_fclose public
 
 endp ; end procedure SR_fclose
 
-proc SR_filelength public
-
-; eax = int handle
-
-        Game_Call_Asm_Reg1 Game_filelength,-1000
-
-endp ; end procedure SR_filelength
-
-proc SR__nfree public
-
-; eax = void __near *ptr
-
-        Game_Call_Asm_Reg1_void free,-1
-
-endp ; end procedure SR__nfree
-
 proc SR_ftime public
 
 ; eax = struct timeb *timeptr
@@ -1237,38 +1137,6 @@ proc SR_ftime public
         Game_Call_Asm_Reg1 Game_ftime,-1
 
 endp ; end procedure SR_ftime
-
-proc SR_getenv public
-
-; eax = const char *name
-
-        Game_Call_Asm_Reg1 getenv,-1
-
-endp ; end procedure SR_getenv
-
-proc SR_isatty public
-
-; eax = int handle
-
-        Game_Call_Asm_Reg1 isatty,-1000
-
-endp ; end procedure SR_isatty
-
-proc SR_localtime public
-
-; eax = const time_t *timer
-
-        Game_Call_Asm_Reg1 localtime,-1
-
-endp ; end procedure SR_localtime
-
-proc SR__nmalloc public
-
-; eax = size_t size
-
-        Game_Call_Asm_Reg1 malloc,-1
-
-endp ; end procedure SR__nmalloc
 
 proc SR_opendir public
 
@@ -1329,22 +1197,6 @@ proc SR_strlen public
 
 endp ; end procedure SR_strlen
 
-proc SR_tell public
-
-; eax = int handle
-
-        Game_Call_Asm_Reg1 Game_tell,-1000
-
-endp ; end procedure SR_tell
-
-proc SR_time public
-
-; eax = time_t *tloc
-
-        Game_Call_Asm_Reg1 Game_time,-1
-
-endp ; end procedure SR_time
-
 proc SR_j_unlink public
 
         tcall SR_unlink
@@ -1399,8 +1251,8 @@ proc SR_fputs public
 ; eax = const char *buf
 ; edx = FILE *fp
 
-;	Game_Call_Asm_Reg2 fputs,-1000
-        call fputs eax, edx
+;	Game_Call_Asm_Reg2 Game_fputs,-1000
+        call Game_fputs eax, edx
         cmovz tmp0, eax, 1, eax
         Game_Call_Asm_Return -1000, 0
 
@@ -1483,15 +1335,6 @@ proc SR_rename public
 
 endp ; end procedure SR_rename
 
-proc SR_setbuf public
-
-; eax = FILE *fp
-; edx = char *buf
-
-        Game_Call_Asm_Reg2_void Game_setbuf,-1000
-
-endp ; end procedure SR_setbuf
-
 proc SR_strchr public
 
 ; eax = const char *s
@@ -1500,15 +1343,6 @@ proc SR_strchr public
         Game_Call_Asm_Reg2 strchr,-1
 
 endp ; end procedure SR_strchr
-
-proc SR_strcmp public
-
-; eax = const char *s1
-; edx = const char *s2
-
-        Game_Call_Asm_Reg2 strcmp,-1
-
-endp ; end procedure SR_strcmp
 
 proc SR_strcpy public
 
@@ -1567,19 +1401,9 @@ proc SR_fgets public
 ; edx = int n
 ; ebx = FILE *fp
 
-        Game_Call_Asm_Reg3 fgets,-1000
+        Game_Call_Asm_Reg3 Game_fgets,-1000
 
 endp ; end procedure SR_fgets
-
-proc SR_lseek public
-
-; eax = int handle
-; edx = long int offset
-; ebx = int origin
-
-        Game_Call_Asm_Reg3 Game_lseek,-1000
-
-endp ; end procedure SR_lseek
 
 proc SR_memcpy public
 
@@ -1611,16 +1435,6 @@ proc SR_memset public
 
 endp ; end procedure SR_memset
 
-proc SR_read public
-
-; eax = int handle
-; edx = void *buffer
-; ebx = unsigned len
-
-        Game_Call_Asm_Reg3 read,-1000
-
-endp ; end procedure SR_read
-
 proc SR_strncmp public
 
 ; eax = const char *s1
@@ -1650,16 +1464,6 @@ proc SR_strnicmp public
         Game_Call_Asm_Reg3 strncasecmp,-1
 
 endp ; end procedure SR_strnicmp
-
-proc SR_write public
-
-; eax = int handle
-; edx = void *buffer
-; ebx = unsigned len
-
-        Game_Call_Asm_Reg3 write,-1
-
-endp ; end procedure SR_write
 
 ; 4 params
 proc SR__vbprintf public
@@ -1700,3 +1504,9 @@ proc SR__splitpath public
         Game_Call_Asm_Reg5_void Game_splitpath,-1
 
 endp ; end procedure SR__splitpath
+
+
+datasegment SR-asm-calls uninitialized
+dlabel asctime_buffer
+dskip 28
+endd

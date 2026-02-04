@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2023 Roman Pauer
+;;  Copyright (C) 2016-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -38,7 +38,6 @@ proc SR__harderr external
 proc SR_fprintf external
 proc SR_printf external
 proc SR_sprintf external
-proc SR_open external
 
 proc SR_AIL_active_sample_count external
 proc SR_AIL_allocate_sample_handle external
@@ -69,8 +68,6 @@ proc SR_AIL_stop_sequence external
 proc SR___clock external
 proc SR_j___clock external
 ; 1 param
-proc SR___close external
-proc SR_j___close external
 proc SR_cputs external
 proc SR___delay external
 proc SR_j___delay external
@@ -80,11 +77,9 @@ proc SR_fclose external
 proc SR_fgetc external
 proc SR__nfree external
 proc SR_ftell external
-proc SR_getenv external
 proc SR_inp external
 proc SR__nmalloc external
 proc SR_puts external
-proc SR_raise external
 proc SR_strlen external
 proc SR_time external
 proc SR_unlink external
@@ -103,14 +98,11 @@ proc SR_vprintf external
 ; 3 params
 proc SR_fgets external
 proc SR_fseek external
-proc SR_lseek external
 proc SR_memcmp external
 proc SR_memcpy external
 proc SR_memmove external
 proc SR_memset external
-proc SR_read external
 proc SR_strncmp external
-proc SR_strncpy external
 proc SR_strnicmp external
 proc SR_strtoul external
 ; 4 params

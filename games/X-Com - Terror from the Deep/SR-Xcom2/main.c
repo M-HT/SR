@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,6 @@
 #define _FILE_OFFSET_BITS 64
 #define _TIME_BITS 64
 #include <string.h>
-#include <malloc.h>
 #include <stdlib.h>
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 #include <direct.h>
@@ -66,6 +65,7 @@
 #include "Xcom-music-midiplugin.h"
 #include "Xcom-music-midiplugin2.h"
 #include "Game_config.h"
+#include "Game_memory.h"
 #include "Game_misc.h"
 #include "Game_scalerplugin.h"
 #include "Game_thread.h"
@@ -701,7 +701,7 @@ static void Game_Display_Create(void)
         int mousex, mousey;
 
         SDL_ShowCursor(SDL_DISABLE);
-        SDL_WM_SetCaption (Game_WindowTitle(), NULL);
+        SDL_WM_SetCaption(Game_WindowTitle(), NULL);
 
         Reposition_Display();
 
@@ -992,7 +992,7 @@ static void Game_Cleanup(void)
 
     if (Zero_Segment != NULL)
     {
-        free(Zero_Segment);
+        x86_free(Zero_Segment);
         Zero_Segment = NULL;
     }
 
@@ -1014,15 +1014,18 @@ static void Game_Cleanup(void)
         Game_DisplaySem = NULL;
     }
 
-    /*if (Game_ScreenWindow != NULL)
+    if (sizeof(void *) > 4)
     {
-        free(Game_ScreenWindow);
-        Game_ScreenWindow = NULL;
-    }*/
+        if (Game_stdin != NULL)
+        {
+            x86_free(Game_stdin);
+            Game_stdin = NULL;
+        }
+    }
 
     if (Game_FrameMemory != NULL)
     {
-        free(Game_FrameMemory);
+        x86_free(Game_FrameMemory);
         Game_FrameMemory = NULL;
     }
 
@@ -1039,8 +1042,8 @@ static void Game_Cleanup(void)
     }
 
 #if (EXE_BUILD == EXE_COMBINED)
-    Game_area_free(Geoscape_DataBackup, &geoscape_data_end - &geoscape_data_begin);
-    Game_area_free(Tactical_DataBackup, &tactical_data_end - &tactical_data_begin);
+    Game_area_free(Geoscape_DataBackup, (unsigned int)(&geoscape_data_end - &geoscape_data_begin));
+    Game_area_free(Tactical_DataBackup, (unsigned int)(&tactical_data_end - &tactical_data_begin));
 #endif
 
     SDL_Quit();
@@ -1147,6 +1150,11 @@ static int Game_Initialize(void)
     Game_SoundCfg.SoundSwapStereo = 0;
     Game_SoundCfg.Reserved = 0;
 
+    if ((sizeof(void *) > 4))
+    {
+        Game_stdin = NULL;
+    }
+
     Display_ChangeMode = 0;
 
     Game_Delay_Game = 1;
@@ -1207,8 +1215,8 @@ static int Game_Initialize(void)
 #endif
 
 #if (EXE_BUILD == EXE_COMBINED)
-    Geoscape_DataBackup = Game_area_copy(&geoscape_data_begin, &geoscape_data_end - &geoscape_data_begin);
-    Tactical_DataBackup = Game_area_copy(&tactical_data_begin, &tactical_data_end - &tactical_data_begin);
+    Geoscape_DataBackup = Game_area_copy(&geoscape_data_begin, (unsigned int)(&geoscape_data_end - &geoscape_data_begin));
+    Tactical_DataBackup = Game_area_copy(&tactical_data_begin, (unsigned int)(&tactical_data_end - &tactical_data_begin));
 
     if ((Geoscape_DataBackup == NULL) || (Tactical_DataBackup == NULL))
     {
@@ -1266,7 +1274,7 @@ static int Game_Initialize(void)
         return -2;
     }
 
-    Game_FrameMemory = (uint8_t *) malloc(/*320*201*/ 65536*2);
+    Game_FrameMemory = (uint8_t *) x86_malloc(/*320*201*/ 65536*2);
     if (Game_FrameMemory == NULL)
     {
         fprintf(stderr, "Error: Not enough memory\n");
@@ -1274,15 +1282,22 @@ static int Game_Initialize(void)
         return -3;
     }
 
-    Game_FrameBuffer = (uint8_t *) ((((uintptr_t) Game_FrameMemory) + 65535) & ~0xffff);
+    Game_FrameBuffer = (uint8_t *) ((65535 + (uintptr_t)Game_FrameMemory) & ~(uintptr_t)0xffff);
     memset(Game_FrameBuffer, 0, 65536);
 
-/*	Game_ScreenWindow = (uint8_t *) malloc(65536);
-    if (Game_ScreenWindow == NULL)
+    if (sizeof(void *) > 4)
     {
-        fprintf(stderr, "Error: Not enough memory\n");
-        return -4;
-    }*/
+        Game_stdin = x86_malloc(3 * sizeof(void *));
+        if (Game_stdin == NULL)
+        {
+            fprintf(stderr, "Error: Not enough memory\n");
+            Game_Cleanup();
+            return -3;
+        }
+
+        Game_stdout = (void *)(sizeof(void *) + (uintptr_t)(void*)Game_stdin);
+        Game_stderr = (void *)(2 * sizeof(void *) + (uintptr_t)(void*)Game_stdin);
+    }
 
     Game_DisplaySem = SDL_CreateSemaphore(0);
     if (Game_DisplaySem == NULL)
@@ -1308,7 +1323,7 @@ static int Game_Initialize(void)
         return -7;
     }
 
-    Zero_Segment = (uint8_t *) malloc(65536);
+    Zero_Segment = (uint8_t *) x86_malloc(65536);
     if (Zero_Segment == NULL)
     {
         fprintf(stderr, "Error: Not enough memory\n");
@@ -1319,9 +1334,18 @@ static int Game_Initialize(void)
 
     Game_BuildRTable();
 
-    Game_stdin = stdin;
-    Game_stdout = stdout;
-    Game_stderr = stderr;
+    if ((sizeof(void *) > 4))
+    {
+        *(FILE **)(void *)Game_stdin = stdin;
+        *(FILE **)(void *)Game_stdout = stdout;
+        *(FILE **)(void *)Game_stderr = stderr;
+    }
+    else
+    {
+        Game_stdin = stdin;
+        Game_stdout = stdout;
+        Game_stderr = stderr;
+    }
 
     Game_Sound = 1;
     Game_Music = 1;
@@ -1430,7 +1454,7 @@ static void Game_Initialize2(void)
 
             if (audio_ok)
             {
-                FILE *f;
+                void *stream;
 
                 Game_AudioRate = frequency;
                 Game_AudioFormat = format;
@@ -1446,14 +1470,14 @@ static void Game_Initialize2(void)
                     }
                     else if (Game_MidiSubsystem > 30)
                     {
-                        f = Game_fopen("C:\\SOUND\\ROLAND.CAT", "rb");
-                        if (f == NULL)
+                        stream = Game_fopen("C:\\SOUND\\ROLAND.CAT", "rb");
+                        if (stream == NULL)
                         {
                             Game_LoadMidiFiles = 1;
                         }
                         else
                         {
-                            Game_fclose(f);
+                            Game_fclose(stream);
                         }
                     }
                 }
@@ -2177,18 +2201,18 @@ static void Game_Event_Loop(void)
                     case EC_MOUSE_MOVE:
                         {
                         #if SDL_VERSION_ATLEAST(2,0,0)
-                            SDL_WarpMouseInWindow(Game_Window, Game_MouseX + (intptr_t) event.user.data1, Game_MouseY + (intptr_t) event.user.data2);
+                            SDL_WarpMouseInWindow(Game_Window, Game_MouseX + (int)(intptr_t) event.user.data1, Game_MouseY + (int)(intptr_t) event.user.data2);
                         #else
-                            SDL_WarpMouse(Game_MouseX + (intptr_t) event.user.data1, Game_MouseY + (intptr_t) event.user.data2);
+                            SDL_WarpMouse(Game_MouseX + (int)(intptr_t) event.user.data1, Game_MouseY + (int)(intptr_t) event.user.data2);
                         #endif
                         }
                         break;
                     case EC_MOUSE_SET:
                         {
                         #if SDL_VERSION_ATLEAST(2,0,0)
-                            SDL_WarpMouseInWindow(Game_Window, (intptr_t) event.user.data1, (intptr_t) event.user.data2);
+                            SDL_WarpMouseInWindow(Game_Window, (int)(intptr_t) event.user.data1, (int)(intptr_t) event.user.data2);
                         #else
-                            SDL_WarpMouse((intptr_t) event.user.data1, (intptr_t) event.user.data2);
+                            SDL_WarpMouse((int)(intptr_t) event.user.data1, (int)(intptr_t) event.user.data2);
                         #endif
                         }
                         break;
@@ -2198,7 +2222,7 @@ static void Game_Event_Loop(void)
                         break;
                     //senquack - need this to allow macros to behave in battlescape
                     case EC_DELAY:
-                        SDL_Delay((intptr_t) event.user.data1);
+                        SDL_Delay((Uint32)(uintptr_t) event.user.data1);
                         break;
                         // case EC_DELAY:
 
@@ -2229,6 +2253,22 @@ static void Game_Event_Loop(void)
 
 int main (int argc, char *argv[])
 {
+#ifdef PTROFS_64BIT
+    if (0 != initialize_pointer_offset())
+    {
+        fprintf(stderr, "Error initializing pointer offset\n");
+        return 1;
+    }
+#endif
+
+#if !defined(x86_malloc)
+    if (0 != x86_init_malloc())
+    {
+        fprintf(stderr, "Error initializing memory allocator\n");
+        return 1;
+    }
+#endif
+
     main_argv = argv;
 
     Game_ConfigFilename[0] = 0;
@@ -2297,6 +2337,10 @@ int main (int argc, char *argv[])
     Cleanup_Input();
     Cleanup_Audio();
     Cleanup_Display();
+
+#if !defined(x86_malloc)
+    x86_deinit_malloc();
+#endif
 
     return Game_ExitCode;
 }

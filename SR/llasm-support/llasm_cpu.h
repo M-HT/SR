@@ -85,8 +85,10 @@ typedef struct {
 
 #ifdef __cplusplus
 #define EXTERNC extern "C"
+#define EXTERNCVAR extern "C"
 #else
 #define EXTERNC
+#define EXTERNCVAR extern
 #endif
 
 // *********************************************************************

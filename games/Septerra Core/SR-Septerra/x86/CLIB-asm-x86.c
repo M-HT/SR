@@ -29,7 +29,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <malloc.h>
 #include <math.h>
 #include <time.h>
 #include "../platform.h"
@@ -210,10 +209,5 @@ void _CItan_c(double *num)
 void _CIpow_c(double *nums)
 {
     nums[0] = pow(nums[1], nums[0]);
-}
-
-void _CIlog_c(double *num)
-{
-    *num = log(*num);
 }
 

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -129,7 +129,7 @@ static void write_track(uint32_t channel, uint8_t *midi, uint8_t *track, subsequ
 
         oldtrack = track;
         READ_VARLEN(interval, track);
-        interval_size = track - oldtrack;
+        interval_size = (unsigned int)(track - oldtrack);
 
         if (track[0] >= 0x80) // not running status
         {
@@ -454,7 +454,7 @@ static unsigned int get_midi_size(uint8_t *gmcat, subsequence *subsequences, enu
 
         oldgmcat = gmcat;
         READ_VARLEN(interval, gmcat);
-        interval_size = gmcat - oldgmcat;
+        interval_size = (unsigned int)(gmcat - oldgmcat);
 
         if (gmcat[0] >= 0x80) // not running status
         {

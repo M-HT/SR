@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -195,6 +195,12 @@ unsigned int Winapi_GetTicks(void);
 #define LR_LOADFROMFILE     0x0010
 #endif
 
+#ifdef PTROFS_64BIT
+#define PSEUDO_HANDLE_MAIN_WINDOW ((void *)(pointer_offset + 1ul))
+#else
+#define PSEUDO_HANDLE_MAIN_WINDOW ((void *)1ul)
+#endif
+
 
 typedef struct {
     uint32_t x;
@@ -235,6 +241,7 @@ extern uint32_t SoundEngine_Counter;
 
 int sdl_versionnum = 0;
 static void *lpfnWndProc = NULL;
+static SDL_Cursor *wait_cursor = NULL;
 static int cursor_visibility = 0;
 static unsigned int mouse_buttons = 0;
 static unsigned int keyboard_mods = 0;
@@ -2099,8 +2106,8 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event, int remove)
                 case SDLK_UP:
                     if (Keys_SwitchArrowKeys)
                     {
-                        vkey = vkey_table['W'];
-                        scancode = scancode_table['W'];
+                        vkey = vkey_table[(unsigned char)'W'];
+                        scancode = scancode_table[(unsigned char)'W'];
                     }
                     else
                     {
@@ -2112,8 +2119,8 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event, int remove)
                 case SDLK_DOWN:
                     if (Keys_SwitchArrowKeys)
                     {
-                        vkey = vkey_table['S'];
-                        scancode = scancode_table['S'];
+                        vkey = vkey_table[(unsigned char)'S'];
+                        scancode = scancode_table[(unsigned char)'S'];
                     }
                     else
                     {
@@ -2125,8 +2132,8 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event, int remove)
                 case SDLK_RIGHT:
                     if (Keys_SwitchArrowKeys)
                     {
-                        vkey = vkey_table['D'];
-                        scancode = scancode_table['D'];
+                        vkey = vkey_table[(unsigned char)'D'];
+                        scancode = scancode_table[(unsigned char)'D'];
                     }
                     else
                     {
@@ -2138,8 +2145,8 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event, int remove)
                 case SDLK_LEFT:
                     if (Keys_SwitchArrowKeys)
                     {
-                        vkey = vkey_table['A'];
-                        scancode = scancode_table['A'];
+                        vkey = vkey_table[(unsigned char)'A'];
+                        scancode = scancode_table[(unsigned char)'A'];
                     }
                     else
                     {
@@ -2652,7 +2659,7 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event, int remove)
         {
         case 0:
             lpMsg->message = WM_QUIT;
-            lpMsg->wParam = (uintptr_t)event->user.data1;
+            lpMsg->wParam = (uint32_t)(uintptr_t)event->user.data1;
             break;
         case 1:
             lpMsg->message = WM_NULL;
@@ -2907,7 +2914,7 @@ void *CreateWindowExA_c(uint32_t dwExStyle, const char *lpClassName, const char 
     }
 #endif
 
-    return (void *)1;
+    return PSEUDO_HANDLE_MAIN_WINDOW;
 }
 
 uint32_t DefWindowProcA_c(void *hWnd, uint32_t Msg, uint32_t wParam, uint32_t lParam)
@@ -3094,25 +3101,25 @@ int32_t GetSystemMetrics_c(int32_t nIndex)
     }
 }
 
-void *LoadCursorA_c(void *hInstance, const char *lpCursorName)
+void *LoadCursorA_c(void *hInstance, PTR32(const char) lpCursorName)
 {
 #ifdef DEBUG_USER32
-    if ( (((uintptr_t)lpCursorName) & ~(uintptr_t)0xffff) == 0 )
+    if ( (GET_PTR32_VALUE(lpCursorName) & ~(uint32_t)0xffff) == 0 )
     {
-        eprintf("LoadCursorA: 0x%" PRIxPTR ", %i\n", (uintptr_t) hInstance, (int32_t)(intptr_t) lpCursorName);
+        eprintf("LoadCursorA: 0x%" PRIxPTR ", %i\n", (uintptr_t) hInstance, GET_PTR32_VALUE(lpCursorName));
     }
     else
     {
-        eprintf("LoadCursorA: 0x%" PRIxPTR ", %s\n", (uintptr_t) hInstance, lpCursorName);
+        eprintf("LoadCursorA: 0x%" PRIxPTR ", %s\n", (uintptr_t) hInstance, (const char *) lpCursorName);
     }
 #endif
 
-    if ((hInstance == NULL) && ((((uintptr_t)lpCursorName) & ~(uintptr_t)0xffff) == 0))
+    if ((hInstance == NULL) && ((GET_PTR32_VALUE(lpCursorName) & ~(uint32_t)0xffff) == 0))
     {
         uint32_t predefined_cursor;
         SDL_Cursor* cursor;
 
-        predefined_cursor = (uintptr_t)lpCursorName;
+        predefined_cursor = GET_PTR32_VALUE(lpCursorName);
 
         if (predefined_cursor == 32514) // IDC_WAIT
         {
@@ -3173,7 +3180,14 @@ void *LoadCursorA_c(void *hInstance, const char *lpCursorName)
 
             cursor = SDL_CreateCursor((Uint8 *) data, (Uint8 *) mask, 16, 23, 7, 11);
 #endif
-            if (cursor != NULL) return cursor;
+            if (cursor != NULL)
+            {
+                PTR32(void) result;
+
+                wait_cursor = cursor;
+                SET_PTR32_VALUE(result, 32514);
+                return (void *)result;
+            }
         }
     }
 
@@ -3181,16 +3195,16 @@ void *LoadCursorA_c(void *hInstance, const char *lpCursorName)
     return NULL;
 }
 
-void *LoadIconA_c(void *hInstance, const char *lpIconName)
+void *LoadIconA_c(void *hInstance, PTR32(const char) lpIconName)
 {
 #ifdef DEBUG_USER32
-    if ( (((uintptr_t)lpIconName) & ~(uintptr_t)0xffff) == 0 )
+    if ( (GET_PTR32_VALUE(lpIconName) & ~(uint32_t)0xffff) == 0 )
     {
-        eprintf("LoadIconA: 0x%" PRIxPTR ", %i\n", (uintptr_t) hInstance, (int32_t)(intptr_t) lpIconName);
+        eprintf("LoadIconA: 0x%" PRIxPTR ", %i\n", (uintptr_t) hInstance, GET_PTR32_VALUE(lpIconName));
     }
     else
     {
-        eprintf("LoadIconA: 0x%" PRIxPTR ", %s\n", (uintptr_t) hInstance, lpIconName);
+        eprintf("LoadIconA: 0x%" PRIxPTR ", %s\n", (uintptr_t) hInstance, (const char *) lpIconName);
     }
 #endif
 
@@ -3427,7 +3441,7 @@ uint32_t PostMessageA_c(void *hWnd, uint32_t Msg, uint32_t wParam, uint32_t lPar
     eprintf("PostMessageA: 0x%" PRIxPTR ", %i, %i, %i\n", (uintptr_t)hWnd, Msg, wParam, lParam);
 #endif
 
-    if (((uintptr_t)hWnd == 1) && (Msg >= WM_USER) && (Msg < WM_APP))
+    if ((hWnd == PSEUDO_HANDLE_MAIN_WINDOW) && (Msg >= WM_USER) && (Msg < WM_APP))
     {
         // Septerra Core posts these messages, but I have no idea what they are for (they're not used by the application)
 
@@ -3478,21 +3492,19 @@ uint32_t RegisterClassA_c(void *lpWndClass)
     return 1;
 }
 
-void *SetCursor_c(void *hCursor)
+void *SetCursor_c(PTR32(void) hCursor)
 {
-    SDL_Cursor *old_cursor;
 #ifdef DEBUG_USER32
     eprintf("SetCursor: 0x%" PRIxPTR "\n", (uintptr_t) hCursor);
 #endif
 
-    old_cursor = SDL_GetCursor();
-    if (old_cursor != hCursor)
+    // Septerra Core loads and sets cursor only once and doesn't free it, so SDL cursor can be used directly
+    if (GET_PTR32_VALUE(hCursor) == 32514)
     {
-        // Septerra Core loads and sets cursor only once and doesn't free it, so SDL cursor can be used directly
-        SDL_SetCursor((SDL_Cursor *)hCursor);
+        SDL_SetCursor(wait_cursor);
     }
 
-    return old_cursor;
+    return NULL;
 }
 
 uint32_t SetCursorPos_c(int32_t X, int32_t Y)

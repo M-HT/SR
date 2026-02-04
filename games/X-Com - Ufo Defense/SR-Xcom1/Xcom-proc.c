@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -32,7 +32,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <malloc.h>
 #include <fcntl.h>		/* needed for procedure Game_openFlags */
 #include <ctype.h>
 #include <time.h>
@@ -40,6 +39,7 @@
 #include "Game_vars.h"
 #include "Xcom-proc.h"
 #include "Xcom-timer.h"
+#include "Game_memory.h"
 #include "Game_misc.h"
 #include "Game_thread.h"
 
@@ -107,12 +107,12 @@ int32_t Game_getch(void)
     return ret;
 }
 
-int32_t Game_filelength2(FILE *f)
+int32_t Game_filelength2(void *stream)
 {
     off_t origpos, endpos;
     int fd;
 
-    fd = fileno(f);
+    fd = fileno((sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
     origpos = lseek(fd, 0, SEEK_CUR);
     if (origpos < 0) return -1;
 
@@ -132,14 +132,14 @@ void *Game_malloc(uint32_t size)
 
     // X-Com has a few buffer underflows
     // That's why I allocate 4kB more memory before the resulting pointer and 4kB after (for overflows)
-    ptr = (uint8_t *) malloc(size + 8192);
+    ptr = (uint8_t *) x86_malloc(size + 8192);
     if (ptr == NULL) return NULL;
 
     out = ptr + 4096;
 
     if (!Game_list_insert(&Game_MallocList, (uintptr_t)out))
     {
-        free(ptr);
+        x86_free(ptr);
         return NULL;
     }
 
@@ -153,19 +153,19 @@ void Game_free(void *ptr)
     if (ptr == NULL) return;
 
     Game_list_remove(&Game_MallocList, (uintptr_t)ptr);
-    free(((uint8_t *) ptr) - 4096);
+    x86_free(((uint8_t *) ptr) - 4096);
 }
 
 void *Game_AllocateMemory(uint32_t size)
 {
     void *mem;
 
-    mem = malloc(size);
+    mem = x86_malloc(size);
     if (mem == NULL) return NULL;
 
     if (!Game_list_insert(&Game_AllocateMemoryList, (uintptr_t)mem))
     {
-        free(mem);
+        x86_free(mem);
         return NULL;
     }
 
@@ -177,7 +177,7 @@ void Game_FreeMemory(void *mem)
     if (mem == NULL) return;
 
     Game_list_remove(&Game_AllocateMemoryList, (uintptr_t)mem);
-    free(mem);
+    x86_free(mem);
 }
 
 int32_t Game_time(int32_t *tloc)
@@ -206,7 +206,7 @@ int32_t Game_dread(void *buf, int32_t count, int32_t fd)
 
     rcount = read(fd, buf, count);
 
-    return (rcount < 0)?0:rcount;
+    return (rcount < 0)?0:(int32_t)rcount;
 }
 
 
@@ -216,21 +216,70 @@ void Game_dclose(int32_t fd)
     close(fd);
 }
 
-int32_t Game_fclose(FILE *fp)
+static int32_t Game_fclose2(void *stream)
 {
+    FILE *fp;
     int ret;
 
-    Game_list_remove(&Game_FopenList, (uintptr_t)fp);
+    if ((sizeof(void *) > 4))
+    {
+        fp = *(FILE **)stream;
+        x86_free(stream);
+    }
+    else fp = (FILE *)stream;
+
     ret = fclose(fp);
     Game_Set_errno_val();
 
     return ret;
 }
 
+int32_t Game_fclose(void *stream)
+{
+    Game_list_remove(&Game_FopenList, (uintptr_t)stream);
+
+    return Game_fclose2(stream);
+}
+
 int32_t Game_fcloseall(void)
 {
-    Game_list_clear(&Game_FopenList, (void (*)(uintptr_t)) &fclose);
+    Game_list_clear(&Game_FopenList, (void (*)(uintptr_t)) &Game_fclose2);
     return 0;
+}
+
+int32_t Game_feof(void *stream)
+{
+    return feof((sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
+}
+
+int32_t Game_fflush(void *stream)
+{
+    return fflush((sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
+}
+
+int32_t Game_fgetc(void *stream)
+{
+    return fgetc((sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
+}
+
+int32_t Game_fputc(int32_t c, void *stream)
+{
+    return fputc(c, (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
+}
+
+int32_t Game_fputs(const char *s, void *stream)
+{
+    return fputs(s, (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
+}
+
+uint32_t Game_fread(void *ptr, uint32_t size, uint32_t nmemb, void *stream)
+{
+    return (uint32_t)fread(ptr, size, nmemb, (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
+}
+
+uint32_t Game_fwrite(const void *ptr, uint32_t size, uint32_t nmemb, void *stream)
+{
+    return (uint32_t)fwrite(ptr, size, nmemb, (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
 }
 
 void Game_SlowDownMainLoop(void)

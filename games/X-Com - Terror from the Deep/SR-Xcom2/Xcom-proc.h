@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -35,7 +35,7 @@ extern void Game_Set_errno_val(void);
 extern void Game_Set_errno_val_num(int32_t value);
 extern int32_t Game_checkch(void);
 extern int32_t Game_getch(void);
-extern int32_t Game_filelength2(FILE *f);
+extern int32_t Game_filelength2(void *stream);
 extern void *Game_malloc(uint32_t size);
 extern void Game_free(void *ptr);
 extern void *Game_AllocateMemory(uint32_t size);
@@ -44,8 +44,15 @@ extern int32_t Game_time(int32_t *tloc);
 extern int32_t Game_dlseek(int32_t fd, int32_t offset, int32_t whence);
 extern int32_t Game_dread(void *buf, int32_t count, int32_t fd);
 extern void Game_dclose(int32_t fd);
-extern int32_t Game_fclose(FILE *fp);
+extern int32_t Game_fclose(void *stream);
 extern int32_t Game_fcloseall(void);
+extern int32_t Game_feof(void *stream);
+extern int32_t Game_fflush(void *stream);
+extern int32_t Game_fgetc(void *stream);
+extern int32_t Game_fputc(int32_t c, void *stream);
+extern int32_t Game_fputs(const char *s, void *stream);
+extern uint32_t Game_fread(void *ptr, uint32_t size, uint32_t nmemb, void *stream);
+extern uint32_t Game_fwrite(const void *ptr, uint32_t size, uint32_t nmemb, void *stream);
 extern void Game_SlowDownMainLoop(void);
 extern void Game_SlowDownScrolling(void);
 extern void Game_Sync(void);

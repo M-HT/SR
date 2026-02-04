@@ -32,26 +32,40 @@
 #include <cstddef>
 #include <type_traits>
 
+#ifdef PTROFS_64BIT
+extern uint64_t pointer_offset;
+#endif
+
 template<class T, int A=4>
 class ptr32_t
 {
 private:
+#if defined(_MSC_VER)
+    uint32_t value;
+#else
     uint32_t value __attribute__ ((packed)) __attribute__ ((aligned (A)));
+#endif
 
 public:
-    ptr32_t ()
-    {
-    }
+    ptr32_t () = default;
 
     ptr32_t (void *p)
     {
+#ifdef PTROFS_64BIT
+        value = (nullptr == p) ? 0 : (uint32_t)((uintptr_t)p - pointer_offset);
+#else
         value = (uint32_t)(uintptr_t)p;
+#endif
     }
 
     template<class Q = T, typename = typename std::enable_if<!std::is_void<Q>::value>::type>
     ptr32_t (T* p) // constructor for T* if T isn't void
     {
+#ifdef PTROFS_64BIT
+        value = (nullptr == p) ? 0 : (uint32_t)((uintptr_t)p - pointer_offset);
+#else
         value = (uint32_t)(uintptr_t)p;
+#endif
     }
 
     ptr32_t (std::nullptr_t)
@@ -61,7 +75,21 @@ public:
 
     ptr32_t (uintptr_t p)
     {
+#ifdef PTROFS_64BIT
+        value = (0 == p) ? 0 : (p - pointer_offset);
+#else
         value = p;
+#endif
+    }
+
+    uint32_t get_value(void)
+    {
+        return value;
+    }
+
+    void set_value(uint32_t v)
+    {
+        value = v;
     }
 
 // Unary operators
@@ -105,50 +133,86 @@ public:
 
     operator uintptr_t () const // Overload uintptr_t (cast)
     {
+#ifdef PTROFS_64BIT
+        return (0 == value) ? 0 : (value + pointer_offset);
+#else
         return (uintptr_t)value;
+#endif
     }
 
     operator void* () const // Overload void* (cast)
     {
+#ifdef PTROFS_64BIT
+        return (0 == value) ? nullptr : (void*)(value + pointer_offset);
+#else
         return (void*)(uintptr_t)value;
+#endif
     }
 
     template<class Q = T, typename = typename std::enable_if<!std::is_void<Q>::value>::type>
     operator T* () const // Overload T* (cast) if T isn't void
     {
+#ifdef PTROFS_64BIT
+        return (0 == value) ? nullptr : (T*)(value + pointer_offset);
+#else
         return (T*)(uintptr_t)value;
+#endif
     }
 
 // Member access
 
     typename std::add_lvalue_reference<T>::type operator * () // Overload * (indirection)
     {
+#ifdef PTROFS_64BIT
+        return *(T*)(uintptr_t)(value + pointer_offset);
+#else
         return *(T*)(uintptr_t)value;
+#endif
     }
 
     typename std::add_lvalue_reference<T>::type operator [] (int32_t index) const // Overload []
     {
+#ifdef PTROFS_64BIT
+        return ((T*)(uintptr_t)(value + pointer_offset))[index];
+#else
         return ((T*)(uintptr_t)value)[index];
+#endif
     }
 
     typename std::add_lvalue_reference<T>::type operator [] (uint32_t index) const // Overload []
     {
+#ifdef PTROFS_64BIT
+        return ((T*)(uintptr_t)(value + pointer_offset))[index];
+#else
         return ((T*)(uintptr_t)value)[index];
+#endif
     }
 
     typename std::add_lvalue_reference<T>::type operator [] (int64_t index) const // Overload []
     {
+#ifdef PTROFS_64BIT
+        return ((T*)(uintptr_t)(value + pointer_offset))[index];
+#else
         return ((T*)(uintptr_t)value)[index];
+#endif
     }
 
     typename std::add_lvalue_reference<T>::type operator [] (uint64_t index) const // Overload []
     {
+#ifdef PTROFS_64BIT
+        return ((T*)(uintptr_t)(value + pointer_offset))[index];
+#else
         return ((T*)(uintptr_t)value)[index];
+#endif
     }
 
     T* operator -> () const // Overload ->
     {
+#ifdef PTROFS_64BIT
+        return (T*)(uintptr_t)(value + pointer_offset);
+#else
         return (T*)(uintptr_t)value;
+#endif
     }
 
 // Binary operators
@@ -160,13 +224,21 @@ public:
 
     bool operator == (void *p) const
     {
+#ifdef PTROFS_64BIT
+        return value == ((nullptr == p) ? 0 : ((uintptr_t)p - pointer_offset));
+#else
         return value == (uintptr_t)p;
+#endif
     }
 
     template<class Q = T, typename = typename std::enable_if<!std::is_void<Q>::value>::type>
     bool operator == (T *p) const // Overload == if T isn't void
     {
+#ifdef PTROFS_64BIT
+        return value == ((nullptr == p) ? 0 : ((uintptr_t)p - pointer_offset));
+#else
         return value == (uintptr_t)p;
+#endif
     }
 
     bool operator == (std::nullptr_t) const
@@ -181,13 +253,21 @@ public:
 
     bool operator != (void *p) const
     {
+#ifdef PTROFS_64BIT
+        return value != ((nullptr == p) ? 0 : ((uintptr_t)p - pointer_offset));
+#else
         return value != (uintptr_t)p;
+#endif
     }
 
     template<class Q = T, typename = typename std::enable_if<!std::is_void<Q>::value>::type>
     bool operator != (T *p) const // Overload != if T isn't void
     {
+#ifdef PTROFS_64BIT
+        return value != ((nullptr == p) ? 0 : ((uintptr_t)p - pointer_offset));
+#else
         return value != (uintptr_t)p;
+#endif
     }
 
     bool operator != (std::nullptr_t) const
@@ -202,7 +282,11 @@ public:
 
     bool operator < (T *p) const
     {
+#ifdef PTROFS_64BIT
+        return value < ((nullptr == p) ? 0 : ((uintptr_t)p - pointer_offset));
+#else
         return value < (uintptr_t)p;
+#endif
     }
 
     bool operator > (ptr32_t<T,A> const& p) const
@@ -212,7 +296,11 @@ public:
 
     bool operator > (T *p) const
     {
+#ifdef PTROFS_64BIT
+        return value > ((nullptr == p) ? 0 : ((uintptr_t)p - pointer_offset));
+#else
         return value > (uintptr_t)p;
+#endif
     }
 
     bool operator <= (ptr32_t<T,A> const& p) const
@@ -222,7 +310,11 @@ public:
 
     bool operator <= (T *p) const
     {
-        return value < (uintptr_t)p;
+#ifdef PTROFS_64BIT
+        return value <= ((nullptr == p) ? 0 : ((uintptr_t)p - pointer_offset));
+#else
+        return value <= (uintptr_t)p;
+#endif
     }
 
     bool operator >= (ptr32_t<T,A> const& p) const
@@ -232,7 +324,11 @@ public:
 
     bool operator >= (T *p) const
     {
+#ifdef PTROFS_64BIT
+        return value >= ((nullptr == p) ? 0 : ((uintptr_t)p - pointer_offset));
+#else
         return value >= (uintptr_t)p;
+#endif
     }
 
     ptr32_t<T,A> operator + (int32_t n) const
@@ -380,10 +476,13 @@ public:
 #define PTR32(t) ptr32_t<t>
 #define PTR32_ALIGN(t,a) ptr32_t<t,a>
 
+#define GET_PTR32_VALUE(p) (p.get_value())
+#define SET_PTR32_VALUE(p,v) p.set_value((uint32_t)(v))
+
 #undef NULL
 #define NULL nullptr
 
-#else
+#else /* __cplusplus */
 
 #define PTR32(t) t*
 #if defined(_MSC_VER)
@@ -391,6 +490,9 @@ public:
 #else
 #define PTR32_ALIGN(t,a) t* __attribute__ ((aligned (a)))
 #endif
+
+#define GET_PTR32_VALUE(p) ((uint32_t)(uintptr_t)p)
+#define SET_PTR32_VALUE(p,v) p = (void *)(uintptr_t)(uint32_t)(v)
 
 #endif
 

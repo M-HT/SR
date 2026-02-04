@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2023 Roman Pauer
+;;  Copyright (C) 2016-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -66,8 +66,6 @@ proc SR_fprintf external
 proc SR_printf external
 proc SR__bprintf external
 proc SR_sprintf external
-proc SR_WaitVerticalRetraceTicks external
-proc SR_open external
 
 proc SR_AIL_mem_use_malloc external
 proc SR_AIL_mem_use_free external
@@ -163,10 +161,6 @@ proc SR_fcloseall external
 proc SR_WaitAfterVerticalRetrace external
 proc SR_WaitForVerticalRetrace external
 ; 1 param
-proc SR_asctime external
-proc SR_chdir external
-proc SR___close external
-proc SR_j___close external
 proc SR_closedir external
 proc SR_ctime external
 proc SR__dos_findclose external
@@ -174,18 +168,10 @@ proc SR__dos_findnext external
 proc SR__dos_getvect external
 proc SR_exit external
 proc SR_fclose external
-proc SR_filelength external
-proc SR__nfree external
 proc SR_ftime external
-proc SR_getenv external
-proc SR_isatty external
-proc SR_localtime external
-proc SR__nmalloc external
 proc SR_opendir external
 proc SR__setjmp external
 proc SR_strlen external
-proc SR_tell external
-proc SR_time external
 proc SR_unlink external
 proc SR_j_unlink external
 proc SR_WaitTimerTicks external
@@ -197,9 +183,7 @@ proc SR_getcwd external
 proc SR_longjmp external
 proc SR_outp external
 proc SR_rename external
-proc SR_setbuf external
 proc SR_strchr external
-proc SR_strcmp external
 proc SR_strcpy external
 proc SR_strcspn external
 proc SR_strspn external
@@ -208,15 +192,12 @@ proc SR__dos_setvect external
 ; 3 params
 proc SR__dos_findfirst external
 proc SR_fgets external
-proc SR_lseek external
 proc SR_memcpy external
 proc SR_memmove external
 proc SR_memset external
-proc SR_read external
 proc SR_strncmp external
 proc SR_strncpy external
 proc SR_strnicmp external
-proc SR_write external
 ; 4 params
 proc SR_int386x external
 proc SR__vbprintf external

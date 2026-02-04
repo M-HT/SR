@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2025 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -1266,6 +1266,7 @@ static void audio_player(void *udata, Uint8 *stream, int len)
 
 static void play_smk(const char *filename)
 {
+    void *stream;
     FILE *f;
     char filepath[260];
 
@@ -1291,36 +1292,38 @@ static void play_smk(const char *filename)
     strcpy(filepath, "C:\\");
     strcat(filepath, filename);
 
-    f = Game_fopen(filepath, "rb");
-    if (f == NULL)
+    stream = Game_fopen(filepath, "rb");
+    if (stream == NULL)
     {
         strcpy(filepath, "C:\\VIDEO\\");
         strcat(filepath, filename);
 
-        f = Game_fopen(filepath, "rb");
+        stream = Game_fopen(filepath, "rb");
     }
 
-    if (f == NULL)
+    if (stream == NULL)
     {
         if (snprintf(filepath, sizeof(filepath), "C:\\%s%s", Albion_CDPath, filename) < (int)sizeof(filepath))
         {
-            f = Game_fopen(filepath, "rb");
+            stream = Game_fopen(filepath, "rb");
         }
     }
 
-    if (f == NULL)
+    if (stream == NULL)
     {
         if (snprintf(filepath, sizeof(filepath), "C:\\%sVIDEO\\%s", Albion_CDPath, filename) < (int)sizeof(filepath))
         {
-            f = Game_fopen(filepath, "rb");
+            stream = Game_fopen(filepath, "rb");
         }
     }
 
-    if (f == NULL)
+    if (stream == NULL)
     {
         // video file not found
         goto SMK_exit1;
     }
+
+    f = (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream;
 
     // open Smacker file
     Smack = SmackOpen(f);
@@ -1623,7 +1626,7 @@ SMK_exit4:
 SMK_exit3:
     SmackClose(Smack);
 SMK_exit2:
-    Game_fclose(f);
+    Game_fclose(stream);
 SMK_exit1:
     if (Thread_Exit)
     {

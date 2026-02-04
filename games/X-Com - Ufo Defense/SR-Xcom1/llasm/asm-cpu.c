@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -23,32 +23,42 @@
  */
 
 #include "../Game_defs.h"
+#include "../Game_memory.h"
 #include "llasm_cpu.h"
 #include <stdlib.h>
 
 static _cpu *global_cpu_ptr = NULL;
-static _cpu global_cpu;
+static void *global_cpu_block = NULL;
 
 extern int Game_Executable;
-extern uint32_t X86_InterruptFlag;
+EXTERNCVAR uint32_t X86_InterruptFlag;
 #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_GEOSCAPE))
-extern uint8_t geoscape_stack_start;
+EXTERNCVAR uint8_t geoscape_stack_start;
 #endif
 #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_TACTICAL))
-extern uint8_t tactical_stack_start;
+EXTERNCVAR uint8_t tactical_stack_start;
 #endif
 #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_INTRO))
-extern uint8_t intro_stack_start;
+EXTERNCVAR uint8_t intro_stack_start;
+#endif
+
+#ifdef PTROFS_64BIT
+extern uint64_t pointer_offset;
 #endif
 
 EXTERNC _cpu *x86_initialize_cpu(void)
 {
     _cpu *cpu;
+    void *cpu_block;
 
     cpu = global_cpu_ptr;
     if (cpu != NULL) return cpu;
 
-    cpu = &global_cpu;
+    cpu_block = x86_malloc(4088);
+    if (cpu_block == NULL) exit(2);
+
+    cpu = (_cpu *)((2048 + (uintptr_t)cpu_block) & ~(uintptr_t)127);
+    global_cpu_block = cpu_block;
 
     cpu->stack_bottom = NULL;
 
@@ -77,7 +87,13 @@ EXTERNC _cpu *x86_initialize_cpu(void)
     cpu->_st_sw_cond = 0;
     cpu->_st_cw = 0x037f;
 
-    esp = (uint32_t)(uintptr_t)cpu->stack_top;
+#ifdef PTROFS_64BIT
+    cpu->_pointer_offset = pointer_offset;
+#else
+    cpu->_reserved1 = 0;
+#endif
+
+    esp = PTR2REG(cpu->stack_top);
     eflags = 0x3202;
     X86_InterruptFlag = 1;
 
@@ -87,6 +103,19 @@ EXTERNC _cpu *x86_initialize_cpu(void)
 
 EXTERNC void x86_deinitialize_cpu(void)
 {
+    _cpu *cpu;
+    void *cpu_block;
+
+    cpu = global_cpu_ptr;
+    if (cpu == NULL) return;
+
+    if (global_cpu_block != NULL)
+    {
+        cpu_block = global_cpu_block;
+        global_cpu_block = NULL;
+        x86_free(cpu_block);
+    }
+
     X86_InterruptFlag = 0;
 
     global_cpu_ptr = NULL;

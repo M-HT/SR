@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,6 +22,7 @@
  *
  */
 
+#include "../Game-Memory.h"
 #include "llasm_cpu.h"
 #include <stdlib.h>
 
@@ -39,28 +40,46 @@ static __declspec(thread) _cpu *thread_cpu = NULL;
 #error thread local variables are not supported
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 uint32_t X86_InterruptFlag;
+
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef PTROFS_64BIT
+extern uint64_t pointer_offset;
+#endif
 
 EXTERNC _cpu *x86_initialize_cpu(void)
 {
     _cpu *cpu;
+    void *stack_bottom;
 
     cpu = thread_cpu;
     if (cpu != NULL) return cpu;
 
-    cpu = (_cpu *)malloc(sizeof(_cpu));
-    if (cpu == NULL) exit(1);
+    stack_bottom = x86_malloc(1024 * 1024 - 8);
+    if (stack_bottom == NULL) exit(2);
 
-    cpu->stack_bottom = malloc(1024 * 1024);
-    if (cpu->stack_bottom == NULL) exit(2);
-
-    cpu->stack_top = (void *)(1024 * 1024 + (uintptr_t)cpu->stack_bottom);
+    cpu = (_cpu *)((1024 * 1022 + (uintptr_t)stack_bottom) & ~(uintptr_t)127);
+    cpu->stack_bottom = stack_bottom;
+    cpu->stack_top = (void *)(1024 * 1020 + (uintptr_t)stack_bottom);
 
     cpu->_st_top = 0;
     cpu->_st_sw_cond = 0;
     cpu->_st_cw = 0x037f;
 
-    esp = (uint32_t)(uintptr_t)cpu->stack_top;
+#ifdef PTROFS_64BIT
+    cpu->_pointer_offset = pointer_offset;
+#else
+    cpu->_reserved1 = 0;
+#endif
+
+    esp = PTR2REG(cpu->stack_top);
     eflags = 0x3202;
     X86_InterruptFlag = 1;
 
@@ -71,17 +90,18 @@ EXTERNC _cpu *x86_initialize_cpu(void)
 EXTERNC void x86_deinitialize_cpu(void)
 {
     _cpu *cpu;
+    void *stack_bottom;
 
     cpu = thread_cpu;
     if (cpu == NULL) return;
 
     if (cpu->stack_bottom != NULL)
     {
-        free(cpu->stack_bottom);
+        stack_bottom = cpu->stack_bottom;
         cpu->stack_bottom = NULL;
+        x86_free(stack_bottom);
     }
 
-    free(cpu);
     thread_cpu = NULL;
 }
 

@@ -54,9 +54,9 @@
 
     %define Game_ExitMain_Asm _Game_ExitMain_Asm
     %define Game_fclose _Game_fclose
-    %define feof _feof
-    %define fflush _fflush
-    %define fgetc _fgetc
+    %define Game_feof _Game_feof
+    %define Game_fflush _Game_fflush
+    %define Game_fgetc _Game_fgetc
     %define Game_filelength2 _Game_filelength2
     %define Game_free _Game_free
     %define Game_inp _Game_inp
@@ -65,8 +65,8 @@
     %define Game_time _Game_time
 
     %define Game_fopen _Game_fopen
-    %define fputc _fputc
-    %define fputs _fputs
+    %define Game_fputc _Game_fputc
+    %define Game_fputs _Game_fputs
     %define Game_outp _Game_outp
     %define strcat _strcat
     %define strcmp _strcmp
@@ -76,8 +76,8 @@
     %define Game_ReadSong _Game_ReadSong
     %define strncmp _strncmp
 
-    %define fread _fread
-    %define fwrite _fwrite
+    %define Game_fread _Game_fread
+    %define Game_fwrite _Game_fwrite
     %define Game_int386x _Game_int386x
 %endif
 
@@ -114,9 +114,9 @@ extern Game_fcloseall
 ; 1 param
 extern Game_ExitMain_Asm
 extern Game_fclose
-extern feof
-extern fflush
-extern fgetc
+extern Game_feof
+extern Game_fflush
+extern Game_fgetc
 extern Game_filelength2
 extern Game_free
 extern Game_inp
@@ -125,8 +125,8 @@ extern strlen
 extern Game_time
 ; 2 params
 extern Game_fopen
-extern fputc
-extern fputs
+extern Game_fputc
+extern Game_fputs
 extern Game_outp
 extern strcat
 extern strcmp
@@ -136,8 +136,8 @@ extern strcasecmp
 extern Game_ReadSong
 extern strncmp
 ; 4 params
-extern fread
-extern fwrite
+extern Game_fread
+extern Game_fwrite
 extern Game_int386x
 ; 5 params
 
@@ -525,7 +525,7 @@ SR_feof:
 
 ; eax = FILE *fp
 
-        Game_Call_Asm_Reg1 feof,-1
+        Game_Call_Asm_Reg1 Game_feof,-1
 
 ; end procedure SR_feof
 
@@ -534,7 +534,7 @@ SR_fflush:
 
 ; eax = FILE *fp
 
-        Game_Call_Asm_Reg1 fflush,'get_errno_val'
+        Game_Call_Asm_Reg1 Game_fflush,'get_errno_val'
 
 ; end procedure SR_fflush
 
@@ -543,7 +543,7 @@ SR_fgetc:
 
 ; eax = FILE *fp
 
-        Game_Call_Asm_Reg1 fgetc,'get_errno_val'
+        Game_Call_Asm_Reg1 Game_fgetc,'get_errno_val'
 
 ; end procedure SR_fgetc
 
@@ -629,7 +629,7 @@ SR_fputc:
 ; eax = int c
 ; edx = FILE *fp
 
-    Game_Call_Asm_Reg2 fputc,'get_errno_val'
+    Game_Call_Asm_Reg2 Game_fputc,'get_errno_val'
 
 ; end procedure SR_fputc
 
@@ -644,7 +644,7 @@ SR_fputs:
 ; eax = const char *buf
 ; edx = FILE *fp
 
-;	Game_Call_Asm_Reg2 fputs,'get_errno_val'
+;	Game_Call_Asm_Reg2 Game_fputs,'get_errno_val'
         push ecx
 
     ; remember original esp value
@@ -661,7 +661,7 @@ SR_fputs:
         mov [esp], eax
     ; stack is aligned to 16 bytes
 
-        call fputs
+        call Game_fputs
 
     ; restore original esp value from stack
         mov esp, [esp + 2*4]
@@ -763,7 +763,7 @@ SR_fread:
 ; ebx = size_t nelem
 ; ecx = FILE *fp
 
-        Game_Call_Asm_Reg4 fread,'get_errno_val'
+        Game_Call_Asm_Reg4 Game_fread,'get_errno_val'
 
 ; end procedure SR_fread
 
@@ -775,7 +775,7 @@ SR_fwrite:
 ; ebx = size_t nelem
 ; ecx = FILE *fp
 
-        Game_Call_Asm_Reg4 fwrite,'get_errno_val'
+        Game_Call_Asm_Reg4 Game_fwrite,'get_errno_val'
 
 ; end procedure SR_fwrite
 

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -34,8 +34,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <malloc.h>
-#include <fcntl.h>		/* needed for procedure Game_openFlags */
 #include <ctype.h>
 #include <signal.h>
 #include <time.h>
@@ -44,6 +42,7 @@
 #include "Game_vars.h"
 #include "Warcraft-proc.h"
 #include "Warcraft-timer.h"
+#include "Game_memory.h"
 #include "Game_thread.h"
 
 
@@ -114,6 +113,60 @@ void Game_delay(uint32_t milliseconds)
     }
 }
 
+int32_t Game_fclose(void *stream)
+{
+    FILE *fp;
+
+    if ((sizeof(void *) > 4))
+    {
+        fp = *(FILE **)stream;
+        x86_free(stream);
+    }
+    else fp = (FILE *)stream;
+
+    return fclose(fp);
+}
+
+int32_t Game_fgetc(void *stream)
+{
+    return fgetc((sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
+}
+
+int32_t Game_ftell(void *stream)
+{
+    return ftell((sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
+}
+
+int32_t Game_fputc(int32_t c, void *stream)
+{
+    return fputc(c, (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
+}
+
+int32_t Game_fputs(const char *s, void *stream)
+{
+    return fputs(s, (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
+}
+
+char *Game_fgets(char *s, int32_t size, void *stream)
+{
+    return fgets(s, size, (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
+}
+
+int32_t Game_fseek(void *stream, int32_t offset, int32_t whence)
+{
+    return fseek((sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream, offset, whence);
+}
+
+uint32_t Game_fread(void *ptr, uint32_t size, uint32_t nmemb, void *stream)
+{
+    return (uint32_t)fread(ptr, size, nmemb, (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
+}
+
+uint32_t Game_fwrite(const void *ptr, uint32_t size, uint32_t nmemb, void *stream)
+{
+    return (uint32_t)fwrite(ptr, size, nmemb, (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
+}
+
 void Game_dos_gettime(void *dtime)
 {
 #pragma pack(1)
@@ -154,62 +207,36 @@ void Game_dos_gettime(void *dtime)
 #endif
 }
 
-int32_t Game_lseek(int32_t fd, int32_t offset, int32_t whence)
-{
-    off_t curpos;
-
-    curpos = lseek(fd, offset, whence);
-
-    return (curpos < 0 || curpos > 2147483647) ? -1 : curpos;
-}
-
 int32_t Game_fmemcmp(void *s1, uint32_t s1_seg, const void *s2, uint32_t s2_seg, uint32_t n)
 {
     return memcmp(s1, s2, n);
 }
 
-uint64_t Game_fmemcpy(void *dest, uint32_t dest_seg, const void *src, uint32_t src_seg, uint32_t n)
+void *Game_fmemcpy(void *dest, uint32_t dest_seg, const void *src, uint32_t src_seg, uint32_t n)
 {
-    uint32_t ret2;
-
-    ret2 = (uintptr_t) memcpy(dest, src, n);
-
-    return ret2 + ( ((uint64_t) dest_seg) << 32 );
+    return memcpy(dest, src, n);
 }
 
-uint64_t Game_fmemset(void *s, uint32_t s_seg, int32_t c, uint32_t n)
+void *Game_fmemset(void *s, uint32_t s_seg, int32_t c, uint32_t n)
 {
-    uint32_t ret2;
-
-    ret2 = (uintptr_t) memset(s, c, n);
-
-    return ret2 + ( ((uint64_t) s_seg) << 32 );
+    return memset(s, c, n);
 }
 
-int32_t Game_raise(int32_t condition)
+void *Game_malloc(uint32_t size)
 {
-    int newcondition;
+    return x86_malloc(size);
+}
 
-    if (Thread_Exit) Game_StopMain();
-
-    newcondition = (condition >= 0 && condition < SIGNAL_NUM)?signal_table[condition]:0;
-
-    if (newcondition == 0)
-    {
-#if defined(__DEBUG__)
-        fprintf(stderr, "Invalid signal number... (%i)\n", condition);
-#endif
-        Game_StopMain();
-    }
-
-    return raise(newcondition);
+void Game_free(void *ptr)
+{
+    x86_free(ptr);
 }
 
 #define WATCOM_IOFBF  0x0100  /* full buffering */
 #define WATCOM_IOLBF  0x0200  /* line buffering */
 #define WATCOM_IONBF  0x0400  /* no buffering */
 
-int32_t Game_setvbuf(FILE *fp, char *buf, int32_t mode, uint32_t size)
+int32_t Game_setvbuf(void *fp, char *buf, int32_t mode, uint32_t size)
 {
     int newmode;
 
@@ -218,17 +245,17 @@ int32_t Game_setvbuf(FILE *fp, char *buf, int32_t mode, uint32_t size)
     else if (mode == WATCOM_IONBF) newmode = _IONBF;
     else return 1;
 
-    return setvbuf(fp, buf, newmode, size);
+    return setvbuf((sizeof(void *) > 4) ? *(FILE **)fp : (FILE *)fp, buf, newmode, size);
 }
 
-#define WATCOM_SIG_IGN         ((sighandler_t) 1)
-#define WATCOM_SIG_DFL         ((sighandler_t) 2)
-#define WATCOM_SIG_ERR         ((sighandler_t) 3)
+#define WATCOM_SIG_IGN 1
+#define WATCOM_SIG_DFL 2
+#define WATCOM_SIG_ERR 3
 
-sighandler_t Game_signal(int32_t signum, sighandler_t handler)
+uint32_t Game_signal(int32_t signum, uint32_t handler)
 {
     int newsignum;
-    sighandler_t newhandler, oldhandler;
+    void (*newhandler)(int), (*oldhandler)(int);
 
     newsignum = (signum >= 0 && signum < SIGNAL_NUM)?signal_table[signum]:0;
 
@@ -242,15 +269,20 @@ sighandler_t Game_signal(int32_t signum, sighandler_t handler)
 
     if (handler == WATCOM_SIG_IGN) newhandler = SIG_IGN;
     else if (handler == WATCOM_SIG_DFL) newhandler = SIG_DFL;
-    else if (handler == WATCOM_SIG_ERR) newhandler = SIG_ERR;
-    else newhandler = handler;
+    else
+    {
+#if defined(__DEBUG__)
+        fprintf(stderr, "Unsupported signal handler... (%i)\n", handler);
+#endif
+        Game_StopMain();
+    }
 
     oldhandler = signal(newsignum, newhandler);
 
     if (oldhandler == SIG_IGN) return WATCOM_SIG_IGN;
     else if (oldhandler == SIG_DFL) return WATCOM_SIG_DFL;
     else if (oldhandler == SIG_ERR) return WATCOM_SIG_ERR;
-    else return oldhandler;
+    else return 0; // oldhandler
 }
 
 uint32_t Game_strtoul(const char *nptr, PTR32(char) *endptr, int32_t base)
@@ -296,132 +328,5 @@ void Game_Sync(void)
 #else
     sync();
 #endif
-}
-
-#define WATCOM_O_RDONLY       0x0000  /* open for read only */
-#define WATCOM_O_WRONLY       0x0001  /* open for write only */
-#define WATCOM_O_RDWR         0x0002  /* open for read and write */
-#define WATCOM_O_APPEND       0x0010  /* writes done at end of file */
-#define WATCOM_O_CREAT        0x0020  /* create new file */
-#define WATCOM_O_TRUNC        0x0040  /* truncate existing file */
-#define WATCOM_O_NOINHERIT    0x0080  /* file is not inherited by child process */
-#define WATCOM_O_TEXT         0x0100  /* text file */
-#define WATCOM_O_BINARY       0x0200  /* binary file */
-#define WATCOM_O_EXCL         0x0400  /* exclusive open */
-
-int32_t Game_openFlags(int32_t flags)
-{
-    int newflags;
-
-#define NO_FLAG_DEFINED
-
-    newflags = 0;
-#if defined(_O_RDONLY) || defined(O_RDONLY)
-    #if !defined(O_RDONLY)
-        #define O_RDONLY _O_RDONLY
-    #endif
-
-    #undef NO_FLAG_DEFINED
-
-    if (flags & WATCOM_O_RDONLY) newflags |= O_RDONLY;
-#endif
-
-#if defined(_O_WRONLY) || defined(O_WRONLY)
-    #if !defined(O_WRONLY)
-        #define O_WRONLY _O_WRONLY
-    #endif
-
-    #undef NO_FLAG_DEFINED
-
-    if (flags & WATCOM_O_WRONLY) newflags |= O_WRONLY;
-#endif
-
-#if defined(_O_RDWR) || defined(O_RDWR)
-    #if !defined(O_RDWR)
-        #define O_RDWR _O_RDWR
-    #endif
-
-    #undef NO_FLAG_DEFINED
-
-    if (flags & WATCOM_O_RDWR) newflags |= O_RDWR;
-#endif
-
-#if defined(_O_APPEND) || defined(O_APPEND)
-    #if !defined(O_APPEND)
-        #define O_APPEND _O_APPEND
-    #endif
-
-    #undef NO_FLAG_DEFINED
-
-    if (flags & WATCOM_O_APPEND) newflags |= O_APPEND;
-#endif
-
-#if defined(_O_CREAT) || defined(O_CREAT)
-    #if !defined(O_CREAT)
-        #define O_CREAT _O_CREAT
-    #endif
-
-    #undef NO_FLAG_DEFINED
-
-    if (flags & WATCOM_O_CREAT) newflags |= O_CREAT;
-#endif
-
-#if defined(_O_TRUNC) || defined(O_TRUNC)
-    #if !defined(O_TRUNC)
-        #define O_TRUNC _O_TRUNC
-    #endif
-
-    #undef NO_FLAG_DEFINED
-
-    if (flags & WATCOM_O_TRUNC) newflags |= O_TRUNC;
-#endif
-
-#if defined(_O_NOINHERIT) || defined(O_NOINHERIT)
-    #if !defined(O_NOINHERIT)
-        #define O_NOINHERIT _O_NOINHERIT
-    #endif
-
-    #undef NO_FLAG_DEFINED
-
-    if (flags & WATCOM_O_NOINHERIT) newflags |= O_NOINHERIT;
-#endif
-
-#if defined(_O_TEXT) || defined(O_TEXT)
-    #if !defined(O_TEXT)
-        #define O_TEXT _O_TEXT
-    #endif
-
-    #undef NO_FLAG_DEFINED
-
-    if (flags & WATCOM_O_TEXT) newflags |= O_TEXT;
-#endif
-
-#if defined(_O_BINARY) || defined(O_BINARY)
-    #if !defined(O_BINARY)
-        #define O_BINARY _O_BINARY
-    #endif
-
-    #undef NO_FLAG_DEFINED
-
-    if (flags & WATCOM_O_BINARY) newflags |= O_BINARY;
-#endif
-
-#if defined(_O_EXCL) || defined(O_EXCL)
-    #if !defined(O_EXCL)
-        #define O_EXCL _O_EXCL
-    #endif
-
-    #undef NO_FLAG_DEFINED
-
-    if (flags & WATCOM_O_EXCL) newflags |= O_EXCL;
-#endif
-
-#if defined(NO_FLAG_DEFINED)
-    #error fcntl.h not included
-#endif
-
-#undef NO_FLAG_DEFINED
-
-    return newflags;
 }
 

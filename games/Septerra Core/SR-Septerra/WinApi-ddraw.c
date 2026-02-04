@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -31,6 +31,7 @@
 #include <string.h>
 #include <SDL.h>
 #include "Game-Config.h"
+#include "Game-Memory.h"
 
 
 #define eprintf(...) fprintf(stderr,__VA_ARGS__)
@@ -349,7 +350,7 @@ uint32_t DirectDrawCreate_c(void *lpGUID, PTR32(struct IDirectDraw_c) *lplpDD, v
         exit(1);
     }
 
-    lpDD_c = (struct IDirectDraw_c *)malloc(sizeof(struct IDirectDraw_c));
+    lpDD_c = (struct IDirectDraw_c *)x86_malloc(sizeof(struct IDirectDraw_c));
 
     if (lpDD_c == NULL)
     {
@@ -447,7 +448,7 @@ uint32_t IDirectDraw_Release_c(struct IDirectDraw_c *lpThis)
             lpThis->Window = NULL;
         }
 #endif
-        free(lpThis);
+        x86_free(lpThis);
         return 0;
     }
     return lpThis->RefCount;
@@ -512,7 +513,7 @@ uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsur
             return DDERR_INVALIDPARAMS;
         }
 
-        lpDDS_c = (struct IDirectDrawSurface_c *)malloc(sizeof(struct IDirectDrawSurface_c));
+        lpDDS_c = (struct IDirectDrawSurface_c *)x86_malloc(sizeof(struct IDirectDrawSurface_c));
 
         if (lpDDS_c == NULL)
         {
@@ -541,11 +542,11 @@ uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsur
         lpDDS_c->mustlock = SDL_MUSTLOCK(lpDDS_c->Surface);
 #endif
 
-        lpDDS_c->lpBackbuffer = (struct IDirectDrawSurface_c *)malloc(sizeof(struct IDirectDrawSurface_c));
+        lpDDS_c->lpBackbuffer = (struct IDirectDrawSurface_c *)x86_malloc(sizeof(struct IDirectDrawSurface_c));
 
         if (lpDDS_c->lpBackbuffer == NULL)
         {
-            free(lpDDS_c);
+            x86_free(lpDDS_c);
 #ifdef DEBUG_DDRAW
             eprintf("error\n");
 #endif
@@ -598,8 +599,8 @@ uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsur
 
         if (lpDDS_c->lpBackbuffer->Surface == NULL)
         {
-            free(lpDDS_c->lpBackbuffer);
-            free(lpDDS_c);
+            x86_free(lpDDS_c->lpBackbuffer);
+            x86_free(lpDDS_c);
 #ifdef DEBUG_DDRAW
             eprintf("error\n");
 #endif
@@ -624,8 +625,8 @@ uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsur
         if (lpDDS_c->Surface == NULL)
         {
             SDL_FreeSurface(lpDDS_c->lpBackbuffer->Surface);
-            free(lpDDS_c->lpBackbuffer);
-            free(lpDDS_c);
+            x86_free(lpDDS_c->lpBackbuffer);
+            x86_free(lpDDS_c);
 #ifdef DEBUG_DDRAW
             eprintf("error\n");
 #endif
@@ -665,7 +666,7 @@ uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsur
             return DDERR_INVALIDPARAMS;
         }
 
-        lpDDS_c = (struct IDirectDrawSurface_c *)malloc(sizeof(struct IDirectDrawSurface_c));
+        lpDDS_c = (struct IDirectDrawSurface_c *)x86_malloc(sizeof(struct IDirectDrawSurface_c));
 
         if (lpDDS_c == NULL)
         {
@@ -695,7 +696,7 @@ uint32_t IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsur
 
         if (lpDDS_c->Surface == NULL)
         {
-            free(lpDDS_c);
+            x86_free(lpDDS_c);
 #ifdef DEBUG_DDRAW
             eprintf("error\n");
 #endif
@@ -1065,7 +1066,7 @@ uint32_t IDirectDrawSurface_Release_c(struct IDirectDrawSurface_c *lpThis)
             IDirectDrawSurface_Release_c(lpThis->lpBackbuffer);
             lpThis->lpBackbuffer = NULL;
         }
-        free(lpThis);
+        x86_free(lpThis);
         return 0;
     }
     return lpThis->RefCount;

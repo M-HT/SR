@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -59,10 +59,10 @@ void X86_InterruptProcedure(
 
                             Game_ScreenWindow = &(Game_FrameBuffer[Game_ScreenWindowNum << 16]);
 
-                            screen_window_ptr[0] = (uint32_t) Game_ScreenWindow;
-                            screen_window_ptr[1] = (uint32_t) Game_ScreenWindow;
-                            screen_window_ptr[2] = (uint32_t) Game_ScreenWindow;
-                            screen_window_ptr[3] = (uint32_t) Game_ScreenWindow;
+                            screen_window_ptr[0] = Game_ScreenWindow;
+                            screen_window_ptr[1] = Game_ScreenWindow;
+                            screen_window_ptr[2] = Game_ScreenWindow;
+                            screen_window_ptr[3] = Game_ScreenWindow;
                         }
 
                         EAX = 0x004F;	// VESA OK

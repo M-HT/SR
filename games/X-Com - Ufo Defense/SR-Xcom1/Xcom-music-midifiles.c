@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -115,6 +115,7 @@ static int Game_FindMidiFile(int index, uint8_t *buf)
 
 int Game_ReadSong(const char *catalog_name, int index, uint8_t *buf)
 {
+    void *stream;
     FILE *f;
     uint32_t num_files, file_offset, file_size, next_offset;
     uint8_t name_length;
@@ -131,8 +132,9 @@ int Game_ReadSong(const char *catalog_name, int index, uint8_t *buf)
         }
     }
 
-    f = Game_fopen(catalog_name, "rb");
-    if (f == NULL) return 0;
+    stream = Game_fopen(catalog_name, "rb");
+    if (stream == NULL) return 0;
+    f = (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream;
     if (fread(&num_files, 4, 1, f) != 1) goto read_song_error;
 
     num_files >>= 3;
@@ -179,11 +181,11 @@ int Game_ReadSong(const char *catalog_name, int index, uint8_t *buf)
         gmcat2rolandcat(buf);
     }
 
-    Game_fclose(f);
+    Game_fclose(stream);
     return 1;
 
 read_song_error:
-    Game_fclose(f);
+    Game_fclose(stream);
     return 0;
 }
 

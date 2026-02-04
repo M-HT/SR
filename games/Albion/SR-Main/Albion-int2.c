@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -345,7 +345,7 @@ uint32_t Game_int386x(
                     }
                     else
                     {
-                        ECX = (uintptr_t) Game_AllocateMemory((uint32_t) BX << 4);
+                        PTR_ECX = Game_AllocateMemory((uint32_t) BX << 4);
                         if (ECX)
                         {
 #if defined(__DEBUG__)
@@ -393,7 +393,7 @@ uint32_t Game_int386x(
 #if defined(__DEBUG__)
                             fprintf(stderr, "Running Original Interrupt...\n");
 #endif
-                            Game_intDPMI(BL, (Game_DPMIREGS *)(uintptr_t) EDI);
+                            Game_intDPMI(BL, (Game_DPMIREGS *)(void *) PTR_EDI);
                         }
                         else
                         {
@@ -422,8 +422,8 @@ uint32_t Game_int386x(
                     // case 0x0400:
                 case 0x0500:
                 // GET FREE MEMORY INFORMATION
-                    memset((void *)(uintptr_t) EDI, -1, 0x30);
-                    *((uint32_t *)(uintptr_t)EDI) = GAME_MAX_FREE_MEMORY;
+                    memset((void *)PTR_EDI, -1, 0x30);
+                    *((uint32_t *)(void *)PTR_EDI) = GAME_MAX_FREE_MEMORY;
 
                     CLEAR_FLAG(CARRY_FLAG);
 
@@ -434,7 +434,7 @@ uint32_t Game_int386x(
 #if defined(__DEBUG__)
                     fprintf(stderr, "Allocating Memory Block: %i\n", ((uint32_t) BX << 16) + CX);
 #endif
-                    ECX = (uintptr_t) Game_AllocateMemory(((uint32_t) BX << 16) + CX);
+                    PTR_ECX = Game_AllocateMemory(((uint32_t) BX << 16) + CX);
                     if (ECX)
                     {
 #if defined(__DEBUG__)
@@ -455,7 +455,9 @@ uint32_t Game_int386x(
                     // case 0x0501:
                 case 0x0502:
                 // Free Memory Block
-                    Game_FreeMemory((void *)(uintptr_t) (((uint32_t) SI << 16) + DI));
+                    EAX = ((uint32_t) SI << 16) + DI;
+                    Game_FreeMemory((void *)PTR_EAX);
+                    EAX = 0;
 
                     CLEAR_FLAG(CARRY_FLAG);
 
@@ -501,7 +503,7 @@ uint32_t Game_int386x(
 
                         for (i = 0; i < 8; i++)
                         {
-                            Game_MouseTable[i] = NULL;
+                            Game_MouseTable[i] = 0;
                         }
                     }
 
@@ -520,7 +522,7 @@ uint32_t Game_int386x(
                         {
                             if (mask & 1)
                             {
-                                Game_MouseTable[i] = (void *)(uintptr_t)EDX;
+                                Game_MouseTable[i] = EDX;
                             }
                             mask = mask >> 1;
                         }
@@ -535,7 +537,7 @@ uint32_t Game_int386x(
             // case 0x33:
         default:
             Game_StopMain();
-    } // switch (inter_no)
+    } // switch (IntNum)
 
     // just in case *out_regs is not properly aligned
     memcpy((void *)out_regs, &tmp_regs, sizeof(Game_REGS));

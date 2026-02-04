@@ -1,7 +1,7 @@
 ;part of static recompiler -- do not edit
 
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2025 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -60,6 +60,8 @@ funcv x87_fimul_int32 $, num
 
 funcv x87_fninit_void $
 
+func x87_fist_int32 $
+func x87_fistp_int16 $
 func x87_fistp_int32 $
 func x87_fistp_int64 $
 
@@ -82,6 +84,7 @@ funcv x87_fmul_st $, num
 funcv x87_fmul_to_st $, num
 funcv x87_fmulp_st $, num
 
+funcv x87_fptan_void $
 funcv x87_fsin_void $
 
 funcv x87_fsqrt_void $
@@ -121,6 +124,7 @@ funcv x87_fatan2_void $
 funcv x87_fatan2r_void $
 funcv x87_flog_void $
 funcv x87_flog10_void $
+funcv x87_floor_double $, num_low, num_high
 funcv x87_fmod_void $
 funcv x87_fmodr_void $
 funcv x87_fpow_void $
@@ -265,6 +269,14 @@ macro FIMUL_INT32 num
 endm
 
 
+macro FIST_INT32
+    call x87_fist_int32 $
+endm
+
+macro FISTP_INT16
+    call x87_fistp_int16 $
+endm
+
 macro FISTP_INT32
     call x87_fistp_int32 $
 endm
@@ -337,6 +349,10 @@ macro FMULP_ST num
     call x87_fmulp_st $, \num
 endm
 
+
+macro FPTAN_VOID
+    call x87_fptan_void $
+endm
 
 macro FSIN_VOID
     call x87_fsin_void $
@@ -464,6 +480,10 @@ endm
 
 macro FLOG10_VOID
     call x87_flog10_void $
+endm
+
+macro FLOOR_DOUBLE num_low, num_high
+    call x87_floor_double $, \num_low, \num_high
 endm
 
 macro FMOD_VOID

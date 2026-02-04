@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -108,7 +108,7 @@ static uint8_t *load_file(char const *midifile, unsigned int *res_midi_size)
 
     if (res_midi_size != NULL)
     {
-        *res_midi_size = filelen;
+        *res_midi_size = (unsigned int)filelen;
     }
 
     return midibuffer;
@@ -122,6 +122,7 @@ load_file_error:
 
 static int prepare_roland_mt32_sysex(void)
 {
+    void *stream;
     FILE *f;
     uint32_t num_files, file_offset, file_len, lapc1_pat_len;
     uint8_t *lapc1_pat, *roland_mt32_sysex, *cur_sysex;
@@ -130,16 +131,17 @@ static int prepare_roland_mt32_sysex(void)
     uint8_t name[256];
 
     // open file "drivers.cat"
-    f = Game_fopen("C:\\SOUND\\DRIVERS.CAT", "rb");
-    if (f == NULL)
+    stream = Game_fopen("C:\\SOUND\\DRIVERS.CAT", "rb");
+    if (stream == NULL)
     {
         return 2;
     }
+    f = (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream;
 
     // find file "lapc1.pat" in "drivers.cat"
     if (1 != fread(&num_files, 4, 1, f))
     {
-        Game_fclose(f);
+        Game_fclose(stream);
         return 3;
     }
     num_files >>= 3;
@@ -174,7 +176,7 @@ static int prepare_roland_mt32_sysex(void)
         }
     }
 
-    Game_fclose(f);
+    Game_fclose(stream);
 
     if (lapc1_pat == NULL)
     {

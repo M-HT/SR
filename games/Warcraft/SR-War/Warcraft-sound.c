@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,7 @@
 #if defined(__DEBUG__)
 #include <inttypes.h>
 #endif
-#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
 #include "Game_defs.h"
 #include "Game_vars.h"
@@ -542,7 +542,7 @@ void Game_AIL_start_sample(AIL_sample *S)
 
                         SDL_BuildAudioCVT(&cvt, AUDIO_S16LSB, channels, Game_AudioRate, Game_AudioFormat, Game_AudioChannels, Game_AudioRate);
 
-                        sample = (Game_sample *) malloc(sizeof(Game_sample) + newlen_bytes * cvt.len_mult * form_mult);
+                        sample = (Game_sample *) malloc(offsetof(Game_sample, data) + newlen_bytes * cvt.len_mult * form_mult);
 
                         sample->start = (uint8_t *) S->start;
                         sample->len = S->len;
@@ -644,7 +644,7 @@ void Game_AIL_start_sample(AIL_sample *S)
 
                         SDL_BuildAudioCVT(&cvt, format, channels, Game_AudioRate, Game_AudioFormat, Game_AudioChannels, Game_AudioRate);
 
-                        sample = (Game_sample *) malloc(sizeof(Game_sample) + newlen_bytes * cvt.len_mult * form_mult);
+                        sample = (Game_sample *) malloc(offsetof(Game_sample, data) + newlen_bytes * cvt.len_mult * form_mult);
 
                         sample->start = (uint8_t *) S->start;
                         sample->len = S->len;
@@ -661,7 +661,7 @@ void Game_AIL_start_sample(AIL_sample *S)
 
                     SDL_BuildAudioCVT(&cvt, format, channels, S->playback_rate, Game_AudioFormat, Game_AudioChannels, Game_AudioRate);
 
-                    sample = (Game_sample *) malloc(sizeof(Game_sample) + S->len * cvt.len_mult);
+                    sample = (Game_sample *) malloc(offsetof(Game_sample, data) + S->len * cvt.len_mult);
 
                     sample->start = (uint8_t *) S->start;
                     sample->len = S->len;

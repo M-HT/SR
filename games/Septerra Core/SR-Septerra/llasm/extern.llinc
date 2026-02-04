@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019-2023 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -65,7 +65,6 @@ proc _stricmp_asm2c external
 proc strncpy_asm2c external
 proc strncmp_asm2c external
 proc strncat_asm2c external
-proc _strnicmp_asm2c external
 
 proc malloc_asm2c external
 proc free_asm2c external
@@ -78,14 +77,7 @@ proc toupper_asm2c external
 proc sprintf_asm2c external
 proc sscanf_asm2c external
 
-proc fread_asm2c external
-proc ftell_asm2c external
-proc fseek_asm2c external
-proc fopen_asm2c external
-proc fclose_asm2c external
-
 proc system_asm2c external
-proc exit_asm2c external
 proc srand_asm2c external
 proc rand_asm2c external
 
@@ -96,7 +88,6 @@ proc _time64_asm2c external
 proc _check_security_cookie_asm2c external
 
 proc _except_handler4_asm2c external
-proc _except_handler3_asm2c external
 
 proc _beginthread_asm2c external
 
@@ -113,7 +104,6 @@ proc _CIsqrt_asm2c external
 proc _CIfmod_asm2c external
 proc _CItan_asm2c external
 proc _CIpow_asm2c external
-proc _CIlog_asm2c external
 
 
 proc OpenGameDataFiles_asm2c external

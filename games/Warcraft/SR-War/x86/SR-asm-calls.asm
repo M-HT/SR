@@ -28,8 +28,6 @@
     %define CLIB_vfprintf _CLIB_vfprintf
     %define CLIB_vprintf _CLIB_vprintf
     %define CLIB_vsprintf _CLIB_vsprintf
-    %define Game_open _Game_open
-    %define Game_openFlags _Game_openFlags
 
     %define Game_AIL_active_sample_count _Game_AIL_active_sample_count
     %define Game_AIL_allocate_sample_handle _Game_AIL_allocate_sample_handle
@@ -60,27 +58,24 @@
 
     %define Game_clock _Game_clock
 
-    %define close _close
     %define Game_cputs _Game_cputs
     %define Game_delay _Game_delay
     %define Game_dos_gettime _Game_dos_gettime
     %define Game_ExitMain_Asm _Game_ExitMain_Asm
-    %define fclose _fclose
-    %define fgetc _fgetc
-    %define free _free
-    %define ftell _ftell
-    %define getenv _getenv
+    %define Game_fclose _Game_fclose
+    %define Game_fgetc _Game_fgetc
+    %define Game_free _Game_free
+    %define Game_ftell _Game_ftell
     %define Game_inp _Game_inp
-    %define malloc _malloc
+    %define Game_malloc _Game_malloc
     %define puts _puts
-    %define Game_raise _Game_raise
     %define strlen _strlen
     %define Game_time _Game_time
     %define Game_unlink _Game_unlink
 
     %define Game_fopen _Game_fopen
-    %define fputc _fputc
-    %define fputs _fputs
+    %define Game_fputc _Game_fputc
+    %define Game_fputs _Game_fputs
     %define Game_outp _Game_outp
     %define Game_signal _Game_signal
     %define strcat _strcat
@@ -88,22 +83,19 @@
     %define strcpy _strcpy
     %define strrchr _strrchr
 
-    %define fgets _fgets
-    %define fseek _fseek
-    %define Game_lseek _Game_lseek
+    %define Game_fgets _Game_fgets
+    %define Game_fseek _Game_fseek
     %define memcmp _memcmp
     %define memcpy _memcpy
     %define memmove _memmove
     %define memset _memset
-    %define read _read
     %define strncmp _strncmp
-    %define strncpy _strncpy
     %define strncasecmp _strncasecmp
     %define strtoul _strtoul
 
     %define Game_fmemset _Game_fmemset
-    %define fread _fread
-    %define fwrite _fwrite
+    %define Game_fread _Game_fread
+    %define Game_fwrite _Game_fwrite
     %define Game_int386x _Game_int386x
     %define Game_setvbuf _Game_setvbuf
 
@@ -118,8 +110,6 @@ extern Game_errno
 extern CLIB_vfprintf
 extern CLIB_vprintf
 extern CLIB_vsprintf
-extern Game_open
-extern Game_openFlags
 
 extern Game_AIL_active_sample_count
 extern Game_AIL_allocate_sample_handle
@@ -150,27 +140,24 @@ extern Game_AIL_stop_sequence
 ; 0 params
 extern Game_clock
 ; 1 param
-extern close
 extern Game_cputs
 extern Game_delay
 extern Game_dos_gettime
 extern Game_ExitMain_Asm
-extern fclose
-extern fgetc
-extern free
-extern ftell
-extern getenv
+extern Game_fclose
+extern Game_fgetc
+extern Game_free
+extern Game_ftell
 extern Game_inp
-extern malloc
+extern Game_malloc
 extern puts
-extern Game_raise
 extern strlen
 extern Game_time
 extern Game_unlink
 ; 2 params
 extern Game_fopen
-extern fputc
-extern fputs
+extern Game_fputc
+extern Game_fputs
 extern Game_outp
 extern Game_signal
 extern strcat
@@ -178,22 +165,19 @@ extern strcmp
 extern strcpy
 extern strrchr
 ; 3 params
-extern fgets
-extern fseek
-extern Game_lseek
+extern Game_fgets
+extern Game_fseek
 extern memcmp
 extern memcpy
 extern memmove
 extern memset
-extern read
 extern strncmp
-extern strncpy
 extern strncasecmp
 extern strtoul
 ; 4 params
 extern Game_fmemset
-extern fread
-extern fwrite
+extern Game_fread
+extern Game_fwrite
 extern Game_int386x
 extern Game_setvbuf
 ; 5 params
@@ -209,7 +193,6 @@ global SR__harderr
 global SR_fprintf
 global SR_printf
 global SR_sprintf
-global SR_open
 
 global SR_AIL_active_sample_count
 global SR_AIL_allocate_sample_handle
@@ -241,8 +224,6 @@ global SR_AIL_stop_sequence
 global SR___clock
 global SR_j___clock
 ; 1 param
-global SR___close
-global SR_j___close
 global SR_cputs
 global SR___delay
 global SR_j___delay
@@ -252,11 +233,9 @@ global SR_fclose
 global SR_fgetc
 global SR__nfree
 global SR_ftell
-global SR_getenv
 global SR_inp
 global SR__nmalloc
 global SR_puts
-global SR_raise
 global SR_strlen
 global SR_time
 global SR_unlink
@@ -275,14 +254,11 @@ global SR_vprintf
 ; 3 params
 global SR_fgets
 global SR_fseek
-global SR_lseek
 global SR_memcmp
 global SR_memcpy
 global SR_memmove
 global SR_memset
-global SR_read
 global SR_strncmp
-global SR_strncpy
 global SR_strnicmp
 global SR_strtoul
 ; 4 params
@@ -382,63 +358,6 @@ SR_sprintf:
         Game_Call_Asm_VariableStack2 CLIB_vsprintf,-1
 
 ; end procedure SR_sprintf
-
-align 16
-SR_open:
-
-; [esp + 3*4] = ...
-; [esp + 2*4] = int access
-; [esp +   4] = const char *path
-; [esp      ] = return address
-
-
-; errno_val is set inside Game_open
-
-        push ecx
-        push edx
-
-; [esp + 5*4] = ...
-; [esp + 4*4] = int access
-; [esp + 3*4] = const char *path
-; [esp +   4] = return address
-
-    ; remember original esp value
-        mov eax, esp
-    ; align stack to 16 bytes
-        and esp, 0FFFFFFF0h
-    ; save original esp value on stack
-        push eax
-
-    ; push function arguments to stack
-        push dword [eax + 5*4]				; ...
-        sub esp, byte 4
-        push dword [eax + 4*4]				; access (flags)
-    ; stack is aligned to 16 bytes
-
-        call Game_openFlags ; function has one argument
-
-    ; put function argument to stack
-        mov [esp + 1*4], eax				; access (flags)
-
-    ; get original esp value from stack
-        mov edx, [esp + 3*4]
-
-    ; get function argument from original stack
-        mov eax, [edx + 3*4]				; path
-    ; put function argument to stack
-        mov [esp], eax						; path
-
-        call Game_open ; function has three arguments
-
-    ; restore original esp value from stack
-        mov esp, [esp + 3*4]
-
-        pop edx
-        pop ecx
-
-        retn
-
-; end procedure SR_open
 
 align 16
 SR_AIL_active_sample_count:
@@ -719,16 +638,6 @@ SR_j___clock:
 
 ; 1 param
 align 16
-SR___close:
-SR_j___close:
-
-; eax = int handle
-
-        Game_Call_Asm_Reg1 close,'get_errno_val'
-
-; end procedure SR___close
-
-align 16
 SR_cputs:
 
 ; eax = int handle
@@ -770,7 +679,7 @@ SR_fclose:
 
 ; eax = FILE *fp
 
-        Game_Call_Asm_Reg1 fclose,'get_errno_val'
+        Game_Call_Asm_Reg1 Game_fclose,'get_errno_val'
 
 ; end procedure SR_fclose
 
@@ -779,7 +688,7 @@ SR_fgetc:
 
 ; eax = FILE *fp
 
-        Game_Call_Asm_Reg1 fgetc,'get_errno_val'
+        Game_Call_Asm_Reg1 Game_fgetc,'get_errno_val'
 
 ; end procedure SR_fgetc
 
@@ -788,7 +697,7 @@ SR__nfree:
 
 ; eax = void __near *ptr
 
-        Game_Call_Asm_Reg1 free,-1
+        Game_Call_Asm_Reg1 Game_free,-1
 
 ; end procedure SR__nfree
 
@@ -797,18 +706,9 @@ SR_ftell:
 
 ; eax = FILE *fp
 
-        Game_Call_Asm_Reg1 ftell,'get_errno_val'
+        Game_Call_Asm_Reg1 Game_ftell,'get_errno_val'
 
 ; end procedure SR_ftell
-
-align 16
-SR_getenv:
-
-; eax = const char *name
-
-        Game_Call_Asm_Reg1 getenv,-1
-
-; end procedure SR_getenv
 
 align 16
 SR_inp:
@@ -824,7 +724,7 @@ SR__nmalloc:
 
 ; eax = size_t size
 
-        Game_Call_Asm_Reg1 malloc,-1
+        Game_Call_Asm_Reg1 Game_malloc,-1
 
 ; end procedure SR__nmalloc
 
@@ -836,15 +736,6 @@ SR_puts:
         Game_Call_Asm_Reg1 puts,'get_errno_val'
 
 ; end procedure SR_puts
-
-align 16
-SR_raise:
-
-; eax = int condition
-
-        Game_Call_Asm_Reg1 Game_raise,-1
-
-; end procedure SR_raise
 
 align 16
 SR_strlen:
@@ -896,7 +787,7 @@ SR_fputc:
 ; eax = int c
 ; edx = FILE *fp
 
-    Game_Call_Asm_Reg2 fputc,'get_errno_val'
+    Game_Call_Asm_Reg2 Game_fputc,'get_errno_val'
 
 ; end procedure SR_fputc
 
@@ -906,7 +797,7 @@ SR_fputs:
 ; eax = const char *buf
 ; edx = FILE *fp
 
-    Game_Call_Asm_Reg2 fputs,'get_errno_val'
+    Game_Call_Asm_Reg2 Game_fputs,'get_errno_val'
 
 ; end procedure SR_fputs
 
@@ -989,7 +880,7 @@ SR_fgets:
 ; edx = int n
 ; ebx = FILE *fp
 
-        Game_Call_Asm_Reg3 fgets,'get_errno_val'
+        Game_Call_Asm_Reg3 Game_fgets,'get_errno_val'
 
 ; end procedure SR_fgets
 
@@ -1000,20 +891,9 @@ SR_fseek:
 ; edx = long int offset
 ; ebx = int where
 
-        Game_Call_Asm_Reg3 fseek,'get_errno_val'
+        Game_Call_Asm_Reg3 Game_fseek,'get_errno_val'
 
 ; end procedure SR_fseek
-
-align 16
-SR_lseek:
-
-; eax = int handle
-; edx = long int offset
-; ebx = int origin
-
-        Game_Call_Asm_Reg3 Game_lseek,'get_errno_val'
-
-; end procedure SR_lseek
 
 align 16
 SR_memcmp:
@@ -1060,17 +940,6 @@ SR_memset:
 ; end procedure SR_memset
 
 align 16
-SR_read:
-
-; eax = int handle
-; edx = void *buffer
-; ebx = unsigned len
-
-        Game_Call_Asm_Reg3 read,'get_errno_val'
-
-; end procedure SR_read
-
-align 16
 SR_strncmp:
 
 ; eax = const char *s1
@@ -1080,17 +949,6 @@ SR_strncmp:
         Game_Call_Asm_Reg3 strncmp,-1
 
 ; end procedure SR_strncmp
-
-align 16
-SR_strncpy:
-
-; eax = char *dst
-; edx = const char *src
-; ebx = size_t n
-
-        Game_Call_Asm_Reg3 strncpy,-1
-
-; end procedure SR_strncpy
 
 align 16
 SR_strnicmp:
@@ -1124,7 +982,42 @@ SR__fmemset:
 ; ebx = int c
 ; ecx = size_t length
 
-        Game_Call_Asm_Reg4 Game_fmemset,-1
+        ;Game_Call_Asm_Reg4 Game_fmemset,-1
+
+    ; save original ecx value on stack
+        push ecx
+    ; remember original esp value
+        lea ecx, [esp + 4]
+    ; reserve 16 bytes on stack
+        sub esp, byte 16
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+
+    ; put function arguments to stack
+        mov [esp], eax
+        mov [esp + 1*4], edx
+        mov [esp + 2*4], ebx
+
+    ; read original ecx value from stack
+        mov eax, [ecx - 4]
+
+    ; put function argument to stack
+        mov [esp + 3*4], eax
+
+    ; save original esp value on stack
+        mov [esp + 4*4], ecx
+
+    ; stack is aligned to 16 bytes
+
+        call Game_fmemset
+
+    ; restore original edx value from stack
+        mov edx, [esp + 1*4]
+
+    ; restore original esp value from stack
+        mov esp, [esp + 4*4]
+
+        retn
 
 ; end procedure SR__fmemset
 
@@ -1136,7 +1029,7 @@ SR_fread:
 ; ebx = size_t nelem
 ; ecx = FILE *fp
 
-        Game_Call_Asm_Reg4 fread,'get_errno_val'
+        Game_Call_Asm_Reg4 Game_fread,'get_errno_val'
 
 ; end procedure SR_fread
 
@@ -1148,7 +1041,7 @@ SR_fwrite:
 ; ebx = size_t nelem
 ; ecx = FILE *fp
 
-        Game_Call_Asm_Reg4 fwrite,'get_errno_val'
+        Game_Call_Asm_Reg4 Game_fwrite,'get_errno_val'
 
 ; end procedure SR_fwrite
 
@@ -1203,7 +1096,46 @@ SR__fmemcpy:
 ;
 ; [esp    ] = return address
 
-        Game_Call_Asm_Reg5 Game_fmemcpy,-1
+        ;Game_Call_Asm_Reg5 Game_fmemcpy,-1
+
+    ; save original ecx value on stack
+        push ecx
+    ; remember original esp value
+        lea ecx, [esp + 4]
+    ; reserve 20 bytes on stack
+        sub esp, byte 20
+    ; align stack to 16 bytes
+        and esp, 0FFFFFFF0h
+
+    ; put function arguments to stack
+        mov [esp], eax
+        mov [esp + 1*4], edx
+        mov [esp + 2*4], ebx
+
+    ; read original ecx value from stack
+        mov eax, [ecx - 4]
+
+    ; read original function argument from stack
+        mov edx, [ecx + 4]
+
+    ; put function arguments to stack
+        mov [esp + 3*4], eax
+        mov [esp + 4*4], edx
+
+    ; save original esp value on stack
+        mov [esp + 5*4], ecx
+
+    ; stack is aligned to 16 bytes
+
+        call Game_fmemcpy
+
+    ; restore original edx value from stack
+        mov edx, [esp + 1*4]
+
+    ; restore original esp value from stack
+        mov esp, [esp + 5*4]
+
+        retn 4
 
 ; end procedure SR__fmemcpy
 

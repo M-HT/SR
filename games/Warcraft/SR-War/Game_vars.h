@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -39,22 +39,33 @@
 
 #if defined(DEFINE_VARIABLES)
     #define EXTERNAL_VARIABLE
+    #ifdef __cplusplus
+        #define EXTERNAL_CVAR_BGN extern "C" {
+        #define EXTERNAL_CVAR_END }
+    #else
+        #define EXTERNAL_CVAR_BGN
+        #define EXTERNAL_CVAR_END
+    #endif
 #else
     #define EXTERNAL_VARIABLE extern
+    #ifdef __cplusplus
+        #define EXTERNAL_CVAR_BGN extern "C"
+    #else
+        #define EXTERNAL_CVAR_BGN extern
+    #endif
+    #define EXTERNAL_CVAR_END
 #endif
 
-EXTERNAL_VARIABLE uint32_t X86_InterruptFlag;		/* interrupt flag indicator */
+EXTERNAL_CVAR_BGN uint32_t X86_InterruptFlag;		/* interrupt flag indicator */ EXTERNAL_CVAR_END
 
 EXTERNAL_VARIABLE int Game_SDLVersionNum;			/* linked SDL version */
 
 EXTERNAL_VARIABLE uint8_t *Game_FrameBuffer;		/* video memory (all) */
-EXTERNAL_VARIABLE PTR32(uint8_t) Game_ScreenWindow;	/* video bank (64KiB) */
+EXTERNAL_CVAR_BGN PTR32(uint8_t) Game_ScreenWindow;	/* video bank (64KiB) */ EXTERNAL_CVAR_END
 EXTERNAL_VARIABLE uint32_t Game_InterruptTable[256];	/* interrupt table */
-EXTERNAL_VARIABLE void *Game_MouseTable[8];			/* mouse functions table */
-EXTERNAL_VARIABLE void *Game_AllocatedMemory[256];	/* dos allocated memory table */
+EXTERNAL_VARIABLE uint32_t Game_MouseTable[8];		/* mouse functions table */
 EXTERNAL_VARIABLE pixel_format_orig Game_Palette_Or[256];	/* original palette (rgba) */
 EXTERNAL_VARIABLE uint32_t Game_ESP_Original_Value;	/* original value of ESP */
-EXTERNAL_VARIABLE uint32_t Game_NextMemory;			/* next memory place to allocate in memory table */
 EXTERNAL_VARIABLE SDL_Cursor *Game_OldCursor;		/* original cursor */
 EXTERNAL_VARIABLE SDL_Cursor *Game_NoCursor;		/* invisible cursor */
 EXTERNAL_VARIABLE SDL_Cursor *Game_MinCursor;		/* minimal cursor */
@@ -120,8 +131,8 @@ EXTERNAL_VARIABLE int Scaler_ScaledTextureHeight;
 #endif
 
 // global audio variables
-EXTERNAL_VARIABLE uint32_t Game_Sound;				/* is sound enabled ? */
-EXTERNAL_VARIABLE uint32_t Game_Music;				/* is music enabled ? */
+EXTERNAL_CVAR_BGN uint32_t Game_Sound;				/* is sound enabled ? */ EXTERNAL_CVAR_END
+EXTERNAL_CVAR_BGN uint32_t Game_Music;				/* is music enabled ? */ EXTERNAL_CVAR_END
 EXTERNAL_VARIABLE uint32_t Game_SoundMasterVolume;	/* sound master volume */
 EXTERNAL_VARIABLE uint32_t Game_MusicMasterVolume;	/* Music master volume */
 EXTERNAL_VARIABLE int Game_MixerChannels;			/* number of used mixer channels */
@@ -157,14 +168,14 @@ EXTERNAL_VARIABLE int Game_MT32DelaySysex;			/* Add delays when sending sysex me
 
 EXTERNAL_VARIABLE Game_sample *Game_SampleCache[GAME_SAMPLE_CACHE_SIZE];
 EXTERNAL_VARIABLE Game_channel Game_channels[GAME_MIXER_CHANNELS_MAXIMUM];
-EXTERNAL_VARIABLE AIL_sample Game_samples[GAME_SAMPLES_MAXIMUM];
+EXTERNAL_VARIABLE AIL_sample *Game_samples;
 
 
 EXTERNAL_VARIABLE uint32_t Game_BaseClockValue;		/* clock base value */
 EXTERNAL_VARIABLE uint32_t Game_LastClockValue;		/* last value returned by clock */
-EXTERNAL_VARIABLE PTR32(FILE) Game_stdin;			/* stdin */
-EXTERNAL_VARIABLE PTR32(FILE) Game_stdout;			/* stdout */
-EXTERNAL_VARIABLE PTR32(FILE) Game_stderr;			/* stderr */
+EXTERNAL_CVAR_BGN PTR32(void) Game_stdin;			/* stdin */ EXTERNAL_CVAR_END
+EXTERNAL_CVAR_BGN PTR32(void) Game_stdout;			/* stdout */ EXTERNAL_CVAR_END
+EXTERNAL_CVAR_BGN PTR32(void) Game_stderr;			/* stderr */ EXTERNAL_CVAR_END
 
 
 EXTERNAL_VARIABLE volatile uint32_t Game_TimerRunning;	/* is timer interrupt running ? */
@@ -202,6 +213,8 @@ EXTERNAL_VARIABLE char Game_Directory[80];			/* Directory where the game is inst
 EXTERNAL_VARIABLE uint32_t errno_rtable[256];		/* reverse errno table */
 
 #undef EXTERNAL_VARIABLE
+#undef EXTERNAL_CVAR_BGN
+#undef EXTERNAL_CVAR_END
 
 #define ERRNO_NUM 41
 
@@ -232,10 +245,7 @@ const static uint32_t errno_table[ERRNO_NUM] = {
 #endif
 
 
-extern PTR32(PTR32(char)) argv_val;
-
-
-extern int Game_Main_Asm(int argc, PTR32(char) argv[]);
+extern int Game_Main_Asm(int argc, char *argv[]);
 extern NORETURN void Game_StopMain_Asm(void);
 
 extern uint32_t Game_MouseMove(uint32_t state, uint32_t x, uint32_t y);
@@ -247,6 +257,8 @@ extern void Game_RunAILcallback_Asm(AIL_sample_CB callback, AIL_sample *sample);
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern PTR32(PTR32(char)) argv_val;
 
 extern int32_t errno_val;
 extern int32_t default_sample_volume;

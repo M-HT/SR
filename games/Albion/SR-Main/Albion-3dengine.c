@@ -14,6 +14,7 @@ typedef int bool;
 
 #include "Game_defs.h"
 #include "Game_vars.h"
+#include "Game_memory.h"
 
 #if defined(_MSC_VER)
 #define VAR_ALIGN(a)
@@ -347,6 +348,10 @@ static void *Game_unk_144F50 = NULL;
 #define g_word_196D0E loc_196D0E
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern uint16_t g_viewport_offsetx;
 extern uint16_t g_viewport_offsety;
 // draw_3dscene
@@ -528,47 +533,55 @@ extern uint32_t g_dword_13FFC8;
 extern int16_t g_word_196D0E;
 
 
+extern void *sub_8B6BB(void *handle);
+
 #ifdef __cplusplus
-extern "C"
-#else
-extern
+}
 #endif
-void *sub_8B6BB(void *handle);
 
 
-static int32_t INLINE convert_horizontal(int32_t xpos)
+static INLINE int32_t convert_horizontal(int32_t xpos)
 {
     return (xpos * (int32_t)Engine_RenderWidth) / 360;
 }
 
-static int32_t INLINE convert_vertical(int32_t ypos)
+static INLINE int32_t convert_vertical(int32_t ypos)
 {
     return (ypos * (int32_t)Engine_RenderHeight) / 240;
 }
 
 
-static int32_t INLINE HIDWORD_S(int64_t i64)
+static INLINE int32_t HIDWORD_S(int64_t i64)
 {
     return (int32_t) (i64 >> 32);
 }
 
-static uint32_t INLINE HIDWORD_U(uint64_t u64)
+static INLINE uint32_t HIDWORD_U(uint64_t u64)
 {
     return (uint32_t) (u64 >> 32);
 }
 
-static int64_t INLINE __PAIR_S__(int32_t d1, uint32_t d0)
+static INLINE void *HIDWORD_P(uint64_t u64)
+{
+    PTR32(void) p32;
+    SET_PTR32_VALUE(p32, u64 >> 32);
+    return (void *)p32;
+}
+
+static INLINE int64_t __PAIR_S__(int32_t d1, uint32_t d0)
 {
     return (((int64_t) d1) << 32) | ((uint64_t) d0);
 }
 
-static int64_t INLINE __PAIR_U__(uint32_t d1, uint32_t d0)
+static INLINE int64_t __PAIR_P__(void *d1, uint32_t d0)
 {
-    return (((uint64_t) d1) << 32) | ((uint64_t) d0);
+    PTR32(void) p1;
+    p1 = d1;
+    return (((uint64_t) GET_PTR32_VALUE(p1)) << 32) | ((uint64_t) d0);
 }
 
 
-static void INLINE memorycopy(void *dst, const void *src, size_t count)
+static INLINE void memorycopy(void *dst, const void *src, size_t count)
 {
     memcpy(dst, src, count);
 }
@@ -1019,7 +1032,7 @@ static PTR32(uint8_t) *d3_sub_C5342(int32_t y1, int32_t x1, int32_t y2, int32_t 
     if ( l_byte_144E8F )
         diff_fp32 = -diff_fp32;
 
-    value_fp32 = __PAIR_U__((uintptr_t)l_dword_144F44, 0x8000);
+    value_fp32 = __PAIR_P__(l_dword_144F44, 0x8000);
     diff_fp32 += ((int64_t)Game_ScreenWidth) << 32;
 
     if ( d3_param_byte_144E92 )
@@ -1027,7 +1040,7 @@ static PTR32(uint8_t) *d3_sub_C5342(int32_t y1, int32_t x1, int32_t y2, int32_t 
 
     for (; vertical_counter > 0; vertical_counter--)
     {
-        a5[0] = (uint8_t *)(uintptr_t)HIDWORD_U(value_fp32);
+        a5[0] = (uint8_t *)HIDWORD_P(value_fp32);
         a5++;
         value_fp32 += diff_fp32;
     }
@@ -1136,7 +1149,7 @@ static void d3_sub_C5B99(int32_t number_of_coordinates, int16_t *list_of_coordin
     do
     {
         dst = var02[0];
-        var22 = var02[Engine_MaximumViewportHeight] - dst;
+        var22 = (int32_t)(var02[Engine_MaximumViewportHeight] - dst);
         ++var02;
 
         if ( var22 < 0 )
@@ -1647,7 +1660,7 @@ static void sm4_proc(struct struc_2 *tex_info, uint32_t arg2)
         {
             addr = Game_stru_1414AC[0].viewport_first_pixel_addr;
             counter = var_24;
-            base = __PAIR_U__((uintptr_t)&d3_texture_column[(((l_dword_141494_fp16 >> 16) & 0xff) << 8) + ((Game_stru_1414AC[0].texture_y1_fp16 >> 16) & 0xff)], Game_stru_1414AC[0].texture_y1_fp16 << 16);
+            base = __PAIR_P__(&d3_texture_column[(((l_dword_141494_fp16 >> 16) & 0xff) << 8) + ((Game_stru_1414AC[0].texture_y1_fp16 >> 16) & 0xff)], Game_stru_1414AC[0].texture_y1_fp16 << 16);
 
             Game_stru_1414AC[0].viewport_first_pixel_addr++;
 
@@ -1655,7 +1668,7 @@ static void sm4_proc(struct struc_2 *tex_info, uint32_t arg2)
             {
                 uint8_t tmp;
 
-                tmp = *((uint8_t *)(uintptr_t) HIDWORD_U(base));
+                tmp = *((uint8_t *) HIDWORD_P(base));
                 if (tmp) *addr = pal[tmp];
 
                 addr += Game_ScreenWidth;
@@ -1742,13 +1755,13 @@ LABEL_49:
                     }
                     l_dword_143D48 = var42;
                     counter = var40;
-                    base = __PAIR_U__((uintptr_t)&d3_texture_column[(((l_dword_141494_fp16 >> 16) & 0xff) << 8) + (l_dword_143D34[1] & 0xff)], l_dword_143D34[0]);
+                    base = __PAIR_P__(&d3_texture_column[(((l_dword_141494_fp16 >> 16) & 0xff) << 8) + (l_dword_143D34[1] & 0xff)], l_dword_143D34[0]);
                     pal = &(g_palettes[256 * (uint32_t)d3_palette_type]);
                     addr = l_dword_143D44;
 
                     do
                     {
-                        *addr = pal[*((uint8_t *)(uintptr_t) HIDWORD_U(base))];
+                        *addr = pal[*((uint8_t *) HIDWORD_P(base))];
                         base += l_qword_143D4C_fp32;
                         addr += Game_ScreenWidth;
                         --counter;
@@ -1757,7 +1770,7 @@ LABEL_49:
 
                     l_dword_143D44 = addr;
                     l_dword_143D34[0] = (uint32_t)base;
-                    l_dword_143D34[1] = (HIDWORD_U(base) - (uint32_t)d3_texture_column) & 0xff;
+                    l_dword_143D34[1] = ((uintptr_t)HIDWORD_P(base) - (uintptr_t)d3_texture_column) & 0xff;
                     ++var35;
                 }
                 else
@@ -2053,13 +2066,13 @@ static void sm123_proc(struct struc_2 *tex_info, int32_t sm123_draw_type)
 
                 addr = var12->viewport_first_pixel_addr;
                 counter = var12->texture_height_in_viewport;
-                base = __PAIR_U__((uintptr_t)&d3_texture_column[((l_dword_141494 & 0xff) << 8) + ((var12->texture_y1_fp16 >> 16) & 0xff)], var12->texture_y1_fp16 << 16);
+                base = __PAIR_P__(&d3_texture_column[((l_dword_141494 & 0xff) << 8) + ((var12->texture_y1_fp16 >> 16) & 0xff)], var12->texture_y1_fp16 << 16);
                 diff = ((uint64_t) ((var12->texture_y2_fp16 - var12->texture_y1_fp16) / var12->texture_height_in_viewport)) << 16;
                 var12++;
 
                 for (; counter >= 0; counter--)
                 {
-                    *addr = pal[*((uint8_t *)(uintptr_t) HIDWORD_U(base))];
+                    *addr = pal[*((uint8_t *) HIDWORD_P(base))];
                     addr += Game_ScreenWidth;
                     base += diff;
                 }
@@ -2079,7 +2092,7 @@ static void sm123_proc(struct struc_2 *tex_info, int32_t sm123_draw_type)
 
                 addr = var12->viewport_first_pixel_addr;
                 counter = var12->texture_height_in_viewport;
-                base = __PAIR_U__((uintptr_t)&d3_texture_column[((l_dword_141494 & 0xff) << 8) + ((var12->texture_y1_fp16 >> 16) & 0xff)], var12->texture_y1_fp16 << 16);
+                base = __PAIR_P__(&d3_texture_column[((l_dword_141494 & 0xff) << 8) + ((var12->texture_y1_fp16 >> 16) & 0xff)], var12->texture_y1_fp16 << 16);
                 diff = ((uint64_t) ((var12->texture_y2_fp16 - var12->texture_y1_fp16) / var12->texture_height_in_viewport)) << 16;
                 var12++;
 
@@ -2087,7 +2100,7 @@ static void sm123_proc(struct struc_2 *tex_info, int32_t sm123_draw_type)
                 {
                     uint8_t tmp;
 
-                    tmp = *((uint8_t *)(uintptr_t) HIDWORD_U(base));
+                    tmp = *((uint8_t *) HIDWORD_P(base));
                     if (tmp) *addr = pal[tmp];
 
                     addr += Game_ScreenWidth;
@@ -2109,7 +2122,7 @@ static void sm123_proc(struct struc_2 *tex_info, int32_t sm123_draw_type)
 
                 addr = var12->viewport_first_pixel_addr;
                 counter = var12->texture_height_in_viewport;
-                base = __PAIR_U__((uintptr_t)&d3_texture_column[((l_dword_141494 & 0xff) << 8) + ((var12->texture_y1_fp16 >> 16) & 0xff)], var12->texture_y1_fp16 << 16);
+                base = __PAIR_P__(&d3_texture_column[((l_dword_141494 & 0xff) << 8) + ((var12->texture_y1_fp16 >> 16) & 0xff)], var12->texture_y1_fp16 << 16);
                 diff = ((uint64_t) ((var12->texture_y2_fp16 - var12->texture_y1_fp16) / var12->texture_height_in_viewport)) << 16;
                 var12++;
 
@@ -2117,7 +2130,7 @@ static void sm123_proc(struct struc_2 *tex_info, int32_t sm123_draw_type)
                 {
                     uint8_t tmp;
 
-                    tmp = *((uint8_t *)(uintptr_t) HIDWORD_U(base));
+                    tmp = *((uint8_t *) HIDWORD_P(base));
                     if (tmp)
                     {
                         *addr = pal[tmp];
@@ -2138,17 +2151,17 @@ static void sm123_proc(struct struc_2 *tex_info, int32_t sm123_draw_type)
     }
 }
 
-static void INLINE sm1_proc(struct struc_2 *tex_info)
+static INLINE void sm1_proc(struct struc_2 *tex_info)
 {
     sm123_proc(tex_info, 1);
 }
 
-static void INLINE sm2_proc(struct struc_2 *tex_info)
+static INLINE void sm2_proc(struct struc_2 *tex_info)
 {
     sm123_proc(tex_info, 2);
 }
 
-static void INLINE sm3_proc(struct struc_2 *tex_info)
+static INLINE void sm3_proc(struct struc_2 *tex_info)
 {
     sm123_proc(tex_info, 3);
 }
@@ -2211,7 +2224,7 @@ static uint8_t *d3_sub_1CC6A(uint16_t a1, uint16_t a2, uint32_t a3)
     var_1C = &(g_dword_14A4A6[a1 - 1]);
     var_8 = d3_sub_22BC1(var_1C->field_0, (uint16_t)var_1C->field_4, a2);
     var_18 = (uint8_t *)&(g_word_1501D4[80 * ((uint32_t)a1 - 1) + 10 * (uint32_t)var_8]);
-    result = (uintptr_t)sub_8B6BB(*(void **)(var_18 + 6));
+    result = (uintptr_t)sub_8B6BB(*(PTR32(void) *)(var_18 + 6));
     result = (result + 256) & ~(uintptr_t)0xff;
     result += (uintptr_t) *(uint16_t *)var_18;
 
@@ -2242,7 +2255,7 @@ static uint8_t *d3_sub_1CABA(uint16_t a1, uint16_t a2, uint16_t a3)
     {
         var_8 = d3_sub_22BC1(*((uint32_t *)var_1C), (uint16_t)var_1C[6], a3);
         var_18 = (uint8_t *)(void *)g_dword_14EBD4[8 * (uint32_t)a2 + (uint32_t)var_8];
-        result = (uintptr_t)sub_8B6BB(*(void **)(var_18 + 6));
+        result = (uintptr_t)sub_8B6BB(*(PTR32(void) *)(var_18 + 6));
         result += (uintptr_t) *(uint16_t *)var_18;
 
         return (uint8_t *)result;
@@ -2269,7 +2282,7 @@ static uint8_t *d3_sub_1CABA(uint16_t a1, uint16_t a2, uint16_t a3)
 
     g_word_159C75[64 * (uint32_t)a1] = var_8;
     var_18 = (uint8_t *)(void *)g_dword_14EBD4[8 * (uint32_t)a2 + (uint32_t)var_8];
-    result = (uintptr_t)sub_8B6BB(*(void **)(var_18 + 6));
+    result = (uintptr_t)sub_8B6BB(*(PTR32(void) *)(var_18 + 6));
     result += (uintptr_t) *(uint16_t *)var_18;
 
     return (uint8_t *)result;
@@ -2305,7 +2318,7 @@ static uint8_t *d3_sub_1CD21(uint16_t a1, uint16_t a2)
     }
 
     var_1C = (uint8_t *)(void *)g_dword_14A8EC[9 * ((uint32_t)a1 - 1) + (uint32_t)var_C];
-    result = (uintptr_t)sub_8B6BB(*(void **)(var_1C + 6));
+    result = (uintptr_t)sub_8B6BB(*(PTR32(void) *)(var_1C + 6));
     result += (uintptr_t) *(uint16_t *)var_1C;
 
     return (uint8_t *)result;
@@ -3476,7 +3489,7 @@ static void draw_background(int32_t endlineoffset) // endlineoffset is allways s
 }
 
 
-static void INLINE memorymove_words(const void *src, void *dst, int32_t words_count)
+static INLINE void memorymove_words(const void *src, void *dst, int32_t words_count)
 {
     if (words_count > 0) memmove(dst, src, 2 * words_count);
 }
@@ -3623,7 +3636,7 @@ static void d3_sub_BF644(struct struc_2 *tex_info)
         if ( (int32_t)var07[-1].viewport_x1 <= var_20 ) break;
     }
 
-    words_count = 4 * ((d3_dword_143D68 + 1) - (((intptr_t)var07 - (intptr_t)&(d3_stru_194A80[0])) >> 3));
+    words_count = 4 * ((d3_dword_143D68 + 1) - (int32_t)(((intptr_t)var07 - (intptr_t)&(d3_stru_194A80[0])) >> 3));
 
     if ( var06 == NULL )
     {
@@ -3646,7 +3659,7 @@ static void d3_sub_BF644(struct struc_2 *tex_info)
         if ( tex_info->without_transparent_pixels )
         {
             ++d3_dword_143D68;
-            memorymove_words(var06, var06 + 1, 4 * (d3_dword_143D68 - (((intptr_t)var06 - (intptr_t)&(d3_stru_194A80[0])) >> 3)));
+            memorymove_words(var06, var06 + 1, 4 * (d3_dword_143D68 - (int32_t)(((intptr_t)var06 - (intptr_t)&(d3_stru_194A80[0])) >> 3)));
             var06[1].viewport_x2 = (int16_t)var04;
             var06[1].viewport_x1 = var06->viewport_x2 + 1;
             var06[1].viewport_y1 = (int16_t)var_24;
@@ -4624,7 +4637,7 @@ void draw_3dscene(void)
 
     if (Game_unk_144F50 == NULL)
     {
-        Game_unk_144F50 = malloc((2 * (Engine_MaximumViewportHeight + 1)) * sizeof(struct struc_7));
+        Game_unk_144F50 = x86_malloc((2 * (Engine_MaximumViewportHeight + 1)) * sizeof(struct struc_7));
         if (Game_unk_144F50 == NULL) return;
     }
 
@@ -4880,7 +4893,7 @@ void draw_3dscene(void)
 
 
         // copy original screen
-        ptr = g_viewport_ptr - g_viewport_offsetx;
+        ptr = (uint8_t *)g_viewport_ptr - g_viewport_offsetx;
         height = g_viewport_height;
         ptr2 = Game_OverlayDraw.ScreenViewpartOriginal;
         if (g_viewport_offsety > 0)

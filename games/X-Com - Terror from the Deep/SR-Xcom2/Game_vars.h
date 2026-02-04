@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -39,11 +39,24 @@
 
 #if defined(DEFINE_VARIABLES)
     #define EXTERNAL_VARIABLE
+    #ifdef __cplusplus
+        #define EXTERNAL_CVAR_BGN extern "C" {
+        #define EXTERNAL_CVAR_END }
+    #else
+        #define EXTERNAL_CVAR_BGN
+        #define EXTERNAL_CVAR_END
+    #endif
 #else
     #define EXTERNAL_VARIABLE extern
+    #ifdef __cplusplus
+        #define EXTERNAL_CVAR_BGN extern "C"
+    #else
+        #define EXTERNAL_CVAR_BGN extern
+    #endif
+    #define EXTERNAL_CVAR_END
 #endif
 
-EXTERNAL_VARIABLE uint32_t X86_InterruptFlag;		/* interrupt flag indicator */
+EXTERNAL_CVAR_BGN uint32_t X86_InterruptFlag;		/* interrupt flag indicator */ EXTERNAL_CVAR_END
 
 EXTERNAL_VARIABLE int Game_SDLVersionNum;			/* linked SDL version */
 
@@ -51,7 +64,7 @@ EXTERNAL_VARIABLE int Game_Executable;				/* current executable */
 EXTERNAL_VARIABLE char **main_argv;
 EXTERNAL_VARIABLE uint8_t *Game_FrameMemory;		/* allocated video memory */
 EXTERNAL_VARIABLE uint8_t *Game_FrameBuffer;		/* pointer to video memory (all) */
-EXTERNAL_VARIABLE PTR32(uint8_t) Game_ScreenWindow;	/* video bank (64KiB) */
+EXTERNAL_CVAR_BGN PTR32(uint8_t) Game_ScreenWindow;	/* video bank (64KiB) */ EXTERNAL_CVAR_END
 EXTERNAL_VARIABLE uint32_t Game_InterruptTable[256];	/* interrupt table */
 EXTERNAL_VARIABLE void *Game_MouseTable[8];			/* mouse functions table */
 EXTERNAL_VARIABLE pixel_format_orig Game_Palette_Or[256];	/* original palette (rgba) */
@@ -66,7 +79,7 @@ EXTERNAL_VARIABLE int Game_MouseCursor;				/* mouse cursor type in window
                                                        0: normal
                                                        1: minimal
                                                        2: none */
-EXTERNAL_VARIABLE int32_t Game_PlayIntro;			/* play intro on start ? */
+EXTERNAL_CVAR_BGN int32_t Game_PlayIntro;			/* play intro on start ? */ EXTERNAL_CVAR_END
 
 EXTERNAL_VARIABLE void *Game_DopenList;				/* list of files opened using Game_dopen */
 EXTERNAL_VARIABLE void *Game_FopenList;				/* list of files opened using Game_fopen */
@@ -128,7 +141,7 @@ EXTERNAL_VARIABLE int Scaler_ScaledTextureHeight;
 
 EXTERNAL_VARIABLE int Game_Delay_Game;				/* time in ms to delay the game in timer tick */
 EXTERNAL_VARIABLE int Game_Main_Loop_VSync_Ticks;	/* maximum number of vsync ticks to wait in game main loop */
-EXTERNAL_VARIABLE int32_t Game_Skip_Scrolling_SlowDown;	/* skip scrolling slowdown once */
+EXTERNAL_CVAR_BGN int32_t Game_Skip_Scrolling_SlowDown;	/* skip scrolling slowdown once */ EXTERNAL_CVAR_END
 
 // global audio variables
 EXTERNAL_VARIABLE uint32_t Game_Sound;				/* is sound enabled ? */
@@ -183,11 +196,11 @@ EXTERNAL_VARIABLE int Game_MT32DelaySysex;			/* Add delays when sending sysex me
 EXTERNAL_VARIABLE int Game_SongLength;				/* Length of last loaded song */
 
 
-EXTERNAL_VARIABLE PTR32(FILE) Game_stdin;			/* stdin */
-EXTERNAL_VARIABLE PTR32(FILE) Game_stdout;			/* stdout */
-EXTERNAL_VARIABLE PTR32(FILE) Game_stderr;			/* stderr */
+EXTERNAL_CVAR_BGN PTR32(void) Game_stdin;			/* stdin */ EXTERNAL_CVAR_END
+EXTERNAL_CVAR_BGN PTR32(void) Game_stdout;			/* stdout */ EXTERNAL_CVAR_END
+EXTERNAL_CVAR_BGN PTR32(void) Game_stderr;			/* stderr */ EXTERNAL_CVAR_END
 
-EXTERNAL_VARIABLE PTR32(uint8_t) Zero_Segment;		/* 64KiB of zeros */
+EXTERNAL_CVAR_BGN PTR32(uint8_t) Zero_Segment;		/* 64KiB of zeros */ EXTERNAL_CVAR_END
 
 #if (EXE_BUILD == EXE_COMBINED)
 EXTERNAL_VARIABLE void *Geoscape_DataBackup;		/* copy of geoscape data segment */
@@ -232,6 +245,8 @@ EXTERNAL_VARIABLE char Game_Directory[80];			/* Directory where the game is inst
 EXTERNAL_VARIABLE uint32_t errno_rtable[256];		/* reverse errno table */
 
 #undef EXTERNAL_VARIABLE
+#undef EXTERNAL_CVAR_BGN
+#undef EXTERNAL_CVAR_END
 
 #define ERRNO_NUM 41
 
@@ -262,7 +277,7 @@ extern const uint32_t errno_table[ERRNO_NUM];
 
 
 
-extern int Game_Main_Asm(int argc, PTR32(char) argv[], void *main_proc);
+extern int Game_Main_Asm(int argc, char *argv[], void *main_proc);
 extern NORETURN void Game_StopMain_Asm(void);
 
 extern void Game_RunTimer_Asm(void *timer_proc);

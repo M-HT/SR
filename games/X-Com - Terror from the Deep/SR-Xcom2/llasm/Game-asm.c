@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -41,7 +41,7 @@ extern void c_RunProcEBP(CPU);
 }
 #endif
 
-extern uint32_t X86_InterruptFlag;
+EXTERNCVAR uint32_t X86_InterruptFlag;
 
 static jmp_buf exit_env;
 
@@ -60,7 +60,7 @@ void Game_StopMain_Asm(void)
     longjmp(exit_env, 1);
 }
 
-int Game_Main_Asm(int argc, PTR32(char) argv[], void *main_proc)
+int Game_Main_Asm(int argc, char *argv[], void *main_proc)
 {
     if (setjmp(exit_env) == 0)
     {
@@ -70,9 +70,9 @@ int Game_Main_Asm(int argc, PTR32(char) argv[], void *main_proc)
         cpu = x86_initialize_cpu();
 
         eax = argc;
-        edx = (uintptr_t)argv;
+        edx = PTR2REG(argv);
 
-        ebp = (uintptr_t)main_proc;
+        ebp = PTR2REG(main_proc);
         c_RunProcEBP(cpu);
 
         retval = eax;
@@ -109,7 +109,7 @@ void Game_RunTimer_Asm(void *timer_proc)
     old_eflags = eflags;
     eflags = 0x3202;
 
-    ebp = (uintptr_t)timer_proc;
+    ebp = PTR2REG(timer_proc);
     c_RunProcEBP(cpu);
 
     eflags = old_eflags;

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,13 +25,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <malloc.h>
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Game_scalerplugin.h"
 #include "Game_thread.h"
 #include "Game_virtualkeyboard.h"
 #include "Albion-proc-events.h"
+#include "Game_memory.h"
 #include "main.h"
 #include "display.h"
 #ifdef USE_SDL2
@@ -45,20 +45,31 @@ int Game_Main(void)
 #define MLEN 8
 
     const static char main_filename[MLEN+1] = "MAIN.EXE";
-    char main_filename_local[MLEN+1];
-    PTR32(char) main_filename_local_ptr[2];
-
-    memcpy(main_filename_local, main_filename, MLEN+1);
-    main_filename_local_ptr[0] = main_filename_local;
-    main_filename_local_ptr[1] = NULL;
-
     if (Thread_Exit)
     {
         return 1;
     }
     else
     {
-        return Game_Main_Asm(1, main_filename_local_ptr);
+        uint8_t *argv_local;
+        int ret;
+
+        argv_local = (uint8_t *)x86_malloc(2 * sizeof(uint32_t) + MLEN+1);
+        if (argv_local == NULL)
+        {
+            fprintf(stderr, "Error: Not enough memory\n");
+            return 1;
+        }
+
+        ((PTR32(uint8_t) *)argv_local)[0] = argv_local + 2 * sizeof(uint32_t);
+        ((PTR32(uint8_t) *)argv_local)[1] = NULL;
+        memcpy(argv_local + 2 * sizeof(uint32_t), main_filename, MLEN+1);
+
+        ret = Game_Main_Asm(1, (char **)argv_local);
+
+        x86_free(argv_local);
+
+        return ret;
     }
 
 #undef MLEN
@@ -87,7 +98,7 @@ void *Game_AllocateMemory(uint32_t size)
 {
     void *mem;
 
-    mem = malloc(size);
+    mem = x86_malloc(size);
 
     if (mem != NULL)
     {
@@ -128,7 +139,7 @@ void Game_FreeMemory(void *mem)
         }
     }
 
-    free(mem);
+    x86_free(mem);
 }
 
 int Game_MainThread(void *data)

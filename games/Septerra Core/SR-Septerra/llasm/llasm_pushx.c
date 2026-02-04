@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,7 +26,7 @@
 
 #include "llasm_cpu.h"
 
-extern uint32_t X86_InterruptFlag;
+EXTERNCVAR uint32_t X86_InterruptFlag;
 
 
 EXTERNC void x86_pushad(CPU)

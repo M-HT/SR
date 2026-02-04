@@ -29,6 +29,7 @@
 #endif
 #include <stdlib.h>
 #include "CLIB.h"
+#include "Game-Memory.h"
 
 #include <string.h>
 #include <ctype.h>
@@ -36,6 +37,7 @@
 #include <stdarg.h>
 #include "platform.h"
 #include "printf_x86.h"
+#include "ptr32.h"
 
 #if (defined(__WIN32__) || defined(__WINDOWS__)) && !defined(_WIN32)
 #define _WIN32
@@ -120,23 +122,13 @@ char *strncat_c(char *dest, const char *src, uint32_t n)
     return strncat(dest, src, n);
 }
 
-int32_t _strnicmp_c(const char *s1, const char *s2, uint32_t n)
-{
-#ifdef DEBUG_CLIB
-    eprintf("_strnicmp: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s), %i - %i\n", (uintptr_t) s1, s1, (uintptr_t) s2, s2, n, strncasecmp(s1, s2, n));
-#endif
-
-    return strncasecmp(s1, s2, n);
-}
-
-
 void *malloc_c(uint32_t size)
 {
 #ifdef DEBUG_CLIB
     eprintf("malloc: %i\n", size);
 #endif
 
-    return malloc(size);
+    return x86_malloc(size);
 }
 
 void free_c(void *ptr)
@@ -145,7 +137,7 @@ void free_c(void *ptr)
     eprintf("free: 0x%" PRIxPTR "\n", (uintptr_t) ptr);
 #endif
 
-    free(ptr);
+    x86_free(ptr);
 }
 
 void *calloc_c(uint32_t nmemb, uint32_t size)
@@ -154,7 +146,7 @@ void *calloc_c(uint32_t nmemb, uint32_t size)
     eprintf("calloc: %i, %i\n", nmemb, size);
 #endif
 
-    return calloc(nmemb, size);
+    return x86_calloc(nmemb, size);
 }
 
 
@@ -217,7 +209,7 @@ int32_t sscanf2_c(const char *str, const char *format, uint32_t *ap)
 
                 if (format[index + 1] == 's')
                 {
-                    ptrvals[num - 1] = (void *)(uintptr_t)ap[num - 1];
+                    ptrvals[num - 1] = (void *)((PTR32(void) *)ap)[num - 1];
                 }
                 else if (format[index + 1] == 'd')
                 {
@@ -249,7 +241,7 @@ int32_t sscanf2_c(const char *str, const char *format, uint32_t *ap)
     {
         if (ptrvals[index] == &(values[index]))
         {
-            *((uint32_t *)(uintptr_t)ap[index]) = (uint32_t)values[index];
+            *((uint32_t *)((PTR32(uint32_t) *)ap)[index]) = (uint32_t)values[index];
         }
     }
 
@@ -262,59 +254,6 @@ int32_t sscanf2_c(const char *str, const char *format, uint32_t *ap)
 }
 
 
-uint32_t fread_c(void *ptr, uint32_t size, uint32_t nmemb, void *stream)
-{
-#ifdef DEBUG_CLIB
-    eprintf("fread: 0x%" PRIxPTR ", %i, %i, 0x%" PRIxPTR "\n", (uintptr_t) ptr, size, nmemb, (uintptr_t) stream);
-#endif
-
-    return fread(ptr, size, nmemb, (FILE *) stream);
-}
-
-int32_t ftell_c(void *stream)
-{
-#ifdef DEBUG_CLIB
-    eprintf("ftell: 0x%" PRIxPTR " - %i\n", (uintptr_t) stream, (int)ftell((FILE *) stream));
-#endif
-
-    return ftell((FILE *) stream);
-}
-
-int32_t fseek_c(void *stream, int32_t offset, int32_t whence)
-{
-#ifdef DEBUG_CLIB
-    eprintf("fseek: 0x%" PRIxPTR ", %i, %i\n", (uintptr_t) stream, offset, whence);
-#endif
-
-    return fseek((FILE *) stream, offset, whence);
-}
-
-void *fopen_c(const char *path, const char *mode)
-{
-#ifdef DEBUG_CLIB
-    eprintf("fopen: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s)\n", (uintptr_t) path, path, (uintptr_t) mode, mode);
-#endif
-
-#ifdef _WIN32
-    return fopen(path, mode);
-#else
-    char buf[8192];
-
-    CLIB_FindFile(path, buf);
-    return fopen(buf, mode);
-#endif
-}
-
-int32_t fclose_c(void *fp)
-{
-#ifdef DEBUG_CLIB
-    eprintf("fclose: 0x%" PRIxPTR "\n", (uintptr_t) fp);
-#endif
-
-    return fclose((FILE *) fp);
-}
-
-
 int32_t system_c(const char *command)
 {
 #ifdef DEBUG_CLIB
@@ -322,15 +261,6 @@ int32_t system_c(const char *command)
 #endif
 
     return 0;
-}
-
-void exit_c(int32_t status)
-{
-#ifdef DEBUG_CLIB
-    eprintf("exit: %i\n", status);
-#endif
-
-    exit(status);
 }
 
 void srand_c(uint32_t seed)
@@ -365,18 +295,21 @@ int32_t _except_handler4_c(int32_t _1, void *TargetFrame, int32_t _3)
     exit(0);
 }
 
-int32_t _except_handler3_c(int32_t _1, void *TargetFrame, int32_t _3)
-{
-    fprintf(stderr, "exception handler: %i\n", 3);
-    exit(0);
-}
-
-#if !defined(_WIN32)
 typedef struct {
     void(*start_address)(void *);
     void *arglist;
 } run_thread_args;
 
+#ifdef _WIN32
+static void run_thread(void *arg)
+{
+    void(*start_address)(void *) = ((run_thread_args *)arg)->start_address;
+    void *arglist = ((run_thread_args *)arg)->arglist;
+    free(arg);
+
+    run_thread_asm(arglist, start_address);
+}
+#else
 static void *run_thread(void *arg)
 {
     void(*start_address)(void *) = ((run_thread_args *)arg)->start_address;
@@ -390,16 +323,11 @@ static void *run_thread(void *arg)
 
 uint32_t _beginthread_c(void(*start_address)(void *), uint32_t stack_size, void *arglist)
 {
+    run_thread_args *thread_args;
+
 #ifdef DEBUG_CLIB
     eprintf("_beginthread: 0x%" PRIxPTR ", %i, 0x%" PRIxPTR "\n", (uintptr_t) start_address, stack_size, (uintptr_t) arglist);
 #endif
-
-#ifdef _WIN32
-    return _beginthread(start_address, stack_size, arglist);
-#else
-    pthread_attr_t attr;
-    pthread_t thread;
-    run_thread_args *thread_args;
 
     thread_args = (run_thread_args *) malloc(sizeof(run_thread_args));
     if (thread_args == NULL)
@@ -409,6 +337,19 @@ uint32_t _beginthread_c(void(*start_address)(void *), uint32_t stack_size, void 
 
     thread_args->start_address = start_address;
     thread_args->arglist = arglist;
+
+#ifdef _WIN32
+    if ((intptr_t)-1 == (intptr_t)_beginthread(run_thread, stack_size, thread_args))
+    {
+        free(thread_args);
+        return 0;
+    }
+
+    // function should return handle to thread, but Septerra Core only checks whether return value is 0
+    return 1;
+#else
+    pthread_attr_t attr;
+    pthread_t thread;
 
     if (0 != pthread_attr_init(&attr))
     {

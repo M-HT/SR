@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2024 Roman Pauer
+ *  Copyright (C) 2018-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -34,6 +34,7 @@
 #include "Game_defs.h"
 #include "Albion-BBBASMEM.h"
 #include "Albion-BBERROR.h"
+#include "Game_memory.h"
 
 
 typedef struct {
@@ -184,7 +185,7 @@ void *BASEMEM_Alloc(uint32_t size, uint32_t memory_flags)
     {
         case BASEMEM_XMS_MEMORY:     // XMS memory
             size = (size + 0xFFF) & ~0xFFF;
-            mem_ptr = malloc(size);
+            mem_ptr = x86_malloc(size);
             if (mem_ptr == NULL)
             {
                 BASEMEM_PushError(3, 0, 685, "bbbasmem.c");
@@ -193,7 +194,7 @@ void *BASEMEM_Alloc(uint32_t size, uint32_t memory_flags)
             break;
         case BASEMEM_DOS_MEMORY:     // DOS memory
             size = (size + 15) & ~15;
-            mem_ptr = malloc(size);
+            mem_ptr = x86_malloc(size);
             if (mem_ptr == NULL)
             {
                 BASEMEM_PushError(2, 0, 648, "bbbasmem.c");
@@ -268,7 +269,7 @@ int32_t BASEMEM_Free(void *mem_ptr)
     {
         case BASEMEM_XMS_MEMORY:     // XMS memory
         case BASEMEM_DOS_MEMORY:     // DOS memory
-            free(BASEMEM_regions[found_region_index].mem_ptr);
+            x86_free(BASEMEM_regions[found_region_index].mem_ptr);
             break;
         default:
             BASEMEM_PushError(13, 0, 1009, "bbbasmem.c");
@@ -321,7 +322,7 @@ static void *BASEMEM_Realloc(void *mem_ptr, unsigned int size)
     {
         case BASEMEM_XMS_MEMORY:     // XMS memory
             size = (size + 0xFFF) & ~0xFFF;
-            new_mem_ptr = realloc(BASEMEM_regions[found_region_index].mem_ptr, size);
+            new_mem_ptr = x86_realloc(BASEMEM_regions[found_region_index].mem_ptr, size);
             if (new_mem_ptr == NULL)
             {
                 BASEMEM_PushError(12, 0, 1175, "bbbasmem.c");
@@ -330,7 +331,7 @@ static void *BASEMEM_Realloc(void *mem_ptr, unsigned int size)
             break;
         case BASEMEM_DOS_MEMORY:     // DOS memory
             size = (size + 15) & ~15;
-            new_mem_ptr = realloc(BASEMEM_regions[found_region_index].mem_ptr, size);
+            new_mem_ptr = x86_realloc(BASEMEM_regions[found_region_index].mem_ptr, size);
             if (new_mem_ptr == NULL)
             {
                 BASEMEM_PushError(11, 0, 1135, "bbbasmem.c");

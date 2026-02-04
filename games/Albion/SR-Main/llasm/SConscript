@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2019-2025 Roman Pauer
+#  Copyright (C) 2019-2026 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -59,6 +59,8 @@ else:
         if path_dir not in env_path:
             env_path.append(path_dir)
 env['ENV']['PATH'] = os.pathsep.join(env_path)
+if env['CC'] == 'cl':
+    env.Append(LLASMFLAGS = ' -func-name strncasecmp=_strnicmp')
 
 obj = env.Object(Glob('*.c'))
 

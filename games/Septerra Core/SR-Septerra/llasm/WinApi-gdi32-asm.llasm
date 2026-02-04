@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2016 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -24,16 +24,16 @@ include llasm.llinc
 include asm-calls.llinc
 
 func BitBlt_c *hdcDest, nXDest, nYDest, nWidth, nHeight, *hdcSrc, nXSrc, nYSrc, dwRop
-func CreateCompatibleDC_c *hdc
-func CreateFontIndirectA_c *lplf
-func CreatePolygonRgn_c *lppt, cPoints, fnPolyFillMode
-func CreateSolidBrush_c crColor
+funcp CreateCompatibleDC_c *hdc
+funcp CreateFontIndirectA_c *lplf
+funcp CreatePolygonRgn_c *lppt, cPoints, fnPolyFillMode
+funcp CreateSolidBrush_c crColor
 func DeleteDC_c *hdc
 func DeleteObject_c *hObject
 func FillRgn_c *hdc, *hrgn, *hbr
-func GetStockObject_c fnObject
+funcp GetStockObject_c fnObject
 func OffsetRgn_c *hrgn, nXOffset, nYOffset
-func SelectObject_c *hdc, *hgdiobj
+funcp SelectObject_c *hdc, *hgdiobj
 func SetBkMode_c *hdc, iBkMode
 func SetTextColor_c *hdc, crColor
 func TextOutA_c *hdc, nXStart, nYStart, *lpString, cbString

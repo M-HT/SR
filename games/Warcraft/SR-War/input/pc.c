@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -387,8 +387,8 @@ int Handle_Input_Event(SDL_Event *_event)
 
                         SDL_GetMouseState(&mousex, &mousey);
 
-                        _event->type = (intptr_t) _event->user.data2;
-                        _event->button.button = (intptr_t) _event->user.data1;
+                        _event->type = (Uint32)(uintptr_t) _event->user.data2;
+                        _event->button.button = (Uint8)(uintptr_t) _event->user.data1;
                         _event->button.state = (_event->type == SDL_MOUSEBUTTONUP)?SDL_RELEASED:SDL_PRESSED;
                         _event->button.x = mousex;
                         _event->button.y = mousey;

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -113,7 +113,7 @@ uint32_t Game_int386x(
             // case 0x10:
         default:
             Game_StopMain();
-    } // switch (inter_no)
+    } // switch (IntNum)
 
     *out_regs = tmp_regs;
 

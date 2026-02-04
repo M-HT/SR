@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2016 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -64,13 +64,13 @@ EXTERNC uint32_t MessageProc_asm(const char *MessageText, uint32_t MessageType, 
     cpu = x86_initialize_cpu();
 
     esp -= 4;
-    *((uint32_t *)REG2PTR(esp)) = (uintptr_t)MessageProc;
+    *((uint32_t *)REG2PTR(esp)) = PTR2REG(MessageProc);
     esp -= 4;
     *((uint32_t *)REG2PTR(esp)) = MessageCode;
     esp -= 4;
     *((uint32_t *)REG2PTR(esp)) = MessageType;
     esp -= 4;
-    *((uint32_t *)REG2PTR(esp)) = (uintptr_t)MessageText;
+    *((uint32_t *)REG2PTR(esp)) = PTR2REG(MessageText);
 
     c_MessageProc_c2asm(cpu);
 
@@ -89,11 +89,11 @@ EXTERNC int WinMain_asm(void *hInstance, void *hPrevInstance, char *lpCmdLine, i
     esp -= 4;
     *((uint32_t *)REG2PTR(esp)) = nCmdShow;
     esp -= 4;
-    *((uint32_t *)REG2PTR(esp)) = (uintptr_t)lpCmdLine;
+    *((uint32_t *)REG2PTR(esp)) = PTR2REG(lpCmdLine);
     esp -= 4;
-    *((uint32_t *)REG2PTR(esp)) = (uintptr_t)hPrevInstance;
+    *((uint32_t *)REG2PTR(esp)) = PTR2REG(hPrevInstance);
     esp -= 4;
-    *((uint32_t *)REG2PTR(esp)) = (uintptr_t)hInstance;
+    *((uint32_t *)REG2PTR(esp)) = PTR2REG(hInstance);
 
     // stdcall (4 parameters)
     c_WinMain_(cpu);
@@ -112,7 +112,7 @@ EXTERNC uint32_t RunWndProc_asm(void *hwnd, uint32_t uMsg, uint32_t wParam, uint
     cpu = x86_initialize_cpu();
 
     esp -= 4;
-    *((uint32_t *)REG2PTR(esp)) = (uintptr_t)WndProc;
+    *((uint32_t *)REG2PTR(esp)) = PTR2REG(WndProc);
     esp -= 4;
     *((uint32_t *)REG2PTR(esp)) = lParam;
     esp -= 4;
@@ -120,7 +120,7 @@ EXTERNC uint32_t RunWndProc_asm(void *hwnd, uint32_t uMsg, uint32_t wParam, uint
     esp -= 4;
     *((uint32_t *)REG2PTR(esp)) = uMsg;
     esp -= 4;
-    *((uint32_t *)REG2PTR(esp)) = (uintptr_t)hwnd;
+    *((uint32_t *)REG2PTR(esp)) = PTR2REG(hwnd);
 
     // stdcall (4 parameters)
     c_RunWndProc_c2asm(cpu);
@@ -138,9 +138,9 @@ EXTERNC void run_thread_asm(void *arglist, void(*start_address)(void *))
     cpu = x86_initialize_cpu();
 
     esp -= 4;
-    *((uint32_t *)REG2PTR(esp)) = (uintptr_t)start_address;
+    *((uint32_t *)REG2PTR(esp)) = PTR2REG(start_address);
     esp -= 4;
-    *((uint32_t *)REG2PTR(esp)) = (uintptr_t)arglist;
+    *((uint32_t *)REG2PTR(esp)) = PTR2REG(arglist);
 
     // ccall
     c_run_thread_c2asm(cpu);

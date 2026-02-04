@@ -30,8 +30,6 @@
 .extern CLIB_vfprintf
 .extern CLIB_vprintf
 .extern CLIB_vsprintf
-.extern Game_open
-.extern Game_openFlags
 
 .extern Game_AIL_active_sample_count
 .extern Game_AIL_allocate_sample_handle
@@ -62,27 +60,24 @@
 @ 0 params
 .extern Game_clock
 @ 1 param
-.extern close
 .extern Game_cputs
 .extern Game_delay
 .extern Game_dos_gettime
 .extern Game_ExitMain_Asm
-.extern fclose
-.extern fgetc
-.extern free
-.extern ftell
-.extern getenv
+.extern Game_fclose
+.extern Game_fgetc
+.extern Game_free
+.extern Game_ftell
 .extern Game_inp
-.extern malloc
+.extern Game_malloc
 .extern puts
-.extern Game_raise
 .extern strlen
 .extern Game_time
 .extern Game_unlink
 @ 2 params
 .extern Game_fopen
-.extern fputc
-.extern fputs
+.extern Game_fputc
+.extern Game_fputs
 .extern Game_outp
 .extern Game_signal
 .extern strcat
@@ -90,22 +85,19 @@
 .extern strcpy
 .extern strrchr
 @ 3 params
-.extern fgets
-.extern fseek
-.extern Game_lseek
+.extern Game_fgets
+.extern Game_fseek
 .extern memcmp
 .extern memcpy
 .extern memmove
 .extern memset
-.extern read
 .extern strncmp
-.extern strncpy
 .extern strncasecmp
 .extern strtoul
 @ 4 params
 .extern Game_fmemset
-.extern fread
-.extern fwrite
+.extern Game_fread
+.extern Game_fwrite
 .extern Game_int386x
 .extern Game_setvbuf
 @ 5 params
@@ -122,7 +114,6 @@
 .global SR_fprintf
 .global SR_printf
 .global SR_sprintf
-.global SR_open
 
 .global SR_AIL_active_sample_count
 .global SR_AIL_allocate_sample_handle
@@ -154,8 +145,6 @@
 .global SR___clock
 .global SR_j___clock
 @ 1 param
-.global SR___close
-.global SR_j___close
 .global SR_cputs
 .global SR___delay
 .global SR_j___delay
@@ -165,11 +154,9 @@
 .global SR_fgetc
 .global SR__nfree
 .global SR_ftell
-.global SR_getenv
 .global SR_inp
 .global SR__nmalloc
 .global SR_puts
-.global SR_raise
 .global SR_strlen
 .global SR_time
 .global SR_unlink
@@ -188,14 +175,11 @@
 @ 3 params
 .global SR_fgets
 .global SR_fseek
-.global SR_lseek
 .global SR_memcmp
 .global SR_memcpy
 .global SR_memmove
 .global SR_memset
-.global SR_read
 .global SR_strncmp
-.global SR_strncpy
 .global SR_strnicmp
 .global SR_strtoul
 @ 4 params
@@ -266,49 +250,6 @@ SR_sprintf:
         Game_Call_Asm_VariableStack2 CLIB_vsprintf,-1
 
 @ end procedure SR_sprintf
-
-SR_open:
-
-@ [esp + 3*4] = ...
-@ [esp + 2*4] = int access
-@ [esp +   4] = const char *path
-@ [esp      ] = return address
-
-
-@ errno_val is set inside Game_open
-
-        stmfd esp!, {eflags}
-
-        ldr tmp1, [esp, #(3*4)]				@ access (flags)
-
-        ALIGN_STACK
-
-        bl Game_openFlags
-
-.ifdef ALLOW_UNALIGNED_STACK
-        mov tmp2, tmp1						@ access (flags)
-
-        ldr tmp1, [esp, #(2*4)]				@ path
-        ldr tmp3, [esp, #(4*4)]				@ ...
-.else
-    @ load original esp value from stack
-        ldr tmpadr, [esp]
-
-        mov tmp2, tmp1						@ access (flags)
-
-        ldr tmp1, [tmpadr, #(2*4)]			@ path
-        ldr tmp3, [tmpadr, #(4*4)]			@ ...
-.endif
-
-        bl Game_open
-
-        RESTORE_STACK
-
-        mov eax, tmp1
-
-        ldmfd esp!, {eflags, eip}
-
-@ end procedure SR_open
 
 SR_AIL_active_sample_count:
 
@@ -562,15 +503,6 @@ SR_j___clock:
 
 
 @ 1 param
-SR___close:
-SR_j___close:
-
-@ eax = int handle
-
-        Game_Call_Asm_Reg1 close,-1000
-
-@ end procedure SR___close
-
 SR_cputs:
 
 @ eax = int handle
@@ -608,7 +540,7 @@ SR_fclose:
 
 @ eax = FILE *fp
 
-        Game_Call_Asm_Reg1 fclose,-1000
+        Game_Call_Asm_Reg1 Game_fclose,-1000
 
 @ end procedure SR_fclose
 
@@ -616,7 +548,7 @@ SR_fgetc:
 
 @ eax = FILE *fp
 
-        Game_Call_Asm_Reg1 fgetc,-1000
+        Game_Call_Asm_Reg1 Game_fgetc,-1000
 
 @ end procedure SR_fgetc
 
@@ -624,7 +556,7 @@ SR__nfree:
 
 @ eax = void __near *ptr
 
-        Game_Call_Asm_Reg1 free,-1
+        Game_Call_Asm_Reg1 Game_free,-1
 
 @ end procedure SR__nfree
 
@@ -632,17 +564,9 @@ SR_ftell:
 
 @ eax = FILE *fp
 
-        Game_Call_Asm_Reg1 ftell,-1000
+        Game_Call_Asm_Reg1 Game_ftell,-1000
 
 @ end procedure SR_ftell
-
-SR_getenv:
-
-@ eax = const char *name
-
-        Game_Call_Asm_Reg1 getenv,-1
-
-@ end procedure SR_getenv
 
 SR_inp:
 
@@ -656,7 +580,7 @@ SR__nmalloc:
 
 @ eax = size_t size
 
-        Game_Call_Asm_Reg1 malloc,-1
+        Game_Call_Asm_Reg1 Game_malloc,-1
 
 @ end procedure SR__nmalloc
 
@@ -667,14 +591,6 @@ SR_puts:
         Game_Call_Asm_Reg1 puts,-1000
 
 @ end procedure SR_puts
-
-SR_raise:
-
-@ eax = int condition
-
-        Game_Call_Asm_Reg1 Game_raise,-1
-
-@ end procedure SR_raise
 
 SR_strlen:
 
@@ -721,7 +637,7 @@ SR_fputc:
 @ eax = int c
 @ edx = FILE *fp
 
-    Game_Call_Asm_Reg2 fputc,-1000
+    Game_Call_Asm_Reg2 Game_fputc,-1000
 
 @ end procedure SR_fputc
 
@@ -730,7 +646,7 @@ SR_fputs:
 @ eax = const char *buf
 @ edx = FILE *fp
 
-    Game_Call_Asm_Reg2 fputs,-1000
+    Game_Call_Asm_Reg2 Game_fputs,-1000
 
 @ end procedure SR_fputs
 
@@ -805,7 +721,7 @@ SR_fgets:
 @ edx = int n
 @ ebx = FILE *fp
 
-        Game_Call_Asm_Reg3 fgets,-1000
+        Game_Call_Asm_Reg3 Game_fgets,-1000
 
 @ end procedure SR_fgets
 
@@ -815,19 +731,9 @@ SR_fseek:
 @ edx = long int offset
 @ ebx = int where
 
-        Game_Call_Asm_Reg3 fseek,-1000
+        Game_Call_Asm_Reg3 Game_fseek,-1000
 
 @ end procedure SR_fseek
-
-SR_lseek:
-
-@ eax = int handle
-@ edx = long int offset
-@ ebx = int origin
-
-        Game_Call_Asm_Reg3 Game_lseek,-1000
-
-@ end procedure SR_lseek
 
 SR_memcmp:
 
@@ -869,16 +775,6 @@ SR_memset:
 
 @ end procedure SR_memset
 
-SR_read:
-
-@ eax = int handle
-@ edx = void *buffer
-@ ebx = unsigned len
-
-        Game_Call_Asm_Reg3 read,-1000
-
-@ end procedure SR_read
-
 SR_strncmp:
 
 @ eax = const char *s1
@@ -888,16 +784,6 @@ SR_strncmp:
         Game_Call_Asm_Reg3 strncmp,-1
 
 @ end procedure SR_strncmp
-
-SR_strncpy:
-
-@ eax = char *dst
-@ edx = const char *src
-@ ebx = size_t n
-
-        Game_Call_Asm_Reg3 strncpy,-1
-
-@ end procedure SR_strncpy
 
 SR_strnicmp:
 
@@ -939,7 +825,7 @@ SR_fread:
 @ ebx = size_t nelem
 @ ecx = FILE *fp
 
-        Game_Call_Asm_Reg4 fread,-1000
+        Game_Call_Asm_Reg4 Game_fread,-1000
 
 @ end procedure SR_fread
 
@@ -950,7 +836,7 @@ SR_fwrite:
 @ ebx = size_t nelem
 @ ecx = FILE *fp
 
-        Game_Call_Asm_Reg4 fwrite,-1000
+        Game_Call_Asm_Reg4 Game_fwrite,-1000
 
 @ end procedure SR_fwrite
 

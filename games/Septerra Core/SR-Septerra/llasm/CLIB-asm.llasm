@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019-2022 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -23,18 +23,17 @@
 include llasm.llinc
 include asm-calls.llinc
 
-func memset_c *s, c, n
-func memcpy_c *dest, *src, n
+funcp memset_c *s, c, n
+funcp memcpy_c *dest, *src, n
 
 func _stricmp_c *s1, *s2
-func strncpy_c *dest, *src, n
+funcp strncpy_c *dest, *src, n
 func strncmp_c *s1, *s2, n
-func strncat_c *dest, *src, n
-func _strnicmp_c *s1, *s2, n
+funcp strncat_c *dest, *src, n
 
-func malloc_c size
+funcp malloc_c size
 funcv free_c *ptr
-func calloc_c nmemb, size
+funcp calloc_c nmemb, size
 
 func atol_c *nptr
 func toupper_c c
@@ -42,14 +41,7 @@ func toupper_c c
 func sprintf2_c *str, *format, *ap
 func sscanf2_c *str, *format, *ap
 
-func fread_c *ptr, size, nmemb, *stream
-func ftell_c *stream
-func fseek_c *stream, offset, whence
-func fopen_c *path, *mode
-func fclose_c *fp
-
 func system_c *command
-funcv exit_c status
 funcv srand_c seed
 func rand_c
 
@@ -58,7 +50,6 @@ funcv _time642_c *t64
 funcv __report_gsfailure_c
 
 func _except_handler4_c param1, *TargetFrame, param3
-func _except_handler3_c param1, *TargetFrame, param3
 
 func _beginthread_c *start_address, stack_size, *arglist
 
@@ -161,20 +152,6 @@ proc strncat_asm2c public
         Call_Asm_Return 0
 
 endp ; end procedure strncat_asm2c
-
-
-proc _strnicmp_asm2c public
-
-; [esp + 3*4] = uint32_t n
-; [esp + 2*4] = const char *s2
-; [esp +   4] = const char *s1
-; [esp      ] = return address
-
-        Call_Asm_Stack3 _strnicmp_c
-
-        Call_Asm_Return 0
-
-endp ; end procedure _strnicmp_asm2c
 
 
 proc malloc_asm2c public
@@ -336,72 +313,6 @@ proc sscanf_asm2c public
 endp ; end procedure sscanf_asm2c
 
 
-proc fread_asm2c public
-
-; [esp + 4*4] = void *stream
-; [esp + 3*4] = uint32_t nmemb
-; [esp + 2*4] = uint32_t size
-; [esp +   4] = void *ptr
-; [esp      ] = return address
-
-        Call_Asm_Stack4 fread_c
-
-        Call_Asm_Return 0
-
-endp ; end procedure fread_asm2c
-
-
-proc ftell_asm2c public
-
-; [esp + 4] = void *stream
-; [esp    ] = return address
-
-        Call_Asm_Stack1 ftell_c
-
-        Call_Asm_Return 0
-
-endp ; end procedure ftell_asm2c
-
-
-proc fseek_asm2c public
-
-; [esp + 3*4] = int32_t whence
-; [esp + 2*4] = int32_t offset
-; [esp +   4] = void *stream
-; [esp      ] = return address
-
-        Call_Asm_Stack3 fseek_c
-
-        Call_Asm_Return 0
-
-endp ; end procedure fseek_asm2c
-
-
-proc fopen_asm2c public
-
-; [esp + 2*4] = const char *mode
-; [esp +   4] = const char *path
-; [esp      ] = return address
-
-        Call_Asm_Stack2 fopen_c
-
-        Call_Asm_Return 0
-
-endp ; end procedure fopen_asm2c
-
-
-proc fclose_asm2c public
-
-; [esp + 4] = void *fp
-; [esp    ] = return address
-
-        Call_Asm_Stack1 fclose_c
-
-        Call_Asm_Return 0
-
-endp ; end procedure fclose_asm2c
-
-
 proc system_asm2c public
 
 ; [esp + 4] = const char *command
@@ -412,18 +323,6 @@ proc system_asm2c public
         Call_Asm_Return 0
 
 endp ; end procedure system_asm2c
-
-
-proc exit_asm2c public
-
-; [esp + 4] = int32_t status
-; [esp    ] = return address
-
-        Call_Asm_Stack1_void exit_c
-
-        Call_Asm_Return 0
-
-endp ; end procedure exit_asm2c
 
 
 proc srand_asm2c public
@@ -541,20 +440,6 @@ proc _except_handler4_asm2c public
         Call_Asm_Return 0
 
 endp ; end procedure _except_handler4_asm2c
-
-
-proc _except_handler3_asm2c public
-
-; [esp + 3*4] = int32_t
-; [esp + 2*4] = void *TargetFrame
-; [esp +   4] = int32_t
-; [esp      ] = return address
-
-        Call_Asm_Stack3 _except_handler3_c
-
-        Call_Asm_Return 0
-
-endp ; end procedure _except_handler3_asm2c
 
 
 proc _beginthread_asm2c public
@@ -713,17 +598,5 @@ proc _CIpow_asm2c public
         Call_Asm_Return 0
 
 endp ; end procedure _CIpow_asm2c
-
-
-proc _CIlog_asm2c public
-
-; st0   = num
-; [esp] = return address
-
-        FLOG_VOID
-
-        Call_Asm_Return 0
-
-endp ; end procedure _CIlog_asm2c
 
 

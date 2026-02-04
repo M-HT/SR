@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,12 +25,13 @@
 #if defined(__DEBUG__)
 #include <inttypes.h>
 #endif
-#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
 #include "Game_defs.h"
 #include "Game_vars.h"
 #include "Albion-sound.h"
 #include "Albion-AIL.h"
+#include "Game_memory.h"
 #ifdef USE_SDL2
     #include <SDL2/SDL_mixer.h>
 #else
@@ -65,7 +66,7 @@ struct _AIL_sample *Game_AIL_allocate_sample_handle(void *dig)
 #define ORIG_SAMPLE_SIZE 644
 #define SAMPLE_SIZE ( (sizeof(AIL_sample) > ORIG_SAMPLE_SIZE)?(sizeof(AIL_sample)):(ORIG_SAMPLE_SIZE) )
 
-    ret = (AIL_sample *) malloc(SAMPLE_SIZE);
+    ret = (AIL_sample *) x86_malloc(SAMPLE_SIZE);
 
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_allocate_sample_handle: return: 0x%" PRIxPTR "\n", (uintptr_t) ret);
@@ -119,7 +120,7 @@ void Game_AIL_release_sample_handle(struct _AIL_sample *S)
         S->sample = NULL;
     }
 
-    free(S);
+    x86_free(S);
 }
 
 void Game_AIL_init_sample(struct _AIL_sample *S)
@@ -470,7 +471,7 @@ void Game_AIL_start_sample(struct _AIL_sample *S)
 
                         SDL_BuildAudioCVT(&cvt, AUDIO_S16LSB, channels, Game_AudioRate, Game_AudioFormat, Game_AudioChannels, Game_AudioRate);
 
-                        sample = (Game_sample *) malloc(sizeof(Game_sample) + newlen_bytes * cvt.len_mult * form_mult);
+                        sample = (Game_sample *) malloc(offsetof(Game_sample, data) + newlen_bytes * cvt.len_mult * form_mult);
 
                         sample->start = (uint8_t *) S->start;
                         sample->len = S->len;
@@ -572,7 +573,7 @@ void Game_AIL_start_sample(struct _AIL_sample *S)
 
                         SDL_BuildAudioCVT(&cvt, format, channels, Game_AudioRate, Game_AudioFormat, Game_AudioChannels, Game_AudioRate);
 
-                        sample = (Game_sample *) malloc(sizeof(Game_sample) + newlen_bytes * cvt.len_mult * form_mult);
+                        sample = (Game_sample *) malloc(offsetof(Game_sample, data) + newlen_bytes * cvt.len_mult * form_mult);
 
                         sample->start = (uint8_t *) S->start;
                         sample->len = S->len;
@@ -589,7 +590,7 @@ void Game_AIL_start_sample(struct _AIL_sample *S)
 
                     SDL_BuildAudioCVT(&cvt, format, channels, S->playback_rate, Game_AudioFormat, Game_AudioChannels, Game_AudioRate);
 
-                    sample = (Game_sample *) malloc(sizeof(Game_sample) + S->len * cvt.len_mult);
+                    sample = (Game_sample *) malloc(offsetof(Game_sample, data) + S->len * cvt.len_mult);
 
                     sample->start = (uint8_t *) S->start;
                     sample->len = S->len;

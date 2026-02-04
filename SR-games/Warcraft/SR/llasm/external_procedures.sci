@@ -3,7 +3,6 @@ loc_48B4E,SR__harderr
 
 loc_3F733,SR_printf
 loc_3D772,SR_sprintf
-loc_46AA1,SR_open
 
 loc_45C80,SR_AIL_active_sample_count
 loc_45CB0,SR_AIL_allocate_sample_handle
@@ -34,8 +33,6 @@ loc_43470,SR_AIL_stop_sequence
 loc_474E2,SR___clock
 loc_3CA28,SR_j___clock
 
-loc_4911E,SR___close
-loc_46CEF,SR_j___close
 loc_48B38,SR_cputs
 loc_47535,SR___delay
 loc_3D314,SR_j___delay
@@ -45,11 +42,9 @@ loc_3F417,SR_fclose
 loc_475D1,SR_fgetc
 loc_468EF,SR__nfree
 loc_475A1,SR_ftell
-loc_49C22,SR_getenv
 loc_40560,SR_inp
 loc_4680C,SR__nmalloc
 loc_3F7B8,SR_puts
-loc_3FDFB,SR_raise
 loc_3D8AA,SR_strlen
 loc_3ED7B,SR_time
 loc_3FA41,SR_unlink
@@ -68,14 +63,11 @@ loc_46FA4,SR_vprintf
 
 loc_3F755,SR_fgets
 loc_47776,SR_fseek
-loc_4694D,SR_lseek
 loc_3DB26,SR_memcmp
 loc_3D319,SR_memcpy
 loc_48AEC,SR_memmove
 loc_3C7E0,SR_memset
-loc_4698E,SR_read
 loc_3C7FF,SR_strncmp
-loc_49C7C,SR_strncpy
 loc_49BCB,SR_strnicmp
 loc_3C961,SR_strtoul
 

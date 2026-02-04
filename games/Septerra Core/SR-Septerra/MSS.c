@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -241,7 +241,7 @@ int32_t ASI_stream_process_c (void *stream, void *buffer, int32_t request_size)
         size_t done = 0;
         int res = mpg123_read((mpg123_handle *)stream, buf, request_size, &done);
 
-        request_size -= done;
+        request_size -= (int32_t)done;
         buf += done;
 
         if (res == MPG123_NEW_FORMAT)

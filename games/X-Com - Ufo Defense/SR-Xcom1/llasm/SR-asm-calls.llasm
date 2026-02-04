@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2024 Roman Pauer
+;;  Copyright (C) 2016-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -44,8 +44,8 @@ func Game_AudioCapabilities
 funcv Game_StopSound
 func Game_PostAudioPending *sndplay
 func Game_SetPlayMode playmode
-func Game_PendingAddress
-func Game_ReportSemaphoreAddress
+funcp Game_PendingAddress
+funcp Game_ReportSemaphoreAddress
 func Game_SetBackFillMode mode
 func Game_VerifyDMA *data, length
 funcv Game_SetDPMIMode mode
@@ -58,30 +58,30 @@ func Game_fcloseall
 ; 1 param
 funcv Game_ExitMain_Asm status
 func Game_fclose *fp
-func feof *fp
-func fflush *fp
-func fgetc *fp
+func Game_feof *fp
+func Game_fflush *fp
+func Game_fgetc *fp
 func Game_filelength2 *fp
 funcv Game_free *ptr
 func Game_inp port
-func Game_malloc size
+funcp Game_malloc size
 func strlen *s
 func Game_time *tloc
 ; 2 params
-func Game_fopen *filename, *mode
-func fputc c, *stream
-func fputs *s, *stream
+funcp Game_fopen *filename, *mode
+func Game_fputc c, *stream
+func Game_fputs *s, *stream
 func Game_outp port, value
-func strcat *dest, *src
+funcp strcat *dest, *src
 func strcmp *s1, *s2
-func strcpy *dest, *src
+funcp strcpy *dest, *src
 func strcasecmp *s1, *s2
 ; 3 params
 func Game_ReadSong *catalog_name, index, *buf
 func strncmp *s1, *s2, n
 ; 4 params
-func fread *ptr, size, nmemb, *stream
-func fwrite *ptr, size, nmemb, *stream
+func Game_fread *ptr, size, nmemb, *stream
+func Game_fwrite *ptr, size, nmemb, *stream
 func Game_int386x IntNum, *in_regs, *out_regs, *seg_regs
 ; 5 params
 
@@ -327,7 +327,7 @@ proc SR_feof public
 
 ; eax = FILE *fp
 
-        Game_Call_Asm_Reg1 feof,-1
+        Game_Call_Asm_Reg1 Game_feof,-1
 
 endp ; end procedure SR_feof
 
@@ -335,7 +335,7 @@ proc SR_fflush public
 
 ; eax = FILE *fp
 
-        Game_Call_Asm_Reg1 fflush,-1000
+        Game_Call_Asm_Reg1 Game_fflush,-1000
 
 endp ; end procedure SR_fflush
 
@@ -343,7 +343,7 @@ proc SR_fgetc public
 
 ; eax = FILE *fp
 
-        Game_Call_Asm_Reg1 fgetc,-1000
+        Game_Call_Asm_Reg1 Game_fgetc,-1000
 
 endp ; end procedure SR_fgetc
 
@@ -421,7 +421,7 @@ proc SR_fputc public
 ; eax = int c
 ; edx = FILE *fp
 
-    Game_Call_Asm_Reg2 fputc,-1000
+    Game_Call_Asm_Reg2 Game_fputc,-1000
 
 endp ; end procedure SR_fputc
 
@@ -430,7 +430,7 @@ proc SR_fputs public
 ; eax = const char *buf
 ; edx = FILE *fp
 
-    Game_Call_Asm_Reg2 fputs,-1000
+    Game_Call_Asm_Reg2 Game_fputs,-1000
 
 endp ; end procedure SR_fputs
 
@@ -510,7 +510,7 @@ proc SR_fread public
 ; ebx = size_t nelem
 ; ecx = FILE *fp
 
-        Game_Call_Asm_Reg4 fread,-1000
+        Game_Call_Asm_Reg4 Game_fread,-1000
 
 endp ; end procedure SR_fread
 
@@ -521,7 +521,7 @@ proc SR_fwrite public
 ; ebx = size_t nelem
 ; ecx = FILE *fp
 
-        Game_Call_Asm_Reg4 fwrite,-1000
+        Game_Call_Asm_Reg4 Game_fwrite,-1000
 
 endp ; end procedure SR_fwrite
 

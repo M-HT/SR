@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,9 +25,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <malloc.h>
 #include "Game_defs.h"
 #include "Game_vars.h"
+#include "Game_memory.h"
 #include "Game_scalerplugin.h"
 #include "Game_thread.h"
 #include "Game_virtualkeyboard.h"
@@ -40,12 +40,6 @@ int Game_Main(void)
 #define MLEN 9
 
     const static char main_filename[MLEN+1] = ".\\war.exe";
-    char main_filename_local[MLEN+1];
-    PTR32(char) main_filename_local_ptr[2];
-
-    memcpy(main_filename_local, main_filename, MLEN+1);
-    main_filename_local_ptr[0] = main_filename_local;
-    main_filename_local_ptr[1] = NULL;
 
     if (Thread_Exit)
     {
@@ -53,8 +47,26 @@ int Game_Main(void)
     }
     else
     {
-        argv_val = main_filename_local_ptr;
-        return Game_Main_Asm(1, main_filename_local_ptr);
+        uint8_t *argv_local;
+        int ret;
+
+        argv_local = (uint8_t *)x86_malloc(2 * sizeof(uint32_t) + MLEN+1);
+        if (argv_local == NULL)
+        {
+            fprintf(stderr, "Error: Not enough memory\n");
+            return 1;
+        }
+
+        ((PTR32(uint8_t) *)argv_local)[0] = argv_local + 2 * sizeof(uint32_t);
+        ((PTR32(uint8_t) *)argv_local)[1] = NULL;
+        memcpy(argv_local + 2 * sizeof(uint32_t), main_filename, MLEN+1);
+
+        argv_val = (char **)argv_local;
+        ret = Game_Main_Asm(1, (char **)argv_local);
+
+        x86_free(argv_local);
+
+        return ret;
     }
 
 #undef MLEN
@@ -76,54 +88,6 @@ void Game_StopMain(void)
 
     Game_TimerTick += 2;
     Game_StopMain_Asm();
-}
-
-void *Game_AllocateMemory(uint32_t size)
-{
-    void *mem;
-
-    mem = malloc(size);
-
-    if (mem != NULL)
-    {
-        if (Game_NextMemory != 256)
-        {
-            Game_AllocatedMemory[Game_NextMemory] = mem;
-            Game_NextMemory++;
-        }
-        else
-        {
-            int i;
-
-            for (i = 0; i < 256; i++)
-            {
-                if (Game_AllocatedMemory[i] == NULL)
-                {
-                    Game_AllocatedMemory[i] = mem;
-                    break;
-                }
-            }
-        }
-    }
-
-    return mem;
-}
-
-void Game_FreeMemory(void *mem)
-{
-    unsigned int i;
-
-    for (i = 0; i < 256; i++)
-    {
-        if (Game_AllocatedMemory[i] == mem)
-        {
-            Game_AllocatedMemory[i] = NULL;
-            if (i + 1 == Game_NextMemory) Game_NextMemory--;
-            break;
-        }
-    }
-
-    free(mem);
 }
 
 int Game_MainThread(void *data)

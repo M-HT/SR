@@ -43,6 +43,7 @@ typedef int bool;
 #include <sys/types.h>
 
 #include "printf_x86.h"
+#include "ptr32.h"
 
 #if defined(_MSC_VER)
 #define inline __inline
@@ -608,11 +609,11 @@ static inline uint32_t _va_uint(uint32_t **va)
 
 static inline void *_va_ptr(uint32_t **va)
 {
-  uint32_t value;
+  PTR32(void) value;
 
-  value = **va;
+  value = **(PTR32(void)**)va;
   (*va)++;
-  return (void *)(uintptr_t)value;
+  return (void *)value;
 }
 
 #if defined(_MSC_VER)

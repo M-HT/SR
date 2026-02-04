@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -24,7 +24,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <malloc.h>
 #if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
     #ifndef __USE_GNU
         #define __USE_GNU 1
@@ -33,6 +32,7 @@
 #endif
 #include "Game_defs.h"
 #include "Game_vars.h"
+#include "Game_memory.h"
 #include "Game_scalerplugin.h"
 #include "Game_misc.h"
 #include "Game_thread.h"
@@ -84,8 +84,8 @@ static NOINLINE void Game_CleanAfterMain(void)
     Game_list_clear(&Game_DopenList, (void (*)(uintptr_t)) &Game_dclose);
 
     // sync data to disk
-    fflush(Game_stdout);
-    fflush(Game_stderr);
+    Game_fflush(Game_stdout);
+    Game_fflush(Game_stderr);
     Game_Sync();
 
     // free allocated memory
@@ -96,12 +96,9 @@ static NOINLINE void Game_CleanAfterMain(void)
 #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_GEOSCAPE))
 static NOINLINE int Game_Main_Geoscape(const char *arg1)
 {
-    const static char main_filename[] = "GEOSCAPE.EXE";
-    PTR32(char) main_argv[3];
+#define MLEN 12
 
-    main_argv[0] = (char *) main_filename;
-    main_argv[1] = (char *) arg1;
-    main_argv[2] = NULL;
+    const static char main_filename[MLEN+1] = "GEOSCAPE.EXE";
 
 #if (EXE_BUILD == EXE_COMBINED)
     memcpy(&geoscape_data_begin, Geoscape_DataBackup, &geoscape_data_end - &geoscape_data_begin);
@@ -115,21 +112,44 @@ static NOINLINE int Game_Main_Geoscape(const char *arg1)
     }
     else
     {
+        uint8_t *argv_local;
+        int arg_len, ret;
+
+        arg_len = (arg1 != NULL) ? (int)strlen(arg1) + 1 : 0;
+        argv_local = (uint8_t *)x86_malloc(3 * sizeof(uint32_t) + MLEN+1 + arg_len);
+        if (argv_local == NULL)
+        {
+            fprintf(stderr, "Error: Not enough memory\n");
+            return 1;
+        }
+
+        ((PTR32(uint8_t) *)argv_local)[0] = argv_local + 3 * sizeof(uint32_t);
+        ((PTR32(uint8_t) *)argv_local)[1] = (arg1 != NULL) ? argv_local + 3 * sizeof(uint32_t) + MLEN+1 : NULL;
+        ((PTR32(uint8_t) *)argv_local)[2] = NULL;
+        memcpy(argv_local + 3 * sizeof(uint32_t), main_filename, MLEN+1);
+        if (arg1 != NULL)
+        {
+            memcpy(argv_local + 3 * sizeof(uint32_t) + MLEN + 1, arg1, arg_len);
+        }
+
         Game_Executable = EXE_GEOSCAPE;
-        return Game_Main_Asm((arg1 != NULL)?2:1, main_argv, (void *)geoscape_main_);
+        ret = Game_Main_Asm((arg1 != NULL)?2:1, (char **)argv_local, (void *)geoscape_main_);
+
+        x86_free(argv_local);
+
+        return ret;
     }
+
+#undef MLEN
 }
 #endif
 
 #if ((EXE_BUILD == EXE_COMBINED) || (EXE_BUILD == EXE_TACTICAL))
 static NOINLINE int Game_Main_Tactical(const char *arg1)
 {
-    const static char main_filename[] = "TACTICAL.EXE";
-    PTR32(char) main_argv[3];
+#define MLEN 12
 
-    main_argv[0] = (char *) main_filename;
-    main_argv[1] = (char *) arg1;
-    main_argv[2] = NULL;
+    const static char main_filename[MLEN+1] = "TACTICAL.EXE";
 
 #if (EXE_BUILD == EXE_COMBINED)
     memcpy(&tactical_data_begin, Tactical_DataBackup, &tactical_data_end - &tactical_data_begin);
@@ -143,9 +163,35 @@ static NOINLINE int Game_Main_Tactical(const char *arg1)
     }
     else
     {
+        uint8_t *argv_local;
+        int arg_len, ret;
+
+        arg_len = (arg1 != NULL) ? (int)strlen(arg1) + 1 : 0;
+        argv_local = (uint8_t *)x86_malloc(3 * sizeof(uint32_t) + MLEN+1 + arg_len);
+        if (argv_local == NULL)
+        {
+            fprintf(stderr, "Error: Not enough memory\n");
+            return 1;
+        }
+
+        ((PTR32(uint8_t) *)argv_local)[0] = argv_local + 3 * sizeof(uint32_t);
+        ((PTR32(uint8_t) *)argv_local)[1] = (arg1 != NULL) ? argv_local + 3 * sizeof(uint32_t) + MLEN+1 : NULL;
+        ((PTR32(uint8_t) *)argv_local)[2] = NULL;
+        memcpy(argv_local + 3 * sizeof(uint32_t), main_filename, MLEN+1);
+        if (arg1 != NULL)
+        {
+            memcpy(argv_local + 3 * sizeof(uint32_t) + MLEN + 1, arg1, arg_len);
+        }
+
         Game_Executable = EXE_TACTICAL;
-        return Game_Main_Asm((arg1 != NULL)?2:1, main_argv, (void *)tactical_main_);
+        ret = Game_Main_Asm((arg1 != NULL)?2:1, (char **)argv_local, (void *)tactical_main_);
+
+        x86_free(argv_local);
+
+        return ret;
     }
+
+#undef MLEN
 }
 #endif
 

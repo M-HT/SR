@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -39,6 +39,7 @@
 #include <sys/stat.h>
 #include "QTML.h"
 #include "Game-Config.h"
+#include "Game-Memory.h"
 #include "platform.h"
 
 #if (defined(__WIN32__) || defined(__WINDOWS__)) && !defined(_WIN32)
@@ -908,7 +909,7 @@ void StartMovie_c (void *theMovie)
 
 #ifdef _WIN32
     movie->is_playing = 1;
-    if ((intptr_t)-1 == _beginthread(&movie_thread, 0, movie))
+    if ((intptr_t)-1 == (intptr_t)_beginthread(&movie_thread, 0, movie))
     {
         movie->is_playing = 0;
     }
@@ -1012,7 +1013,7 @@ void DisposeMovie_c (void *theMovie)
     if (theMovie == NULL) return;
 
     quicktime_close(((Movie)theMovie)->qt);
-    free(theMovie);
+    x86_free(theMovie);
 }
 
 //EXTERN_API( OSErr )
@@ -1098,7 +1099,7 @@ int16_t OpenMovieFile_c (const void *fileSpec, int16_t *resRefNum, int8_t permis
     if (!found)
     {
         // check for file with .avi extension
-        pathlen = strlen(((FSSpec *)fileSpec)->name);
+        pathlen = (int)strlen(((FSSpec *)fileSpec)->name);
         avipath = (char *) malloc(pathlen + 2);
         if (avipath != NULL)
         {
@@ -1226,7 +1227,7 @@ int16_t NewMovieFromFile_c (PTR32(void)*theMovie, int16_t resRefNum, int16_t *re
         return 1;
     }
 
-    movie = (Movie) malloc(sizeof(MovieRecord));
+    movie = (Movie) x86_malloc(sizeof(MovieRecord));
     if (movie == NULL)
     {
 #ifdef DEBUG_QTML

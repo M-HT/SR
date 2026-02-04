@@ -43,7 +43,6 @@ loc_469d44,_stricmp_asm2c
 loc_469fe0,strncpy_asm2c
 loc_46a15a,strncmp_asm2c
 loc_46ab00,strncat_asm2c
-loc_48ce8a,_strnicmp_asm2c
 
 loc_4692c8,malloc_asm2c
 loc_46938b,free_asm2c
@@ -57,14 +56,7 @@ loc_46a338,toupper_asm2c
 loc_46949a,sprintf_asm2c
 loc_46a3c7,sscanf_asm2c
 
-loc_46b825,fread_asm2c
-loc_46b9d8,ftell_asm2c
-loc_46bacd,fseek_asm2c
-loc_46bc16,fopen_asm2c
-loc_46bcec,fclose_asm2c
-
 loc_469690,system_asm2c
-loc_46c35f,exit_asm2c
 loc_46c3eb,srand_asm2c
 loc_46c3f8,rand_asm2c
 
@@ -75,7 +67,6 @@ loc_46b050,_time64_asm2c
 loc_46962e,_check_security_cookie_asm2c
 
 loc_46a480,_except_handler4_asm2c
-loc_46bea8,_except_handler3_asm2c
 
 loc_46c518,_beginthread_asm2c
 
@@ -90,7 +81,6 @@ loc_469f20,_CIsqrt_asm2c
 loc_46a62a,_CIfmod_asm2c
 loc_46aa10,_CItan_asm2c
 loc_46acb0,_CIpow_asm2c
-loc_46af40,_CIlog_asm2c
 
 
 loc_468FD0,DirectDrawCreate

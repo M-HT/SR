@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -26,8 +26,8 @@ include asm-calls.llinc
 func Beep_c dwFreq, dwDuration
 func CloseHandle_c *hObject
 func CreateDirectoryA_c *lpPathName, *lpSecurityAttributes
-func CreateFileA_c *lpFileName, dwDesiredAccess, dwShareMode, *lpSecurityAttributes, dwCreationDistribution, dwFlagsAndAttributes, *hTemplateFile
-func CreateMutexA_c *lpMutexAttributes, bInitialOwner, *lpName
+funcp CreateFileA_c *lpFileName, dwDesiredAccess, dwShareMode, *lpSecurityAttributes, dwCreationDistribution, dwFlagsAndAttributes, *hTemplateFile
+funcp CreateMutexA_c *lpMutexAttributes, bInitialOwner, *lpName
 func CreatePipe_c *hReadPipe, *hWritePipe, *lpPipeAttributes, nSize
 funcv DeleteCriticalSection_c *lpCriticalSection
 func DeleteFileA_c *lpFileName
@@ -36,10 +36,10 @@ funcv ExitProcess_c uExitCode
 func FileTimeToLocalFileTime_c *lpFileTime, *lpLocalFileTime
 func FileTimeToSystemTime_c *lpFileTime, *lpSystemTime
 func FindClose_c *hFindFile
-func FindFirstFileA_c *lpFileName, *lpFindFileData
+funcp FindFirstFileA_c *lpFileName, *lpFindFileData
 func FindNextFileA_c *hFindFile, *lpFindFileData
-func GetCurrentProcess_c
-func GetCurrentThread_c
+funcp GetCurrentProcess_c
+funcp GetCurrentThread_c
 func GetFullPathNameA_c *lpFileName, nBufferLength, *lpBuffer, *lpFilePart
 func GetLastError_c
 func GetPrivateProfileStringA_c *lpAppName, *lpKeyName, *lpDefault, *lpReturnedString, nSize, *lpFileName

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -74,10 +74,20 @@ typedef struct _Game_BYTEREGS_ {
   uint32_t cflag;
 } Game_BYTEREGS;
 
+typedef struct _Game_PTR32REGS_ {
+  PTR32(void) eax;
+  PTR32(void) ebx;
+  PTR32(void) ecx;
+  PTR32(void) edx;
+  PTR32(void) esi;
+  PTR32(void) edi;
+} Game_PTR32REGS;
+
 typedef union _Game_REGS_ {
   Game_DWORDREGS d;
   Game_WORDREGS w;
   Game_BYTEREGS h;
+  Game_PTR32REGS p;
 } Game_REGS;
 
 #pragma pack()

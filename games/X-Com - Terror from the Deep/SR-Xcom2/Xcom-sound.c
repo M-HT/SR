@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,7 +22,7 @@
  *
  */
 
-#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
 #include "Game_defs.h"
 #include "Game_vars.h"

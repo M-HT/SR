@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -39,18 +39,31 @@
 
 #if defined(DEFINE_VARIABLES)
     #define EXTERNAL_VARIABLE
+    #ifdef __cplusplus
+        #define EXTERNAL_CVAR_BGN extern "C" {
+        #define EXTERNAL_CVAR_END }
+    #else
+        #define EXTERNAL_CVAR_BGN
+        #define EXTERNAL_CVAR_END
+    #endif
 #else
     #define EXTERNAL_VARIABLE extern
+    #ifdef __cplusplus
+        #define EXTERNAL_CVAR_BGN extern "C"
+    #else
+        #define EXTERNAL_CVAR_BGN extern
+    #endif
+    #define EXTERNAL_CVAR_END
 #endif
 
-EXTERNAL_VARIABLE uint32_t X86_InterruptFlag;		/* interrupt flag indicator */
+EXTERNAL_CVAR_BGN uint32_t X86_InterruptFlag;		/* interrupt flag indicator */ EXTERNAL_CVAR_END
 
 EXTERNAL_VARIABLE int Game_SDLVersionNum;			/* linked SDL version */
 
 EXTERNAL_VARIABLE uint8_t *Game_FrameBuffer;		/* video memory (all) */
-EXTERNAL_VARIABLE PTR32(uint8_t) Game_ScreenWindow;	/* video bank (64KiB) */
+EXTERNAL_CVAR_BGN PTR32(uint8_t) Game_ScreenWindow;	/* video bank (64KiB) */ EXTERNAL_CVAR_END
 EXTERNAL_VARIABLE uint32_t Game_InterruptTable[256];	/* interrupt table */
-EXTERNAL_VARIABLE void *Game_MouseTable[8];			/* mouse functions table */
+EXTERNAL_VARIABLE uint32_t Game_MouseTable[8];		/* mouse functions table */
 EXTERNAL_VARIABLE void *Game_AllocatedMemory[256];	/* dos allocated memory table */
 EXTERNAL_VARIABLE pixel_format_orig Game_Palette_Or[256];	/* original palette (rgba) */
 EXTERNAL_VARIABLE uint32_t Game_ScreenWindowNum;	/* screen number in video bank */
@@ -129,8 +142,8 @@ EXTERNAL_VARIABLE int Scaler_ScaleTexture;
 #endif
 
 // global audio variables
-EXTERNAL_VARIABLE uint32_t Game_Sound;				/* is sound enabled ? */
-EXTERNAL_VARIABLE uint32_t Game_Music;				/* is music enabled ? */
+EXTERNAL_CVAR_BGN uint32_t Game_Sound;				/* is sound enabled ? */ EXTERNAL_CVAR_END
+EXTERNAL_CVAR_BGN uint32_t Game_Music;				/* is music enabled ? */ EXTERNAL_CVAR_END
 EXTERNAL_VARIABLE uint32_t Game_SoundMasterVolume;	/* sound master volume */
 EXTERNAL_VARIABLE uint32_t Game_MusicMasterVolume;	/* Music master volume */
 EXTERNAL_VARIABLE int Game_MixerChannels;			/* number of used mixer channels */
@@ -173,7 +186,7 @@ EXTERNAL_VARIABLE uint32_t Game_RMBActive;	/* 1 if button for RMB is held  */
 EXTERNAL_VARIABLE uint32_t Game_TouchscreenButtonEvents;	/* New option, see comments above */
 
 // 3d engine variables
-EXTERNAL_VARIABLE volatile uint32_t Game_UseEnhanced3DEngine;
+EXTERNAL_CVAR_BGN volatile uint32_t Game_UseEnhanced3DEngine; EXTERNAL_CVAR_END
 EXTERNAL_VARIABLE volatile uint32_t Game_UseEnhanced3DEngineNewValue;
 EXTERNAL_VARIABLE uint8_t *Game_ScreenViewpartOverlay[2];
 EXTERNAL_VARIABLE uint8_t *Game_ScreenViewpartOriginal[2];
@@ -188,15 +201,15 @@ EXTERNAL_VARIABLE int Game_ScreenshotFormat;    /* screenshot format
                                                     4: BMP
                                                     5: PNG */
 EXTERNAL_VARIABLE int Game_ScreenshotEnhancedResolution;
-EXTERNAL_VARIABLE uint32_t Game_ScreenshotEnabled;
-EXTERNAL_VARIABLE uint32_t Game_ScreenshotAutomaticFilename;
+EXTERNAL_CVAR_BGN uint32_t Game_ScreenshotEnabled; EXTERNAL_CVAR_END
+EXTERNAL_CVAR_BGN uint32_t Game_ScreenshotAutomaticFilename; EXTERNAL_CVAR_END
 
 EXTERNAL_VARIABLE Game_sample *Game_SampleCache[GAME_SAMPLE_CACHE_SIZE];
 
 
-EXTERNAL_VARIABLE PTR32(FILE) Game_stdin;					/* stdin */
-EXTERNAL_VARIABLE PTR32(FILE) Game_stdout;				/* stdout */
-EXTERNAL_VARIABLE PTR32(FILE) Game_stderr;				/* stderr */
+EXTERNAL_CVAR_BGN PTR32(void) Game_stdin;				/* stdin */ EXTERNAL_CVAR_END
+EXTERNAL_CVAR_BGN PTR32(void) Game_stdout;				/* stdout */ EXTERNAL_CVAR_END
+EXTERNAL_CVAR_BGN PTR32(void) Game_stderr;				/* stderr */ EXTERNAL_CVAR_END
 
 EXTERNAL_VARIABLE char Albion_CDPath[256];			/* path to albion cd */
 EXTERNAL_VARIABLE Albion_Lang Albion_Font_Lang;		/* albion font language */
@@ -205,7 +218,7 @@ EXTERNAL_VARIABLE Albion_Lang Albion_Font_Lang;		/* albion font language */
 EXTERNAL_VARIABLE volatile uint32_t Game_TimerRunning;	/* is timer interrupt running ? */
 EXTERNAL_VARIABLE volatile uint32_t Game_TimerTick;	/* Timer tick counter */
 EXTERNAL_VARIABLE volatile uint32_t Game_TimerRun;	/* Timer number of runs counter */
-EXTERNAL_VARIABLE volatile uint32_t Game_VSyncTick;	/* VSync tick counter */
+EXTERNAL_CVAR_BGN volatile uint32_t Game_VSyncTick;	/* VSync tick counter */ EXTERNAL_CVAR_END
 EXTERNAL_VARIABLE volatile uint32_t Thread_Exited;	/* did main thread exit ? */
 EXTERNAL_VARIABLE volatile uint32_t Thread_Exit;	/* should thread exit ? */
 EXTERNAL_VARIABLE volatile uint32_t SMK_Playing;	/* is smk video playing? */
@@ -232,11 +245,13 @@ EXTERNAL_VARIABLE char Game_ConfigFilename[80];			/* Config file being used */
 
 EXTERNAL_VARIABLE char Game_Directory[80];			/* Directory where the game is installed */
 
-EXTERNAL_VARIABLE uint32_t self_mod_width;			/* variable to store self modyfing screen width */
+EXTERNAL_CVAR_BGN uint32_t self_mod_width;			/* variable to store self modyfing screen width */ EXTERNAL_CVAR_END
 
 EXTERNAL_VARIABLE uint32_t errno_rtable[256];		/* reverse errno table */
 
 #undef EXTERNAL_VARIABLE
+#undef EXTERNAL_CVAR_BGN
+#undef EXTERNAL_CVAR_END
 
 #define ERRNO_NUM 41
 
@@ -267,12 +282,7 @@ extern const uint32_t errno_table[ERRNO_NUM];
 
 
 
-extern uint32_t mouse_pos[2];
-extern uint32_t screen_window_ptr[4];
-extern uint8_t keyboard_keys[0x80];
-
-
-extern int Game_Main_Asm(int argc, PTR32(char) argv[]);
+extern int Game_Main_Asm(int argc, char *argv[]);
 extern NORETURN void Game_StopMain_Asm(void);
 
 
@@ -283,6 +293,10 @@ extern void Game_RunTimer_Asm(void);
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern uint32_t mouse_pos[2];
+extern PTR32(uint8_t) screen_window_ptr[4];
+extern uint8_t keyboard_keys[0x80];
 
 extern int32_t errno_val;
 

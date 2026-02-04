@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016-2019 Roman Pauer
+@@  Copyright (C) 2016-2026 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -38,7 +38,6 @@
 .extern SR_fprintf
 .extern SR_printf
 .extern SR_sprintf
-.extern SR_open
 
 .extern SR_AIL_active_sample_count
 .extern SR_AIL_allocate_sample_handle
@@ -69,8 +68,6 @@
 .extern SR___clock
 .extern SR_j___clock
 @ 1 param
-.extern SR___close
-.extern SR_j___close
 .extern SR_cputs
 .extern SR___delay
 .extern SR_j___delay
@@ -80,11 +77,9 @@
 .extern SR_fgetc
 .extern SR__nfree
 .extern SR_ftell
-.extern SR_getenv
 .extern SR_inp
 .extern SR__nmalloc
 .extern SR_puts
-.extern SR_raise
 .extern SR_strlen
 .extern SR_time
 .extern SR_unlink
@@ -103,14 +98,11 @@
 @ 3 params
 .extern SR_fgets
 .extern SR_fseek
-.extern SR_lseek
 .extern SR_memcmp
 .extern SR_memcpy
 .extern SR_memmove
 .extern SR_memset
-.extern SR_read
 .extern SR_strncmp
-.extern SR_strncpy
 .extern SR_strnicmp
 .extern SR_strtoul
 @ 4 params

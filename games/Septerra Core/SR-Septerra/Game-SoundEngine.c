@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -40,6 +40,7 @@
 #include "Game-SoundEngine.h"
 #include "MSS.h"
 #include "Game-DataFiles.h"
+#include "Game-Memory.h"
 #include "WinApi-kernel32.h"
 
 typedef struct _SE_struc_4 // final size
@@ -137,15 +138,25 @@ static pthread_t timer_thread_id;
 
 static void *SE_timer_CB(void *arg)
 {
+#if defined(__APPLE__)
+    uint64_t timer_time, current_time, time_diff;
+    struct timespec duration;
+#else
     struct timespec timer_time;
+#endif
     int32_t PipeValue = 3;
     uint32_t NumberOfBytesWritten;
 
     SoundEngine_Counter = 0;
 
-    clock_gettime(CLOCK_MONOTONIC, &timer_time);
-
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
+
+#if defined(__APPLE__)
+    timer_time = clock_gettime_nsec_np(CLOCK_MONOTONIC);
+
+    timer_time += 20000000;
+#else
+    clock_gettime(CLOCK_MONOTONIC, &timer_time);
 
     timer_time.tv_nsec += 20000000;
     if (timer_time.tv_nsec >= 1000000000)
@@ -153,6 +164,7 @@ static void *SE_timer_CB(void *arg)
         timer_time.tv_nsec -= 1000000000;
         timer_time.tv_sec++;
     }
+#endif
 
     while (1)
     {
@@ -160,6 +172,19 @@ static void *SE_timer_CB(void *arg)
         pthread_testcancel();
         pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
 
+#if defined(__APPLE__)
+        current_time = clock_gettime_nsec_np(CLOCK_MONOTONIC);
+        time_diff = timer_time - current_time;
+
+        if (time_diff > 0)
+        {
+            duration.tv_sec = time_diff / 1000000000;
+            duration.tv_nsec = time_diff % 1000000000;
+            if (0 != nanosleep(&duration, NULL)) continue;
+        }
+
+        timer_time += 20000000;
+#else
         if (0 != clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &timer_time, NULL)) continue;
 
         timer_time.tv_nsec += 20000000;
@@ -168,6 +193,7 @@ static void *SE_timer_CB(void *arg)
             timer_time.tv_nsec -= 1000000000;
             timer_time.tv_sec++;
         }
+#endif
 
         SoundEngine_Counter++;
         WriteFile_c(hWritePipe, &PipeValue, 4, &NumberOfBytesWritten, NULL);
@@ -232,7 +258,7 @@ static ssize_t SE_read_CB_4(SE_struc_4 *struc4, uint8_t *buf, ssize_t count)
                 bytes_to_copy = struc4->BufferAvailable - struc4->BufferOffset;
                 if (bytes_to_copy >= count)
                 {
-                    bytes_to_copy = count;
+                    bytes_to_copy = (int32_t)count;
                 }
 
                 memcpy(&(buf[bytes_returned]), &(struc4->BufferPtr[struc4->BufferOffset]), bytes_to_copy);
@@ -322,7 +348,7 @@ void SoundEngine_DecodeMP3Stream(struct _SE_struc_4 *struc4)
 
     record_size = struc4->RecordSize;
 
-    struc4->BufferPtr = (uint8_t *) malloc(1024);
+    struc4->BufferPtr = (uint8_t *) x86_malloc(1024);
     struc4->RecordOffset = 0;
     struc4->BufferOffset = 0;
     struc4->BufferAvailable = 0;
@@ -331,7 +357,7 @@ void SoundEngine_DecodeMP3Stream(struct _SE_struc_4 *struc4)
     ASI_stream_process_c(stream, struc4->RecordData, record_size);
     ASI_stream_close_c(stream);
 
-    free(struc4->BufferPtr);
+    x86_free(struc4->BufferPtr);
     struc4->BufferPtr = NULL;
 }
 
@@ -358,7 +384,7 @@ static ssize_t SE_read_CB_9(SE_struc_9 *struc9, uint8_t *buf, ssize_t count)
                 bytes_to_copy = struc9->BufferAvailable - struc9->BufferOffset;
                 if (bytes_to_copy >= count)
                 {
-                    bytes_to_copy = count;
+                    bytes_to_copy = (int32_t)count;
                 }
                 count -= bytes_to_copy;
 
@@ -455,7 +481,7 @@ void SoundEngine_OpenMP3Stream(struct _SE_struc_9 *struc9)
 
     if (struc9->BufferPtr == NULL)
     {
-        struc9->BufferPtr = (uint8_t *) malloc(1024);
+        struc9->BufferPtr = (uint8_t *) x86_malloc(1024);
     }
 
     struc9->RecordOffset = 0;

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2025 Roman Pauer
+ *  Copyright (C) 2018-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -31,7 +31,17 @@
 
 
 int32_t AIL_preference[19] = {200, 1, 32768, 100, 16, 100, 655, 0, 0, 1, 0, 120, 8, 127, 1, 0, 2, 1, 1};
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern uint8_t AIL_error[256];
+
+#ifdef __cplusplus
+}
+#endif
+
 
 
 void *Game_AIL_mem_use_malloc(void * (*fn)(uint32_t))

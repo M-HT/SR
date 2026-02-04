@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,6 @@
 #define _FILE_OFFSET_BITS 64
 #define _TIME_BITS 64
 #include <string.h>
-#include <malloc.h>
 #include <stdlib.h>
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 #include <direct.h>
@@ -66,6 +65,7 @@
 #include "Albion-music-midiplugin.h"
 #include "Albion-music-midiplugin2.h"
 #include "Game_config.h"
+#include "Game_memory.h"
 #include "Game_scalerplugin.h"
 #include "Game_thread.h"
 #include "Game_virtualkeyboard.h"
@@ -926,7 +926,7 @@ void Game_CleanState(int imm)
     {
         if (Game_AllocatedMemory[i] != NULL)
         {
-            free(Game_AllocatedMemory[i]);
+            x86_free(Game_AllocatedMemory[i]);
             Game_AllocatedMemory[i] = NULL;
         }
     }
@@ -1046,12 +1046,6 @@ static void Game_Cleanup(void)
         Game_DisplaySem = NULL;
     }
 
-    /*if (Game_ScreenWindow != NULL)
-    {
-        free(Game_ScreenWindow);
-        Game_ScreenWindow = NULL;
-    }*/
-
     if (Game_ScreenViewpartOriginal[0] != NULL)
     {
         free(Game_ScreenViewpartOriginal[0]);
@@ -1066,9 +1060,18 @@ static void Game_Cleanup(void)
         Game_ScreenViewpartOverlay[1] = NULL;
     }
 
+    if (sizeof(void *) > 4)
+    {
+        if (Game_stdin != NULL)
+        {
+            x86_free(Game_stdin);
+            Game_stdin = NULL;
+        }
+    }
+
     if (Game_FrameBuffer != NULL)
     {
-        free(Game_FrameBuffer);
+        x86_free(Game_FrameBuffer);
         Game_FrameBuffer = NULL;
     }
 
@@ -1109,12 +1112,14 @@ static void Game_ReadCDPath(void)
 {
     char str[8192];
     int items, len;
+    void *stream;
     FILE *f;
 
-    f = Game_fopen("SETUP.INI", "rt");
+    stream = Game_fopen("SETUP.INI", "rt");
 
-    if (f != NULL)
+    if (stream != NULL)
     {
+        f = (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream;
         while (!feof(f))
         {
             str[0] = 0;
@@ -1123,7 +1128,7 @@ static void Game_ReadCDPath(void)
             if (strncasecmp(str, "SOURCE_PATH=", 12) == 0)
             {
                 strcpy(Albion_CDPath, &(str[12]));
-                len = strlen(Albion_CDPath);
+                len = (int)strlen(Albion_CDPath);
                 if ((len != 0) && (Albion_CDPath[len - 1] == '\r'))
                 {
                     Albion_CDPath[len - 1] = 0;
@@ -1140,7 +1145,7 @@ static void Game_ReadCDPath(void)
                 }
             }
         }
-        Game_fclose(f);
+        Game_fclose(stream);
     }
 }
 
@@ -1182,6 +1187,7 @@ static void Game_ReadFontData(void)
 {
     char fname_base[256];
     uint8_t buf8[8];
+    void *stream;
     FILE *f;
     uint32_t size1, size2;
     size_t items;
@@ -1190,20 +1196,22 @@ static void Game_ReadFontData(void)
     strcpy(fname_base, Albion_CDPath);
     strcat(fname_base, "XLDLIBS\\FONTS0.XLD");
 
-    f = Game_fopen(fname_base, "rb");
-    if (f == NULL) return;
+    stream = Game_fopen(fname_base, "rb");
+    if (stream == NULL) return;
+
+    f = (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream;
 
     items = fread(buf8, 1, 8, f);
     if ((items != 8) || (buf8[6] != 2))
     {
-        Game_fclose(f);
+        Game_fclose(stream);
         return;
     }
     items = fread(&size1, 1, 4, f);
     items = fread(&size2, 1, 4, f);
     if (items != 4)
     {
-        Game_fclose(f);
+        Game_fclose(stream);
         return;
     }
 
@@ -1211,14 +1219,14 @@ static void Game_ReadFontData(void)
 
     if (albion_font == NULL)
     {
-        Game_fclose(f);
+        Game_fclose(stream);
         return;
     }
 
     fseek(f, size1, SEEK_CUR);
     items = fread(albion_font, 1, size2, f);
 
-    Game_fclose(f);
+    Game_fclose(stream);
 
     if (items != size2)
     {
@@ -1302,6 +1310,11 @@ static int Game_Initialize(void)
     Game_VolumeDelta = 0;
 
     memset(&Game_SampleCache, 0, sizeof(Game_SampleCache));
+
+    if ((sizeof(void *) > 4))
+    {
+        Game_stdin = NULL;
+    }
 
     Game_SoundFontPath = NULL;
     Game_MidiDevice = NULL;
@@ -1424,12 +1437,26 @@ static int Game_Initialize(void)
         return -2;
     }
 
-    Game_FrameBuffer = (uint8_t *) malloc(360*481);
+    Game_FrameBuffer = (uint8_t *) x86_malloc(360*481);
     if (Game_FrameBuffer == NULL)
     {
         fprintf(stderr, "Error: Not enough memory\n");
         Game_Cleanup();
         return -3;
+    }
+
+    if (sizeof(void *) > 4)
+    {
+        Game_stdin = x86_malloc(3 * sizeof(void *));
+        if (Game_stdin == NULL)
+        {
+            fprintf(stderr, "Error: Not enough memory\n");
+            Game_Cleanup();
+            return -3;
+        }
+
+        Game_stdout = (void *)(sizeof(void *) + (uintptr_t)(void*)Game_stdin);
+        Game_stderr = (void *)(2 * sizeof(void *) + (uintptr_t)(void*)Game_stdin);
     }
 
     if (Game_UseEnhanced3DEngineNewValue)
@@ -1456,13 +1483,6 @@ static int Game_Initialize(void)
     Game_OverlayDisplay.ScreenViewpartOverlay = Game_OverlayDraw.ScreenViewpartOverlay = Game_ScreenViewpartOverlay[0];
     Game_OverlayDisplay.ScreenViewpartOriginal = Game_OverlayDraw.ScreenViewpartOriginal = Game_ScreenViewpartOriginal[0];
 
-/*	Game_ScreenWindow = (uint8_t *) malloc(65536);
-    if (Game_ScreenWindow == NULL)
-    {
-        fprintf(stderr, "Error: Not enough memory\n");
-        return -4;
-    }*/
-
     Game_DisplaySem = SDL_CreateSemaphore(0);
     if (Game_DisplaySem == NULL)
     {
@@ -1481,9 +1501,18 @@ static int Game_Initialize(void)
 
     Game_BuildRTable();
 
-    Game_stdin = stdin;
-    Game_stdout = stdout;
-    Game_stderr = stderr;
+    if ((sizeof(void *) > 4))
+    {
+        *(FILE **)(void *)Game_stdin = stdin;
+        *(FILE **)(void *)Game_stdout = stdout;
+        *(FILE **)(void *)Game_stderr = stderr;
+    }
+    else
+    {
+        Game_stdin = stdin;
+        Game_stdout = stdout;
+        Game_stderr = stderr;
+    }
 
     Game_Sound = 1;
     Game_Music = 1;
@@ -2191,18 +2220,18 @@ static void Game_Event_Loop(void)
 
                             SDL_GetMouseState(&mousex, &mousey);
                         #if SDL_VERSION_ATLEAST(2,0,0)
-                            SDL_WarpMouseInWindow(Game_Window, mousex + (intptr_t) event.user.data1, mousey + (intptr_t) event.user.data2);
+                            SDL_WarpMouseInWindow(Game_Window, mousex + (int)(intptr_t) event.user.data1, mousey + (int)(intptr_t) event.user.data2);
                         #else
-                            SDL_WarpMouse(mousex + (intptr_t) event.user.data1, mousey + (intptr_t) event.user.data2);
+                            SDL_WarpMouse(mousex + (int)(intptr_t) event.user.data1, mousey + (int)(intptr_t) event.user.data2);
                         #endif
                         }
                         break;
                     case EC_MOUSE_SET:
                         {
                         #if SDL_VERSION_ATLEAST(2,0,0)
-                            SDL_WarpMouseInWindow(Game_Window, (intptr_t) event.user.data1, (intptr_t) event.user.data2);
+                            SDL_WarpMouseInWindow(Game_Window, (int)(intptr_t) event.user.data1, (int)(intptr_t) event.user.data2);
                         #else
-                            SDL_WarpMouse((intptr_t) event.user.data1, (intptr_t) event.user.data2);
+                            SDL_WarpMouse((int)(intptr_t) event.user.data1, (int)(intptr_t) event.user.data2);
                         #endif
                         }
                         break;
@@ -2229,7 +2258,15 @@ int main (int argc, char *argv[])
         fprintf(stderr, "Error: The program wasn't compiled correctly for %i-bits\n", (int) (8 * sizeof(void*)));
         return 0;
     }
-    else if (sizeof(void*) != 4)
+
+#ifdef PTROFS_64BIT
+    if (0 != initialize_pointer_offset())
+    {
+        fprintf(stderr, "Error initializing pointer offset\n");
+        return 1;
+    }
+#else
+    if (sizeof(void*) != 4)
     {
         if ((uintptr_t)argv > UINT32_MAX)
         {
@@ -2237,6 +2274,15 @@ int main (int argc, char *argv[])
             return 0;
         }
     }
+#endif
+
+#if !defined(x86_malloc)
+    if (0 != x86_init_malloc())
+    {
+        fprintf(stderr, "Error initializing memory allocator\n");
+        return 1;
+    }
+#endif
 
     Game_ConfigFilename[0] = 0;
     Game_Directory[0] = 0;
@@ -2306,6 +2352,10 @@ int main (int argc, char *argv[])
     Cleanup_Input();
     Cleanup_Audio();
     Cleanup_Display();
+
+#if !defined(x86_malloc)
+    x86_deinit_malloc();
+#endif
 
     return Game_ExitCode;
 }

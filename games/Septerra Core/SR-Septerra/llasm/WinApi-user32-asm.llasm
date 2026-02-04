@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,7 @@ include asm-calls.llinc
 
 func AdjustWindowRectEx_c *lpRect, dwStyle, bMenu, dwExStyle
 func ClipCursor_c *lpRect
-func CreateWindowExA_c dwExStyle, *lpClassName, *lpWindowName, dwStyle, x, y, nWidth, nHeight, *hWndParent, *hMenu, *hInstance, *lpParam
+funcp CreateWindowExA_c dwExStyle, *lpClassName, *lpWindowName, dwStyle, x, y, nWidth, nHeight, *hWndParent, *hMenu, *hInstance, *lpParam
 func DefWindowProcA_c *hWnd, Msg, wParam, lParam
 func DestroyWindow_c *hWnd
 func DispatchMessageA_c *lpMsg
@@ -36,9 +36,9 @@ func GetMessageA_c *lpMsg, *hWnd, wMsgFilterMin, wMsgFilterMax
 func GetMessagePos_c
 func GetMessageTime_c
 func GetSystemMetrics_c nIndex
-func LoadCursorA_c *hInstance, *lpCursorName
-func LoadIconA_c *hInstance, *lpIconName
-func LoadImageA_c *hinst, *lpszName, uType, cxDesired, cyDesired, fuLoad
+funcp LoadCursorA_c *hInstance, lpCursorName
+funcp LoadIconA_c *hInstance, lpIconName
+funcp LoadImageA_c *hinst, *lpszName, uType, cxDesired, cyDesired, fuLoad
 func MessageBoxA_c *hWnd, *lpText, *lpCaption, uType
 func OffsetRect_c *lprc, dx, dy
 func PeekMessageA_c *lpMsg, *hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg
@@ -46,9 +46,9 @@ func PostMessageA_c *hWnd, Msg, wParam, lParam
 funcv PostQuitMessage_c nExitCode
 func PtInRect_c *lprc, px, py
 func RegisterClassA_c *lpWndClass
-func SetCursor_c *hCursor
+funcp SetCursor_c hCursor
 func SetCursorPos_c X, Y
-func SetFocus_c *hWnd
+funcp SetFocus_c *hWnd
 func ShowCursor_c bShow
 func ShowWindow_c *hWnd, nCmdShow
 func TranslateMessage_c *pMsg

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -31,7 +31,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <malloc.h>
 #if !defined(_MSC_VER)
 #include <strings.h>
 #endif
@@ -43,7 +42,6 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#define fopen_c fopen
 #else
 #include <pthread.h>
 #include "CLIB.h"
@@ -138,11 +136,23 @@ static uint32_t LZO1X_DecompressRead(void);
 static int32_t LZO1X_DoDecompress(uint8_t *TmpBuffer, uint32_t TmpBufRemaining, uint8_t *DstBuffer, uint32_t *ReadSizePtr, uint32_t (*ReadProc)(void));
 
 
+#ifdef _WIN32
+#define fopen_c fopen
+#else
+static FILE *fopen_c(const char *path, const char *mode)
+{
+    char buf[8192];
+
+    CLIB_FindFile(path, buf);
+    return fopen(buf, mode);
+}
+#endif
+
 // sub_445460
 void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, uint32_t (*_MessageProc)(const char *, uint32_t, uint32_t))
 {
     char FilePath[256];
-    int len;
+    size_t len;
     char *findslash, *buf;
     long ManifestSize, IndexSize;
     size_t items;
@@ -169,7 +179,7 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
     *findslash = 0;
 
     // open manifest file
-    ManifestFILE = (FILE *)fopen_c(ManifestFilePath, "rt");
+    ManifestFILE = fopen_c(ManifestFilePath, "rt");
     if ( ManifestFILE == NULL )
     {
         snprintf(ErrorString, sizeof(ErrorString), "Unable to open %s", ManifestFilePath);
@@ -200,7 +210,7 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
     GetDataFilePath(&(ManifestFileBuffer[strlen(ManifestFileBuffer) + 1]), FilePath);
 
     // open index file
-    IndexFILE = (FILE *)fopen_c(FilePath, "rb");
+    IndexFILE = fopen_c(FilePath, "rb");
     if ( IndexFILE == NULL )
     {
         volatile size_t ErrorSize = sizeof(ErrorString); // avoid compiler warning
@@ -248,7 +258,7 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
         }
         strcpy(DatabaseFiles[NumberOfDatabaseFiles].Path, FilePath);
 
-        DatabaseFiles[NumberOfDatabaseFiles].File = (FILE *)fopen_c(FilePath, "rb");
+        DatabaseFiles[NumberOfDatabaseFiles].File = fopen_c(FilePath, "rb");
         for ( ; DatabaseFiles[NumberOfDatabaseFiles].File == NULL; )
         {
             int fopenerrno;
@@ -263,7 +273,7 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
             }
 
             RequestCDPresence();
-            DatabaseFiles[NumberOfDatabaseFiles].File = (FILE *)fopen_c(FilePath, "rb");
+            DatabaseFiles[NumberOfDatabaseFiles].File = fopen_c(FilePath, "rb");
         }
 
         DatabaseFiles[NumberOfDatabaseFiles].Offset = 0;
@@ -656,7 +666,7 @@ uint32_t RecordRead(int32_t RecordHandle, uint8_t *ReadBuffer, uint32_t NumberOf
 
             while (1)
             {
-                result = fread(ReadBuffer, 1, NumberOfBytes, DataFILE);
+                result = (uint32_t)fread(ReadBuffer, 1, NumberOfBytes, DataFILE);
 
                 if ( !feof(DataFILE) ) break;
 
@@ -952,7 +962,7 @@ static uint32_t LZO1X_DecompressRead(void)
 
     if (ReadSize != 0)
     {
-        ReadSize = fread(DecompressionBufPtr, 1, ReadSize, DecompressionFILE);
+        ReadSize = (uint32_t)fread(DecompressionBufPtr, 1, ReadSize, DecompressionFILE);
     }
 
     return ReadSize;
@@ -1370,7 +1380,7 @@ loc_4469BE:
 
 loc_446A06:
 
-    *DecompressedSize = DstPtr - DstBuffer;
+    *DecompressedSize = (uint32_t)(DstPtr - DstBuffer);
 
     return 0;
 

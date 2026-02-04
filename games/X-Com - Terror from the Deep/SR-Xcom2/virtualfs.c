@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,7 +26,6 @@
 #define _TIME_BITS 64
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <string.h>
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 #include <direct.h>
@@ -40,6 +39,7 @@
 #include <ctype.h>
 #include "virtualfs.h"
 #include "Game_defs.h"
+#include "Game_memory.h"
 
 file_entry Game_CDir, *Game_Current_Dir;
 
@@ -131,7 +131,7 @@ void vfs_delete_entry(file_entry *entry)
 
     if (entry->parent != entry)
     {
-        free(entry);
+        x86_free(entry);
     }
 }
 
@@ -180,8 +180,8 @@ void vfs_visit_dir(file_entry *vdir)
 #endif
 
         last_child = NULL;
-        vdir_doslength = strlen(vdir->dos_fullname);
-        vdir_reallength = strlen(vdir->real_fullname);
+        vdir_doslength = (int)strlen(vdir->dos_fullname);
+        vdir_reallength = (int)strlen(vdir->real_fullname);
 
         strcpy(new_filename, vdir->real_fullname);
         new_filename[vdir_reallength] = '/';
@@ -205,7 +205,7 @@ void vfs_visit_dir(file_entry *vdir)
             }
 
             // skip long names
-            file_reallength = strlen(FILE_NAME);
+            file_reallength = (int)strlen(FILE_NAME);
             if (file_reallength > 12) continue;
 
             {
@@ -246,7 +246,7 @@ void vfs_visit_dir(file_entry *vdir)
 #endif
 
             // allocate mem for new file entry
-            new_child = (file_entry *) malloc(sizeof(file_entry));
+            new_child = (file_entry *) x86_malloc(sizeof(file_entry));
             if (new_child == NULL)
             {
                 CLOSE_DIR(dir);
@@ -476,7 +476,7 @@ int vfs_get_real_name(const char *origdosname, char *buf, file_entry **realdir)
             buf[MAX_PATH - 1] = 0;
             strncpy(buf, parse_dir->real_fullname, MAX_PATH - 1);
 
-            buflen = strlen(buf);
+            buflen = (int)strlen(buf);
 
             if (buflen < MAX_PATH - 1)
             {
@@ -528,7 +528,7 @@ void vfs_add_file(file_entry *dir, const char *filepath)
     if (strchr(filename, '/') == NULL)
     {
         // allocate mem for new file entry
-        new_child = (file_entry *) malloc(sizeof(file_entry));
+        new_child = (file_entry *) x86_malloc(sizeof(file_entry));
         if (new_child == NULL)
         {
             return;
@@ -552,7 +552,7 @@ void vfs_add_file(file_entry *dir, const char *filepath)
         // set real and dos full name
         new_child->real_fullname = strdup(filepath);
 
-        dir_doslength = strlen(dir->dos_fullname);
+        dir_doslength = (int)strlen(dir->dos_fullname);
 
         new_child->dos_fullname = (char *) malloc(strlen(filename) + dir_doslength + 2);
 

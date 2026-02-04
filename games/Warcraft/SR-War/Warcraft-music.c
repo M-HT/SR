@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,6 @@
 #if defined(__DEBUG__)
 #include <inttypes.h>
 #endif
-#include <malloc.h>
 #include <string.h>
 #define USE_RWOPS
 #include "Game_defs.h"
@@ -34,6 +33,7 @@
 #include "Warcraft-music.h"
 #include "Warcraft-music-midiplugin.h"
 #include "Warcraft-music-midiplugin2.h"
+#include "Game_memory.h"
 #include "xmi2mid.h"
 
 #define STATUS_STOPPED 0
@@ -115,7 +115,7 @@ AIL_sequence *Game_AIL_allocate_sequence_handle(void *mdi)
 #define ORIG_SEQUENCE_SIZE 2092
 #define SEQUENCE_SIZE ( (sizeof(AIL_sequence) > ORIG_SEQUENCE_SIZE)?(sizeof(AIL_sequence)):(ORIG_SEQUENCE_SIZE) )
 
-    ret = (AIL_sequence *) malloc(SEQUENCE_SIZE);
+    ret = (AIL_sequence *) x86_malloc(SEQUENCE_SIZE);
 
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_allocate_sequence_handle: return: 0x%" PRIxPTR "\n", (uintptr_t) ret);
@@ -182,7 +182,7 @@ void Game_AIL_release_sequence_handle(AIL_sequence *S)
         Game_ActiveSequence = NULL;
     }
 
-    free(S);
+    x86_free(S);
 }
 
 int32_t Game_AIL_init_sequence(AIL_sequence *S, void *start, int32_t sequence_num)

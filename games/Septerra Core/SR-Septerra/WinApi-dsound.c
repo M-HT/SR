@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include "WinApi-dsound.h"
 #include "Game-Config.h"
+#include "Game-Memory.h"
 #ifdef USE_SPEEXDSP_RESAMPLER
 #include <speex/speex_resampler.h>
 #endif
@@ -1072,7 +1073,7 @@ uint32_t DirectSoundCreate_c(void *lpGuid, PTR32(struct IDirectSound_c) *ppDS, v
         exit(1);
     }
 
-    lpDS_c = (struct IDirectSound_c *)malloc(sizeof(struct IDirectSound_c));
+    lpDS_c = (struct IDirectSound_c *)x86_malloc(sizeof(struct IDirectSound_c));
 
     if (lpDS_c == NULL)
     {
@@ -1150,7 +1151,7 @@ uint32_t IDirectSound_Release_c(struct IDirectSound_c *lpThis)
             StopPrimaryBuffer(lpThis->PrimaryBuffer);
             lpThis->PrimaryBuffer = NULL;
         }
-        free(lpThis);
+        x86_free(lpThis);
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
         return 0;
     }
@@ -1244,7 +1245,7 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
             return DSERR_INVALIDPARAM;
         }
 
-        lpDSB_c = (struct IDirectSoundBuffer_c *) malloc(sizeof(struct IDirectSoundBuffer_c));
+        lpDSB_c = (struct IDirectSoundBuffer_c *) x86_malloc(sizeof(struct IDirectSoundBuffer_c));
 
         if (lpDSB_c == NULL)
         {
@@ -1279,7 +1280,7 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
         if (0 != SDL_OpenAudio(&desired, &obtained))
 #endif
         {
-            free(lpDSB_c);
+            x86_free(lpDSB_c);
 
 #ifdef DEBUG_DSOUND
             eprintf("SDL error\n");
@@ -1307,7 +1308,7 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
             else
 #endif
             {
-                free(lpDSB_c);
+                x86_free(lpDSB_c);
 
 #ifdef DEBUG_DSOUND
                 eprintf("SDL error\n");
@@ -1340,7 +1341,7 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
             SDL_CloseAudio();
 #endif
 
-            free(lpDSB_c);
+            x86_free(lpDSB_c);
 
 #ifdef DEBUG_DSOUND
             eprintf("error\n");
@@ -1387,7 +1388,7 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
         }
 
 
-        lpDSB_c = (struct IDirectSoundBuffer_c *) malloc(sizeof(struct IDirectSoundBuffer_c));
+        lpDSB_c = (struct IDirectSoundBuffer_c *) x86_malloc(sizeof(struct IDirectSoundBuffer_c));
 
         if (lpDSB_c == NULL)
         {
@@ -1419,10 +1420,10 @@ uint32_t IDirectSound_CreateSoundBuffer_c(struct IDirectSound_c *lpThis, const s
 
         RecalculateConvFormat(lpDSB_c);
 
-        lpDSB_c->data = (uint8_t *)malloc(pcDSBufferDesc->dwBufferBytes + 4); // allocate 4 more bytes to allow reading past the end of buffer
+        lpDSB_c->data = (uint8_t *)x86_malloc(pcDSBufferDesc->dwBufferBytes + 4); // allocate 4 more bytes to allow reading past the end of buffer
         if (lpDSB_c->data == NULL)
         {
-            free(lpDSB_c);
+            x86_free(lpDSB_c);
 #ifdef DEBUG_DSOUND
             eprintf("error\n");
 #endif
@@ -1652,7 +1653,7 @@ uint32_t IDirectSoundBuffer_Release_c(struct IDirectSoundBuffer_c *lpThis)
 
             if (lpThis->data != NULL)
             {
-                free(lpThis->data);
+                x86_free(lpThis->data);
                 lpThis->data = NULL;
             }
             if (lpThis->resample_buffer != NULL)
@@ -1668,7 +1669,7 @@ uint32_t IDirectSoundBuffer_Release_c(struct IDirectSoundBuffer_c *lpThis)
             }
 #endif
         }
-        free(lpThis);
+        x86_free(lpThis);
         return 0;
     }
     return lpThis->RefCount;

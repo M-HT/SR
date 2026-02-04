@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2024 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -300,7 +300,7 @@ static void conv_u16swap_stereo(uint16_t *src, int16_t *dst, int num_samples)
 for (; num_samples != 0; num_samples--) \
 { \
     *dst = srcvalue; \
-    src += (1 << freq_diff_shift); \
+    src += ((intptr_t)1 << freq_diff_shift); \
     dst++; \
 }
 

@@ -38,7 +38,6 @@ int32_t _stricmp_c(const char *s1, const char *s2);
 char *strncpy_c(char *dest, const char *src, uint32_t n);
 int32_t strncmp_c(const char *s1, const char *s2, uint32_t n);
 char *strncat_c(char *dest, const char *src, uint32_t n);
-int32_t _strnicmp_c(const char *s1, const char *s2, uint32_t n);
 
 void *malloc_c(uint32_t size);
 void free_c(void *ptr);
@@ -50,21 +49,13 @@ int32_t toupper_c(int32_t c);
 int32_t sprintf2_c(char *str, const char *format, uint32_t *ap);
 int32_t sscanf2_c(const char *str, const char *format, uint32_t *ap);
 
-uint32_t fread_c(void *ptr, uint32_t size, uint32_t nmemb, void *stream);
-int32_t ftell_c(void *stream);
-int32_t fseek_c(void *stream, int32_t offset, int32_t whence);
-void *fopen_c(const char *path, const char *mode);
-int32_t fclose_c(void *fp);
-
 int32_t system_c(const char *command);
-void exit_c(int32_t status);
 void srand_c(uint32_t seed);
 int32_t rand_c(void);
 
 void __report_gsfailure_c(void);
 
 int32_t _except_handler4_c(int32_t, void *TargetFrame, int32_t);
-int32_t _except_handler3_c(int32_t, void *TargetFrame, int32_t);
 
 uint32_t _beginthread_c(void(*start_address)(void *), uint32_t stack_size, void *arglist);
 

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,9 +22,10 @@
  *
  */
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
 #include "smack.h"
 
@@ -100,7 +101,7 @@ typedef struct _Tree16_ {
 	uint32_t LastDecoded;
 	uint32_t LastDecoded2;
 	uint32_t LastDecoded3;
-	uint32_t Nodes[];
+	uint32_t Nodes[1];
 /*	Nodes:	Bit 31: 0 - Leaf
 					1 - Node
 */
@@ -146,7 +147,7 @@ void BitStreamFillBuffer(BitStream *bitstream)
 	count = bitstream->BytesLeft;
 	if (count > bitstream->BufferSize) count = bitstream->BufferSize;
 
-	bitstream->BytesRead = fread(bitstream->Buffer, 1, count, bitstream->File);
+	bitstream->BytesRead = (uint32_t)fread(bitstream->Buffer, 1, count, bitstream->File);
 
 	if (bitstream->BytesRead != 0)
 	{
@@ -874,7 +875,7 @@ SmackStruct *SmackOpen(FILE *SmackFile)
 /* create huffman trees */
 	BitStreamInitialize(&bitstream, SmackFile, buf, 1024, Header.TreesSize);
 
-	Smack->MMap_Tree = (uint8_t *) malloc(Header.MMap_Size + sizeof(Tree16) - 12);
+	Smack->MMap_Tree = (uint8_t *) malloc(Header.MMap_Size + offsetof(Tree16, Nodes) - 12);
 	if (Smack->MMap_Tree == NULL)
 	{
 		SmackClose(Smack);
@@ -884,7 +885,7 @@ SmackStruct *SmackOpen(FILE *SmackFile)
 	((Tree16 *) Smack->MMap_Tree)->NumNodes = (Header.MMap_Size - 12) >> 2;
 	CreateHuffmanTree16(&bitstream, (Tree16 *) Smack->MMap_Tree);
 
-	Smack->MClr_Tree = (uint8_t *) malloc(Header.MClr_Size + sizeof(Tree16) - 12);
+	Smack->MClr_Tree = (uint8_t *) malloc(Header.MClr_Size + offsetof(Tree16, Nodes) - 12);
 	if (Smack->MClr_Tree == NULL)
 	{
 		SmackClose(Smack);
@@ -894,7 +895,7 @@ SmackStruct *SmackOpen(FILE *SmackFile)
 	((Tree16 *) Smack->MClr_Tree)->NumNodes = (Header.MClr_Size - 12) >> 2;
 	CreateHuffmanTree16(&bitstream, (Tree16 *) Smack->MClr_Tree);
 
-	Smack->Full_Tree = (uint8_t *) malloc(Header.Full_Size + sizeof(Tree16) - 12);
+	Smack->Full_Tree = (uint8_t *) malloc(Header.Full_Size + offsetof(Tree16, Nodes) - 12);
 	if (Smack->Full_Tree == NULL)
 	{
 		SmackClose(Smack);
@@ -904,7 +905,7 @@ SmackStruct *SmackOpen(FILE *SmackFile)
 	((Tree16 *) Smack->Full_Tree)->NumNodes = (Header.Full_Size - 12) >> 2;
 	CreateHuffmanTree16(&bitstream, (Tree16 *) Smack->Full_Tree);
 
-	Smack->Type_Tree = (uint8_t *) malloc(Header.Type_Size + sizeof(Tree16) - 12);
+	Smack->Type_Tree = (uint8_t *) malloc(Header.Type_Size + offsetof(Tree16, Nodes) - 12);
 	if (Smack->Type_Tree == NULL)
 	{
 		SmackClose(Smack);

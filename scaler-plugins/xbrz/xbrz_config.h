@@ -7,6 +7,7 @@
 // * to link the code of this program with the following libraries            *
 // * (or with modified versions that use the same licenses), and distribute   *
 // * linked combinations including the two: MAME, FreeFileSync, Snes9x, ePSXe *
+// *                                                                          *
 // * You must obey the GNU General Public License in all respects for all of  *
 // * the code used other than MAME, FreeFileSync, Snes9x, ePSXe.              *
 // * If you modify this file, you may extend this exception to your version   *
@@ -25,12 +26,11 @@ namespace xbrz
 typedef float real_t;
 struct ScalerCfg
 {
-    real_t luminanceWeight            = 1;
     real_t equalColorTolerance        = 30;
     real_t centerDirectionBias        = 4;
     real_t dominantDirectionThreshold = 3.6;
-    real_t steepDirectionThreshold    = 2.2;
-    real_t newTestAttribute           = 0; //unused; test new parameters
+    real_t steepDirectionThreshold    = 2.4;
+    real_t testAttribute              = 0; //unused; test new parameters
 };
 }
 

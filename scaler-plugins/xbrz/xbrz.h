@@ -7,6 +7,7 @@
 // * to link the code of this program with the following libraries            *
 // * (or with modified versions that use the same licenses), and distribute   *
 // * linked combinations including the two: MAME, FreeFileSync, Snes9x, ePSXe *
+// *                                                                          *
 // * You must obey the GNU General Public License in all respects for all of  *
 // * the code used other than MAME, FreeFileSync, Snes9x, ePSXe.              *
 // * If you modify this file, you may extend this exception to your version   *
@@ -25,26 +26,23 @@
 
 namespace xbrz
 {
-/*
--------------------------------------------------------------------------
-| xBRZ: "Scale by rules" - high quality image upscaling filter by Zenju |
--------------------------------------------------------------------------
-using a modified approach of xBR:
-http://board.byuu.org/viewtopic.php?f=10&t=2248
-- new rule set preserving small image features
-- highly optimized for performance
-- support alpha channel
-- support multithreading
-- support 64-bit architectures
-- support processing image slices
-- support scaling up to 6xBRZ
-*/
+/*  -------------------------------------------------------------------------
+    | xBRZ: "Scale by rules" - high quality image upscaling filter by Zenju |
+    -------------------------------------------------------------------------
+    using a modified approach of xBR: https://forums.libretro.com/t/xbr-algorithm-tutorial/123
+    - new rule set preserving small image features
+    - highly optimized for performance
+    - support alpha channel
+    - support multithreading
+    - support 64-bit architectures
+    - support processing image slices
+    - support scaling up to 6xBRZ                                             */
 
 enum class ColorFormat //from high bits -> low bits, 8 bit per channel
 {
-    RGB,  //8 bit for each red, green, blue, upper 8 bits unused
-    ARGB, //including alpha channel, BGRA byte order on little-endian machines
-    ARGB_UNBUFFERED, //like ARGB, but without the one-time buffer creation overhead (ca. 100 - 300 ms) at the expense of a slightly slower scaling time
+    rgb,  //8 bit for each red, green, blue, upper 8 bits unused
+    argb, //including alpha channel, BGRA byte order on little-endian machines
+    argbUnbuffered, //like ARGB, but without the one-time buffer creation overhead (ca. 100 - 300 ms) at the expense of a slightly slower scaling time
 };
 
 const int SCALE_FACTOR_MAX = 6;
@@ -66,6 +64,7 @@ void scale(size_t factor, //valid range: 2 - SCALE_FACTOR_MAX
            int yFirst = 0, int yLast = std::numeric_limits<int>::max()); //slice of source image
 
 #if !defined(NO_EXTRA_SCALERS)
+//BGRA byte order
 void bilinearScale(const uint32_t* src, int srcWidth, int srcHeight,
                    /**/  uint32_t* trg, int trgWidth, int trgHeight);
 
@@ -75,7 +74,7 @@ void nearestNeighborScale(const uint32_t* src, int srcWidth, int srcHeight,
 
 
 //parameter tuning
-bool equalColorTest(uint32_t col1, uint32_t col2, ColorFormat colFmt, real_t luminanceWeight, real_t equalColorTolerance);
+bool equalColorTest2(uint32_t col1, uint32_t col2, ColorFormat colFmt, real_t equalColorTolerance, real_t testAttribute);
 }
 
 #endif

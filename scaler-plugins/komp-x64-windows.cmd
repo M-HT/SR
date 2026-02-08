@@ -9,6 +9,10 @@ cd ..
 %CC% -s -shared -o scaler-hqx.dll -m64 scaler-hqx.o hqx/*.o scaler.def
 
 rem find maximum supported C++ standard in GCC
+SET CPPSTD=c++23
+%CXX% -c -m64 -O2 -Wall -std=%CPPSTD% scaler-xbrz.cpp 2>NUL
+IF NOT ERRORLEVEL 1 GOTO :stdok
+
 SET CPPSTD=c++20
 %CXX% -c -m64 -O2 -Wall -std=%CPPSTD% scaler-xbrz.cpp 2>NUL
 IF NOT ERRORLEVEL 1 GOTO :stdok

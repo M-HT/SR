@@ -7,19 +7,24 @@ cc -shared -Wl,-soname,scaler-hqx.so -o scaler-hqx.so -fpic scaler-hqx.o hqx/*.o
 
 # find maximum supported C++ standard in GCC
 CPPSTD=
-c++ -c -fpic -O2 -Wall -std=c++20 scaler-xbrz.cpp 2>/dev/null
+c++ -c -fpic -O2 -Wall -std=c++23 scaler-xbrz.cpp 2>/dev/null
 if [ $? -eq 0 ]; then
-    CPPSTD=c++20
+    CPPSTD=c++23
 else
-    c++ -c -fpic -O2 -Wall -std=c++17 scaler-xbrz.cpp 2>/dev/null
+    c++ -c -fpic -O2 -Wall -std=c++20 scaler-xbrz.cpp 2>/dev/null
     if [ $? -eq 0 ]; then
-        CPPSTD=c++17
+        CPPSTD=c++20
     else
-        c++ -c -fpic -O2 -Wall -std=c++14 scaler-xbrz.cpp 2>/dev/null
+        c++ -c -fpic -O2 -Wall -std=c++17 scaler-xbrz.cpp 2>/dev/null
         if [ $? -eq 0 ]; then
-            CPPSTD=c++14
+            CPPSTD=c++17
         else
-            CPPSTD=c++11
+            c++ -c -fpic -O2 -Wall -std=c++14 scaler-xbrz.cpp 2>/dev/null
+            if [ $? -eq 0 ]; then
+                CPPSTD=c++14
+            else
+                CPPSTD=c++11
+            fi
         fi
     fi
 fi

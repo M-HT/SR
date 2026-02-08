@@ -35,7 +35,7 @@
 
 static void SCALER_PLUGIN_API scale(int factor, const void *src, void *dst, int src_width, int src_height, int y_first, int y_last)
 {
-    xbrz::scale((size_t)factor, (const uint32_t *)src, (uint32_t *)dst, src_width, src_height, xbrz::ColorFormat::RGB, xbrz::ScalerCfg(), y_first, y_last);
+    xbrz::scale((size_t)factor, (const uint32_t *)src, (uint32_t *)dst, src_width, src_height, xbrz::ColorFormat::rgb, xbrz::ScalerCfg(), y_first, y_last);
 }
 
 static int SCALER_PLUGIN_API get_maximum_scale_factor(void)
@@ -58,7 +58,7 @@ int SCALER_PLUGIN_API initialize_scaler_plugin(scaler_plugin_functions *function
 
     // one-time buffer creation
     for (index = 0; index < 8*8; index++) src[index] = 0;
-    xbrz::scale(2, src, dst, 8, 8, xbrz::ColorFormat::RGB);
+    xbrz::scale(2, src, dst, 8, 8, xbrz::ColorFormat::rgb);
 
     functions->scale = &scale;
     functions->get_maximum_scale_factor = &get_maximum_scale_factor;

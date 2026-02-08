@@ -26,28 +26,29 @@
 #define _CLIB_ASM_X86_H_INCLUDED_
 
 #include <stdint.h>
+#include "../platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void *_alloca_probe_c(uint32_t size);
+void * CCALL _alloca_probe_c(uint32_t size);
 
-uint64_t _aulldiv_c(uint64_t x, uint64_t y);
-int64_t _alldiv_c(int64_t x, int64_t y);
-uint64_t _time64_c(uint64_t *t64);
+uint64_t CCALL _aulldiv_c(uint64_t x, uint64_t y);
+int64_t CCALL _alldiv_c(int64_t x, int64_t y);
+uint64_t CCALL _time64_c(uint64_t *t64);
 
-int32_t _ftol2_sse_c(double *num);
-int64_t _ftol2_c(double *num);
-int64_t _ftol_c(double *num);
+int32_t CCALL _ftol2_sse_c(double *num);
+int64_t CCALL _ftol2_c(double *num);
+int64_t CCALL _ftol_c(double *num);
 
-void _CIcos_c(double *num);
-void _CIsin_c(double *num);
-void _CIatan2_c(double *nums);
-void _CIsqrt_c(double *num);
-void _CIfmod_c(double *nums);
-void _CItan_c(double *num);
-void _CIpow_c(double *nums);
+void CCALL _CIcos_c(double *num);
+void CCALL _CIsin_c(double *num);
+void CCALL _CIatan2_c(double *nums);
+void CCALL _CIsqrt_c(double *num);
+void CCALL _CIfmod_c(double *nums);
+void CCALL _CItan_c(double *num);
+void CCALL _CIpow_c(double *nums);
 
 #ifdef __cplusplus
 }

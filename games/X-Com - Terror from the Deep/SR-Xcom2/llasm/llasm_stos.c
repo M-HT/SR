@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,7 +26,7 @@
 
 #include "llasm_cpu.h"
 
-EXTERNC void x86_rep_stosb(CPU)
+EXTERNC void CCALL x86_rep_stosb(CPU)
 {
     int32_t dir;
 
@@ -42,7 +42,7 @@ EXTERNC void x86_rep_stosb(CPU)
     } while (ecx != 0);
 }
 
-EXTERNC void x86_rep_stosd(CPU)
+EXTERNC void CCALL x86_rep_stosd(CPU)
 {
     uint32_t dstptr, counter, srcvalue;
 
@@ -99,7 +99,7 @@ EXTERNC void x86_rep_stosd(CPU)
     edi = dstptr;
 }
 
-EXTERNC void x86_rep_stosw(CPU)
+EXTERNC void CCALL x86_rep_stosw(CPU)
 {
     int32_t dir;
 

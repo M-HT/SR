@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -39,7 +39,7 @@ static int TXT_initialized = 0;
 static TXT_struct *TXT_fonts[32];
 
 
-int TXT_Init_c(void)
+int CCALL TXT_Init_c(void)
 {
     int index;
 
@@ -55,7 +55,7 @@ int TXT_Init_c(void)
     return 1;
 }
 
-void TXT_Exit_c(void)
+void CCALL TXT_Exit_c(void)
 {
     //int index;
 
@@ -75,7 +75,7 @@ void TXT_Exit_c(void)
     }*/
 }
 
-int TXT_LoadFont_c(const char *path)
+int CCALL TXT_LoadFont_c(const char *path)
 {
     int error, font_handle, index, num_entries;
     void *lib;
@@ -195,7 +195,7 @@ static void TXT_UnloadFont_c(int font_handle)
     TXT_fonts[font_handle] = NULL;
 }
 
-void TXT_WriteString_c(const char *text, int font_handle, void *dst_pixel_map, int x, int y, int width, int height, uint8_t color_add)
+void CCALL TXT_WriteString_c(const char *text, int font_handle, void *dst_pixel_map, int x, int y, int width, int height, uint8_t color_add)
 {
     TXT_struct *font;
     OPM_struct *pixel_map;
@@ -253,7 +253,7 @@ void TXT_WriteString_c(const char *text, int font_handle, void *dst_pixel_map, i
     pixel_map->clip_height = orig_clip_height;
 }
 
-void TXT_UnloadAllFonts_c(void)
+void CCALL TXT_UnloadAllFonts_c(void)
 {
     int index;
 

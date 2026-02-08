@@ -85,7 +85,6 @@ static clockid_t monotonic_clock_id;
 #endif
 #include "WinApi-kernel32.h"
 #include "Game-Memory.h"
-#include "platform.h"
 
 
 #ifndef _WIN32
@@ -342,7 +341,7 @@ static void Conv_find(win32_find_data *buffer, struct stat *filestat, const char
 
 #endif
 
-uint32_t Beep_c(uint32_t dwFreq, uint32_t dwDuration)
+uint32_t CCALL Beep_c(uint32_t dwFreq, uint32_t dwDuration)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("Beep: %i, %i\n", dwFreq, dwDuration);
@@ -375,7 +374,7 @@ uint32_t Beep_c(uint32_t dwFreq, uint32_t dwDuration)
 #endif
 }
 
-uint32_t CloseHandle_c(void *hObject)
+uint32_t CCALL CloseHandle_c(void *hObject)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("CloseHandle: 0x%" PRIxPTR "\n", (uintptr_t) hObject);
@@ -432,7 +431,7 @@ uint32_t CloseHandle_c(void *hObject)
 //    return CloseHandle((HANDLE)hObject);
 }
 
-uint32_t CreateDirectoryA_c(const char *lpPathName, void *lpSecurityAttributes)
+uint32_t CCALL CreateDirectoryA_c(const char *lpPathName, void *lpSecurityAttributes)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("CreateDirectoryA: %s, 0x%" PRIxPTR "\n", lpPathName, (uintptr_t)lpSecurityAttributes);
@@ -472,7 +471,7 @@ uint32_t CreateDirectoryA_c(const char *lpPathName, void *lpSecurityAttributes)
     return 1;
 }
 
-void *CreateFileA_c(const char *lpFileName, uint32_t dwDesiredAccess, uint32_t dwShareMode, void *lpSecurityAttributes, uint32_t dwCreationDistribution, uint32_t dwFlagsAndAttributes, void *hTemplateFile)
+void * CCALL CreateFileA_c(const char *lpFileName, uint32_t dwDesiredAccess, uint32_t dwShareMode, void *lpSecurityAttributes, uint32_t dwCreationDistribution, uint32_t dwFlagsAndAttributes, void *hTemplateFile)
 {
     int file_exists;
     char mode[4];
@@ -663,14 +662,14 @@ void *CreateFileA_c(const char *lpFileName, uint32_t dwDesiredAccess, uint32_t d
     return ret;
 }
 
-void *CreateMutexA_c(void *lpMutexAttributes, uint32_t bInitialOwner, const char *lpName)
+void * CCALL CreateMutexA_c(void *lpMutexAttributes, uint32_t bInitialOwner, const char *lpName)
 {
     // Septerra Core doesn't use the mutex - it only checks last error for ERROR_ALREADY_EXISTS, to prevent two instances of the application to run
     Winapi_SetLastError(ERROR_ACCESS_DENIED);
     return NULL;
 }
 
-uint32_t CreatePipe_c(PTR32(void) *hReadPipe, PTR32(void) *hWritePipe, void *lpPipeAttributes, uint32_t nSize)
+uint32_t CCALL CreatePipe_c(PTR32(void) *hReadPipe, PTR32(void) *hWritePipe, void *lpPipeAttributes, uint32_t nSize)
 {
     handle hread, hwrite;
     int ret;
@@ -757,7 +756,7 @@ uint32_t CreatePipe_c(PTR32(void) *hReadPipe, PTR32(void) *hWritePipe, void *lpP
     exit(1);
 }
 
-void DeleteCriticalSection_c(void *lpCriticalSection)
+void CCALL DeleteCriticalSection_c(void *lpCriticalSection)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("DeleteCriticalSection: 0x%" PRIxPTR "\n", (uintptr_t)lpCriticalSection);
@@ -774,14 +773,14 @@ void DeleteCriticalSection_c(void *lpCriticalSection)
 #endif
 }
 
-uint32_t DeleteFileA_c(const char *lpFileName)
+uint32_t CCALL DeleteFileA_c(const char *lpFileName)
 {
     eprintf("Unimplemented: %s\n", "DeleteFileA");
     exit(1);
 //    return DeleteFileA(lpFileName);
 }
 
-void EnterCriticalSection_c(void *lpCriticalSection)
+void CCALL EnterCriticalSection_c(void *lpCriticalSection)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("EnterCriticalSection: 0x%" PRIxPTR "\n", (uintptr_t)lpCriticalSection);
@@ -794,12 +793,12 @@ void EnterCriticalSection_c(void *lpCriticalSection)
 #endif
 }
 
-void ExitProcess_c(uint32_t uExitCode)
+void CCALL ExitProcess_c(uint32_t uExitCode)
 {
     exit(uExitCode);
 }
 
-uint32_t FileTimeToLocalFileTime_c(const void *lpFileTime, void *lpLocalFileTime)
+uint32_t CCALL FileTimeToLocalFileTime_c(const void *lpFileTime, void *lpLocalFileTime)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("FileTimeToLocalFileTime\n");
@@ -821,7 +820,7 @@ uint32_t FileTimeToLocalFileTime_c(const void *lpFileTime, void *lpLocalFileTime
 #endif
 }
 
-uint32_t FileTimeToSystemTime_c(const void *lpFileTime, void *lpSystemTime)
+uint32_t CCALL FileTimeToSystemTime_c(const void *lpFileTime, void *lpSystemTime)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("FileTimeToSystemTime\n");
@@ -873,7 +872,7 @@ uint32_t FileTimeToSystemTime_c(const void *lpFileTime, void *lpSystemTime)
 #endif
 }
 
-uint32_t FindClose_c(void *hFindFile)
+uint32_t CCALL FindClose_c(void *hFindFile)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("FindClose: 0x%" PRIxPTR "\n", (uintptr_t) hFindFile);
@@ -926,7 +925,7 @@ uint32_t FindClose_c(void *hFindFile)
     return 1;
 }
 
-void *FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
+void * CCALL FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
 {
     handle ret;
 
@@ -1181,7 +1180,7 @@ void *FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
 #endif
 }
 
-uint32_t FindNextFileA_c(void *hFindFile, void *lpFindFileData)
+uint32_t CCALL FindNextFileA_c(void *hFindFile, void *lpFindFileData)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("FindNextFileA: 0x%" PRIxPTR ", 0x%" PRIxPTR "\n", (uintptr_t) hFindFile, (uintptr_t) lpFindFileData);
@@ -1265,7 +1264,7 @@ uint32_t FindNextFileA_c(void *hFindFile, void *lpFindFileData)
 #endif
 }
 
-void *GetCurrentProcess_c(void)
+void * CCALL GetCurrentProcess_c(void)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("GetCurrentProcess\n");
@@ -1275,7 +1274,7 @@ void *GetCurrentProcess_c(void)
     return PSEUDO_HANDLE_CURRENT_PROCESS;
 }
 
-void *GetCurrentThread_c(void)
+void * CCALL GetCurrentThread_c(void)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("GetCurrentThread\n");
@@ -1285,7 +1284,7 @@ void *GetCurrentThread_c(void)
     return PSEUDO_HANDLE_CURRENT_THREAD;
 }
 
-uint32_t GetFullPathNameA_c(const char *lpFileName, uint32_t nBufferLength, char *lpBuffer, PTR32(char) *lpFilePart)
+uint32_t CCALL GetFullPathNameA_c(const char *lpFileName, uint32_t nBufferLength, char *lpBuffer, PTR32(char) *lpFilePart)
 {
     uint32_t len;
     char *p1, *p2;
@@ -1344,12 +1343,12 @@ uint32_t GetFullPathNameA_c(const char *lpFileName, uint32_t nBufferLength, char
     return (uint32_t)len;
 }
 
-uint32_t GetLastError_c(void)
+uint32_t CCALL GetLastError_c(void)
 {
     return Winapi_GetLastError();
 }
 
-uint32_t GetPrivateProfileStringA_c(const char *lpAppName, const char *lpKeyName, const char *lpDefault, char *lpReturnedString, uint32_t nSize, const char *lpFileName)
+uint32_t CCALL GetPrivateProfileStringA_c(const char *lpAppName, const char *lpKeyName, const char *lpDefault, char *lpReturnedString, uint32_t nSize, const char *lpFileName)
 {
     FILE *file;
     unsigned int remaining_size, correct_appname;
@@ -1626,7 +1625,7 @@ uint32_t GetPrivateProfileStringA_c(const char *lpAppName, const char *lpKeyName
     }
 }
 
-void InitializeCriticalSection_c(void *lpCriticalSection)
+void CCALL InitializeCriticalSection_c(void *lpCriticalSection)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("InitializeCriticalSection: 0x%" PRIxPTR "\n", (uintptr_t)lpCriticalSection);
@@ -1656,7 +1655,7 @@ InitializeCriticalSection_error:
 #endif
 }
 
-void LeaveCriticalSection_c(void *lpCriticalSection)
+void CCALL LeaveCriticalSection_c(void *lpCriticalSection)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("LeaveCriticalSection: 0x%" PRIxPTR "\n", (uintptr_t)lpCriticalSection);
@@ -1669,7 +1668,7 @@ void LeaveCriticalSection_c(void *lpCriticalSection)
 #endif
 }
 
-uint32_t QueryPerformanceCounter_c(void *lpPerformanceCount)
+uint32_t CCALL QueryPerformanceCounter_c(void *lpPerformanceCount)
 {
 #ifdef _WIN32
     return QueryPerformanceCounter((LARGE_INTEGER *)lpPerformanceCount);
@@ -1680,7 +1679,7 @@ uint32_t QueryPerformanceCounter_c(void *lpPerformanceCount)
 #endif
 }
 
-uint32_t QueryPerformanceFrequency_c(void *lpFrequency)
+uint32_t CCALL QueryPerformanceFrequency_c(void *lpFrequency)
 {
 #ifdef _WIN32
     return QueryPerformanceFrequency((LARGE_INTEGER *)lpFrequency);
@@ -1693,7 +1692,7 @@ uint32_t QueryPerformanceFrequency_c(void *lpFrequency)
 #endif
 }
 
-uint32_t ReadFile_c(void *hFile, void *lpBuffer, uint32_t nNumberOfBytesToRead, uint32_t *lpNumberOfBytesRead, void *lpOverlapped)
+uint32_t CCALL ReadFile_c(void *hFile, void *lpBuffer, uint32_t nNumberOfBytesToRead, uint32_t *lpNumberOfBytesRead, void *lpOverlapped)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("ReadFile: 0x%" PRIxPTR ", %i\n", (uintptr_t) hFile, nNumberOfBytesToRead);
@@ -1823,7 +1822,7 @@ uint32_t ReadFile_c(void *hFile, void *lpBuffer, uint32_t nNumberOfBytesToRead, 
     exit(1);
 }
 
-uint32_t SetErrorMode_c(uint32_t uMode)
+uint32_t CCALL SetErrorMode_c(uint32_t uMode)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("SetErrorMode: 0x%x\n", uMode);
@@ -1832,14 +1831,14 @@ uint32_t SetErrorMode_c(uint32_t uMode)
     return 0;
 }
 
-uint32_t SetFilePointer_c(void *hFile, uint32_t lDistanceToMove, uint32_t *lpDistanceToMoveHigh, uint32_t dwMoveMethod)
+uint32_t CCALL SetFilePointer_c(void *hFile, uint32_t lDistanceToMove, uint32_t *lpDistanceToMoveHigh, uint32_t dwMoveMethod)
 {
     eprintf("Unimplemented: %s\n", "SetFilePointer");
     exit(1);
 //    return SetFilePointer((HANDLE)hFile, lDistanceToMove, (PLONG)lpDistanceToMoveHigh, dwMoveMethod);
 }
 
-uint32_t SetPriorityClass_c(void *hProcess, uint32_t fdwPriority)
+uint32_t CCALL SetPriorityClass_c(void *hProcess, uint32_t fdwPriority)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("SetPriorityClass: 0x%" PRIxPTR ", %i\n", (uintptr_t) hProcess, fdwPriority);
@@ -1859,7 +1858,7 @@ uint32_t SetPriorityClass_c(void *hProcess, uint32_t fdwPriority)
     exit(1);
 }
 
-uint32_t SetThreadPriority_c(void *hThread, int32_t nPriority)
+uint32_t CCALL SetThreadPriority_c(void *hThread, int32_t nPriority)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("SetThreadPriority: 0x%" PRIxPTR ", %i\n", (uintptr_t) hThread, nPriority);
@@ -1884,7 +1883,7 @@ uint32_t SetThreadPriority_c(void *hThread, int32_t nPriority)
     exit(1);
 }
 
-void Sleep_c(uint32_t cMilliseconds)
+void CCALL Sleep_c(uint32_t cMilliseconds)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("Sleep: %i\n", cMilliseconds);
@@ -1915,7 +1914,7 @@ void Sleep_c(uint32_t cMilliseconds)
 #endif
 }
 
-uint32_t WriteFile_c(void *hFile, const void *lpBuffer, uint32_t nNumberOfBytesToWrite, uint32_t *lpNumberOfBytesWritten, void *lpOverlapped)
+uint32_t CCALL WriteFile_c(void *hFile, const void *lpBuffer, uint32_t nNumberOfBytesToWrite, uint32_t *lpNumberOfBytesWritten, void *lpOverlapped)
 {
 #ifdef DEBUG_KERNEL32
     eprintf("WriteFile: 0x%" PRIxPTR ", %i\n", (uintptr_t) hFile, nNumberOfBytesToWrite);

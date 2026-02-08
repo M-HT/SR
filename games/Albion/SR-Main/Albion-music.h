@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -24,6 +24,8 @@
 
 #if !defined(_ALBION_MUSIC_H_INCLUDED_)
 #define _ALBION_MUSIC_H_INCLUDED_
+
+#include "Game_defs.h"
 
 #define USE_RWOPS
 #ifdef USE_SDL2
@@ -51,18 +53,18 @@ typedef struct _AIL_sequence
 extern "C" {
 #endif
 
-extern AIL_sequence *Game_AIL_allocate_sequence_handle(void *mdi);
-extern void Game_AIL_release_sequence_handle(AIL_sequence *S);
-extern int32_t Game_AIL_init_sequence(AIL_sequence *S, void *start, int32_t sequence_num);
-extern void Game_AIL_start_sequence(AIL_sequence *S);
-extern void Game_AIL_stop_sequence(AIL_sequence *S);
-extern void Game_AIL_resume_sequence(AIL_sequence *S);
-extern void Game_AIL_end_sequence(AIL_sequence *S);
-extern void Game_AIL_set_sequence_volume(AIL_sequence *S, int32_t volume, int32_t ms);
-extern void Game_AIL_set_sequence_loop_count(AIL_sequence *S, int32_t loop_count);
-extern uint32_t Game_AIL_sequence_status(AIL_sequence *S);
-extern void *Game_AIL_create_wave_synthesizer(void *dig, void *mdi, void *wave_lib, int32_t polyphony);
-extern void Game_AIL_destroy_wave_synthesizer(void *W);
+extern AIL_sequence * CCALL Game_AIL_allocate_sequence_handle(void *mdi);
+extern void CCALL Game_AIL_release_sequence_handle(AIL_sequence *S);
+extern int32_t CCALL Game_AIL_init_sequence(AIL_sequence *S, void *start, int32_t sequence_num);
+extern void CCALL Game_AIL_start_sequence(AIL_sequence *S);
+extern void CCALL Game_AIL_stop_sequence(AIL_sequence *S);
+extern void CCALL Game_AIL_resume_sequence(AIL_sequence *S);
+extern void CCALL Game_AIL_end_sequence(AIL_sequence *S);
+extern void CCALL Game_AIL_set_sequence_volume(AIL_sequence *S, int32_t volume, int32_t ms);
+extern void CCALL Game_AIL_set_sequence_loop_count(AIL_sequence *S, int32_t loop_count);
+extern uint32_t CCALL Game_AIL_sequence_status(AIL_sequence *S);
+extern void * CCALL Game_AIL_create_wave_synthesizer(void *dig, void *mdi, void *wave_lib, int32_t polyphony);
+extern void CCALL Game_AIL_destroy_wave_synthesizer(void *W);
 
 #ifdef __cplusplus
 }

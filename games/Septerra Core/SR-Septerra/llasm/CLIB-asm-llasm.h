@@ -26,12 +26,13 @@
 #define _CLIB_ASM_LLASM_H_INCLUDED_
 
 #include <stdint.h>
+#include "../platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void _time642_c(uint32_t *t64);
+void CCALL _time642_c(uint32_t *t64);
 
 #ifdef __cplusplus
 }

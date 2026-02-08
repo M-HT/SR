@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -31,12 +31,12 @@
 extern "C" {
 #endif
 
-uint32_t X86_InPortProcedure(
+extern uint32_t CCALL X86_InPortProcedure(
     const uint16_t PortNum,
     const uint32_t PortSize
 );
 
-void X86_OutPortProcedure(
+extern void CCALL X86_OutPortProcedure(
     const uint16_t PortNum,
     const uint32_t PortSize,
     const uint32_t _eax
@@ -47,62 +47,62 @@ void X86_OutPortProcedure(
 #endif
 
 
-EXTERNC void x86_in_al_imm(CPU, uint32_t portno)
+EXTERNC void CCALL x86_in_al_imm(CPU, uint32_t portno)
 {
     eax = (eax & 0xffffff00) | (X86_InPortProcedure(portno & 0xffff, 1) & 0xff);
 }
 
-EXTERNC void x86_in_ax_imm(CPU, uint32_t portno)
+EXTERNC void CCALL x86_in_ax_imm(CPU, uint32_t portno)
 {
     eax = (eax & 0xffff0000) | (X86_InPortProcedure(portno & 0xffff, 2) & 0xffff);
 }
 
-EXTERNC void x86_in_eax_imm(CPU, uint32_t portno)
+EXTERNC void CCALL x86_in_eax_imm(CPU, uint32_t portno)
 {
     eax = X86_InPortProcedure(portno & 0xffff, 4);
 }
 
-EXTERNC void x86_in_al_dx(CPU)
+EXTERNC void CCALL x86_in_al_dx(CPU)
 {
     eax = (eax & 0xffffff00) | (X86_InPortProcedure(edx & 0xffff, 1) & 0xff);
 }
 
-EXTERNC void x86_in_ax_dx(CPU)
+EXTERNC void CCALL x86_in_ax_dx(CPU)
 {
     eax = (eax & 0xffff0000) | (X86_InPortProcedure(edx & 0xffff, 2) & 0xffff);
 }
 
-EXTERNC void x86_in_eax_dx(CPU)
+EXTERNC void CCALL x86_in_eax_dx(CPU)
 {
     eax = X86_InPortProcedure(edx & 0xffff, 4);
 }
 
-EXTERNC void x86_out_imm_al(CPU, uint32_t portno)
+EXTERNC void CCALL x86_out_imm_al(CPU, uint32_t portno)
 {
     X86_OutPortProcedure(portno & 0xffff, 1, eax);
 }
 
-EXTERNC void x86_out_imm_ax(CPU, uint32_t portno)
+EXTERNC void CCALL x86_out_imm_ax(CPU, uint32_t portno)
 {
     X86_OutPortProcedure(portno & 0xffff, 2, eax);
 }
 
-EXTERNC void x86_out_imm_eax(CPU, uint32_t portno)
+EXTERNC void CCALL x86_out_imm_eax(CPU, uint32_t portno)
 {
     X86_OutPortProcedure(portno & 0xffff, 4, eax);
 }
 
-EXTERNC void x86_out_dx_al(CPU)
+EXTERNC void CCALL x86_out_dx_al(CPU)
 {
     X86_OutPortProcedure(edx & 0xffff, 1, eax);
 }
 
-EXTERNC void x86_out_dx_ax(CPU)
+EXTERNC void CCALL x86_out_dx_ax(CPU)
 {
     X86_OutPortProcedure(edx & 0xffff, 2, eax);
 }
 
-EXTERNC void x86_out_dx_eax(CPU)
+EXTERNC void CCALL x86_out_dx_eax(CPU)
 {
     X86_OutPortProcedure(edx & 0xffff, 4, eax);
 }

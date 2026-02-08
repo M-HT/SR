@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,12 +25,14 @@
 #if !defined(_XCOM_TIMER_H_INCLUDED_)
 #define _XCOM_TIMER_H_INCLUDED_
 
+#include "Game_defs.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern void Game_RunTimer(void);
-extern void Game_RunTimerDelay(void);
+extern void CCALL Game_RunTimer(void);
+extern void CCALL Game_RunTimerDelay(void);
 
 #ifdef __cplusplus
 }

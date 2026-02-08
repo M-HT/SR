@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -47,7 +47,7 @@ static unsigned int LL_numLists = 0;
 static LL_List *LL_lists;
 
 
-int LL_Init_c(void)
+int CCALL LL_Init_c(void)
 {
     if (LL_initialized)
     {
@@ -67,7 +67,7 @@ int LL_Init_c(void)
     return 1;
 }
 
-void LL_Exit_c(void)
+void CCALL LL_Exit_c(void)
 {
     unsigned int index;
 
@@ -88,7 +88,7 @@ void LL_Exit_c(void)
     LL_initialized = 0;
 }
 
-unsigned int LL_NewList_c(void)
+unsigned int CCALL LL_NewList_c(void)
 {
     LL_Element *before_first, *after_last;
     unsigned int index;
@@ -144,7 +144,7 @@ unsigned int LL_NewList_c(void)
     return index + 1;
 }
 
-int LL_AppendElement_c(unsigned int list_handle, void *data)
+int CCALL LL_AppendElement_c(unsigned int list_handle, void *data)
 {
     unsigned int index;
     LL_Element *prev, *new;
@@ -178,7 +178,7 @@ int LL_AppendElement_c(unsigned int list_handle, void *data)
     return 1;
 }
 
-void LL_Reset_c(unsigned int list_handle)
+void CCALL LL_Reset_c(unsigned int list_handle)
 {
     unsigned int index;
 
@@ -204,7 +204,7 @@ void LL_Reset_c(unsigned int list_handle)
     }
 }
 
-void *LL_GetData_c(unsigned int list_handle)
+void * CCALL LL_GetData_c(unsigned int list_handle)
 {
     unsigned int index;
 
@@ -228,7 +228,7 @@ void *LL_GetData_c(unsigned int list_handle)
     return LL_lists[index].current->data;
 }
 
-int LL_GotoNext_c(unsigned int list_handle)
+int CCALL LL_GotoNext_c(unsigned int list_handle)
 {
     unsigned int index;
 
@@ -256,7 +256,7 @@ int LL_GotoNext_c(unsigned int list_handle)
     return (LL_lists[index].current != NULL)?1:0;
 }
 
-int LL_DeleteElement_c(unsigned int list_handle)
+int CCALL LL_DeleteElement_c(unsigned int list_handle)
 {
     unsigned int index;
     LL_Element *current, *next;
@@ -293,7 +293,7 @@ int LL_DeleteElement_c(unsigned int list_handle)
     return 1;
 }
 
-void LL_DestroyList_c(unsigned int list_handle)
+void CCALL LL_DestroyList_c(unsigned int list_handle)
 {
     unsigned int index;
     LL_Element *element, *next;

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021-2023 Roman Pauer
+ *  Copyright (C) 2021-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,7 +26,7 @@
 #include <windows.h>
 
 
-int cmdline_ContainsOption(int option)
+int CCALL cmdline_ContainsOption(int option)
 {
     LPCWSTR cmdline, curptr;
     LPWSTR *argv;
@@ -80,7 +80,7 @@ int cmdline_ContainsOption(int option)
     return 0;
 }
 
-void cmdline_ReadLanguageOption(uint32_t *language)
+void CCALL cmdline_ReadLanguageOption(uint32_t *language)
 {
     LPCWSTR cmdline, curptr;
     LPWSTR *argv;

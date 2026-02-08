@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021-2023 Roman Pauer
+ *  Copyright (C) 2021-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,6 +26,7 @@
 #include <stdio.h>
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include "../platform.h"
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 // C11
@@ -65,7 +66,7 @@ void X86_InitializeExceptions(void)
 }
 
 
-uint32_t X86_ReadFsDword(uint32_t addr)
+uint32_t CCALL X86_ReadFsDword(uint32_t addr)
 {
     uint32_t *address;
 
@@ -82,7 +83,7 @@ uint32_t X86_ReadFsDword(uint32_t addr)
     return *address;
 }
 
-void X86_WriteFsDword(uint32_t addr, uint32_t value)
+void CCALL X86_WriteFsDword(uint32_t addr, uint32_t value)
 {
     uint32_t *address;
 

@@ -24,7 +24,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "Game_defs.h"
 #include "Game_vars.h"
 #include "Xcom-sound.h"
 #ifdef USE_SPEEXDSP_RESAMPLER
@@ -494,7 +493,7 @@ static int16_t Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
 }
 
 
-int16_t Game_DigPlay(struct _DIGPAK_SNDSTRUC_ *sndplay)
+int16_t CCALL Game_DigPlay(struct _DIGPAK_SNDSTRUC_ *sndplay)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: Playing sound:\n\tsample length: %i\n\tfrequency: %i\n", sndplay->sndlen, sndplay->frequency);
@@ -533,7 +532,7 @@ int16_t Game_DigPlay(struct _DIGPAK_SNDSTRUC_ *sndplay)
     }
 }
 
-int16_t Game_AudioCapabilities(void)
+int16_t CCALL Game_AudioCapabilities(void)
 {
 /* Bit flags to denote audio driver capabilities. */
 /* returned by the AudioCapabilities call.				*/
@@ -565,7 +564,7 @@ STEREOPLAY // is tested
     return PLAYBACK | STEREOPAN | STEREOPLAY | PCM16 | PCM16STEREO;
 }
 
-void Game_StopSound(void)
+void CCALL Game_StopSound(void)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: stopping sound\n");
@@ -598,7 +597,7 @@ void Game_StopSound(void)
 #endif
 }
 
-int16_t Game_PostAudioPending(struct _DIGPAK_SNDSTRUC_ *sndplay)
+int16_t CCALL Game_PostAudioPending(struct _DIGPAK_SNDSTRUC_ *sndplay)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: posting audio pending:\n\tsample length: %i\n\tfrequency: %i\n", sndplay->sndlen, sndplay->frequency);
@@ -639,7 +638,7 @@ int16_t Game_PostAudioPending(struct _DIGPAK_SNDSTRUC_ *sndplay)
     }
 }
 
-int16_t Game_AudioPendingStatus(void)
+int16_t CCALL Game_AudioPendingStatus(void)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: checking pending status\n");
@@ -647,7 +646,7 @@ int16_t Game_AudioPendingStatus(void)
     return Game_ProcessAudio();
 }
 
-int16_t Game_SetPlayMode(int16_t playmode)
+int16_t CCALL Game_SetPlayMode(int16_t playmode)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: Set Play mode: %i - ", playmode);
@@ -712,7 +711,7 @@ int16_t Game_SetPlayMode(int16_t playmode)
     return 1; // mode set
 }
 
-int16_t *Game_PendingAddress(void)
+int16_t * CCALL Game_PendingAddress(void)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: reporting pending address\n");
@@ -720,7 +719,7 @@ int16_t *Game_PendingAddress(void)
     return &Game_AudioPending;
 }
 
-int16_t *Game_ReportSemaphoreAddress(void)
+int16_t * CCALL Game_ReportSemaphoreAddress(void)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: reporting semaphore address\n");
@@ -728,7 +727,7 @@ int16_t *Game_ReportSemaphoreAddress(void)
     return &Game_AudioSemaphore;
 }
 
-int16_t Game_SetBackFillMode(int16_t mode)
+int16_t CCALL Game_SetBackFillMode(int16_t mode)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: DMA BackFill mode: %i - %s\n", mode, (mode)?"off":"on");
@@ -736,7 +735,7 @@ int16_t Game_SetBackFillMode(int16_t mode)
     return 0; // command ignored
 }
 
-int16_t Game_VerifyDMA(char *data, int16_t length)
+int16_t CCALL Game_VerifyDMA(char *data, int16_t length)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: verifying dma block: %i\n", length);
@@ -744,20 +743,20 @@ int16_t Game_VerifyDMA(char *data, int16_t length)
     return 1;
 }
 
-void Game_SetDPMIMode(int16_t mode)
+void CCALL Game_SetDPMIMode(int16_t mode)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "DIGPAK: Setting DPMI mode: %i - %s\n", mode, (mode)?"32 bit addressing":"16 bit addressing");
 #endif
 }
 
-int32_t Game_FillSoundCfg(void *buf, int32_t count)
+int32_t CCALL Game_FillSoundCfg(void *buf, int32_t count)
 {
     memcpy(buf, &Game_SoundCfg, count);
     return count;
 }
 
-uint32_t Game_RealPtr(uint32_t ptr)
+uint32_t CCALL Game_RealPtr(uint32_t ptr)
 {
     return ptr;
 }
@@ -860,7 +859,7 @@ static void sound_player(void *udata, Uint8 *stream, int len)
     Game_AudioSemaphore = 0;
 }
 
-void Game_InitializeSound(void)
+void CCALL Game_InitializeSound(void)
 {
     sound_mutex = SDL_CreateMutex();
     if (sound_mutex == NULL) return;
@@ -870,7 +869,7 @@ void Game_InitializeSound(void)
     Mix_SetPostMix(&sound_player, NULL);
 }
 
-void Game_DeinitializeSound(void)
+void CCALL Game_DeinitializeSound(void)
 {
     if (!sound_initialized) return;
 
@@ -890,7 +889,7 @@ void Game_DeinitializeSound(void)
     sound_mutex = NULL;
 }
 
-void Game_StartAnimVideo(void)
+void CCALL Game_StartAnimVideo(void)
 {
     if (!sound_initialized) return;
 
@@ -903,7 +902,7 @@ void Game_StartAnimVideo(void)
     SDL_UnlockMutex(sound_mutex);
 }
 
-void Game_StopAnimVideo(void)
+void CCALL Game_StopAnimVideo(void)
 {
     if (!sound_initialized) return;
 

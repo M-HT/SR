@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,16 +25,18 @@
 #if !defined(_ALBION_INOUT_H_INCLUDED_)
 #define _ALBION_INOUT_H_INCLUDED_
 
+#include "Game_defs.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern uint32_t X86_InPortProcedure(
+extern uint32_t CCALL X86_InPortProcedure(
     const uint16_t PortNum,
     const uint32_t PortSize
 );
 
-extern void X86_OutPortProcedure(
+extern void CCALL X86_OutPortProcedure(
     const uint16_t PortNum,
     const uint32_t PortSize,
     const Game_register _eax

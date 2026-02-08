@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2023 Roman Pauer
+ *  Copyright (C) 2018-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,6 +25,8 @@
 #if !defined(_ALBION_AIL_H_INCLUDED_)
 #define _ALBION_AIL_H_INCLUDED_
 
+#include "Game_defs.h"
+
 #define DIG_DEFAULT_VOLUME 5
 #define MDI_DEFAULT_VOLUME 0x0d
 
@@ -32,21 +34,21 @@
 extern "C" {
 #endif
 
-extern void *Game_AIL_mem_use_malloc(void * (*fn)(uint32_t));
-extern void *Game_AIL_mem_use_free(void (*fn)(void *));
-extern void Game_AIL_startup(void);
-extern int32_t Game_AIL_register_timer(void (*callback_fn)(uint32_t user));
-extern void Game_AIL_set_timer_frequency(int32_t timer, uint32_t hertz);
-extern void Game_AIL_start_timer(int32_t timer);
-extern void Game_AIL_stop_timer(int32_t timer);
-extern void Game_AIL_release_timer_handle(int32_t timer);
-extern void Game_AIL_shutdown(void);
-extern void Game_AIL_set_GTL_filename_prefix(const char *prefix);
-extern int32_t Game_AIL_install_MDI_INI(void *mdi);
-extern int32_t Game_AIL_set_preference(uint32_t number, int32_t value);
-extern int32_t Game_AIL_install_DIG_INI(void *dig);
-extern void Game_AIL_uninstall_DIG_driver(void *dig);
-extern void Game_AIL_uninstall_MDI_driver(void *mdi);
+extern void * CCALL Game_AIL_mem_use_malloc(void * (*fn)(uint32_t));
+extern void * CCALL Game_AIL_mem_use_free(void (*fn)(void *));
+extern void CCALL Game_AIL_startup(void);
+extern int32_t CCALL Game_AIL_register_timer(void (*callback_fn)(uint32_t user));
+extern void CCALL Game_AIL_set_timer_frequency(int32_t timer, uint32_t hertz);
+extern void CCALL Game_AIL_start_timer(int32_t timer);
+extern void CCALL Game_AIL_stop_timer(int32_t timer);
+extern void CCALL Game_AIL_release_timer_handle(int32_t timer);
+extern void CCALL Game_AIL_shutdown(void);
+extern void CCALL Game_AIL_set_GTL_filename_prefix(const char *prefix);
+extern int32_t CCALL Game_AIL_install_MDI_INI(void *mdi);
+extern int32_t CCALL Game_AIL_set_preference(uint32_t number, int32_t value);
+extern int32_t CCALL Game_AIL_install_DIG_INI(void *dig);
+extern void CCALL Game_AIL_uninstall_DIG_driver(void *dig);
+extern void CCALL Game_AIL_uninstall_MDI_driver(void *mdi);
 
 #ifdef __cplusplus
 }

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,20 +26,21 @@
 #define _BBFX_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int FX_Init_c(void);
-void FX_Exit_c(void);
-int FX_ReserveDevices_c(int reserve);
-int FX_ReadLib_c(const char *path);
-void FX_FreeLib_c(int lib_handle);
-void FX_StopAllSamples_c(void);
-int FX_PlaySample_c(int lib_handle, int sample_number, int priority, int volume, int times_play);
-void FX_SetVolume_c(unsigned int volume);
-int FM_IsError_c(void);
+int CCALL FX_Init_c(void);
+void CCALL FX_Exit_c(void);
+int CCALL FX_ReserveDevices_c(int reserve);
+int CCALL FX_ReadLib_c(const char *path);
+void CCALL FX_FreeLib_c(int lib_handle);
+void CCALL FX_StopAllSamples_c(void);
+int CCALL FX_PlaySample_c(int lib_handle, int sample_number, int priority, int volume, int times_play);
+void CCALL FX_SetVolume_c(unsigned int volume);
+int CCALL FM_IsError_c(void);
 
 #ifdef __cplusplus
 }

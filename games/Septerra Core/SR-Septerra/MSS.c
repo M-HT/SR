@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "platform.h"
 #include "MSS.h"
 
 #include <mpg123.h>
@@ -52,7 +51,7 @@
 static int MSS_initialized = 0;
 
 
-uint32_t ASI_startup_c (void)
+uint32_t CCALL ASI_startup_c (void)
 {
 #ifdef DEBUG_MSS
     eprintf("ASI_startup - ");
@@ -84,7 +83,7 @@ uint32_t ASI_startup_c (void)
 }
 
 
-uint32_t ASI_shutdown_c (void)
+uint32_t CCALL ASI_shutdown_c (void)
 {
 #ifdef DEBUG_MSS
     eprintf("ASI_shutdown - ");
@@ -181,7 +180,7 @@ void *ASI_stream_open_mpg123 (void *user, ssize_t (*read_CB)(void *, void *, siz
 }
 
 
-uint32_t ASI_stream_close_c (void *stream)
+uint32_t CCALL ASI_stream_close_c (void *stream)
 {
 #ifdef DEBUG_MSS
     eprintf("ASI_stream_close: 0x%" PRIxPTR " - ", (uintptr_t) stream);
@@ -208,7 +207,7 @@ uint32_t ASI_stream_close_c (void *stream)
 }
 
 
-int32_t ASI_stream_process_c (void *stream, void *buffer, int32_t request_size)
+int32_t CCALL ASI_stream_process_c (void *stream, void *buffer, int32_t request_size)
 {
     int32_t original_size;
     unsigned char *buf;

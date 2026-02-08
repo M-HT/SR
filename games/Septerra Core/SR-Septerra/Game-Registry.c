@@ -39,7 +39,6 @@
 #else
 #include "CLIB.h"
 #endif
-#include "platform.h"
 
 #define REGISTRY_BASE "SOFTWARE\\Valkyrie Studios\\Septerra Core"
 #define CONF_NAME "septerra.conf"
@@ -248,7 +247,7 @@ static int GetValue(const char *ValueName, char *Value, unsigned int Length)
     return 0;
 }
 
-int32_t Registry_SetValueDword(const char *ValueName, uint32_t Value)
+int32_t CCALL Registry_SetValueDword(const char *ValueName, uint32_t Value)
 {
 #ifdef _WIN32
     if (Game_Installation == 0)
@@ -283,7 +282,7 @@ int32_t Registry_SetValueDword(const char *ValueName, uint32_t Value)
     }
 }
 
-/*int32_t Registry_SetValueString(const char *ValueName, const char *Value)
+/*int32_t CCALL Registry_SetValueString(const char *ValueName, const char *Value)
 {
 #ifdef _WIN32
     if (Game_Installation == 0)
@@ -306,7 +305,7 @@ int32_t Registry_SetValueDword(const char *ValueName, uint32_t Value)
     return SetValue(ValueName, Value);
 }*/
 
-int32_t Registry_GetValueDword(const char *ValueName, uint32_t *Value)
+int32_t CCALL Registry_GetValueDword(const char *ValueName, uint32_t *Value)
 {
 #ifdef _WIN32
     if (Game_Installation == 0)
@@ -355,7 +354,7 @@ int32_t Registry_GetValueDword(const char *ValueName, uint32_t *Value)
     }
 }
 
-int32_t Registry_GetValueString(const char *ValueName, char *Value)
+int32_t CCALL Registry_GetValueString(const char *ValueName, char *Value)
 {
 #ifdef _WIN32
     if (Game_Installation == 0)

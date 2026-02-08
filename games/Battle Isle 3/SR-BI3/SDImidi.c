@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2025 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,7 +26,6 @@
 #include "midi-plugins.h"
 #include "midi-plugins2.h"
 #include "Game-Config.h"
-#include "platform.h"
 #include <windows.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -595,7 +594,7 @@ static int load_midi(const char *filename)
 }
 
 
-int midi_OpenSDIMusic(const char *filename)
+int CCALL midi_OpenSDIMusic(const char *filename)
 {
     // change:
     if (Audio_MidiSubsystem == 0)
@@ -665,7 +664,7 @@ int midi_OpenSDIMusic(const char *filename)
     return 0;
 }
 
-unsigned int midi_GetSDIMusicID(void)
+unsigned int CCALL midi_GetSDIMusicID(void)
 {
     // change:
     if (Audio_MidiSubsystem == 0)
@@ -685,7 +684,7 @@ unsigned int midi_GetSDIMusicID(void)
     return (midi_status != MS_STOPPED)?1:0;
 }
 
-int midi_PlaySDIMusic(void)
+int CCALL midi_PlaySDIMusic(void)
 {
     // change:
     if (Audio_MidiSubsystem == 0)
@@ -737,7 +736,7 @@ int midi_PlaySDIMusic(void)
     return 0;
 }
 
-int midi_CloseSDIMusic(void)
+int CCALL midi_CloseSDIMusic(void)
 {
     // change:
     if (Audio_MidiSubsystem == 0)
@@ -788,7 +787,7 @@ int midi_CloseSDIMusic(void)
     return 0;
 }
 
-int midi_IsPlaying(unsigned int musicID)
+int CCALL midi_IsPlaying(unsigned int musicID)
 {
     // change:
     if (Audio_MidiSubsystem == 0)
@@ -826,7 +825,7 @@ int midi_IsPlaying(unsigned int musicID)
 }
 
 
-int midi_OpenTestMusic(void)
+int CCALL midi_OpenTestMusic(void)
 {
     // change:
     if (Audio_MidiSubsystem == 0)
@@ -839,7 +838,7 @@ int midi_OpenTestMusic(void)
     return midi_OpenSDIMusic("TST.MID");
 }
 
-int midi_PlayTestMusic(void)
+int CCALL midi_PlayTestMusic(void)
 {
     // change:
     if (Audio_MidiSubsystem == 0)
@@ -852,7 +851,7 @@ int midi_PlayTestMusic(void)
     return midi_PlaySDIMusic();
 }
 
-int midi_CloseTestMusic(void)
+int CCALL midi_CloseTestMusic(void)
 {
     // change:
     if (Audio_MidiSubsystem == 0)
@@ -866,7 +865,7 @@ int midi_CloseTestMusic(void)
 }
 
 
-int midi_GetErrorString(int error, char *text, unsigned int length)
+int CCALL midi_GetErrorString(int error, char *text, unsigned int length)
 {
     const char *errorText;
 

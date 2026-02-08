@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,19 +26,20 @@
 #define _BBLBL_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int LBL_Init_c(void);
-void LBL_Exit_c(void);
-void *LBL_OpenLib_c(const char *path, int param2);
-void LBL_CloseLib_c(void *lib);
-void *LBL_ReadEntry_c(void *lib, void *entry_data, unsigned int entry_number, int close_file, void *entry_metadata);
-int LBL_GetEntrySize_c(void *lib, unsigned int entry_number);
-void LBL_CloseFile_c(void *lib);
-int LBL_GetNOFEntries_c(void *lib);
+int CCALL LBL_Init_c(void);
+void CCALL LBL_Exit_c(void);
+void * CCALL LBL_OpenLib_c(const char *path, int param2);
+void CCALL LBL_CloseLib_c(void *lib);
+void * CCALL LBL_ReadEntry_c(void *lib, void *entry_data, unsigned int entry_number, int close_file, void *entry_metadata);
+int CCALL LBL_GetEntrySize_c(void *lib, unsigned int entry_number);
+void CCALL LBL_CloseFile_c(void *lib);
+int CCALL LBL_GetNOFEntries_c(void *lib);
 
 #ifdef __cplusplus
 }

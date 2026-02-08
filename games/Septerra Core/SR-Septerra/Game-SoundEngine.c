@@ -36,7 +36,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "platform.h"
 #include "Game-SoundEngine.h"
 #include "MSS.h"
 #include "Game-DataFiles.h"
@@ -203,7 +202,7 @@ static void *SE_timer_CB(void *arg)
 }
 #endif
 
-uint32_t SoundEngine_StartTimer(void)
+uint32_t CCALL SoundEngine_StartTimer(void)
 {
 #ifdef _WIN32
     SoundEngine_Counter = 0;
@@ -230,7 +229,7 @@ uint32_t SoundEngine_StartTimer(void)
 #endif
 }
 
-void SoundEngine_StopTimer(uint32_t uTimerID)
+void CCALL SoundEngine_StopTimer(uint32_t uTimerID)
 {
 #ifdef _WIN32
     timeKillEvent(uTimerID);
@@ -341,7 +340,7 @@ static off_t SE_lseek_CB_4(SE_struc_4 *struc4, off_t offset, int whence)
 }
 
 // sub_468130
-void SoundEngine_DecodeMP3Stream(struct _SE_struc_4 *struc4)
+void CCALL SoundEngine_DecodeMP3Stream(struct _SE_struc_4 *struc4)
 {
     uint32_t record_size;
     void *stream;
@@ -472,7 +471,7 @@ static off_t SE_lseek_CB_9(SE_struc_9 *struc9, off_t offset, int whence)
 }
 
 // sub_468D10
-void SoundEngine_OpenMP3Stream(struct _SE_struc_9 *struc9)
+void CCALL SoundEngine_OpenMP3Stream(struct _SE_struc_9 *struc9)
 {
     if (struc9->Stream != NULL)
     {

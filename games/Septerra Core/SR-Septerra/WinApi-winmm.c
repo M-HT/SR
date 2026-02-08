@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2020 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -40,7 +40,7 @@ unsigned int Winapi_GetTicks(void);
 #define eprintf(...) fprintf(stderr,__VA_ARGS__)
 
 
-uint32_t timeGetTime_c(void)
+uint32_t CCALL timeGetTime_c(void)
 {
 #ifdef DEBUG_WINMM
     eprintf("timeGetTime\n");

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,13 +25,15 @@
 #if !defined(_ALBION_SMK_H_INCLUDED_)
 #define _ALBION_SMK_H_INCLUDED_
 
+#include "Game_defs.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern void SMK_ShowMenu(void);
-extern void SMK_PlayIntro(void);
-extern void SMK_PlayCredits(void);
+extern void CCALL SMK_ShowMenu(void);
+extern void CCALL SMK_PlayIntro(void);
+extern void CCALL SMK_PlayCredits(void);
 
 #ifdef __cplusplus
 }

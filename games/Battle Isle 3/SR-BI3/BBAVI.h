@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,18 +26,19 @@
 #define _BBAVI_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int AVI_Init_c(void);
-void AVI_Exit_c(void);
-void AVI_SetDestortionLevel_c(int destortionLevel);
-void AVI_SystemTask_c(void);
-void *AVI_OpenVideo_c(const char *path, const uint8_t *param2);
-void AVI_CloseVideo_c(void *video);
-int AVI_PlayVideo_c(void *video, int x, int y, int param4, int param5, int volume, unsigned int flags);
+int CCALL AVI_Init_c(void);
+void CCALL AVI_Exit_c(void);
+void CCALL AVI_SetDestortionLevel_c(int destortionLevel);
+void CCALL AVI_SystemTask_c(void);
+void * CCALL AVI_OpenVideo_c(const char *path, const uint8_t *param2);
+void CCALL AVI_CloseVideo_c(void *video);
+int CCALL AVI_PlayVideo_c(void *video, int x, int y, int param4, int param5, int volume, unsigned int flags);
 
 #ifdef __cplusplus
 }

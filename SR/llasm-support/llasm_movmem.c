@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -30,12 +30,12 @@
 extern "C" {
 #endif
 
-uint32_t X86_ReadMemProcedure(
+extern uint32_t CCALL X86_ReadMemProcedure(
     const uint32_t Address,
     const uint32_t MemSize
 );
 
-void X86_WriteMemProcedure(
+extern void CCALL X86_WriteMemProcedure(
     const uint32_t Address,
     const uint32_t MemSize,
     const uint32_t _eax
@@ -45,34 +45,34 @@ void X86_WriteMemProcedure(
 }
 #endif
 
-EXTERNC uint32_t x86_mov_reg_mem_8(uint32_t address)
+EXTERNC uint32_t CCALL x86_mov_reg_mem_8(uint32_t address)
 {
     return X86_ReadMemProcedure(address, 1) & 0xff;
 }
 
-EXTERNC uint32_t x86_mov_reg_mem_16(uint32_t address)
+EXTERNC uint32_t CCALL x86_mov_reg_mem_16(uint32_t address)
 {
     return X86_ReadMemProcedure(address, 2) & 0xffff;
 }
 
-EXTERNC uint32_t x86_mov_reg_mem_32(uint32_t address)
+EXTERNC uint32_t CCALL x86_mov_reg_mem_32(uint32_t address)
 {
     return X86_ReadMemProcedure(address, 4);
 }
 
 
 
-EXTERNC void x86_mov_mem_reg_8(uint32_t address, uint32_t value)
+EXTERNC void CCALL x86_mov_mem_reg_8(uint32_t address, uint32_t value)
 {
     X86_WriteMemProcedure(address, 1, value & 0xff);
 }
 
-EXTERNC void x86_mov_mem_reg_16(uint32_t address, uint32_t value)
+EXTERNC void CCALL x86_mov_mem_reg_16(uint32_t address, uint32_t value)
 {
     X86_WriteMemProcedure(address, 2, value & 0xffff);
 }
 
-EXTERNC void x86_mov_mem_reg_32(uint32_t address, uint32_t value)
+EXTERNC void CCALL x86_mov_mem_reg_32(uint32_t address, uint32_t value)
 {
     X86_WriteMemProcedure(address, 4, value);
 }

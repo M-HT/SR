@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,20 +26,21 @@
 #define _BBRNG_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int RNG_Init_c(void);
-void RNG_Exit_c(void);
-void *RNG_NewBuffer_c(int element_size, int num_elements);
-void RNG_DelBuffer_c(void *buffer);
-int RNG_In_c(void *buffer, const void *element);
-int RNG_Out_c(void *buffer, void *element);
-int RNG_Peek_c(void *buffer, void *element);
-void RNG_Replace_c(void *buffer, const void *element);
-void RNG_PutFirst_c(void *buffer, const void *element);
+int CCALL RNG_Init_c(void);
+void CCALL RNG_Exit_c(void);
+void * CCALL RNG_NewBuffer_c(int element_size, int num_elements);
+void CCALL RNG_DelBuffer_c(void *buffer);
+int CCALL RNG_In_c(void *buffer, const void *element);
+int CCALL RNG_Out_c(void *buffer, void *element);
+int CCALL RNG_Peek_c(void *buffer, void *element);
+void CCALL RNG_Replace_c(void *buffer, const void *element);
+void CCALL RNG_PutFirst_c(void *buffer, const void *element);
 
 #ifdef __cplusplus
 }

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,20 +26,21 @@
 #define _BBLL_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int LL_Init_c(void);
-void LL_Exit_c(void);
-unsigned int LL_NewList_c(void);
-int LL_AppendElement_c(unsigned int list_handle, void *data);
-void LL_Reset_c(unsigned int list_handle);
-void *LL_GetData_c(unsigned int list_handle);
-int LL_GotoNext_c(unsigned int list_handle);
-int LL_DeleteElement_c(unsigned int list_handle);
-void LL_DestroyList_c(unsigned int list_handle);
+int CCALL LL_Init_c(void);
+void CCALL LL_Exit_c(void);
+unsigned int CCALL LL_NewList_c(void);
+int CCALL LL_AppendElement_c(unsigned int list_handle, void *data);
+void CCALL LL_Reset_c(unsigned int list_handle);
+void * CCALL LL_GetData_c(unsigned int list_handle);
+int CCALL LL_GotoNext_c(unsigned int list_handle);
+int CCALL LL_DeleteElement_c(unsigned int list_handle);
+void CCALL LL_DestroyList_c(unsigned int list_handle);
 
 #ifdef __cplusplus
 }

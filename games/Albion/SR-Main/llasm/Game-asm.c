@@ -24,7 +24,6 @@
 
 #include <stdlib.h>
 #include <setjmp.h>
-#include "../Game_defs.h"
 #include "llasm_cpu.h"
 
 #ifdef __cplusplus
@@ -34,12 +33,12 @@ extern "C" {
 extern _cpu *x86_initialize_cpu(void);
 extern void x86_deinitialize_cpu(void);
 
-extern void c_main_(CPU);
-extern void c_update_timer(CPU);
+extern void CCALL c_main_(CPU);
+extern void CCALL c_update_timer(CPU);
 
-extern void c_loc_8B6BB(CPU);
+extern void CCALL c_loc_8B6BB(CPU);
 
-extern void c_RunProcECX(CPU);
+extern void CCALL c_RunProcECX(CPU);
 
 #ifdef __cplusplus
 }
@@ -55,19 +54,19 @@ static jmp_buf exit_env;
 static int main_return_value;
 
 
-EXTERNC void Game_ExitMain_Asm(int32_t status)
+EXTERNC void CCALL Game_ExitMain_Asm(int32_t status)
 {
     main_return_value = status;
     longjmp(exit_env, 1);
 }
 
-void Game_StopMain_Asm(void)
+void CCALL Game_StopMain_Asm(void)
 {
     main_return_value = 1;
     longjmp(exit_env, 1);
 }
 
-int Game_Main_Asm(int argc, char *argv[])
+int CCALL Game_Main_Asm(int argc, char *argv[])
 {
     if (setjmp(exit_env) == 0)
     {
@@ -95,7 +94,7 @@ int Game_Main_Asm(int argc, char *argv[])
     }
 }
 
-void Game_RunTimer_Asm(void)
+void CCALL Game_RunTimer_Asm(void)
 {
     _cpu *cpu;
     uint32_t old_eax, old_ecx, old_ebp, old_esi, old_edi;
@@ -127,7 +126,7 @@ void Game_RunTimer_Asm(void)
 }
 
 
-EXTERNC void *sub_8B6BB(void *handle)
+EXTERNC void * CCALL sub_8B6BB(void *handle)
 {
     _cpu *cpu;
 
@@ -143,7 +142,7 @@ EXTERNC void *sub_8B6BB(void *handle)
 }
 
 
-uint32_t Game_MouseMove(uint32_t state, uint32_t x, uint32_t y)
+uint32_t CCALL Game_MouseMove(uint32_t state, uint32_t x, uint32_t y)
 {
     _cpu *cpu;
     uint32_t old_eax, old_ecx, old_edx, old_ebx, old_ebp, old_esi, old_edi;
@@ -196,7 +195,7 @@ uint32_t Game_MouseMove(uint32_t state, uint32_t x, uint32_t y)
     return 0;
 }
 
-uint32_t Game_MouseButton(uint32_t state, uint32_t action)
+uint32_t CCALL Game_MouseButton(uint32_t state, uint32_t action)
 {
     _cpu *cpu;
     uint32_t old_eax, old_ecx, old_edx, old_ebx, old_ebp, old_esi, old_edi;
@@ -246,7 +245,7 @@ uint32_t Game_MouseButton(uint32_t state, uint32_t action)
     return 0;
 }
 
-EXTERNC uint32_t Game_RunProcReg1_Asm(void *proc_addr, const char *proc_param1)
+EXTERNC uint32_t CCALL Game_RunProcReg1_Asm(void *proc_addr, const char *proc_param1)
 {
     _cpu *cpu;
     uint32_t old_ecx;
@@ -266,7 +265,7 @@ EXTERNC uint32_t Game_RunProcReg1_Asm(void *proc_addr, const char *proc_param1)
     return eax;
 }
 
-EXTERNC uint32_t Game_RunProcReg2_Asm(void *proc_addr, const char *proc_param1, const uint8_t *proc_param2)
+EXTERNC uint32_t CCALL Game_RunProcReg2_Asm(void *proc_addr, const char *proc_param1, const uint8_t *proc_param2)
 {
     _cpu *cpu;
     uint32_t old_ecx;

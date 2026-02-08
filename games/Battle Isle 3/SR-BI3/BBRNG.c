@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -40,18 +40,18 @@ typedef struct _RNG_struct {
 static int RNG_initialized = 0;
 
 
-int RNG_Init_c(void)
+int CCALL RNG_Init_c(void)
 {
     RNG_initialized++;
     return 1;
 }
 
-void RNG_Exit_c(void)
+void CCALL RNG_Exit_c(void)
 {
     RNG_initialized--;
 }
 
-void *RNG_NewBuffer_c(int element_size, int num_elements)
+void * CCALL RNG_NewBuffer_c(int element_size, int num_elements)
 {
     RNG_struct *ring;
 
@@ -76,7 +76,7 @@ void *RNG_NewBuffer_c(int element_size, int num_elements)
     return ring;
 }
 
-void RNG_DelBuffer_c(void *buffer)
+void CCALL RNG_DelBuffer_c(void *buffer)
 {
     RNG_struct *ring;
 
@@ -86,7 +86,7 @@ void RNG_DelBuffer_c(void *buffer)
     MEM_free_c(ring);
 }
 
-int RNG_In_c(void *buffer, const void *element)
+int CCALL RNG_In_c(void *buffer, const void *element)
 {
     RNG_struct *ring;
 
@@ -118,7 +118,7 @@ int RNG_In_c(void *buffer, const void *element)
     return 1;
 }
 
-int RNG_Out_c(void *buffer, void *element)
+int CCALL RNG_Out_c(void *buffer, void *element)
 {
     RNG_struct *ring;
 
@@ -148,7 +148,7 @@ int RNG_Out_c(void *buffer, void *element)
     return 1;
 }
 
-int RNG_Peek_c(void *buffer, void *element)
+int CCALL RNG_Peek_c(void *buffer, void *element)
 {
     RNG_struct *ring;
 
@@ -167,7 +167,7 @@ int RNG_Peek_c(void *buffer, void *element)
     return 1;
 }
 
-void RNG_Replace_c(void *buffer, const void *element)
+void CCALL RNG_Replace_c(void *buffer, const void *element)
 {
     RNG_struct *ring;
 
@@ -183,7 +183,7 @@ void RNG_Replace_c(void *buffer, const void *element)
     }
 }
 
-void RNG_PutFirst_c(void *buffer, const void *element)
+void CCALL RNG_PutFirst_c(void *buffer, const void *element)
 {
     RNG_struct *ring;
     int full;

@@ -25,7 +25,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "CLIB.h"
-#include "platform.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -51,7 +50,7 @@
 static int32_t ms_randseed;
 
 
-int32_t memcmp_c(const void *s1, const void *s2, uint32_t n)
+int32_t CCALL memcmp_c(const void *s1, const void *s2, uint32_t n)
 {
 #ifdef DEBUG_CLIB
     eprintf("memcmp: 0x%x, 0x%x, %i\n", (uintptr_t) s1, (uintptr_t) s2, n);
@@ -60,7 +59,7 @@ int32_t memcmp_c(const void *s1, const void *s2, uint32_t n)
     return memcmp(s1, s2, n);
 }
 
-void *memcpy_c(void *dest, const void *src, uint32_t n)
+void * CCALL memcpy_c(void *dest, const void *src, uint32_t n)
 {
 #ifdef DEBUG_CLIB
     eprintf("memcpy: 0x%x, 0x%x, %i\n", (uintptr_t) dest, (uintptr_t) src, n);
@@ -69,7 +68,7 @@ void *memcpy_c(void *dest, const void *src, uint32_t n)
     return memcpy(dest, src, n);
 }
 
-void *memset_c(void *s, int32_t c, uint32_t n)
+void * CCALL memset_c(void *s, int32_t c, uint32_t n)
 {
 #ifdef DEBUG_CLIB
     eprintf("memset: 0x%x, 0x%x, %i\n", (uintptr_t) s, c, n);
@@ -79,7 +78,7 @@ void *memset_c(void *s, int32_t c, uint32_t n)
 }
 
 
-char *strcat_c(char *dest, const char *src)
+char * CCALL strcat_c(char *dest, const char *src)
 {
 #ifdef DEBUG_CLIB
     eprintf("strcat: 0x%x (%s), 0x%x (%s)\n", (uintptr_t) dest, dest, (uintptr_t) src, src);
@@ -88,7 +87,7 @@ char *strcat_c(char *dest, const char *src)
     return strcat(dest, src);
 }
 
-int32_t strcmp_c(const char *s1, const char *s2)
+int32_t CCALL strcmp_c(const char *s1, const char *s2)
 {
 #ifdef DEBUG_CLIB
     eprintf("strcmp: 0x%x (%s), 0x%x (%s)\n", (uintptr_t) s1, s1, (uintptr_t) s2, s2);
@@ -97,7 +96,7 @@ int32_t strcmp_c(const char *s1, const char *s2)
     return strcmp(s1, s2);
 }
 
-char *strcpy_c(char *dest, const char *src)
+char * CCALL strcpy_c(char *dest, const char *src)
 {
 #ifdef DEBUG_CLIB
     eprintf("strcpy: 0x%x (%s), 0x%x (%s)\n", (uintptr_t) dest, dest, (uintptr_t) src, src);
@@ -106,7 +105,7 @@ char *strcpy_c(char *dest, const char *src)
     return strcpy(dest, src);
 }
 
-uint32_t strlen_c(const char *s)
+uint32_t CCALL strlen_c(const char *s)
 {
 #ifdef DEBUG_CLIB
     eprintf("strlen: 0x%x (%s)\n", (uintptr_t) s, s);
@@ -115,7 +114,7 @@ uint32_t strlen_c(const char *s)
     return strlen(s);
 }
 
-char *strncpy_c(char *dest, const char *src, uint32_t n)
+char * CCALL strncpy_c(char *dest, const char *src, uint32_t n)
 {
 #ifdef DEBUG_CLIB
     eprintf("strncpy: 0x%x, 0x%x (%s), %i\n", (uintptr_t) dest, (uintptr_t) src, src, n);
@@ -124,7 +123,7 @@ char *strncpy_c(char *dest, const char *src, uint32_t n)
     return strncpy(dest, src, n);
 }
 
-int32_t _strnicmp_c(const char *s1, const char *s2, uint32_t n)
+int32_t CCALL _strnicmp_c(const char *s1, const char *s2, uint32_t n)
 {
 #ifdef DEBUG_CLIB
     eprintf("_strnicmp: 0x%x (%s), 0x%x (%s), %i\n", (uintptr_t) s1, s1, (uintptr_t) s2, s2, n);
@@ -133,7 +132,7 @@ int32_t _strnicmp_c(const char *s1, const char *s2, uint32_t n)
     return strncasecmp(s1, s2, n);
 }
 
-char *strstr_c(const char *haystack, const char *needle)
+char * CCALL strstr_c(const char *haystack, const char *needle)
 {
 #ifdef DEBUG_CLIB
     eprintf("strstr: 0x%x (%s), 0x%x (%s)\n", (uintptr_t) haystack, haystack, (uintptr_t) needle, needle);
@@ -143,7 +142,7 @@ char *strstr_c(const char *haystack, const char *needle)
 }
 
 
-int32_t printf2_c(const char *format, uint32_t *ap)
+int32_t CCALL printf2_c(const char *format, uint32_t *ap)
 {
     int res;
 
@@ -160,7 +159,7 @@ int32_t printf2_c(const char *format, uint32_t *ap)
     return res;
 }
 
-int32_t sprintf2_c(char *str, const char *format, uint32_t *ap)
+int32_t CCALL sprintf2_c(char *str, const char *format, uint32_t *ap)
 {
     int res;
 
@@ -178,7 +177,7 @@ int32_t sprintf2_c(char *str, const char *format, uint32_t *ap)
 }
 
 
-void ms_srand_c(uint32_t seed)
+void CCALL ms_srand_c(uint32_t seed)
 {
 #ifdef DEBUG_CLIB
     eprintf("srand (MS): 0x%x\n", seed);
@@ -187,7 +186,7 @@ void ms_srand_c(uint32_t seed)
     ms_randseed = seed;
 }
 
-int32_t ms_rand_c(void)
+int32_t CCALL ms_rand_c(void)
 {
     int32_t newvalue;
 
@@ -200,7 +199,7 @@ int32_t ms_rand_c(void)
     return (newvalue & 0x7FFF0000) >> 16;
 }
 
-int32_t wc_rand_c(void)
+int32_t CCALL wc_rand_c(void)
 {
 #ifdef DEBUG_CLIB
     eprintf("rand (Watcom)\n");
@@ -211,7 +210,7 @@ int32_t wc_rand_c(void)
 }
 
 
-int32_t atoi_c(const char *nptr)
+int32_t CCALL atoi_c(const char *nptr)
 {
 #ifdef DEBUG_CLIB
     eprintf("atoi: 0x%x (%s)\n", (uintptr_t) nptr, nptr);
@@ -220,7 +219,7 @@ int32_t atoi_c(const char *nptr)
     return atoi(nptr);
 }
 
-int32_t atol_c(const char *nptr)
+int32_t CCALL atol_c(const char *nptr)
 {
 #ifdef DEBUG_CLIB
     eprintf("atol: 0x%x (%s)\n", (uintptr_t) nptr, nptr);
@@ -273,7 +272,7 @@ static void xtoa(uint32_t value, char *buffer, int32_t radix, int negative)
     while (pos1 < pos2);
 }
 
-char *_ltoa_c(int32_t value, char *buffer, int32_t radix)
+char * CCALL _ltoa_c(int32_t value, char *buffer, int32_t radix)
 {
 #ifdef DEBUG_CLIB
     eprintf("_ltoa: %i, 0x%x, %i\n", value, (uintptr_t) buffer, radix);
@@ -292,7 +291,7 @@ char *_ltoa_c(int32_t value, char *buffer, int32_t radix)
 }
 
 
-int32_t isalnum_c(int32_t c)
+int32_t CCALL isalnum_c(int32_t c)
 {
 #ifdef DEBUG_CLIB
     eprintf("isalnum: %i\n", c);
@@ -302,7 +301,7 @@ int32_t isalnum_c(int32_t c)
 }
 
 
-int32_t _except_handler3_c(void *exception_record, void *registration, void *context, void *dispatcher)
+int32_t CCALL _except_handler3_c(void *exception_record, void *registration, void *context, void *dispatcher)
 {
 #if defined(_WIN32)
     fprintf(stderr, "exception handler 3: %i\n", (int) ((PEXCEPTION_RECORD)exception_record)->ExceptionCode);
@@ -318,7 +317,7 @@ int32_t _except_handler3_c(void *exception_record, void *registration, void *con
 }
 
 
-void sync_c(void)
+void CCALL sync_c(void)
 {
 #ifdef DEBUG_CLIB
     eprintf("sync\n");

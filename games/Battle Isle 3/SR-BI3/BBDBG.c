@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -105,7 +105,7 @@ static void DBG_CloseOutputFile_c(void)
     }
 }
 
-void DBG_Panic_c(const char *module, int line)
+void CCALL DBG_Panic_c(const char *module, int line)
 {
     int closeLogFile;
 
@@ -140,7 +140,7 @@ void DBG_Panic_c(const char *module, int line)
     }
 }
 
-int DBG_Init_c(void)
+int CCALL DBG_Init_c(void)
 {
     if (!DBG_initialized)
     {
@@ -156,7 +156,7 @@ int DBG_Init_c(void)
     return 1;
 }
 
-void DBG_Exit_c(void)
+void CCALL DBG_Exit_c(void)
 {
     DBG_initialized--;
     if (DBG_initialized == 0)

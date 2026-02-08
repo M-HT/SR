@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,12 +25,12 @@
 #include <math.h>
 #include "SR-proc-float2.h"
 
-void Game_acos2(double *x)
+void CCALL Game_acos2(double *x)
 {
     *x = acos(*x);
 }
 
-void Game_asin2(double *x)
+void CCALL Game_asin2(double *x)
 {
     *x = asin(*x);
 }

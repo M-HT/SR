@@ -40,7 +40,6 @@
 #include "QTML.h"
 #include "Game-Config.h"
 #include "Game-Memory.h"
-#include "platform.h"
 
 #if (defined(__WIN32__) || defined(__WINDOWS__)) && !defined(_WIN32)
 #define _WIN32
@@ -698,7 +697,7 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
 
 //EXTERN_API( OSErr )
 //InitializeQTML                  (long                   flag);
-int16_t InitializeQTML_c (int32_t flag)
+int16_t CCALL InitializeQTML_c (int32_t flag)
 {
 #ifdef DEBUG_QTML
     eprintf("InitializeQTML: 0x%x - ", flag);
@@ -714,7 +713,7 @@ int16_t InitializeQTML_c (int32_t flag)
 
 //EXTERN_API( void )
 //TerminateQTML                   (void);
-void TerminateQTML_c (void)
+void CCALL TerminateQTML_c (void)
 {
 #ifdef DEBUG_QTML
     eprintf("TerminateQTML\n");
@@ -727,7 +726,7 @@ void TerminateQTML_c (void)
 //CreatePortAssociation           (void *                 theWnd,
 //                                 Ptr                    storage,
 //                                 long                   flags);
-void *CreatePortAssociation_c (void *theWnd, void *storage, int32_t flags)
+void * CCALL CreatePortAssociation_c (void *theWnd, void *storage, int32_t flags)
 {
 #ifdef DEBUG_QTML
     eprintf("CreatePortAssociation: 0x%" PRIxPTR ", 0x%" PRIxPTR ", 0x%x - ", (uintptr_t)theWnd, (uintptr_t)storage, flags);
@@ -741,7 +740,7 @@ void *CreatePortAssociation_c (void *theWnd, void *storage, int32_t flags)
 
 //EXTERN_API( void )
 //DestroyPortAssociation          (CGrafPtr               cgp);
-void DestroyPortAssociation_c (void *cgp)
+void CCALL DestroyPortAssociation_c (void *cgp)
 {
 #ifdef DEBUG_QTML
     eprintf("DestroyPortAssociation: 0x%" PRIxPTR "\n", (uintptr_t)cgp);
@@ -753,7 +752,7 @@ void DestroyPortAssociation_c (void *cgp)
 //EXTERN_API( void )
 //SetGWorld                       (CGrafPtr               port,
 //                                 GDHandle               gdh)                                FOURWORDINLINE(0x203C, 0x0008, 0x0006, 0xAB1D);
-void SetGWorld_c (void *port, void *gdh)
+void CCALL SetGWorld_c (void *port, void *gdh)
 {
 #ifdef DEBUG_QTML
     eprintf("SetGWorld: 0x%" PRIxPTR ", 0x%" PRIxPTR "\n", (uintptr_t)port, (uintptr_t)gdh);
@@ -763,7 +762,7 @@ void SetGWorld_c (void *port, void *gdh)
 
 //EXTERN_API_C( StringPtr )
 //c2pstr                          (char *                 aStr);
-uint8_t *c2pstr_c (char *aStr)
+uint8_t * CCALL c2pstr_c (char *aStr)
 {
 #ifdef DEBUG_QTML
     eprintf("c2pstr: 0x%" PRIxPTR " (%s)- ", (uintptr_t)aStr, aStr);
@@ -780,7 +779,7 @@ uint8_t *c2pstr_c (char *aStr)
 //PtrToHand                       (const void *           srcPtr,
 //                                 Handle *               dstHndl,
 //                                 long                   size);
-int16_t PtrToHand_c (const void *srcPtr, PTR32(void *)*dstHndl, int32_t size)
+int16_t CCALL PtrToHand_c (const void *srcPtr, PTR32(void *)*dstHndl, int32_t size)
 {
 #ifdef DEBUG_QTML
     char *str;
@@ -806,7 +805,7 @@ int16_t PtrToHand_c (const void *srcPtr, PTR32(void *)*dstHndl, int32_t size)
 //                                 long                   dirID,
 //                                 ConstStr255Param       fileName,
 //                                 FSSpec *               spec)                               TWOWORDINLINE(0x7001, 0xAA52);
-int16_t FSMakeFSSpec_c (int16_t vRefNum, int32_t dirID, char *fileName, void *spec)
+int16_t CCALL FSMakeFSSpec_c (int16_t vRefNum, int32_t dirID, char *fileName, void *spec)
 {
 #ifdef DEBUG_QTML
     eprintf("FSMakeFSSpec: %i, %i, 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " - ", vRefNum, dirID, (uintptr_t)fileName, fileName, (uintptr_t)spec);
@@ -826,7 +825,7 @@ int16_t FSMakeFSSpec_c (int16_t vRefNum, int32_t dirID, char *fileName, void *sp
 //EXTERN_API( OSErr )
 //QTSetDDPrimarySurface           (void *                 lpNewDDSurface,
 //                                 unsigned long          flags);
-int16_t QTSetDDPrimarySurface_c (void *lpNewDDSurface, uint32_t flags)
+int16_t CCALL QTSetDDPrimarySurface_c (void *lpNewDDSurface, uint32_t flags)
 {
 #ifdef DEBUG_QTML
     eprintf("QTSetDDPrimarySurface: 0x%" PRIxPTR ", 0x%x - ", (uintptr_t)lpNewDDSurface, flags);
@@ -843,7 +842,7 @@ int16_t QTSetDDPrimarySurface_c (void *lpNewDDSurface, uint32_t flags)
 //EXTERN_API( long )
 //NativeEventToMacEvent           (void *                 nativeEvent,
 //                                 EventRecord *          macEvent);
-int32_t NativeEventToMacEvent_c (void *nativeEvent, void *macEvent)
+int32_t CCALL NativeEventToMacEvent_c (void *nativeEvent, void *macEvent)
 {
 #ifdef DEBUG_QTML
     eprintf("NativeEventToMacEvent: 0x%" PRIxPTR ", 0x%" PRIxPTR " - ", (uintptr_t)nativeEvent, (uintptr_t)macEvent);
@@ -864,7 +863,7 @@ int32_t NativeEventToMacEvent_c (void *nativeEvent, void *macEvent)
 
 //EXTERN_API( OSErr )
 //EnterMovies                     (void)                                                      TWOWORDINLINE(0x7001, 0xAAAA);
-int16_t EnterMovies_c (void)
+int16_t CCALL EnterMovies_c (void)
 {
 #ifdef DEBUG_QTML
     eprintf("EnterMovies - ");
@@ -878,7 +877,7 @@ int16_t EnterMovies_c (void)
 
 //EXTERN_API( void )
 //ExitMovies                      (void)                                                      TWOWORDINLINE(0x7002, 0xAAAA);
-void ExitMovies_c (void)
+void CCALL ExitMovies_c (void)
 {
 #ifdef DEBUG_QTML
     eprintf("ExitMovies\n");
@@ -888,7 +887,7 @@ void ExitMovies_c (void)
 
 //EXTERN_API( void )
 //StartMovie                      (Movie                  theMovie)                           TWOWORDINLINE(0x700B, 0xAAAA);
-void StartMovie_c (void *theMovie)
+void CCALL StartMovie_c (void *theMovie)
 {
     Movie movie;
 #ifndef _WIN32
@@ -939,7 +938,7 @@ void StartMovie_c (void *theMovie)
 
 //EXTERN_API( void )
 //StopMovie                       (Movie                  theMovie)                           TWOWORDINLINE(0x700C, 0xAAAA);
-void StopMovie_c (void *theMovie)
+void CCALL StopMovie_c (void *theMovie)
 {
     Movie movie;
 
@@ -978,7 +977,7 @@ void StopMovie_c (void *theMovie)
 
 //EXTERN_API( Boolean )
 //IsMovieDone                     (Movie                  theMovie)                           THREEWORDINLINE(0x303C, 0x00DD, 0xAAAA);
-uint8_t IsMovieDone_c (void *theMovie)
+uint8_t CCALL IsMovieDone_c (void *theMovie)
 {
 #ifdef DEBUG_QTML
     eprintf("IsMovieDone: 0x%" PRIxPTR " - ", (uintptr_t)theMovie);
@@ -1004,7 +1003,7 @@ uint8_t IsMovieDone_c (void *theMovie)
 
 //EXTERN_API( void )
 //DisposeMovie                    (Movie                  theMovie)                           TWOWORDINLINE(0x7023, 0xAAAA);
-void DisposeMovie_c (void *theMovie)
+void CCALL DisposeMovie_c (void *theMovie)
 {
 #ifdef DEBUG_QTML
     eprintf("DisposeMovie: 0x%" PRIxPTR "\n", (uintptr_t)theMovie);
@@ -1020,7 +1019,7 @@ void DisposeMovie_c (void *theMovie)
 //OpenMovieFile                   (const FSSpec *         fileSpec,
 //                                 short *                resRefNum,
 //                                 SInt8                  permission)                         THREEWORDINLINE(0x303C, 0x0192, 0xAAAA);
-int16_t OpenMovieFile_c (const void *fileSpec, int16_t *resRefNum, int8_t permission)
+int16_t CCALL OpenMovieFile_c (const void *fileSpec, int16_t *resRefNum, int8_t permission)
 {
     int RefNum, found, pathlen;
     struct stat statbuf;
@@ -1176,7 +1175,7 @@ int16_t OpenMovieFile_c (const void *fileSpec, int16_t *resRefNum, int8_t permis
 
 //EXTERN_API( OSErr )
 //CloseMovieFile                  (short                  resRefNum)                          THREEWORDINLINE(0x303C, 0x00D5, 0xAAAA);
-int16_t CloseMovieFile_c (int16_t resRefNum)
+int16_t CCALL CloseMovieFile_c (int16_t resRefNum)
 {
 #ifdef DEBUG_QTML
     eprintf("CloseMovieFile: %i - ", resRefNum);
@@ -1210,7 +1209,7 @@ int16_t CloseMovieFile_c (int16_t resRefNum)
 //                                 StringPtr              resName,
 //                                 short                  newMovieFlags,
 //                                 Boolean *              dataRefWasChanged)                  THREEWORDINLINE(0x303C, 0x00F0, 0xAAAA);
-int16_t NewMovieFromFile_c (PTR32(void)*theMovie, int16_t resRefNum, int16_t *resId, uint8_t *resName, int16_t newMovieFlags, uint8_t *dataRefWasChanged)
+int16_t CCALL NewMovieFromFile_c (PTR32(void)*theMovie, int16_t resRefNum, int16_t *resId, uint8_t *resName, int16_t newMovieFlags, uint8_t *dataRefWasChanged)
 {
     Movie movie;
     int color_models[5], model_index, use_yuv;
@@ -1330,7 +1329,7 @@ int16_t NewMovieFromFile_c (PTR32(void)*theMovie, int16_t resRefNum, int16_t *re
 //EXTERN_API( void )
 //GetMovieBox                     (Movie                  theMovie,
 //                                 Rect *                 boxRect)                            THREEWORDINLINE(0x303C, 0x00F9, 0xAAAA);
-void GetMovieBox_c (void *theMovie, void *boxRect)
+void CCALL GetMovieBox_c (void *theMovie, void *boxRect)
 {
 #ifdef DEBUG_QTML
     eprintf("GetMovieBox: 0x%" PRIxPTR ", 0x%" PRIxPTR "\n", (uintptr_t)theMovie, (uintptr_t)boxRect);
@@ -1432,7 +1431,7 @@ static void check_movie_audio(Movie movie)
 //NewMovieController              (Movie                  theMovie,
 //                                 const Rect *           movieRect,
 //                                 long                   someFlags)                          THREEWORDINLINE(0x303C, 0x018A, 0xAAAA);
-void *NewMovieController_c (void *theMovie, const void *movieRect, int32_t someFlags)
+void * CCALL NewMovieController_c (void *theMovie, const void *movieRect, int32_t someFlags)
 {
     Movie movie;
     const Rect *rect;
@@ -1685,7 +1684,7 @@ void *NewMovieController_c (void *theMovie, const void *movieRect, int32_t someF
 
 //EXTERN_API( void )
 //DisposeMovieController          (ComponentInstance      mc)                                 THREEWORDINLINE(0x303C, 0x018B, 0xAAAA);
-void DisposeMovieController_c (void *mc)
+void CCALL DisposeMovieController_c (void *mc)
 {
     Movie movie;
 
@@ -1733,7 +1732,7 @@ void DisposeMovieController_c (void *mc)
 //QTRegisterAccessKey             (Str255                 accessKeyType,
 //                                 long                   flags,
 //                                 Handle                 accessKey)                          THREEWORDINLINE(0x303C, 0x02B4, 0xAAAA);
-int16_t QTRegisterAccessKey_c (uint8_t *accessKeyType, int32_t flags, void *accessKey)
+int16_t CCALL QTRegisterAccessKey_c (uint8_t *accessKeyType, int32_t flags, void *accessKey)
 {
 #ifdef DEBUG_QTML
     eprintf("QTRegisterAccessKey: 0x%" PRIxPTR " (%s), 0x%x, 0x%" PRIxPTR " - ", (uintptr_t)accessKeyType, accessKeyType, flags, (uintptr_t)accessKey);
@@ -1749,7 +1748,7 @@ int16_t QTRegisterAccessKey_c (uint8_t *accessKeyType, int32_t flags, void *acce
 //QTUnregisterAccessKey           (Str255                 accessKeyType,
 //                                 long                   flags,
 //                                 Handle                 accessKey)                          THREEWORDINLINE(0x303C, 0x02B5, 0xAAAA);
-int16_t QTUnregisterAccessKey_c (uint8_t *accessKeyType, int32_t flags, void *accessKey)
+int16_t CCALL QTUnregisterAccessKey_c (uint8_t *accessKeyType, int32_t flags, void *accessKey)
 {
 #ifdef DEBUG_QTML
     eprintf("QTUnregisterAccessKey: 0x%" PRIxPTR " (%s), 0x%x, 0x%" PRIxPTR " - ", (uintptr_t)accessKeyType, accessKeyType, flags, (uintptr_t)accessKey);
@@ -1765,7 +1764,7 @@ int16_t QTUnregisterAccessKey_c (uint8_t *accessKeyType, int32_t flags, void *ac
 //EXTERN_API( ComponentResult )
 //MCIsPlayerEvent                 (MovieController        mc,
 //                                 const EventRecord *    e)                                  FIVEWORDINLINE(0x2F3C, 0x0004, 0x0007, 0x7000, 0xA82A);
-void *MCIsPlayerEvent_c (void *mc, const void *e)
+void * CCALL MCIsPlayerEvent_c (void *mc, const void *e)
 {
 #ifdef DEBUG_QTML
     eprintf("MCIsPlayerEvent: 0x%" PRIxPTR ", 0x%" PRIxPTR " - ", (uintptr_t)mc, (uintptr_t)e);
@@ -1841,7 +1840,7 @@ void *MCIsPlayerEvent_c (void *mc, const void *e)
 //MCDoAction                      (MovieController        mc,
 //                                 short                  action,
 //                                 void *                 params)                             FIVEWORDINLINE(0x2F3C, 0x0006, 0x0009, 0x7000, 0xA82A);
-void *MCDoAction_c (void *mc, int16_t action, void *params)
+void * CCALL MCDoAction_c (void *mc, int16_t action, void *params)
 {
 #ifdef DEBUG_QTML
     eprintf("MCDoAction: 0x%" PRIxPTR ", %i, 0x%" PRIxPTR " - ", (uintptr_t)mc, action, (uintptr_t)params);

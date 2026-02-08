@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,16 +26,17 @@
 #define _BBTXT_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int TXT_Init_c(void);
-void TXT_Exit_c(void);
-int TXT_LoadFont_c(const char *path);
-void TXT_WriteString_c(const char *text, int font_handle, void *dst_pixel_map, int x, int y, int width, int height, uint8_t color_add);
-void TXT_UnloadAllFonts_c(void);
+int CCALL TXT_Init_c(void);
+void CCALL TXT_Exit_c(void);
+int CCALL TXT_LoadFont_c(const char *path);
+void CCALL TXT_WriteString_c(const char *text, int font_handle, void *dst_pixel_map, int x, int y, int width, int height, uint8_t color_add);
+void CCALL TXT_UnloadAllFonts_c(void);
 
 #ifdef __cplusplus
 }

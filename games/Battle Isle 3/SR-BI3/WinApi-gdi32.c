@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,42 +26,42 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-void * CreateFontIndirectA_c(const void * lplf)
+void * CCALL CreateFontIndirectA_c(const void * lplf)
 {
     return CreateFontIndirectA((CONST LOGFONTA *)lplf);
 }
 
-uint32_t DeleteObject_c(void * ho)
+uint32_t CCALL DeleteObject_c(void * ho)
 {
     return DeleteObject((HGDIOBJ)ho);
 }
 
-uint32_t GdiFlush_c(void)
+uint32_t CCALL GdiFlush_c(void)
 {
     return GdiFlush();
 }
 
-int32_t GetDeviceCaps_c(void * hdc, int32_t index)
+int32_t CCALL GetDeviceCaps_c(void * hdc, int32_t index)
 {
     return GetDeviceCaps((HDC)hdc, index);
 }
 
-uint32_t GetTextExtentPointA_c(void * hdc, const char * lpString, int32_t c, void * lpsz)
+uint32_t CCALL GetTextExtentPointA_c(void * hdc, const char * lpString, int32_t c, void * lpsz)
 {
     return GetTextExtentPointA((HDC)hdc, lpString, c, (LPSIZE)lpsz);
 }
 
-void * SelectObject_c(void * hdc, void * h)
+void * CCALL SelectObject_c(void * hdc, void * h)
 {
     return SelectObject((HDC)hdc, (HGDIOBJ)h);
 }
 
-int32_t SetBkMode_c(void * hdc, int32_t mode)
+int32_t CCALL SetBkMode_c(void * hdc, int32_t mode)
 {
     return SetBkMode((HDC)hdc, mode);
 }
 
-uint32_t TextOutA_c(void * hdc, int32_t x, int32_t y, const char * lpString, int32_t c)
+uint32_t CCALL TextOutA_c(void * hdc, int32_t x, int32_t y, const char * lpString, int32_t c)
 {
     return TextOutA((HDC)hdc, x, y, lpString, c);
 }

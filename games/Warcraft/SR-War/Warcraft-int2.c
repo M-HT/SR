@@ -24,13 +24,12 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "Game_defs.h"
 #include "Game_vars.h"
 #include "Warcraft-int2.h"
 #include "Game_thread.h"
 #include "Game-int2.h"
 
-uint32_t Game_int386x(
+uint32_t CCALL Game_int386x(
 	const uint32_t IntNum,
 	const Game_REGS *in_regs,
 	Game_REGS *out_regs,

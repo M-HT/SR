@@ -26,15 +26,16 @@
 #define _CLIB_PROC_H_INCLUDED_
 
 #include <stdint.h>
+#include "Game_defs.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int32_t CLIB_vprintf(const char *format, uint32_t *ap);
-int32_t CLIB_vfprintf(void *stream, const char *format, uint32_t *ap);
-int32_t CLIB_vsprintf(char *str, const char *format, uint32_t *ap);
-int32_t CLIB_vsnprintf(char *str, uint32_t size, const char *format, uint32_t *ap);
+int32_t CCALL CLIB_vprintf(const char *format, uint32_t *ap);
+int32_t CCALL CLIB_vfprintf(void *stream, const char *format, uint32_t *ap);
+int32_t CCALL CLIB_vsprintf(char *str, const char *format, uint32_t *ap);
+int32_t CCALL CLIB_vsnprintf(char *str, uint32_t size, const char *format, uint32_t *ap);
 
 #ifdef __cplusplus
 }

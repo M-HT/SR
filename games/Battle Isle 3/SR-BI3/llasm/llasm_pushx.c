@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,10 +26,10 @@
 
 #include "llasm_cpu.h"
 
-extern uint32_t X86_InterruptFlag;
+EXTERNCVAR uint32_t X86_InterruptFlag;
 
 
-EXTERNC void x86_pushad(CPU)
+EXTERNC void CCALL x86_pushad(CPU)
 {
     uint32_t tmp1, *ptr;
 
@@ -47,7 +47,7 @@ EXTERNC void x86_pushad(CPU)
     ptr[7] = eax;
 }
 
-EXTERNC void x86_pushaw(CPU)
+EXTERNC void CCALL x86_pushaw(CPU)
 {
     uint32_t tmp1, tmp2, tmp3, tmp4, *ptr;
 
@@ -65,7 +65,7 @@ EXTERNC void x86_pushaw(CPU)
     ptr[3] = tmp4;
 }
 
-EXTERNC void x86_popad(CPU)
+EXTERNC void CCALL x86_popad(CPU)
 {
     uint32_t *ptr;
 
@@ -82,7 +82,7 @@ EXTERNC void x86_popad(CPU)
     esp += 8*4;
 }
 
-EXTERNC void x86_popaw(CPU)
+EXTERNC void CCALL x86_popaw(CPU)
 {
     uint32_t tmp1, tmp2, tmp3, tmp4, *ptr;
 
@@ -105,7 +105,7 @@ EXTERNC void x86_popaw(CPU)
     eax = (ecx & 0xffff0000) | (tmp4 >> 16);
 }
 
-EXTERNC void x86_popfd(CPU)
+EXTERNC void CCALL x86_popfd(CPU)
 {
     eflags = *((uint32_t *)REG2PTR(esp));
     esp += 4;

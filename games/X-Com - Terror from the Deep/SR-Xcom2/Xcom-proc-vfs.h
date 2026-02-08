@@ -26,13 +26,14 @@
 #define _XCOM_PROC_VFS_H_INCLUDED_
 
 #include <stdio.h>
+#include "Game_defs.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern int32_t Game_dopen(const char *path, const char *mode);
-extern void *Game_fopen(const char *filename, const char *mode);
+extern int32_t CCALL Game_dopen(const char *path, const char *mode);
+extern void * CCALL Game_fopen(const char *filename, const char *mode);
 
 #ifdef __cplusplus
 }

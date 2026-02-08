@@ -103,45 +103,7 @@ http://xoomer.alice.it/acantato/dev/wildcard/wildmatch.html
 
 */
 
-int32_t Game_access(const char *path, int32_t mode)
-{
-    char temp_str[MAX_PATH];
-    int ret;
-    file_entry *realdir;
-    int vfs_err;
-
-#if defined(__DEBUG__)
-    fprintf(stderr, "access: original name: %s\n", path);
-#endif
-
-    vfs_err = vfs_get_real_name(path, (char *) &temp_str, &realdir);
-
-#if defined(__DEBUG__)
-    fprintf(stderr, "access: real name: %s (%i)\n", (char *) &temp_str, vfs_err);
-#endif
-
-    if (mode == 0)
-    {
-        if (vfs_err == 0)
-        {
-            return 0;
-        }
-        else
-        {
-            Game_Set_errno_error(ENOENT);
-            return -1;
-        }
-    }
-    else
-    {
-        ret = access((char *) &temp_str, mode);
-        Game_Set_errno_val();
-
-        return ret;
-    }
-}
-
-char *Game_getcwd(char *buf, int32_t size)
+char * CCALL Game_getcwd(char *buf, int32_t size)
 {
     file_entry *cur_dir;
     int len, addbackslash;
@@ -200,7 +162,7 @@ char *Game_getcwd(char *buf, int32_t size)
     return buf;
 }
 
-void *Game_fopen(const char *filename, const char *mode)
+void * CCALL Game_fopen(const char *filename, const char *mode)
 {
     char temp_str[MAX_PATH];
     FILE *fp;
@@ -258,39 +220,7 @@ void *Game_fopen(const char *filename, const char *mode)
     return ret;
 }
 
-int32_t Game_mkdir(const char *pathname)
-{
-    char temp_str[MAX_PATH];
-    int ret;
-    file_entry *realdir;
-    int vfs_err;
-
-#if defined(__DEBUG__)
-    fprintf(stderr, "mkdir: original name: %s\n", pathname);
-#endif
-
-    vfs_err = vfs_get_real_name(pathname, (char *) &temp_str, &realdir);
-
-#if defined(__DEBUG__)
-    fprintf(stderr, "mkdir: real name: %s (%i)\n", (char *) &temp_str, vfs_err);
-#endif
-
-#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
-    ret = mkdir((char *) &temp_str);
-#else
-    ret = mkdir((char *) &temp_str, 0777);
-#endif
-    Game_Set_errno_val();
-
-    if (vfs_err && ret == 0)
-    {
-        vfs_add_file(realdir, (char *) &temp_str, 1);
-    }
-
-    return ret;
-}
-
-int32_t Game_unlink(const char *pathname)
+int32_t CCALL Game_unlink(const char *pathname)
 {
     char temp_str[MAX_PATH];
     int ret;
@@ -318,7 +248,7 @@ int32_t Game_unlink(const char *pathname)
     return ret;
 }
 
-int32_t Game_rename(const char *oldpath, const char *newpath)
+int32_t CCALL Game_rename(const char *oldpath, const char *newpath)
 {
     char temp_str_old[MAX_PATH], temp_str_new[MAX_PATH];
     int ret;
@@ -383,7 +313,7 @@ static char *x86_strdup(const char *str)
     return result;
 }
 
-struct watcom_dirent *Game_opendir(const char *dirname)
+struct watcom_dirent * CCALL Game_opendir(const char *dirname)
 {
     char temp_str[MAX_PATH], orig_directory[MAX_PATH];
     const char *pattern;
@@ -610,7 +540,7 @@ struct watcom_dirent *Game_opendir(const char *dirname)
 #define WATCOM_A_SUBDIR       0x10    /* Subdirectory */
 #define WATCOM_A_ARCH         0x20    /* Archive file */
 
-struct watcom_dirent *Game_readdir(struct watcom_dirent *dirp)
+struct watcom_dirent * CCALL Game_readdir(struct watcom_dirent *dirp)
 {
     file_entry *current_entry;
     struct stat statbuf;
@@ -707,7 +637,7 @@ struct watcom_dirent *Game_readdir(struct watcom_dirent *dirp)
 #undef REALDIR
 }
 
-int32_t Game_closedir(struct watcom_dirent *dirp)
+int32_t CCALL Game_closedir(struct watcom_dirent *dirp)
 {
     if (dirp == NULL) return 0;
 
@@ -751,7 +681,7 @@ static void Conv_find(struct watcom_find_t *buffer, struct watcom_dirent *dirent
 #define DOS_FIND_SIGNATURE1 0xBDAECFAB
 #define DOS_FIND_SIGNATURE2 0xED
 
-uint32_t Game_dos_findfirst(const char *path, const uint32_t attributes, struct watcom_find_t *buffer)
+uint32_t CCALL Game_dos_findfirst(const char *path, const uint32_t attributes, struct watcom_find_t *buffer)
 {
     struct watcom_dirent *direntp;
 #if defined(__DEBUG__)
@@ -825,7 +755,7 @@ uint32_t Game_dos_findfirst(const char *path, const uint32_t attributes, struct 
 
 }
 
-uint32_t Game_dos_findnext(struct watcom_find_t *buffer)
+uint32_t CCALL Game_dos_findnext(struct watcom_find_t *buffer)
 {
     struct watcom_dirent *direntp;
 
@@ -865,7 +795,7 @@ uint32_t Game_dos_findnext(struct watcom_find_t *buffer)
 
 }
 
-uint32_t Game_dos_findclose(struct watcom_find_t *buffer)
+uint32_t CCALL Game_dos_findclose(struct watcom_find_t *buffer)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "findclose\n");

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,14 +26,15 @@
 #define _BBLBM_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int LBM_DisplayLBM_c(const char *path, void *pixel_map, uint8_t *palette, unsigned int flags);
-void LBM_StartSerie_c(int number);
-void LBM_AutoSave_c(void *pixel_map);
+int CCALL LBM_DisplayLBM_c(const char *path, void *pixel_map, uint8_t *palette, unsigned int flags);
+void CCALL LBM_StartSerie_c(int number);
+void CCALL LBM_AutoSave_c(void *pixel_map);
 
 #ifdef __cplusplus
 }

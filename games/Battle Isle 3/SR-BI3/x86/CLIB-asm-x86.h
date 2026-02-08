@@ -26,14 +26,15 @@
 #define _CLIB_ASM_X86_H_INCLUDED_
 
 #include <stdint.h>
+#include "../platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void *_alloca_probe_c(uint32_t size);
+void * CCALL _alloca_probe_c(uint32_t size);
 
-int64_t _ftol_c(double *num);
+int64_t CCALL _ftol_c(double *num);
 
 #ifdef __cplusplus
 }

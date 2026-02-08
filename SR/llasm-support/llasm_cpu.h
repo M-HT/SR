@@ -91,6 +91,14 @@ typedef struct {
 #define EXTERNCVAR extern
 #endif
 
+#if defined(__GNUC__) && (defined(__i386) || (defined(__x86_64) && defined(_WIN32)))
+    #define CCALL __attribute__ ((__cdecl__))
+#elif defined(_MSC_VER)
+    #define CCALL __cdecl
+#else
+    #define CCALL
+#endif
+
 // *********************************************************************
 
 #if defined(_MSC_VER)
@@ -111,7 +119,7 @@ static __inline void unaligned_write_32(void *adr, uint32_t val)
 
 typedef struct {
     uint32_t u;
-} __attribute__((packed)) _unaligned32;
+} __attribute__((__packed__)) _unaligned32;
 
 static inline uint32_t unaligned_read_32(void *adr)
 {
@@ -150,7 +158,7 @@ static __inline void unaligned_write_16(void *adr, uint16_t val)
 
 typedef struct {
     uint16_t u;
-} __attribute__((packed)) _unaligned16;
+} __attribute__((__packed__)) _unaligned16;
 
 static inline uint16_t unaligned_read_16(void *adr)
 {

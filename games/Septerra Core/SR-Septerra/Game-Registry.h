@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,15 +26,16 @@
 #define _GAME_REGISTRY_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int32_t Registry_SetValueDword(const char *ValueName, uint32_t Value);
-//int32_t Registry_SetValueString(const char *ValueName, const char *Value);
-int32_t Registry_GetValueDword(const char *ValueName, uint32_t *Value);
-int32_t Registry_GetValueString(const char *ValueName, char *Value);
+int32_t CCALL Registry_SetValueDword(const char *ValueName, uint32_t Value);
+//int32_t CCALL Registry_SetValueString(const char *ValueName, const char *Value);
+int32_t CCALL Registry_GetValueDword(const char *ValueName, uint32_t *Value);
+int32_t CCALL Registry_GetValueString(const char *ValueName, char *Value);
 
 #ifdef __cplusplus
 }

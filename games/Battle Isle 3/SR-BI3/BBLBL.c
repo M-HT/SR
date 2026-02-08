@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2022 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -58,13 +58,13 @@ typedef struct _LBL_Library {
 static int LBL_initialized = 0;
 
 
-int LBL_Init_c(void)
+int CCALL LBL_Init_c(void)
 {
     LBL_initialized++;
     return 1;
 }
 
-void LBL_Exit_c(void)
+void CCALL LBL_Exit_c(void)
 {
     if (LBL_initialized > 0)
     {
@@ -72,7 +72,7 @@ void LBL_Exit_c(void)
     }
 }
 
-void *LBL_OpenLib_c(const char *path, int param2)
+void * CCALL LBL_OpenLib_c(const char *path, int param2)
 {
     LBL_Library *library;
     uint8_t buffer12[12];
@@ -190,7 +190,7 @@ void *LBL_OpenLib_c(const char *path, int param2)
     return library;
 }
 
-void *LBL_ReadEntry_c(void *lib, void *entry_data, unsigned int entry_number, int close_file, void *entry_name)
+void * CCALL LBL_ReadEntry_c(void *lib, void *entry_data, unsigned int entry_number, int close_file, void *entry_name)
 {
     LBL_Library *library;
     void *compressed_data;
@@ -313,7 +313,7 @@ void *LBL_ReadEntry_c(void *lib, void *entry_data, unsigned int entry_number, in
     return data;
 }
 
-void LBL_CloseLib_c(void *lib)
+void CCALL LBL_CloseLib_c(void *lib)
 {
     LBL_Library *library;
 
@@ -332,7 +332,7 @@ void LBL_CloseLib_c(void *lib)
     MEM_free_c(library);
 }
 
-int LBL_GetEntrySize_c(void *lib, unsigned int entry_number)
+int CCALL LBL_GetEntrySize_c(void *lib, unsigned int entry_number)
 {
     LBL_Library *library;
 
@@ -358,7 +358,7 @@ int LBL_GetEntrySize_c(void *lib, unsigned int entry_number)
     }
 }
 
-void LBL_CloseFile_c(void *lib)
+void CCALL LBL_CloseFile_c(void *lib)
 {
     LBL_Library *library;
 
@@ -379,7 +379,7 @@ void LBL_CloseFile_c(void *lib)
     library->current_entry = -1;
 }
 
-int LBL_GetNOFEntries_c(void *lib)
+int CCALL LBL_GetNOFEntries_c(void *lib)
 {
     LBL_Library *library;
 

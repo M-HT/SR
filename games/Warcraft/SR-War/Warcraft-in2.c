@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -23,12 +23,11 @@
  */
 
 #include <stdio.h>
-#include "Game_defs.h"
 #include "Game_vars.h"
 #include "Warcraft-in2.h"
 #include "Game_thread.h"
 
-uint32_t Game_inp(const uint32_t port)
+uint32_t CCALL Game_inp(const uint32_t port)
 {
     uint32_t ret;
 #if defined(__DEBUG__)

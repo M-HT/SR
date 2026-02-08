@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,7 +26,7 @@
 
 #include "llasm_cpu.h"
 
-EXTERNC uint32_t x86_repe_cmpsb(CPU)
+EXTERNC uint32_t CCALL x86_repe_cmpsb(CPU)
 {
     int32_t dir;
     uint32_t srcptr1, srcptr2, counter, srcvalue1, srcvalue2;
@@ -55,7 +55,7 @@ EXTERNC uint32_t x86_repe_cmpsb(CPU)
     return srcvalue1 | (srcvalue2 << 8);
 }
 
-EXTERNC uint32_t x86_repne_cmpsb(CPU)
+EXTERNC uint32_t CCALL x86_repne_cmpsb(CPU)
 {
     int32_t dir;
     uint32_t srcptr1, srcptr2, counter, srcvalue1, srcvalue2;

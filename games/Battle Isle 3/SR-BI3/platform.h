@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2025 Roman Pauer
+ *  Copyright (C) 2025-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -28,9 +28,15 @@
 #if defined(__GNUC__)
     #define NOINLINE __attribute__ ((__noinline__))
     #define PACKED __attribute__ ((__packed__))
+    #if defined(__i386) || (defined(__x86_64) && defined(_WIN32))
+        #define CCALL __attribute__ ((__cdecl__))
+    #else
+        #define CCALL
+    #endif
 #elif defined(_MSC_VER)
     #define NOINLINE __declspec(noinline)
     #define PACKED
+    #define CCALL __cdecl
     #define putenv _putenv
     #define strcasecmp _stricmp
     #define strdup _strdup
@@ -38,6 +44,7 @@
 #else
     #define NOINLINE
     #define PACKED
+    #define CCALL
 #endif
 
 #endif /* _PLATFORM_H_INCLUDED_ */

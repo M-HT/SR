@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,6 +25,8 @@
 #if !defined(_SDIMIDI_H_INCLUDED_)
 #define _SDIMIDI_H_INCLUDED_
 
+#include "platform.h"
+
 int midi_PluginStartup(void);
 void midi_PluginShutdown(void);
 
@@ -32,17 +34,17 @@ void midi_PluginShutdown(void);
 extern "C" {
 #endif
 
-int midi_OpenSDIMusic(const char *filename);
-unsigned int midi_GetSDIMusicID(void);
-int midi_PlaySDIMusic(void);
-int midi_CloseSDIMusic(void);
-int midi_IsPlaying(unsigned int musicID);
+int CCALL midi_OpenSDIMusic(const char *filename);
+unsigned int CCALL midi_GetSDIMusicID(void);
+int CCALL midi_PlaySDIMusic(void);
+int CCALL midi_CloseSDIMusic(void);
+int CCALL midi_IsPlaying(unsigned int musicID);
 
-int midi_OpenTestMusic(void);
-int midi_PlayTestMusic(void);
-int midi_CloseTestMusic(void);
+int CCALL midi_OpenTestMusic(void);
+int CCALL midi_PlayTestMusic(void);
+int CCALL midi_CloseTestMusic(void);
 
-int midi_GetErrorString(int error, char *text, unsigned int length);
+int CCALL midi_GetErrorString(int error, char *text, unsigned int length);
 
 #ifdef __cplusplus
 }

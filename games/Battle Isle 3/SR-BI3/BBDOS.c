@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -38,7 +38,7 @@ static int DOS_initialized = 0;
 static DOS_struct DOS_handles[256];
 
 
-int DOS_Init_c(void)
+int CCALL DOS_Init_c(void)
 {
     int count, index;
 
@@ -61,7 +61,7 @@ int DOS_Init_c(void)
     return 1;
 }
 
-void DOS_Exit_c(void)
+void CCALL DOS_Exit_c(void)
 {
     int index;
 
@@ -79,7 +79,7 @@ void DOS_Exit_c(void)
     }
 }
 
-int DOS_Open_c(const char *path, unsigned int mode)
+int CCALL DOS_Open_c(const char *path, unsigned int mode)
 {
     int iReadWrite, append, index;
 
@@ -142,7 +142,7 @@ int DOS_Open_c(const char *path, unsigned int mode)
     return index;
 }
 
-int DOS_Close_c(int file_handle)
+int CCALL DOS_Close_c(int file_handle)
 {
     file_handle = (int16_t)file_handle;
 
@@ -156,7 +156,7 @@ int DOS_Close_c(int file_handle)
     return 1;
 }
 
-int DOS_Read_c(int file_handle, void *buffer, unsigned int length)
+int CCALL DOS_Read_c(int file_handle, void *buffer, unsigned int length)
 {
     file_handle = (int16_t)file_handle;
 
@@ -168,7 +168,7 @@ int DOS_Read_c(int file_handle, void *buffer, unsigned int length)
     return _lread(DOS_handles[file_handle].handle, buffer, length);
 }
 
-int DOS_Write_c(int file_handle, const void *buffer, unsigned int length)
+int CCALL DOS_Write_c(int file_handle, const void *buffer, unsigned int length)
 {
     unsigned int total_length, to_write, written;
 
@@ -199,7 +199,7 @@ int DOS_Write_c(int file_handle, const void *buffer, unsigned int length)
     return total_length;
 }
 
-int DOS_Seek_c(int file_handle, int origin, int offset)
+int CCALL DOS_Seek_c(int file_handle, int origin, int offset)
 {
     LONG res;
 
@@ -232,7 +232,7 @@ int DOS_Seek_c(int file_handle, int origin, int offset)
     return (res != HFILE_ERROR)?1:0;
 }
 
-void *DOS_ReadFile_c(const char *path, void *buffer)
+void * CCALL DOS_ReadFile_c(const char *path, void *buffer)
 {
     int length, memalloc, file_handle;
 
@@ -277,7 +277,7 @@ void *DOS_ReadFile_c(const char *path, void *buffer)
     return buffer;
 }
 
-int DOS_WriteFile_c(const char *path, const void *buffer, unsigned int length)
+int CCALL DOS_WriteFile_c(const char *path, const void *buffer, unsigned int length)
 {
     int file_handle;
 
@@ -297,7 +297,7 @@ int DOS_WriteFile_c(const char *path, const void *buffer, unsigned int length)
     return 1;
 }
 
-int DOS_GetFileLength_c(const char *path)
+int CCALL DOS_GetFileLength_c(const char *path)
 {
     LONG res;
     int file_handle;

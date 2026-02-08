@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,11 +25,13 @@
 #if !defined(_WARCRAFT_OUT2_H_INCLUDED_)
 #define _WARCRAFT_OUT2_H_INCLUDED_
 
+#include "Game_defs.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern uint32_t Game_outp(const uint32_t port, const uint32_t value);
+extern uint32_t CCALL Game_outp(const uint32_t port, const uint32_t value);
 
 #ifdef __cplusplus
 }

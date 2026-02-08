@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2025 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -34,7 +34,7 @@ static int BLEV_state;
 static int BLEV_writeIndex;
 
 
-int BLEV_Init_c(void)
+int CCALL BLEV_Init_c(void)
 {
     if ( BLEV_initialized )
     {
@@ -50,7 +50,7 @@ int BLEV_Init_c(void)
     return 1;
 }
 
-void BLEV_Exit_c(void)
+void CCALL BLEV_Exit_c(void)
 {
     if (BLEV_initialized)
     {
@@ -58,7 +58,7 @@ void BLEV_Exit_c(void)
     }
 }
 
-void BLEV_ClearAllEvents_c(void)
+void CCALL BLEV_ClearAllEvents_c(void)
 {
     int index;
 
@@ -71,7 +71,7 @@ void BLEV_ClearAllEvents_c(void)
     }
 }
 
-int BLEV_PutEvent_c(const BLEV_Event *event)
+int CCALL BLEV_PutEvent_c(const BLEV_Event *event)
 {
     if (BLEV_state == 2)
     {
@@ -98,7 +98,7 @@ int BLEV_PutEvent_c(const BLEV_Event *event)
     return 1;
 }
 
-int BLEV_GetEvent_c(BLEV_Event *event)
+int CCALL BLEV_GetEvent_c(BLEV_Event *event)
 {
     if (BLEV_state == 0)
     {
@@ -118,7 +118,7 @@ int BLEV_GetEvent_c(BLEV_Event *event)
     return 1;
 }
 
-int BLEV_PeekEvent_c(BLEV_Event *event)
+int CCALL BLEV_PeekEvent_c(BLEV_Event *event)
 {
     if (BLEV_state == 0)
     {

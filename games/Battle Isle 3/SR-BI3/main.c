@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021-2025 Roman Pauer
+ *  Copyright (C) 2021-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -28,6 +28,7 @@
 #include "Game-Display.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include "platform.h"
 
 
 void X86_InitializeExceptions(void);
@@ -36,7 +37,7 @@ void X86_InitializeExceptions(void);
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern int WinMain_asm(
+extern int CCALL WinMain_asm(
   void *hInstance,
   void *hPrevInstance,
   char *lpCmdLine,

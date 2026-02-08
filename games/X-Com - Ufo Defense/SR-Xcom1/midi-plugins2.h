@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,6 +25,14 @@
 #if !defined(_MIDI_PLUGINS2_H_INCLUDED_)
 #define _MIDI_PLUGINS2_H_INCLUDED_
 
+#if defined(__GNUC__) && (defined(__i386) || (defined(__x86_64) && defined(_WIN32)))
+    #define MIDI_PLUGIN2_API __attribute__ ((__cdecl__))
+#elif defined(_MSC_VER)
+    #define MIDI_PLUGIN2_API __cdecl
+#else
+    #define MIDI_PLUGIN2_API
+#endif
+
 typedef struct _midi_plugin2_parameters_ {
     char const *midi_device_name;
     unsigned char const *initial_sysex_events;
@@ -35,16 +43,16 @@ typedef struct _midi_plugin2_parameters_ {
 } midi_plugin2_parameters;
 
 typedef struct _midi_plugin2_functions_ {
-    int (*play) (void const *midibuffer, long int size, int loop_count);
-    int (*pause) (void);
-    int (*resume) (void);
-    int (*halt) (void);
-    int (*set_volume) (unsigned char volume); // volume = 0 - 127
-    int (*set_loop_count) (int loop_count); // -1 = unlimited
-    void (*shutdown_plugin) (void);
+    int (MIDI_PLUGIN2_API *play) (void const *midibuffer, long int size, int loop_count);
+    int (MIDI_PLUGIN2_API *pause) (void);
+    int (MIDI_PLUGIN2_API *resume) (void);
+    int (MIDI_PLUGIN2_API *halt) (void);
+    int (MIDI_PLUGIN2_API *set_volume) (unsigned char volume); // volume = 0 - 127
+    int (MIDI_PLUGIN2_API *set_loop_count) (int loop_count); // -1 = unlimited
+    void (MIDI_PLUGIN2_API *shutdown_plugin) (void);
 } midi_plugin2_functions;
 
-typedef int (*midi_plugin2_initialize)(midi_plugin2_parameters const *parameters, midi_plugin2_functions *functions);
+typedef int (MIDI_PLUGIN2_API *midi_plugin2_initialize)(midi_plugin2_parameters const *parameters, midi_plugin2_functions *functions);
 
 #define MIDI_PLUGIN2_INITIALIZE "initialize_midi_plugin2"
 

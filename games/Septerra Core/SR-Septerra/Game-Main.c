@@ -85,7 +85,7 @@ static char *command_line;
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern int WinMain_asm(
+extern int CCALL WinMain_asm(
   void *hInstance,
   void *hPrevInstance,
   char *lpCmdLine,

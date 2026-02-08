@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -70,7 +70,7 @@ static void send_master_volume_sysex(void)
     adl_rt_systemExclusive(adl_handle, sysex, 8);
 }
 
-static int set_master_volume(unsigned char master_volume) // master_volume = 0 - 127
+static int MIDI_PLUGIN_API set_master_volume(unsigned char master_volume) // master_volume = 0 - 127
 {
     if (master_volume > 127) master_volume = 127;
 
@@ -81,7 +81,7 @@ static int set_master_volume(unsigned char master_volume) // master_volume = 0 -
     return 0;
 }
 
-static void *open_file(char const *midifile)
+static void * MIDI_PLUGIN_API open_file(char const *midifile)
 {
     if (midifile == NULL) return NULL;
     if (adl_handle == NULL) return NULL;
@@ -97,7 +97,7 @@ static void *open_file(char const *midifile)
     return (void *) 1;
 }
 
-static void *open_buffer(void const *midibuffer, long int size)
+static void * MIDI_PLUGIN_API open_buffer(void const *midibuffer, long int size)
 {
     if (midibuffer == NULL) return NULL;
     if (size <= 0) return NULL;
@@ -114,7 +114,7 @@ static void *open_buffer(void const *midibuffer, long int size)
     return (void *) 1;
 }
 
-static long int get_data(void *handle, void *buffer, long int size)
+static long int MIDI_PLUGIN_API get_data(void *handle, void *buffer, long int size)
 {
     if (handle == NULL) return -2;
     if (buffer == NULL) return -3;
@@ -168,7 +168,7 @@ static long int get_data(void *handle, void *buffer, long int size)
     return adl_play(adl_handle, size >> 1, (short *) buffer) << 1;
 }
 
-static int rewind_midi(void *handle)
+static int MIDI_PLUGIN_API rewind_midi(void *handle)
 {
     if (handle == NULL) return -2;
     if (adl_handle == NULL) return -3;
@@ -182,7 +182,7 @@ static int rewind_midi(void *handle)
     return 0;
 }
 
-static int close_midi(void *handle)
+static int MIDI_PLUGIN_API close_midi(void *handle)
 {
     if (handle == NULL) return -2;
     if (adl_handle == NULL) return -3;
@@ -192,7 +192,7 @@ static int close_midi(void *handle)
     return 0;
 }
 
-static void shutdown_plugin(void)
+static void MIDI_PLUGIN_API shutdown_plugin(void)
 {
     if (adl_handle != NULL)
     {
@@ -209,7 +209,7 @@ static void shutdown_plugin(void)
 }
 
 EXPORT
-int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const *parameters, midi_plugin_functions *functions)
+int MIDI_PLUGIN_API initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const *parameters, midi_plugin_functions *functions)
 {
     int bank_number, emulator;
     int resampling_quality;

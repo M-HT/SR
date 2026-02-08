@@ -46,14 +46,13 @@
 #include <pthread.h>
 #include "CLIB.h"
 #endif
-#include "platform.h"
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern const char *GetRecordName_asm(uint32_t RecordKey);
-extern uint32_t MessageProc_asm(const char *MessageText, uint32_t MessageType, uint32_t MessageCode, uint32_t (*MessageProc)(const char *, uint32_t, uint32_t));
+extern const char * CCALL GetRecordName_asm(uint32_t RecordKey);
+extern uint32_t CCALL MessageProc_asm(const char *MessageText, uint32_t MessageType, uint32_t MessageCode, uint32_t (*MessageProc)(const char *, uint32_t, uint32_t));
 #ifdef __cplusplus
 }
 #endif
@@ -149,7 +148,7 @@ static FILE *fopen_c(const char *path, const char *mode)
 #endif
 
 // sub_445460
-void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, uint32_t (*_MessageProc)(const char *, uint32_t, uint32_t))
+void CCALL OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, uint32_t (*_MessageProc)(const char *, uint32_t, uint32_t))
 {
     char FilePath[256];
     size_t len;
@@ -306,7 +305,7 @@ void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, ui
 }
 
 // sub_445880
-void CloseGameDataFiles(void)
+void CCALL CloseGameDataFiles(void)
 {
 #ifdef DEBUG_DATABASE
     eprintf("CloseGameFiles - ");
@@ -343,7 +342,7 @@ void CloseGameDataFiles(void)
 }
 
 // sub_445900
-int32_t RecordOpen(uint32_t RecordKey)
+int32_t CCALL RecordOpen(uint32_t RecordKey)
 {
     int32_t IndexNumber;
     uint32_t result, RecordHandle;
@@ -463,7 +462,7 @@ int32_t RecordOpen(uint32_t RecordKey)
 }
 
 // sub_445ae0
-int32_t RecordTryOpen(uint32_t RecordKey)
+int32_t CCALL RecordTryOpen(uint32_t RecordKey)
 {
     int32_t RecordHandle;
 
@@ -495,7 +494,7 @@ int32_t RecordTryOpen(uint32_t RecordKey)
 }
 
 // sub_445b60
-const char *RecordGetDataFilePathAndOffset(uint32_t RecordKey, uint32_t *Offset)
+const char * CCALL RecordGetDataFilePathAndOffset(uint32_t RecordKey, uint32_t *Offset)
 {
     int32_t RecordHandle;
 
@@ -543,7 +542,7 @@ const char *RecordGetDataFilePathAndOffset(uint32_t RecordKey, uint32_t *Offset)
 }
 
 //sub_445be0
-void RecordSeek(int32_t RecordHandle, int32_t Offset, int32_t Whence)
+void CCALL RecordSeek(int32_t RecordHandle, int32_t Offset, int32_t Whence)
 {
 #ifdef DEBUG_DATABASE
     eprintf("RecordSeek - %i - %i - %i - ", RecordHandle, Offset, Whence);
@@ -578,7 +577,7 @@ void RecordSeek(int32_t RecordHandle, int32_t Offset, int32_t Whence)
 }
 
 // sub_445c80
-uint32_t RecordRead(int32_t RecordHandle, uint8_t *ReadBuffer, uint32_t NumberOfBytes)
+uint32_t CCALL RecordRead(int32_t RecordHandle, uint8_t *ReadBuffer, uint32_t NumberOfBytes)
 {
     uint32_t result, DatabaseNumber, FileOffset;
     IndexInfo *Index;
@@ -694,7 +693,7 @@ uint32_t RecordRead(int32_t RecordHandle, uint8_t *ReadBuffer, uint32_t NumberOf
 }
 
 // sub_445ec0
-void RecordClose(int32_t RecordHandle)
+void CCALL RecordClose(int32_t RecordHandle)
 {
 #ifdef DEBUG_DATABASE
     eprintf("RecordClose - %i - ", RecordHandle);
@@ -724,7 +723,7 @@ void RecordClose(int32_t RecordHandle)
 }
 
 // sub_445f30
-uint32_t RecordGetSize(int32_t RecordHandle)
+uint32_t CCALL RecordGetSize(int32_t RecordHandle)
 {
     uint32_t result;
     IndexInfo *Index;
@@ -872,7 +871,7 @@ static void MessageWithPossibleExit(const char *MessageText, uint32_t MessageCod
 }
 
 //sub_4461e0
-uint32_t GetFirstLevelRecordKey(void)
+uint32_t CCALL GetFirstLevelRecordKey(void)
 {
 #ifdef DEBUG_DATABASE
     eprintf("GetFirstLevelRecordKey - ");
@@ -883,7 +882,7 @@ uint32_t GetFirstLevelRecordKey(void)
 }
 
 //sub_4461f0
-uint32_t GetNextLevelRecordKey(void)
+uint32_t CCALL GetNextLevelRecordKey(void)
 {
     uint32_t RecordKey;
 

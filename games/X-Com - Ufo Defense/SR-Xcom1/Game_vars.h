@@ -278,10 +278,10 @@ extern const uint32_t errno_table[ERRNO_NUM];
 
 
 
-extern int Game_Main_Asm(int argc, char *argv[], void *main_proc);
-extern NORETURN void Game_StopMain_Asm(void);
+extern int CCALL Game_Main_Asm(int argc, char *argv[], void *main_proc);
+extern NORETURN void CCALL Game_StopMain_Asm(void);
 
-extern void Game_RunTimer_Asm(void *timer_proc);
+extern void CCALL Game_RunTimer_Asm(void *timer_proc);
 
 #ifdef __cplusplus
 extern "C" {

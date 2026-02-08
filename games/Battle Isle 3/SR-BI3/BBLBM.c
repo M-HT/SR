@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -158,7 +158,7 @@ static void LBM_DisplayLBMinOPM_c(LBM_struct *lbmdata, OPM_struct *pixel_map)
     }
 }
 
-int LBM_DisplayLBM_c(const char *path, void *pixel_map, uint8_t *palette, unsigned int flags)
+int CCALL LBM_DisplayLBM_c(const char *path, void *pixel_map, uint8_t *palette, unsigned int flags)
 {
     LBM_struct lbmdata;
     const uint8_t *bmhd_ptr;
@@ -380,7 +380,7 @@ static void LBM_SaveLBM_c(const char *path, OPM_struct *pixel_map)
     MEM_free_c(buffer);
 }
 
-void LBM_StartSerie_c(int number)
+void CCALL LBM_StartSerie_c(int number)
 {
     if ((number < 0) || (number > 999))
     {
@@ -421,7 +421,7 @@ void LBM_StartSerie_c(int number)
     LBM_serieNumber = 0;
 }
 
-void LBM_AutoSave_c(void *pixel_map)
+void CCALL LBM_AutoSave_c(void *pixel_map)
 {
     if ((LBM_serieNumber < 0) || (LBM_serieNumber > 999))
     {

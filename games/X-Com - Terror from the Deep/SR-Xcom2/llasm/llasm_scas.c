@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,7 +26,7 @@
 
 #include "llasm_cpu.h"
 
-EXTERNC uint32_t x86_repe_scasb(CPU)
+EXTERNC uint32_t CCALL x86_repe_scasb(CPU)
 {
     int32_t dir;
     uint32_t srcptr, counter, scanvalue, srcvalue;
@@ -52,7 +52,7 @@ EXTERNC uint32_t x86_repe_scasb(CPU)
     return srcvalue;
 }
 
-EXTERNC uint32_t x86_repne_scasb(CPU)
+EXTERNC uint32_t CCALL x86_repne_scasb(CPU)
 {
     int32_t dir;
     uint32_t srcptr, counter, scanvalue, srcvalue;

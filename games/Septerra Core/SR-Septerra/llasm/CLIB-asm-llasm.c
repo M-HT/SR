@@ -33,7 +33,7 @@
 #define eprintf(...) fprintf(stderr,__VA_ARGS__)
 
 
-void _time642_c(uint32_t *t64)
+void CCALL _time642_c(uint32_t *t64)
 {
     time_t t;
     uint64_t i;

@@ -533,7 +533,7 @@ extern uint32_t g_dword_13FFC8;
 extern int16_t g_word_196D0E;
 
 
-extern void *sub_8B6BB(void *handle);
+extern void * CCALL sub_8B6BB(void *handle);
 
 #ifdef __cplusplus
 }
@@ -4607,7 +4607,7 @@ static void prepare_mapgrid(void)
 #ifdef __cplusplus
 extern "C"
 #endif
-void draw_3dscene(void)
+void CCALL draw_3dscene(void)
 {
 #if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     if (Game_AdvancedScaling)

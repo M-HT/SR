@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2021 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -31,13 +31,13 @@ extern "C" {
 extern _cpu *x86_initialize_cpu(void);
 extern void x86_deinitialize_cpu(void);
 
-extern void c_WinMain_(CPU);
+extern void CCALL c_WinMain_(CPU);
 
 #ifdef __cplusplus
 }
 #endif
 
-EXTERNC int WinMain_asm(void *hInstance, void *hPrevInstance, char *lpCmdLine, int nCmdShow)
+EXTERNC int CCALL WinMain_asm(void *hInstance, void *hPrevInstance, char *lpCmdLine, int nCmdShow)
 {
     _cpu *cpu;
     int retval;

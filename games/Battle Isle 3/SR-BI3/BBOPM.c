@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2025 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -49,7 +49,7 @@ static int OPM_initialized = 0;
 static myBITMAPINFO OPM_bitmapInfo;
 
 
-int OPM_Init_c(void)
+int CCALL OPM_Init_c(void)
 {
     if (OPM_initialized)
     {
@@ -60,7 +60,7 @@ int OPM_Init_c(void)
     return 1;
 }
 
-void OPM_Exit_c(void)
+void CCALL OPM_Exit_c(void)
 {
     OPM_struct *pixel_map;
 
@@ -98,7 +98,7 @@ void OPM_Exit_c(void)
     OPM_initialized = 0;
 }
 
-int OPM_New_c(unsigned int width, unsigned int height, unsigned int bytes_per_pixel, OPM_struct *pixel_map, uint8_t *buffer)
+int CCALL OPM_New_c(unsigned int width, unsigned int height, unsigned int bytes_per_pixel, OPM_struct *pixel_map, uint8_t *buffer)
 {
     RGBQUAD *colors;
     int index;
@@ -212,7 +212,7 @@ int OPM_New_c(unsigned int width, unsigned int height, unsigned int bytes_per_pi
     return 1;
 }
 
-void OPM_Del_c(OPM_struct *pixel_map)
+void CCALL OPM_Del_c(OPM_struct *pixel_map)
 {
     OPM_struct *pm2;
 
@@ -251,7 +251,7 @@ void OPM_Del_c(OPM_struct *pixel_map)
     pixel_map->flags = 0;
 }
 
-void OPM_CreateVirtualOPM_c(OPM_struct *base_pixel_map, OPM_struct *virtual_pixel_map, int virtual_x, int virtual_y, int virtual_width, int virtual_height)
+void CCALL OPM_CreateVirtualOPM_c(OPM_struct *base_pixel_map, OPM_struct *virtual_pixel_map, int virtual_x, int virtual_y, int virtual_width, int virtual_height)
 {
     virtual_x = (uint16_t)virtual_x;
     virtual_y = (uint16_t)virtual_y;
@@ -281,7 +281,7 @@ void OPM_CreateVirtualOPM_c(OPM_struct *base_pixel_map, OPM_struct *virtual_pixe
     virtual_pixel_map->access_offset = 0;
 }
 
-int OPM_CreateSecondaryOPM_c(int width, int height, int bytes_per_pixel, OPM_struct *pixel_map, uint8_t *buffer)
+int CCALL OPM_CreateSecondaryOPM_c(int width, int height, int bytes_per_pixel, OPM_struct *pixel_map, uint8_t *buffer)
 {
     width = (uint16_t)width;
     height = (uint16_t)height;
@@ -327,7 +327,7 @@ int OPM_CreateSecondaryOPM_c(int width, int height, int bytes_per_pixel, OPM_str
     return 1;
 }
 
-void OPM_SetPixel_c(OPM_struct *pixel_map, int x, int y, uint8_t color)
+void CCALL OPM_SetPixel_c(OPM_struct *pixel_map, int x, int y, uint8_t color)
 {
     x = (int16_t)(x + pixel_map->origin_x);
     y = (int16_t)(y + pixel_map->origin_y);
@@ -343,7 +343,7 @@ void OPM_SetPixel_c(OPM_struct *pixel_map, int x, int y, uint8_t color)
     }
 }
 
-void OPM_HorLine_c(OPM_struct *pixel_map, int x, int y, unsigned int length, uint8_t color)
+void CCALL OPM_HorLine_c(OPM_struct *pixel_map, int x, int y, unsigned int length, uint8_t color)
 {
     int length2, index;
 
@@ -373,7 +373,7 @@ void OPM_HorLine_c(OPM_struct *pixel_map, int x, int y, unsigned int length, uin
     }
 }
 
-void OPM_VerLine_c(OPM_struct *pixel_map, int x, int y, unsigned int length, uint8_t color)
+void CCALL OPM_VerLine_c(OPM_struct *pixel_map, int x, int y, unsigned int length, uint8_t color)
 {
     int length2, index;
 
@@ -403,7 +403,7 @@ void OPM_VerLine_c(OPM_struct *pixel_map, int x, int y, unsigned int length, uin
     }
 }
 
-void OPM_FillBox_c(OPM_struct *pixel_map, int x, int y, unsigned int width, unsigned int height, uint8_t color)
+void CCALL OPM_FillBox_c(OPM_struct *pixel_map, int x, int y, unsigned int width, unsigned int height, uint8_t color)
 {
     unsigned int index;
 
@@ -425,7 +425,7 @@ void OPM_FillBox_c(OPM_struct *pixel_map, int x, int y, unsigned int width, unsi
     }
 }
 
-void OPM_CopyGFXOPM_c(OPM_struct *pixel_map, GFX_struct *gfx, int pos_x, int pos_y, uint8_t value_add)
+void CCALL OPM_CopyGFXOPM_c(OPM_struct *pixel_map, GFX_struct *gfx, int pos_x, int pos_y, uint8_t value_add)
 {
     int clip_x, clip_y, clip_endx, clip_endy;
     int dst_x, dst_y, dst_width, dst_height;
@@ -528,7 +528,7 @@ void OPM_CopyGFXOPM_c(OPM_struct *pixel_map, GFX_struct *gfx, int pos_x, int pos
     pixel_map->flags |= BBOPM_MODIFIED;
 }
 
-void OPM_CopyOPMOPM_c(OPM_struct *src_pixel_map, OPM_struct *dst_pixel_map, int src_x, int src_y, int copy_width, int copy_height, int dst_x, int dst_y)
+void CCALL OPM_CopyOPMOPM_c(OPM_struct *src_pixel_map, OPM_struct *dst_pixel_map, int src_x, int src_y, int copy_width, int copy_height, int dst_x, int dst_y)
 {
     int clip_x, clip_y, clip_endx, clip_endy;
     int src_add_x, src_add_y, src_width, src_height;
@@ -690,7 +690,7 @@ void OPM_CopyOPMOPM_c(OPM_struct *src_pixel_map, OPM_struct *dst_pixel_map, int 
     dst_pixel_map->flags |= BBOPM_MODIFIED;
 }
 
-void OPM_AccessBitmap_c(OPM_struct *pixel_map)
+void CCALL OPM_AccessBitmap_c(OPM_struct *pixel_map)
 {
     uint8_t *ptr;
     uint8_t value;

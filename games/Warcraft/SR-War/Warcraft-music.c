@@ -108,7 +108,7 @@ static int ActivateSequence(AIL_sequence *S)
 }
 
 
-AIL_sequence *Game_AIL_allocate_sequence_handle(void *mdi)
+AIL_sequence * CCALL Game_AIL_allocate_sequence_handle(void *mdi)
 {
     AIL_sequence *ret;
 
@@ -151,7 +151,7 @@ AIL_sequence *Game_AIL_allocate_sequence_handle(void *mdi)
 #undef ORIG_SEQUENCE_SIZE
 }
 
-void Game_AIL_release_sequence_handle(AIL_sequence *S)
+void CCALL Game_AIL_release_sequence_handle(AIL_sequence *S)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_release_sequence_handle: 0x%" PRIxPTR "\n", (uintptr_t) S);
@@ -185,7 +185,7 @@ void Game_AIL_release_sequence_handle(AIL_sequence *S)
     x86_free(S);
 }
 
-int32_t Game_AIL_init_sequence(AIL_sequence *S, void *start, int32_t sequence_num)
+int32_t CCALL Game_AIL_init_sequence(AIL_sequence *S, void *start, int32_t sequence_num)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_init_sequence: 0x%" PRIxPTR ", 0x%" PRIxPTR ", %i\n", (uintptr_t) S, (uintptr_t) start, sequence_num);
@@ -215,7 +215,7 @@ int32_t Game_AIL_init_sequence(AIL_sequence *S, void *start, int32_t sequence_nu
     return 1;
 }
 
-void Game_AIL_start_sequence(AIL_sequence *S)
+void CCALL Game_AIL_start_sequence(AIL_sequence *S)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_start_sequence: 0x%" PRIxPTR "\n", (uintptr_t) S);
@@ -293,7 +293,7 @@ void Game_AIL_start_sequence(AIL_sequence *S)
     S->status = STATUS_PLAYING;
 }
 
-void Game_AIL_stop_sequence(AIL_sequence *S)
+void CCALL Game_AIL_stop_sequence(AIL_sequence *S)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_stop_sequence: 0x%" PRIxPTR "\n", (uintptr_t) S);
@@ -323,7 +323,7 @@ void Game_AIL_stop_sequence(AIL_sequence *S)
     }
 }
 
-void Game_AIL_resume_sequence(AIL_sequence *S)
+void CCALL Game_AIL_resume_sequence(AIL_sequence *S)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_resume_sequence: 0x%" PRIxPTR "\n", (uintptr_t) S);
@@ -391,7 +391,7 @@ void Game_AIL_resume_sequence(AIL_sequence *S)
     }
 }
 
-void Game_AIL_end_sequence(AIL_sequence *S)
+void CCALL Game_AIL_end_sequence(AIL_sequence *S)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_end_sequence: 0x%" PRIxPTR "\n", (uintptr_t) S);
@@ -420,7 +420,7 @@ void Game_AIL_end_sequence(AIL_sequence *S)
     S->status = STATUS_STOPPED;
 }
 
-void Game_AIL_set_sequence_volume(AIL_sequence *S, int32_t volume, int32_t ms)
+void CCALL Game_AIL_set_sequence_volume(AIL_sequence *S, int32_t volume, int32_t ms)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_set_sequence_volume: 0x%" PRIxPTR ", %i, %i\n", (uintptr_t) S, volume, ms);
@@ -448,7 +448,7 @@ void Game_AIL_set_sequence_volume(AIL_sequence *S, int32_t volume, int32_t ms)
     }
 }
 
-void Game_AIL_set_sequence_loop_count(AIL_sequence *S, int32_t loop_count)
+void CCALL Game_AIL_set_sequence_loop_count(AIL_sequence *S, int32_t loop_count)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_set_sequence_loop_count: 0x%" PRIxPTR ", %i\n", (uintptr_t) S, loop_count);
@@ -482,7 +482,7 @@ void Game_AIL_set_sequence_loop_count(AIL_sequence *S, int32_t loop_count)
 #define SEQ_PLAYINGBUTRELEASED 0x0010 // Sequence is playing, but MIDI handle
                                       // has been temporarily released
 
-uint32_t Game_AIL_sequence_status(AIL_sequence *S)
+uint32_t CCALL Game_AIL_sequence_status(AIL_sequence *S)
 {
     if (S == NULL) return SEQ_FREE;
 

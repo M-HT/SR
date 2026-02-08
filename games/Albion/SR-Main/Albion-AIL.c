@@ -25,7 +25,6 @@
 #if defined(__DEBUG__)
 #include <inttypes.h>
 #endif
-#include "Game_defs.h"
 #include "Game_vars.h"
 #include "Albion-AIL.h"
 
@@ -44,7 +43,7 @@ extern uint8_t AIL_error[256];
 
 
 
-void *Game_AIL_mem_use_malloc(void * (*fn)(uint32_t))
+void * CCALL Game_AIL_mem_use_malloc(void * (*fn)(uint32_t))
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_mem_use_malloc: 0x%" PRIxPTR "\n", (uintptr_t) fn);
@@ -52,7 +51,7 @@ void *Game_AIL_mem_use_malloc(void * (*fn)(uint32_t))
     return NULL;
 }
 
-void *Game_AIL_mem_use_free(void (*fn)(void *))
+void * CCALL Game_AIL_mem_use_free(void (*fn)(void *))
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_mem_use_free: 0x%" PRIxPTR "\n", (uintptr_t) fn);
@@ -60,7 +59,7 @@ void *Game_AIL_mem_use_free(void (*fn)(void *))
     return NULL;
 }
 
-void Game_AIL_startup(void)
+void CCALL Game_AIL_startup(void)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_startup\n");
@@ -68,7 +67,7 @@ void Game_AIL_startup(void)
     AIL_error[0] = 0;
 }
 
-int32_t Game_AIL_register_timer(void (*callback_fn)(uint32_t user))
+int32_t CCALL Game_AIL_register_timer(void (*callback_fn)(uint32_t user))
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_register_timer: 0x%" PRIxPTR "\n", (uintptr_t) callback_fn);
@@ -76,14 +75,14 @@ int32_t Game_AIL_register_timer(void (*callback_fn)(uint32_t user))
     return 1;
 }
 
-void Game_AIL_set_timer_frequency(int32_t timer, uint32_t hertz)
+void CCALL Game_AIL_set_timer_frequency(int32_t timer, uint32_t hertz)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_set_timer_frequency: %i - %i\n", timer, hertz);
 #endif
 }
 
-void Game_AIL_start_timer(int32_t timer)
+void CCALL Game_AIL_start_timer(int32_t timer)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_start_timer: %i\n", timer);
@@ -91,7 +90,7 @@ void Game_AIL_start_timer(int32_t timer)
     Game_InterruptTable[8] = (intptr_t)-1;
 }
 
-void Game_AIL_stop_timer(int32_t timer)
+void CCALL Game_AIL_stop_timer(int32_t timer)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_stop_timer: %i\n", timer);
@@ -99,28 +98,28 @@ void Game_AIL_stop_timer(int32_t timer)
     Game_InterruptTable[8] = 0;
 }
 
-void Game_AIL_release_timer_handle(int32_t timer)
+void CCALL Game_AIL_release_timer_handle(int32_t timer)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_release_timer_handle: %i\n", timer);
 #endif
 }
 
-void Game_AIL_shutdown(void)
+void CCALL Game_AIL_shutdown(void)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_shutdown\n");
 #endif
 }
 
-void Game_AIL_set_GTL_filename_prefix(const char *prefix)
+void CCALL Game_AIL_set_GTL_filename_prefix(const char *prefix)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_set_GTL_filename_prefix: %s\n", prefix);
 #endif
 }
 
-int32_t Game_AIL_install_MDI_INI(void *mdi)
+int32_t CCALL Game_AIL_install_MDI_INI(void *mdi)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_install_MDI_INI: 0x%" PRIxPTR "\n", (uintptr_t) mdi);
@@ -128,7 +127,7 @@ int32_t Game_AIL_install_MDI_INI(void *mdi)
     return (Game_Music)?0:1;
 }
 
-int32_t  Game_AIL_set_preference(uint32_t number, int32_t value)
+int32_t CCALL Game_AIL_set_preference(uint32_t number, int32_t value)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_set_preference: 0x%x - %i\n", number, value);
@@ -162,7 +161,7 @@ number:
 */
 }
 
-int32_t Game_AIL_install_DIG_INI(void *dig)
+int32_t CCALL Game_AIL_install_DIG_INI(void *dig)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_install_DIG_INI: 0x%" PRIxPTR "\n", (uintptr_t) dig);
@@ -170,14 +169,14 @@ int32_t Game_AIL_install_DIG_INI(void *dig)
     return (Game_Sound)?0:1;
 }
 
-void Game_AIL_uninstall_DIG_driver(void *dig)
+void CCALL Game_AIL_uninstall_DIG_driver(void *dig)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_uninstall_DIG_driver: 0x%" PRIxPTR "\n", (uintptr_t) dig);
 #endif
 }
 
-void Game_AIL_uninstall_MDI_driver(void *mdi)
+void CCALL Game_AIL_uninstall_MDI_driver(void *mdi)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "AIL_uninstall_MDI_driver: 0x%" PRIxPTR "\n", (uintptr_t) mdi);

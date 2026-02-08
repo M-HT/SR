@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2019 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,6 +25,8 @@
 #if !defined(_WARCRAFT_INT_H_INCLUDED_)
 #define _WARCRAFT_INT_H_INCLUDED_
 
+#include "Game_defs.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,7 +44,7 @@ typedef struct {
     const Game_register _eip;
 } _cpu_regs;
 
-extern void X86_InterruptProcedure(
+extern void CCALL X86_InterruptProcedure(
     const uint8_t IntNum,
     _cpu_regs *regs
 );

@@ -957,7 +957,7 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
 #ifdef __cplusplus
 extern "C"
 #endif
-void Game_save_screenshot(const char *filename)
+void CCALL Game_save_screenshot(const char *filename)
 {
     uint8_t *screenshot_src, *buffer, *curptr, *chunk_size_ptr[2];
     uint32_t *buf_scaled;

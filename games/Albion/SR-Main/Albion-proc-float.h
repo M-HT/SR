@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,27 +25,29 @@
 #if !defined(_ALBION_PROC_FLOAT_H_INCLUDED_)
 #define _ALBION_PROC_FLOAT_H_INCLUDED_
 
+#include "Game_defs.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern void Game_FloatProcSin(int32_t *ValuePtr);
-extern void Game_FloatProcSin2(int32_t *ValuePtr);
-extern void Game_FloatProcSin3(int32_t *ValuePtr);
-extern void Game_FloatProcSin4(int32_t *ValuePtr);
-extern void Game_FloatProcCos(int32_t *ValuePtr);
-extern void Game_FloatProcCos2(int32_t *ValuePtr);
-extern void Game_FloatProcSqrt(int32_t *ValuePtr);
-extern void Game_FloatProcSqrt2(int32_t *ValuePtr);
-extern void Game_FloatProcSqrt3(int32_t *ValuePtr);
-extern void Game_FloatProcSqrt4(int32_t *ValuePtr);
-extern void Game_FloatProcSqrt5(int32_t *ValuePtr);
-extern void Game_FloatProcSqrt6(int32_t *ValuePtr);
-extern void Game_FloatProcSqrt7(int32_t *ValuePtr);
-extern void Game_FloatProcSqrt8(int32_t *ValuePtr);
-extern void Game_FloatProcCosSin(int32_t *ValuePtr);
-extern void Game_FloatProcAtan(int32_t *ValuePtr);
-extern void Game_FloatProcSinCos(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcSin(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcSin2(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcSin3(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcSin4(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcCos(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcCos2(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcSqrt(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcSqrt2(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcSqrt3(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcSqrt4(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcSqrt5(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcSqrt6(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcSqrt7(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcSqrt8(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcCosSin(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcAtan(int32_t *ValuePtr);
+extern void CCALL Game_FloatProcSinCos(int32_t *ValuePtr);
 
 #ifdef __cplusplus
 }

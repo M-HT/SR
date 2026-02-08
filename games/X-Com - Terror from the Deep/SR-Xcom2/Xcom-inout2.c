@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -23,7 +23,6 @@
  */
 
 #include <stdio.h>
-#include "Game_defs.h"
 #include "Game_vars.h"
 #include "Xcom-inout2.h"
 #include "Game_thread.h"
@@ -31,7 +30,7 @@
 
 static uint32_t palette_index, color_index;
 
-uint32_t Game_inp(const uint32_t port)
+uint32_t CCALL Game_inp(const uint32_t port)
 {
 #if defined(__DEBUG__)
 	fprintf(stderr, "in2 0x%x\n", port & 0xffff);
@@ -76,7 +75,7 @@ uint32_t Game_inp(const uint32_t port)
 	return 0;
 }
 
-uint32_t Game_outp(const uint32_t port, const uint32_t value)
+uint32_t CCALL Game_outp(const uint32_t port, const uint32_t value)
 {
 #if defined(__DEBUG__)
 	fprintf(stderr, "out2 0x%x\n", port & 0xffff);

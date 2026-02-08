@@ -50,7 +50,7 @@ typedef union {
 #define eprintf(...) fprintf(stderr,__VA_ARGS__)
 
 
-void *_alloca_probe_c(uint32_t size)
+void * CCALL _alloca_probe_c(uint32_t size)
 {
 #ifdef DEBUG_CLIB
     eprintf("_alloca_probe: %i\n", size);
@@ -71,7 +71,7 @@ void *_alloca_probe_c(uint32_t size)
 }
 
 
-uint64_t _aulldiv_c(uint64_t x, uint64_t y)
+uint64_t CCALL _aulldiv_c(uint64_t x, uint64_t y)
 {
 #ifdef DEBUG_CLIB
     eprintf("_aulldiv: 0x%x%x, 0x%x%x\n", (uint32_t) (x >> 32), (uint32_t) x, (uint32_t) (y >> 32), (uint32_t) y);
@@ -80,7 +80,7 @@ uint64_t _aulldiv_c(uint64_t x, uint64_t y)
     return x / y;
 }
 
-int64_t _alldiv_c(int64_t x, int64_t y)
+int64_t CCALL _alldiv_c(int64_t x, int64_t y)
 {
 #ifdef DEBUG_CLIB
     eprintf("_alldiv: 0x%x%x, 0x%x%x\n", (uint32_t) (x >> 32), (uint32_t) x, (uint32_t) (y >> 32), (uint32_t) y);
@@ -89,7 +89,7 @@ int64_t _alldiv_c(int64_t x, int64_t y)
     return x / y;
 }
 
-uint64_t _time64_c(uint64_t *t64)
+uint64_t CCALL _time64_c(uint64_t *t64)
 {
     time_t t;
 
@@ -107,7 +107,7 @@ uint64_t _time64_c(uint64_t *t64)
 }
 
 
-int32_t _ftol2_sse_c(double *num)
+int32_t CCALL _ftol2_sse_c(double *num)
 {
 #if defined(__SSE2__)
     return _mm_cvttsd_si32(_mm_load1_pd(num));
@@ -151,7 +151,7 @@ int32_t _ftol2_sse_c(double *num)
 #endif
 }
 
-int64_t _ftol2_c(double *num)
+int64_t CCALL _ftol2_c(double *num)
 {
 #if defined(_MSC_VER) && _MSC_VER < 1800
     return (int64_t) *num;
@@ -163,7 +163,7 @@ int64_t _ftol2_c(double *num)
 #endif
 }
 
-int64_t _ftol_c(double *num)
+int64_t CCALL _ftol_c(double *num)
 {
 #if defined(_MSC_VER) && _MSC_VER < 1800
     return (int64_t) *num;
@@ -176,37 +176,37 @@ int64_t _ftol_c(double *num)
 }
 
 
-void _CIcos_c(double *num)
+void CCALL _CIcos_c(double *num)
 {
     *num = cos(*num);
 }
 
-void _CIsin_c(double *num)
+void CCALL _CIsin_c(double *num)
 {
     *num = sin(*num);
 }
 
-void _CIatan2_c(double *nums)
+void CCALL _CIatan2_c(double *nums)
 {
     nums[0] = atan2(nums[1], nums[0]);
 }
 
-void _CIsqrt_c(double *num)
+void CCALL _CIsqrt_c(double *num)
 {
     *num = sqrt(*num);
 }
 
-void _CIfmod_c(double *nums)
+void CCALL _CIfmod_c(double *nums)
 {
     nums[0] = fmod(nums[1], nums[0]);
 }
 
-void _CItan_c(double *num)
+void CCALL _CItan_c(double *num)
 {
     *num = tan(*num);
 }
 
-void _CIpow_c(double *nums)
+void CCALL _CIpow_c(double *nums)
 {
     nums[0] = pow(nums[1], nums[0]);
 }

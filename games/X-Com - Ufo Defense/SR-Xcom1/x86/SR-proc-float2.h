@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,12 +25,14 @@
 #if !defined(_SR_PROC_FLOAT2_H_INCLUDED_)
 #define _SR_PROC_FLOAT2_H_INCLUDED_
 
+#include "../Game_defs.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern void Game_acos2(double *x);
-extern void Game_asin2(double *x);
+extern void CCALL Game_acos2(double *x);
+extern void CCALL Game_asin2(double *x);
 
 #ifdef __cplusplus
 }

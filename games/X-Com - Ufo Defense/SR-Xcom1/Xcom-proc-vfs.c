@@ -31,7 +31,6 @@
 #else
 #include <unistd.h>
 #endif
-#include "Game_defs.h"
 #include "Game_vars.h"
 #include "Xcom-proc-vfs.h"
 #include "Xcom-proc.h"
@@ -41,7 +40,7 @@
 #include "Game_memory.h"
 
 
-int32_t Game_dopen(const char *path, const char *mode)
+int32_t CCALL Game_dopen(const char *path, const char *mode)
 {
     char temp_str[MAX_PATH];
     int ret;
@@ -80,7 +79,7 @@ int32_t Game_dopen(const char *path, const char *mode)
     return ret;
 }
 
-void *Game_fopen(const char *filename, const char *mode)
+void * CCALL Game_fopen(const char *filename, const char *mode)
 {
     char temp_str[MAX_PATH];
     FILE *fp;

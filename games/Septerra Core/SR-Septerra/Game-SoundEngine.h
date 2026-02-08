@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2022 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,6 +26,7 @@
 #define _GAME_SOUNDENGINE_H_INCLUDED_
 
 #include "ptr32.h"
+#include "platform.h"
 
 struct _SE_struc_4;
 struct _SE_struc_9;
@@ -34,10 +35,10 @@ struct _SE_struc_9;
 extern "C" {
 #endif
 
-uint32_t SoundEngine_StartTimer(void);
-void SoundEngine_StopTimer(uint32_t uTimerID);
-void SoundEngine_DecodeMP3Stream(struct _SE_struc_4 *struc4);
-void SoundEngine_OpenMP3Stream(struct _SE_struc_9 *struc9);
+uint32_t CCALL SoundEngine_StartTimer(void);
+void CCALL SoundEngine_StopTimer(uint32_t uTimerID);
+void CCALL SoundEngine_DecodeMP3Stream(struct _SE_struc_4 *struc4);
+void CCALL SoundEngine_OpenMP3Stream(struct _SE_struc_9 *struc9);
 
 #ifdef __cplusplus
 }

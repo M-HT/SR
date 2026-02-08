@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -27,7 +27,7 @@
 #include "llasm_cpu.h"
 
 
-EXTERNC void x86_div_64_64(CPU, uint32_t *div)
+EXTERNC void CCALL x86_div_64_64(CPU, uint32_t *div)
 {
     uint64_t dividend, divisor, result;
 
@@ -40,7 +40,7 @@ EXTERNC void x86_div_64_64(CPU, uint32_t *div)
     edx = (uint32_t) (result >> 32);
 }
 
-EXTERNC void x86_div_64(CPU, uint32_t divisor)
+EXTERNC void CCALL x86_div_64(CPU, uint32_t divisor)
 {
     if (edx != 0)
     {
@@ -59,7 +59,7 @@ EXTERNC void x86_div_64(CPU, uint32_t divisor)
 }
 
 
-EXTERNC void x86_div_32(CPU, uint32_t divisor)
+EXTERNC void CCALL x86_div_32(CPU, uint32_t divisor)
 {
     uint32_t dividend, quotient, remainder;
 
@@ -73,7 +73,7 @@ EXTERNC void x86_div_32(CPU, uint32_t divisor)
 }
 
 
-EXTERNC void x86_div_16(CPU, uint32_t divisor)
+EXTERNC void CCALL x86_div_16(CPU, uint32_t divisor)
 {
     uint16_t dividend;
     uint32_t quotient, remainder;
@@ -87,7 +87,7 @@ EXTERNC void x86_div_16(CPU, uint32_t divisor)
 }
 
 
-EXTERNC void x86_idiv_64_64(CPU, uint32_t *div)
+EXTERNC void CCALL x86_idiv_64_64(CPU, uint32_t *div)
 {
     int64_t dividend, divisor, result;
 
@@ -100,7 +100,7 @@ EXTERNC void x86_idiv_64_64(CPU, uint32_t *div)
     edx = (uint32_t) (result >> 32);
 }
 
-EXTERNC void x86_idiv_64(CPU, int32_t divisor)
+EXTERNC void CCALL x86_idiv_64(CPU, int32_t divisor)
 {
     if ((int32_t)edx != (((int32_t)eax) >> 31))
     {
@@ -119,7 +119,7 @@ EXTERNC void x86_idiv_64(CPU, int32_t divisor)
 }
 
 
-EXTERNC void x86_idiv_32(CPU, int32_t divisor)
+EXTERNC void CCALL x86_idiv_32(CPU, int32_t divisor)
 {
     int32_t dividend, quotient, remainder;
 
@@ -133,7 +133,7 @@ EXTERNC void x86_idiv_32(CPU, int32_t divisor)
 }
 
 
-EXTERNC void x86_idiv_16(CPU, int32_t divisor)
+EXTERNC void CCALL x86_idiv_16(CPU, int32_t divisor)
 {
     int16_t dividend;
     int32_t quotient, remainder;

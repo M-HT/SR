@@ -1638,7 +1638,7 @@ SMK_exit1:
 }
 
 
-void SMK_ShowMenu(void)
+void CCALL SMK_ShowMenu(void)
 {
     if (!firstMenu) return;
 
@@ -1649,12 +1649,12 @@ void SMK_ShowMenu(void)
     play_smk("INTRO.SMK");
 }
 
-void SMK_PlayIntro(void)
+void CCALL SMK_PlayIntro(void)
 {
     play_smk("INTRO.SMK");
 }
 
-void SMK_PlayCredits(void)
+void CCALL SMK_PlayCredits(void)
 {
     play_smk("CREDITS.SMK");
 }

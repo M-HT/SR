@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -1263,7 +1263,7 @@ static void deinitialize_queue(void)
 #endif
 
 
-static int play(void const *midibuffer, long int size, int loop_count)
+static int MIDI_PLUGIN2_API play(void const *midibuffer, long int size, int loop_count)
 {
     if (midibuffer == NULL) return -1;
     if (size <= 0) return -2;
@@ -1362,7 +1362,7 @@ static int play(void const *midibuffer, long int size, int loop_count)
     return 0;
 }
 
-static int pause(void)
+static int MIDI_PLUGIN2_API pause(void)
 {
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 	if (hStream == NULL) return -1;
@@ -1430,7 +1430,7 @@ static int pause(void)
     return 0;
 }
 
-static int resume(void)
+static int MIDI_PLUGIN2_API resume(void)
 {
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 	if (hStream == NULL) return -1;
@@ -1461,7 +1461,7 @@ static int resume(void)
     return 0;
 }
 
-static int halt(void)
+static int MIDI_PLUGIN2_API halt(void)
 {
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 	if (hStream == NULL) return -1;
@@ -1473,7 +1473,7 @@ static int halt(void)
     return 0;
 }
 
-static int set_volume(unsigned char volume) // volume = 0 - 127
+static int MIDI_PLUGIN2_API set_volume(unsigned char volume) // volume = 0 - 127
 {
     if (volume > 127) volume = 127;
 
@@ -1487,7 +1487,7 @@ static int set_volume(unsigned char volume) // volume = 0 - 127
     return 0;
 }
 
-static int set_loop_count(int loop_count) // -1 = unlimited
+static int MIDI_PLUGIN2_API set_loop_count(int loop_count) // -1 = unlimited
 {
     if (loop_count < -1) loop_count = -1;
 
@@ -1502,7 +1502,7 @@ static int set_loop_count(int loop_count) // -1 = unlimited
     return 0;
 }
 
-static void shutdown_plugin(void)
+static void MIDI_PLUGIN2_API shutdown_plugin(void)
 {
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 	if (hNotificationInstance != NULL)
@@ -1600,7 +1600,7 @@ static void shutdown_plugin(void)
 
 
 EXPORT
-int initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plugin2_functions *functions)
+int MIDI_PLUGIN2_API initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plugin2_functions *functions)
 {
     if (functions == NULL) return -3;
 

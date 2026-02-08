@@ -45,7 +45,7 @@
 #include "Game_thread.h"
 
 
-int32_t Game_errno(void)
+int32_t CCALL Game_errno(void)
 {
     int err;
 
@@ -64,7 +64,7 @@ void Game_Set_errno_error(int errornum)
     errno_val = (errornum >= 0 && errornum < 256)?(errno_rtable[errornum]):(errornum);
 }
 
-char *Game_ctime2(const int32_t *timep, char *buf, int32_t max)
+char * CCALL Game_ctime2(const int32_t *timep, char *buf, int32_t max)
 {
     time_t t2;
 
@@ -95,30 +95,30 @@ static int32_t Game_fclose2(void *stream)
     return ret;
 }
 
-int32_t Game_fclose(void *stream)
+int32_t CCALL Game_fclose(void *stream)
 {
     Game_list_remove(&Game_FopenList, (uintptr_t)stream);
 
     return Game_fclose2(stream);
 }
 
-int32_t Game_fcloseall(void)
+int32_t CCALL Game_fcloseall(void)
 {
     Game_list_clear(&Game_FopenList, (void (*)(uintptr_t)) &Game_fclose2);
     return 0;
 }
 
-int32_t Game_fputs(const char *s, void *stream)
+int32_t CCALL Game_fputs(const char *s, void *stream)
 {
     return fputs(s, (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
 }
 
-char *Game_fgets(char *s, int32_t size, void *stream)
+char * CCALL Game_fgets(char *s, int32_t size, void *stream)
 {
     return fgets(s, size, (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
 }
 
-int32_t Game_ftime(watcom_timeb *tp)
+int32_t CCALL Game_ftime(watcom_timeb *tp)
 {
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     struct timeb tb;
@@ -143,12 +143,12 @@ int32_t Game_ftime(watcom_timeb *tp)
     return 0;
 }
 
-uint32_t Game_dos_getvect(const int32_t intnum)
+uint32_t CCALL Game_dos_getvect(const int32_t intnum)
 {
     return Game_InterruptTable[intnum & 0xff];
 }
 
-void Game_dos_setvect(const int32_t intnum, const uint32_t handler_low, const uint32_t handler_high)
+void CCALL Game_dos_setvect(const int32_t intnum, const uint32_t handler_low, const uint32_t handler_high)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "Setting interrupt vector: %i\n", intnum & 0xff);
@@ -157,7 +157,7 @@ void Game_dos_setvect(const int32_t intnum, const uint32_t handler_low, const ui
     Game_InterruptTable[intnum & 0xff] = handler_low;
 }
 
-void Game_Sync(void)
+void CCALL Game_Sync(void)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "sync\n");
@@ -170,7 +170,7 @@ void Game_Sync(void)
 }
 
 static void Game_WaitVerticalRetraceTicks(const int32_t ticks);
-void Game_WaitTimerTicks(const int32_t ticks)
+void CCALL Game_WaitTimerTicks(const int32_t ticks)
 {
     Game_WaitVerticalRetraceTicks(ticks);
 }
@@ -203,7 +203,7 @@ static void Game_WaitVerticalRetraceTicks(const int32_t ticks)
 
 }
 
-void Game_WaitAfterVerticalRetrace(void)
+void CCALL Game_WaitAfterVerticalRetrace(void)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "WaitAfterVerticalRetrace\n");
@@ -212,7 +212,7 @@ void Game_WaitAfterVerticalRetrace(void)
     Game_WaitVerticalRetraceTicks(0);
 }
 
-void Game_WaitForVerticalRetrace(void)
+void CCALL Game_WaitForVerticalRetrace(void)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "WaitForVerticalRetrace\n");
@@ -221,7 +221,7 @@ void Game_WaitForVerticalRetrace(void)
     Game_WaitVerticalRetraceTicks(1);
 }
 
-void Game_WaitAfter2ndVerticalRetrace(void)
+void CCALL Game_WaitAfter2ndVerticalRetrace(void)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "WaitAfter2ndVerticalRetrace\n");
@@ -230,7 +230,7 @@ void Game_WaitAfter2ndVerticalRetrace(void)
     Game_WaitVerticalRetraceTicks(1);
 }
 
-void Game_WaitFor2ndVerticalRetrace(void)
+void CCALL Game_WaitFor2ndVerticalRetrace(void)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "WaitFor2ndVerticalRetrace\n");
@@ -245,7 +245,7 @@ void Game_WaitFor2ndVerticalRetrace(void)
 #define WATCOM_MAX_FNAME   9  /* maximum length of file name component */
 #define WATCOM_MAX_EXT     5  /* maximum length of extension component */
 
-void Game_splitpath(const char *path, char *drive, char *dir, char *fname, char *ext)
+void CCALL Game_splitpath(const char *path, char *drive, char *dir, char *fname, char *ext)
 {
     char *firstcolon;
     char *lastslash;

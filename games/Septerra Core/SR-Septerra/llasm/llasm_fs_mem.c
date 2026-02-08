@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -30,20 +30,20 @@
 extern "C" {
 #endif
 
-uint32_t X86_ReadFsDword(uint32_t addr);
-void X86_WriteFsDword(uint32_t addr, uint32_t value);
+extern uint32_t CCALL X86_ReadFsDword(uint32_t addr);
+extern void CCALL X86_WriteFsDword(uint32_t addr, uint32_t value);
 
 #ifdef __cplusplus
 }
 #endif
 
 
-EXTERNC uint32_t x86_read_fs_dword(uint32_t address)
+EXTERNC uint32_t CCALL x86_read_fs_dword(uint32_t address)
 {
     return X86_ReadFsDword(address);
 }
 
-EXTERNC void x86_write_fs_dword(uint32_t address, uint32_t value)
+EXTERNC void CCALL x86_write_fs_dword(uint32_t address, uint32_t value)
 {
     X86_WriteFsDword(address, value);
 }

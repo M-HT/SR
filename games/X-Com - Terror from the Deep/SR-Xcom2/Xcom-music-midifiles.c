@@ -66,7 +66,7 @@ const static struct {
 extern "C" {
 #endif
 
-extern int Game_ReadSong(const char *catalog_name, int index, uint8_t *buf);
+extern int CCALL Game_ReadSong(const char *catalog_name, int index, uint8_t *buf);
 
 #ifdef __cplusplus
 }
@@ -110,7 +110,7 @@ static int Game_FindMidiFile(int index, uint8_t *buf)
     return 1;
 }
 
-int Game_ReadSong(const char *catalog_name, int index, uint8_t *buf)
+int CCALL Game_ReadSong(const char *catalog_name, int index, uint8_t *buf)
 {
     void *stream;
     FILE *f;

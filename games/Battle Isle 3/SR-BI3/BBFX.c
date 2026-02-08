@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2025 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -86,7 +86,7 @@ static void FX_StopPlaying_c(void)
     }
 }
 
-int FX_Init_c(void)
+int CCALL FX_Init_c(void)
 {
     int index;
 
@@ -109,7 +109,7 @@ int FX_Init_c(void)
     return 1;
 }
 
-void FX_Exit_c(void)
+void CCALL FX_Exit_c(void)
 {
     int index;
 
@@ -133,7 +133,7 @@ void FX_Exit_c(void)
     FX_deviceReserved = 0;
 }
 
-int FX_ReserveDevices_c(int reserve)
+int CCALL FX_ReserveDevices_c(int reserve)
 {
     WAVEOUTCAPS caps;
     int index;
@@ -224,7 +224,7 @@ int FX_ReserveDevices_c(int reserve)
     }
 }
 
-int FX_ReadLib_c(const char *path)
+int CCALL FX_ReadLib_c(const char *path)
 {
     int index;
 
@@ -247,7 +247,7 @@ int FX_ReadLib_c(const char *path)
     return index;
 }
 
-void FX_FreeLib_c(int lib_handle)
+void CCALL FX_FreeLib_c(int lib_handle)
 {
     if ((lib_handle >= 0) && (lib_handle < 128))
     {
@@ -259,7 +259,7 @@ void FX_FreeLib_c(int lib_handle)
     }
 }
 
-void FX_StopAllSamples_c(void)
+void CCALL FX_StopAllSamples_c(void)
 {
     if (FX_waveOpened)
     {
@@ -367,7 +367,7 @@ static VOID CALLBACK FX_TimerFunc(HWND a1, UINT a2, UINT_PTR a3, DWORD a4)
     FX_inTimer = 0;
 }
 
-int FX_PlaySample_c(int lib_handle, int sample_number, int priority, int volume, int times_play)
+int CCALL FX_PlaySample_c(int lib_handle, int sample_number, int priority, int volume, int times_play)
 {
     uint8_t *library, *entries;
     unsigned int num_samples, size, sample_offset;
@@ -486,7 +486,7 @@ int FX_PlaySample_c(int lib_handle, int sample_number, int priority, int volume,
     return FX_playingSamples[free_sample].ID;
 }
 
-void FX_SetVolume_c(unsigned int volume)
+void CCALL FX_SetVolume_c(unsigned int volume)
 {
     if (!FX_deviceReserved)
     {
@@ -498,7 +498,7 @@ void FX_SetVolume_c(unsigned int volume)
     FX_outputEnabled = (volume != 0)?1:0;
 }
 
-int FM_IsError_c(void)
+int CCALL FM_IsError_c(void)
 {
     return 0;
 }

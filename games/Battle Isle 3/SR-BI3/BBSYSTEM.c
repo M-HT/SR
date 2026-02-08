@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -38,7 +38,7 @@ static int SYSTEM_initialized = 0;
 static unsigned int SYSTEM_tickBase;
 
 
-void SYSTEM_SetInitValues_c(int type, const char *value)
+void CCALL SYSTEM_SetInitValues_c(int type, const char *value)
 {
     if (type == 0)
     {
@@ -52,7 +52,7 @@ void SYSTEM_SetInitValues_c(int type, const char *value)
     }
 }
 
-void SYSTEM_SystemTask_c(void)
+void CCALL SYSTEM_SystemTask_c(void)
 {
     MSG msg;
 
@@ -66,7 +66,7 @@ void SYSTEM_SystemTask_c(void)
     AVI_SystemTask_c();
 }
 
-int SYSTEM_Init_c(void)
+int CCALL SYSTEM_Init_c(void)
 {
     unsigned int platform;
     DWORD version;
@@ -100,7 +100,7 @@ int SYSTEM_Init_c(void)
     return 1;
 }
 
-void SYSTEM_Exit_c(void)
+void CCALL SYSTEM_Exit_c(void)
 {
     if (SYSTEM_initialized)
     {
@@ -108,17 +108,17 @@ void SYSTEM_Exit_c(void)
     }
 }
 
-unsigned int SYSTEM_GetTicks_c(void)
+unsigned int CCALL SYSTEM_GetTicks_c(void)
 {
     return (GetTickCount() - SYSTEM_tickBase) / 17;
 }
 
-int SYSTEM_IsApplicationActive_c(void)
+int CCALL SYSTEM_IsApplicationActive_c(void)
 {
     return (IsIconic((HWND)DSAWIN_GetMainWindowHandle_c()) == 0)?1:0;
 }
 
-void SYSTEM_WaitTicks_c(unsigned int ticks)
+void CCALL SYSTEM_WaitTicks_c(unsigned int ticks)
 {
     unsigned int start_ticks;
     int finish;
@@ -185,20 +185,20 @@ void SYSTEM_WaitTicks_c(unsigned int ticks)
     }
 }
 
-void SYSTEM_EnterCriticalSection_c(void)
+void CCALL SYSTEM_EnterCriticalSection_c(void)
 {
 }
 
-void SYSTEM_LeaveCriticalSection_c(void)
+void CCALL SYSTEM_LeaveCriticalSection_c(void)
 {
 }
 
-int SYSTEM_InCriticalSection_c(void)
+int CCALL SYSTEM_InCriticalSection_c(void)
 {
     return 0;
 }
 
-unsigned int SYSTEM_GetOS_c(void)
+unsigned int CCALL SYSTEM_GetOS_c(void)
 {
     return SYSTEM_OS;
 }

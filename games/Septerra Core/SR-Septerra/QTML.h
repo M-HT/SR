@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2023 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,6 +26,7 @@
 #define _QTML_H_INCLUDED_
 
 #include "ptr32.h"
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,36 +35,36 @@ extern "C" {
 // note: parameters smaller than 32 bits are extended to 32 bits by callers in the original/thunk asm code
 // note: return values smaller than 32 bits are not expected by callers in the original asm code to have been extended to 32 bits
 
-int16_t InitializeQTML_c (int32_t flag);
-void TerminateQTML_c (void);
+int16_t CCALL InitializeQTML_c (int32_t flag);
+void CCALL TerminateQTML_c (void);
 
-void *CreatePortAssociation_c (void *theWnd, void *storage, int32_t flags);
-void DestroyPortAssociation_c (void *cgp);
+void * CCALL CreatePortAssociation_c (void *theWnd, void *storage, int32_t flags);
+void CCALL DestroyPortAssociation_c (void *cgp);
 
-void SetGWorld_c (void *port, void *gdh);
-uint8_t *c2pstr_c (char *aStr);
-int16_t PtrToHand_c (const void *srcPtr, PTR32(void *)*dstHndl, int32_t size);
+void CCALL SetGWorld_c (void *port, void *gdh);
+uint8_t * CCALL c2pstr_c (char *aStr);
+int16_t CCALL PtrToHand_c (const void *srcPtr, PTR32(void *)*dstHndl, int32_t size);
 
-int16_t FSMakeFSSpec_c (int16_t vRefNum, int32_t dirID, char *fileName, void *spec);
-int16_t QTSetDDPrimarySurface_c (void *lpNewDDSurface, uint32_t flags);
-int32_t NativeEventToMacEvent_c (void *nativeEvent, void *macEvent);
+int16_t CCALL FSMakeFSSpec_c (int16_t vRefNum, int32_t dirID, char *fileName, void *spec);
+int16_t CCALL QTSetDDPrimarySurface_c (void *lpNewDDSurface, uint32_t flags);
+int32_t CCALL NativeEventToMacEvent_c (void *nativeEvent, void *macEvent);
 
-int16_t EnterMovies_c (void);
-void ExitMovies_c (void);
-void StartMovie_c (void *theMovie);
-void StopMovie_c (void *theMovie);
-uint8_t IsMovieDone_c (void *theMovie);
-void DisposeMovie_c (void *theMovie);
-int16_t OpenMovieFile_c (const void *fileSpec, int16_t *resRefNum, int8_t permission);
-int16_t CloseMovieFile_c (int16_t resRefNum);
-int16_t NewMovieFromFile_c (PTR32(void)*theMovie, int16_t resRefNum, int16_t *resId, uint8_t *resName, int16_t newMovieFlags, uint8_t *dataRefWasChanged);
-void GetMovieBox_c (void *theMovie, void *boxRect);
-void *NewMovieController_c (void *theMovie, const void *movieRect, int32_t someFlags);
-void DisposeMovieController_c (void *mc);
-int16_t QTRegisterAccessKey_c (uint8_t *accessKeyType, int32_t flags, void *accessKey);
-int16_t QTUnregisterAccessKey_c (uint8_t *accessKeyType, int32_t flags, void *accessKey);
-void *MCIsPlayerEvent_c (void *mc, const void *e);
-void *MCDoAction_c (void *mc, int16_t action, void *params);
+int16_t CCALL EnterMovies_c (void);
+void CCALL ExitMovies_c (void);
+void CCALL StartMovie_c (void *theMovie);
+void CCALL StopMovie_c (void *theMovie);
+uint8_t CCALL IsMovieDone_c (void *theMovie);
+void CCALL DisposeMovie_c (void *theMovie);
+int16_t CCALL OpenMovieFile_c (const void *fileSpec, int16_t *resRefNum, int8_t permission);
+int16_t CCALL CloseMovieFile_c (int16_t resRefNum);
+int16_t CCALL NewMovieFromFile_c (PTR32(void)*theMovie, int16_t resRefNum, int16_t *resId, uint8_t *resName, int16_t newMovieFlags, uint8_t *dataRefWasChanged);
+void CCALL GetMovieBox_c (void *theMovie, void *boxRect);
+void * CCALL NewMovieController_c (void *theMovie, const void *movieRect, int32_t someFlags);
+void CCALL DisposeMovieController_c (void *mc);
+int16_t CCALL QTRegisterAccessKey_c (uint8_t *accessKeyType, int32_t flags, void *accessKey);
+int16_t CCALL QTUnregisterAccessKey_c (uint8_t *accessKeyType, int32_t flags, void *accessKey);
+void * CCALL MCIsPlayerEvent_c (void *mc, const void *e);
+void * CCALL MCDoAction_c (void *mc, int16_t action, void *params);
 
 #ifdef __cplusplus
 }

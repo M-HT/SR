@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -31,32 +31,32 @@ extern volatile uint32_t Game_LastAudio;
 extern "C" {
 #endif
 
-extern void Game_RunTimer(void);
-extern void Game_RunTimerDelay(void);
-extern void Game_SlowDownMainLoop(void);
-extern void Game_SlowDownScrolling(void);
+extern void CCALL Game_RunTimer(void);
+extern void CCALL Game_RunTimerDelay(void);
+extern void CCALL Game_SlowDownMainLoop(void);
+extern void CCALL Game_SlowDownScrolling(void);
 
 #ifdef __cplusplus
 }
 #endif
 
 
-EXTERNC void SR_CheckTimer(void)
+EXTERNC void CCALL SR_CheckTimer(void)
 {
     if (Game_SDLTicks != Game_LastAudio) Game_RunTimer();
 }
 
-EXTERNC void SR_RunTimerDelay(void)
+EXTERNC void CCALL SR_RunTimerDelay(void)
 {
     Game_RunTimerDelay();
 }
 
-EXTERNC void SR_SlowDownMainLoop(void)
+EXTERNC void CCALL SR_SlowDownMainLoop(void)
 {
     Game_SlowDownMainLoop();
 }
 
-EXTERNC void SR_SlowDownScrolling(void)
+EXTERNC void CCALL SR_SlowDownScrolling(void)
 {
     Game_SlowDownScrolling();
 }

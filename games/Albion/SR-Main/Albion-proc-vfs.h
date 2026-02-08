@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+#include "Game_defs.h"
 
 #pragma pack(1)
 
@@ -104,18 +105,16 @@ struct watcom_find_t {
 extern "C" {
 #endif
 
-extern int32_t Game_access(const char *path, int32_t mode);
-extern char *Game_getcwd(char *buf, int32_t size);
-extern void *Game_fopen(const char *filename, const char *mode);
-extern int32_t Game_mkdir(const char *pathname);
-extern int32_t Game_unlink(const char *pathname);
-extern int32_t Game_rename(const char *oldpath, const char *newpath);
-extern struct watcom_dirent *Game_opendir(const char *dirname);
-extern struct watcom_dirent *Game_readdir(struct watcom_dirent *dirp);
-extern int32_t Game_closedir(struct watcom_dirent *dirp);
-extern uint32_t Game_dos_findfirst(const char *path, const uint32_t attributes, struct watcom_find_t *buffer);
-extern uint32_t Game_dos_findnext(struct watcom_find_t *buffer);
-extern uint32_t Game_dos_findclose(struct watcom_find_t *buffer);
+extern char * CCALL Game_getcwd(char *buf, int32_t size);
+extern void * CCALL Game_fopen(const char *filename, const char *mode);
+extern int32_t CCALL Game_unlink(const char *pathname);
+extern int32_t CCALL Game_rename(const char *oldpath, const char *newpath);
+extern struct watcom_dirent * CCALL Game_opendir(const char *dirname);
+extern struct watcom_dirent * CCALL Game_readdir(struct watcom_dirent *dirp);
+extern int32_t CCALL Game_closedir(struct watcom_dirent *dirp);
+extern uint32_t CCALL Game_dos_findfirst(const char *path, const uint32_t attributes, struct watcom_find_t *buffer);
+extern uint32_t CCALL Game_dos_findnext(struct watcom_find_t *buffer);
+extern uint32_t CCALL Game_dos_findclose(struct watcom_find_t *buffer);
 
 #ifdef __cplusplus
 }

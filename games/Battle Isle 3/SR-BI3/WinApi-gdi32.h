@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,19 +26,20 @@
 #define _WINAPI_GDI32_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void * CreateFontIndirectA_c(const void * lplf);
-uint32_t DeleteObject_c(void * ho);
-uint32_t GdiFlush_c(void);
-int32_t GetDeviceCaps_c(void * hdc, int32_t index);
-uint32_t GetTextExtentPointA_c(void * hdc, const char * lpString, int32_t c, void * lpsz);
-void * SelectObject_c(void * hdc, void * h);
-int32_t SetBkMode_c(void * hdc, int32_t mode);
-uint32_t TextOutA_c(void * hdc, int32_t x, int32_t y, const char * lpString, int32_t c);
+void * CCALL CreateFontIndirectA_c(const void * lplf);
+uint32_t CCALL DeleteObject_c(void * ho);
+uint32_t CCALL GdiFlush_c(void);
+int32_t CCALL GetDeviceCaps_c(void * hdc, int32_t index);
+uint32_t CCALL GetTextExtentPointA_c(void * hdc, const char * lpString, int32_t c, void * lpsz);
+void * CCALL SelectObject_c(void * hdc, void * h);
+int32_t CCALL SetBkMode_c(void * hdc, int32_t mode);
+uint32_t CCALL TextOutA_c(void * hdc, int32_t x, int32_t y, const char * lpString, int32_t c);
 
 #ifdef __cplusplus
 }

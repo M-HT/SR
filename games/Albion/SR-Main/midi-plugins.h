@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,6 +25,14 @@
 #if !defined(_MIDI_PLUGIN_H_INCLUDED_)
 #define _MIDI_PLUGIN_H_INCLUDED_
 
+#if defined(__GNUC__) && (defined(__i386) || (defined(__x86_64) && defined(_WIN32)))
+    #define MIDI_PLUGIN_API __attribute__ ((__cdecl__))
+#elif defined(_MSC_VER)
+    #define MIDI_PLUGIN_API __cdecl
+#else
+    #define MIDI_PLUGIN_API
+#endif
+
 typedef struct _midi_plugin_parameters_ {
     char const *timidity_cfg_path;
     char const *soundfont_path;
@@ -38,16 +46,16 @@ typedef struct _midi_plugin_parameters_ {
 } midi_plugin_parameters;
 
 typedef struct _midi_plugin_functions_ {
-    int (*set_master_volume) (unsigned char master_volume); // master_volume = 0 - 127
-    void * (*open_file) (char const *midifile);
-    void * (*open_buffer) (void const *midibuffer, long int size);
-    long int (*get_data) (void *handle, void *buffer, long int size);
-    int (*rewind_midi) (void *handle);
-    int (*close_midi) (void *handle);
-    void (*shutdown_plugin) (void);
+    int (MIDI_PLUGIN_API *set_master_volume) (unsigned char master_volume); // master_volume = 0 - 127
+    void * (MIDI_PLUGIN_API *open_file) (char const *midifile);
+    void * (MIDI_PLUGIN_API *open_buffer) (void const *midibuffer, long int size);
+    long int (MIDI_PLUGIN_API *get_data) (void *handle, void *buffer, long int size);
+    int (MIDI_PLUGIN_API *rewind_midi) (void *handle);
+    int (MIDI_PLUGIN_API *close_midi) (void *handle);
+    void (MIDI_PLUGIN_API *shutdown_plugin) (void);
 } midi_plugin_functions;
 
-typedef int (*midi_plugin_initialize)(unsigned short int rate, midi_plugin_parameters const *parameters, midi_plugin_functions *functions);
+typedef int (MIDI_PLUGIN_API *midi_plugin_initialize)(unsigned short int rate, midi_plugin_parameters const *parameters, midi_plugin_functions *functions);
 
 #define MIDI_PLUGIN_INITIALIZE "initialize_midi_plugin"
 

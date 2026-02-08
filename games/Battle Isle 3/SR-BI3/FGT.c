@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -30,7 +30,7 @@
 static DWORD LastTicks[3];
 static int TicksDelay[3];
 
-void FGT_SystemTask_End(int flushGdi)
+void CCALL FGT_SystemTask_End(int flushGdi)
 {
     MSG msg;
 
@@ -46,7 +46,7 @@ void FGT_SystemTask_End(int flushGdi)
     }
 }
 
-void FGT_CheckTicksDelay(int index)
+void CCALL FGT_CheckTicksDelay(int index)
 {
     DWORD Ticks;
 

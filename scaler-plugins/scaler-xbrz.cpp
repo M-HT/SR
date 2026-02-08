@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021-2025 Roman Pauer
+ *  Copyright (C) 2021-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -33,23 +33,23 @@
     #define EXPORT
 #endif
 
-static void scale(int factor, const void *src, void *dst, int src_width, int src_height, int y_first, int y_last)
+static void SCALER_PLUGIN_API scale(int factor, const void *src, void *dst, int src_width, int src_height, int y_first, int y_last)
 {
     xbrz::scale((size_t)factor, (const uint32_t *)src, (uint32_t *)dst, src_width, src_height, xbrz::ColorFormat::RGB, xbrz::ScalerCfg(), y_first, y_last);
 }
 
-static int get_maximum_scale_factor(void)
+static int SCALER_PLUGIN_API get_maximum_scale_factor(void)
 {
     return xbrz::SCALE_FACTOR_MAX;
 }
 
-static void shutdown_plugin(void)
+static void SCALER_PLUGIN_API shutdown_plugin(void)
 {
 }
 
 extern "C"
 EXPORT
-int initialize_scaler_plugin(scaler_plugin_functions *functions)
+int SCALER_PLUGIN_API initialize_scaler_plugin(scaler_plugin_functions *functions)
 {
     uint32_t src[8*8], dst[8*2*8*2];
     int index;

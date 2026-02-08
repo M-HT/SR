@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -80,7 +80,7 @@ static int file_exists(char const *filename)
 
 
 
-static int set_master_volume(unsigned char master_volume) // master_volume = 0 - 127
+static int MIDI_PLUGIN_API set_master_volume(unsigned char master_volume) // master_volume = 0 - 127
 {
     if (soundfont_handle == 0) return -2;
 
@@ -94,7 +94,7 @@ static int set_master_volume(unsigned char master_volume) // master_volume = 0 -
     return 0;
 }
 
-static void *open_file(char const *midifile)
+static void * MIDI_PLUGIN_API open_file(char const *midifile)
 {
     HSTREAM stream;
 
@@ -112,7 +112,7 @@ static void *open_file(char const *midifile)
     return (void *)(uintptr_t) stream;
 }
 
-static void *open_buffer(void const *midibuffer, long int size)
+static void * MIDI_PLUGIN_API open_buffer(void const *midibuffer, long int size)
 {
     HSTREAM stream;
 
@@ -131,7 +131,7 @@ static void *open_buffer(void const *midibuffer, long int size)
     return (void *)(uintptr_t) stream;
 }
 
-static long int get_data(void *handle, void *buffer, long int size)
+static long int MIDI_PLUGIN_API get_data(void *handle, void *buffer, long int size)
 {
     if (handle == NULL) return -2;
     if (buffer == NULL) return -3;
@@ -141,7 +141,7 @@ static long int get_data(void *handle, void *buffer, long int size)
     return BASS_ChannelGetData((HSTREAM)(uintptr_t)handle, buffer, size);
 }
 
-static int rewind_midi(void *handle)
+static int MIDI_PLUGIN_API rewind_midi(void *handle)
 {
     QWORD curpos;
 
@@ -158,7 +158,7 @@ static int rewind_midi(void *handle)
     return 0;
 }
 
-static int close_midi(void *handle)
+static int MIDI_PLUGIN_API close_midi(void *handle)
 {
     if (handle == NULL) return -2;
 
@@ -170,7 +170,7 @@ static int close_midi(void *handle)
     return 0;
 }
 
-static void shutdown_plugin(void)
+static void MIDI_PLUGIN_API shutdown_plugin(void)
 {
     if (soundfont_handle)
     {
@@ -182,7 +182,7 @@ static void shutdown_plugin(void)
 
 
 EXPORT
-int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const *parameters, midi_plugin_functions *functions)
+int MIDI_PLUGIN_API initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const *parameters, midi_plugin_functions *functions)
 {
     char const *soundfont_sf2;
     char *soundfont_name;

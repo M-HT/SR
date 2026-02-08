@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,22 +26,23 @@
 #define _BBSYSTEM_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void SYSTEM_SetInitValues_c(int type, const char *value);
-void SYSTEM_SystemTask_c(void);
-int SYSTEM_Init_c(void);
-void SYSTEM_Exit_c(void);
-unsigned int SYSTEM_GetTicks_c(void);
-int SYSTEM_IsApplicationActive_c(void);
-void SYSTEM_WaitTicks_c(unsigned int ticks);
-void SYSTEM_EnterCriticalSection_c(void);
-void SYSTEM_LeaveCriticalSection_c(void);
-int SYSTEM_InCriticalSection_c(void);
-unsigned int SYSTEM_GetOS_c(void);
+void CCALL SYSTEM_SetInitValues_c(int type, const char *value);
+void CCALL SYSTEM_SystemTask_c(void);
+int CCALL SYSTEM_Init_c(void);
+void CCALL SYSTEM_Exit_c(void);
+unsigned int CCALL SYSTEM_GetTicks_c(void);
+int CCALL SYSTEM_IsApplicationActive_c(void);
+void CCALL SYSTEM_WaitTicks_c(unsigned int ticks);
+void CCALL SYSTEM_EnterCriticalSection_c(void);
+void CCALL SYSTEM_LeaveCriticalSection_c(void);
+int CCALL SYSTEM_InCriticalSection_c(void);
+unsigned int CCALL SYSTEM_GetOS_c(void);
 
 #ifdef __cplusplus
 }

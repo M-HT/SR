@@ -26,40 +26,41 @@
 #define _CLIB_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void *memset_c(void *s, int32_t c, uint32_t n);
-void *memcpy_c(void *dest, const void *src, uint32_t n);
+void * CCALL memset_c(void *s, int32_t c, uint32_t n);
+void * CCALL memcpy_c(void *dest, const void *src, uint32_t n);
 
-int32_t _stricmp_c(const char *s1, const char *s2);
-char *strncpy_c(char *dest, const char *src, uint32_t n);
-int32_t strncmp_c(const char *s1, const char *s2, uint32_t n);
-char *strncat_c(char *dest, const char *src, uint32_t n);
+int32_t CCALL _stricmp_c(const char *s1, const char *s2);
+char * CCALL strncpy_c(char *dest, const char *src, uint32_t n);
+int32_t CCALL strncmp_c(const char *s1, const char *s2, uint32_t n);
+char * CCALL strncat_c(char *dest, const char *src, uint32_t n);
 
-void *malloc_c(uint32_t size);
-void free_c(void *ptr);
-void *calloc_c(uint32_t nmemb, uint32_t size);
+void * CCALL malloc_c(uint32_t size);
+void CCALL free_c(void *ptr);
+void * CCALL calloc_c(uint32_t nmemb, uint32_t size);
 
-int32_t atol_c(const char *nptr);
-int32_t toupper_c(int32_t c);
+int32_t CCALL atol_c(const char *nptr);
+int32_t CCALL toupper_c(int32_t c);
 
-int32_t sprintf2_c(char *str, const char *format, uint32_t *ap);
-int32_t sscanf2_c(const char *str, const char *format, uint32_t *ap);
+int32_t CCALL sprintf2_c(char *str, const char *format, uint32_t *ap);
+int32_t CCALL sscanf2_c(const char *str, const char *format, uint32_t *ap);
 
-int32_t system_c(const char *command);
-void srand_c(uint32_t seed);
-int32_t rand_c(void);
+int32_t CCALL system_c(const char *command);
+void CCALL srand_c(uint32_t seed);
+int32_t CCALL rand_c(void);
 
-void __report_gsfailure_c(void);
+void CCALL __report_gsfailure_c(void);
 
-int32_t _except_handler4_c(int32_t, void *TargetFrame, int32_t);
+int32_t CCALL _except_handler4_c(int32_t, void *TargetFrame, int32_t);
 
-uint32_t _beginthread_c(void(*start_address)(void *), uint32_t stack_size, void *arglist);
+uint32_t CCALL _beginthread_c(void(*start_address)(void *), uint32_t stack_size, void *arglist);
 
-void sync_c(void);
+void CCALL sync_c(void);
 
 #ifdef __cplusplus
 }

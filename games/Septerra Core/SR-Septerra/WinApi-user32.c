@@ -330,7 +330,7 @@ static int pyra_key_l2 = 0;
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern uint32_t RunWndProc_asm(void *hwnd, uint32_t uMsg, uint32_t wParam, uint32_t lParam, uint32_t (*WndProc)(void *, uint32_t, uint32_t, uint32_t));
+extern uint32_t CCALL RunWndProc_asm(void *hwnd, uint32_t uMsg, uint32_t wParam, uint32_t lParam, uint32_t (*WndProc)(void *, uint32_t, uint32_t, uint32_t));
 #ifdef __cplusplus
 }
 #endif
@@ -2838,20 +2838,20 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event, int remove)
 }
 
 
-uint32_t AdjustWindowRectEx_c(void *lpRect, uint32_t dwStyle, uint32_t bMenu, uint32_t dwExStyle)
+uint32_t CCALL AdjustWindowRectEx_c(void *lpRect, uint32_t dwStyle, uint32_t bMenu, uint32_t dwExStyle)
 {
     eprintf("Unimplemented: %s\n", "AdjustWindowRectEx");
     exit(1);
 //    return AdjustWindowRectEx((LPRECT)lpRect, dwStyle, bMenu, dwExStyle);
 }
 
-uint32_t ClipCursor_c(const void *lpRect)
+uint32_t CCALL ClipCursor_c(const void *lpRect)
 {
     return 1;
 //    return ClipCursor((const RECT *)lpRect);
 }
 
-void *CreateWindowExA_c(uint32_t dwExStyle, const char *lpClassName, const char *lpWindowName, uint32_t dwStyle, int32_t x, int32_t y, int32_t nWidth, int32_t nHeight, void *hWndParent, void *hMenu, void *hInstance, void *lpParam)
+void * CCALL CreateWindowExA_c(uint32_t dwExStyle, const char *lpClassName, const char *lpWindowName, uint32_t dwStyle, int32_t x, int32_t y, int32_t nWidth, int32_t nHeight, void *hWndParent, void *hMenu, void *hInstance, void *lpParam)
 {
 #ifdef DEBUG_USER32
     eprintf("CreateWindowExA: 0x%x, %s, %s, 0x%x, %i, %i, %i, %i\n", dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight);
@@ -2917,7 +2917,7 @@ void *CreateWindowExA_c(uint32_t dwExStyle, const char *lpClassName, const char 
     return PSEUDO_HANDLE_MAIN_WINDOW;
 }
 
-uint32_t DefWindowProcA_c(void *hWnd, uint32_t Msg, uint32_t wParam, uint32_t lParam)
+uint32_t CCALL DefWindowProcA_c(void *hWnd, uint32_t Msg, uint32_t wParam, uint32_t lParam)
 {
 #ifdef DEBUG_USER32
     eprintf("DefWindowProcA: 0x%" PRIxPTR ", 0x%x, 0x%x, 0x%x\n", (uintptr_t)hWnd, Msg, wParam, lParam);
@@ -2926,14 +2926,14 @@ uint32_t DefWindowProcA_c(void *hWnd, uint32_t Msg, uint32_t wParam, uint32_t lP
     return 0;
 }
 
-uint32_t DestroyWindow_c(void *hWnd)
+uint32_t CCALL DestroyWindow_c(void *hWnd)
 {
     eprintf("Unimplemented: %s\n", "DestroyWindow");
     exit(1);
 //    return DestroyWindow((HWND)hWnd);
 }
 
-uint32_t DispatchMessageA_c(void *lpMsg)
+uint32_t CCALL DispatchMessageA_c(void *lpMsg)
 {
 #ifdef DEBUG_USER32
     eprintf("DispatchMessageA - ");
@@ -2971,7 +2971,7 @@ uint32_t DispatchMessageA_c(void *lpMsg)
     }
 }
 
-int16_t GetAsyncKeyState_c(int32_t vKey)
+int16_t CCALL GetAsyncKeyState_c(int32_t vKey)
 {
 #ifdef DEBUG_USER32
     eprintf("GetAsyncKeyState: %i\n", vKey);
@@ -2986,7 +2986,7 @@ int16_t GetAsyncKeyState_c(int32_t vKey)
     exit(1);
 }
 
-uint32_t GetCursorPos_c(void *lpPoint)
+uint32_t CCALL GetCursorPos_c(void *lpPoint)
 {
     int x, y;
 
@@ -3013,7 +3013,7 @@ uint32_t GetCursorPos_c(void *lpPoint)
     return 1;
 }
 
-int16_t GetKeyState_c(int32_t nVirtKey)
+int16_t CCALL GetKeyState_c(int32_t nVirtKey)
 {
 #ifdef DEBUG_USER32
     eprintf("GetKeyState: %i\n", nVirtKey);
@@ -3028,7 +3028,7 @@ int16_t GetKeyState_c(int32_t nVirtKey)
     exit(1);
 }
 
-uint32_t GetMessageA_c(void *lpMsg, void *hWnd, uint32_t wMsgFilterMin, uint32_t wMsgFilterMax)
+uint32_t CCALL GetMessageA_c(void *lpMsg, void *hWnd, uint32_t wMsgFilterMin, uint32_t wMsgFilterMax)
 {
 #ifdef DEBUG_USER32
     eprintf("GetMessageA: 0x%" PRIxPTR ", %i, %i\n", (intptr_t)hWnd, wMsgFilterMin, wMsgFilterMax);
@@ -3064,7 +3064,7 @@ uint32_t GetMessageA_c(void *lpMsg, void *hWnd, uint32_t wMsgFilterMin, uint32_t
     exit(1);
 }
 
-uint32_t GetMessagePos_c(void)
+uint32_t CCALL GetMessagePos_c(void)
 {
 #ifdef DEBUG_USER32
     eprintf("GetMessagePos\n");
@@ -3073,7 +3073,7 @@ uint32_t GetMessagePos_c(void)
     return (mouse_x & 0xffff) | ((mouse_y & 0xffff) << 16);
 }
 
-uint32_t GetMessageTime_c(void)
+uint32_t CCALL GetMessageTime_c(void)
 {
 #ifdef DEBUG_USER32
     eprintf("GetMessageTime\n");
@@ -3082,7 +3082,7 @@ uint32_t GetMessageTime_c(void)
     return message_time;
 }
 
-int32_t GetSystemMetrics_c(int32_t nIndex)
+int32_t CCALL GetSystemMetrics_c(int32_t nIndex)
 {
 #ifdef DEBUG_USER32
     eprintf("GetSystemMetrics: %i\n", nIndex);
@@ -3101,7 +3101,7 @@ int32_t GetSystemMetrics_c(int32_t nIndex)
     }
 }
 
-void *LoadCursorA_c(void *hInstance, PTR32(const char) lpCursorName)
+void * CCALL LoadCursorA_c(void *hInstance, PTR32(const char) lpCursorName)
 {
 #ifdef DEBUG_USER32
     if ( (GET_PTR32_VALUE(lpCursorName) & ~(uint32_t)0xffff) == 0 )
@@ -3195,7 +3195,7 @@ void *LoadCursorA_c(void *hInstance, PTR32(const char) lpCursorName)
     return NULL;
 }
 
-void *LoadIconA_c(void *hInstance, PTR32(const char) lpIconName)
+void * CCALL LoadIconA_c(void *hInstance, PTR32(const char) lpIconName)
 {
 #ifdef DEBUG_USER32
     if ( (GET_PTR32_VALUE(lpIconName) & ~(uint32_t)0xffff) == 0 )
@@ -3213,7 +3213,7 @@ void *LoadIconA_c(void *hInstance, PTR32(const char) lpIconName)
     return NULL;
 }
 
-void *LoadImageA_c(void *hinst, const char *lpszName, uint32_t uType, int32_t cxDesired, int32_t cyDesired, uint32_t fuLoad)
+void * CCALL LoadImageA_c(void *hinst, const char *lpszName, uint32_t uType, int32_t cxDesired, int32_t cyDesired, uint32_t fuLoad)
 {
 #ifndef _WIN32
     char buf[8192];
@@ -3247,7 +3247,7 @@ void *LoadImageA_c(void *hinst, const char *lpszName, uint32_t uType, int32_t cx
     exit(1);
 }
 
-uint32_t MessageBoxA_c(void *hWnd, const char *lpText, const char *lpCaption, uint32_t uType)
+uint32_t CCALL MessageBoxA_c(void *hWnd, const char *lpText, const char *lpCaption, uint32_t uType)
 {
 #if SDL_VERSION_ATLEAST(2,0,0)
     SDL_MessageBoxData data;
@@ -3395,7 +3395,7 @@ uint32_t MessageBoxA_c(void *hWnd, const char *lpText, const char *lpCaption, ui
     exit(1);
 }
 
-uint32_t OffsetRect_c(void *lprc, int32_t dx, int32_t dy)
+uint32_t CCALL OffsetRect_c(void *lprc, int32_t dx, int32_t dy)
 {
 #ifdef DEBUG_USER32
     eprintf("OffsetRect: 0x%" PRIxPTR ", %i, %i\n", (intptr_t)lprc, dx, dy);
@@ -3411,7 +3411,7 @@ uint32_t OffsetRect_c(void *lprc, int32_t dx, int32_t dy)
     return 1;
 }
 
-uint32_t PeekMessageA_c(void *lpMsg, void *hWnd, uint32_t wMsgFilterMin, uint32_t wMsgFilterMax, uint32_t wRemoveMsg)
+uint32_t CCALL PeekMessageA_c(void *lpMsg, void *hWnd, uint32_t wMsgFilterMin, uint32_t wMsgFilterMax, uint32_t wRemoveMsg)
 {
 #ifdef DEBUG_USER32
     eprintf("PeekMessageA: 0x%" PRIxPTR ", %i, %i, %i\n", (uintptr_t)hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
@@ -3435,7 +3435,7 @@ uint32_t PeekMessageA_c(void *lpMsg, void *hWnd, uint32_t wMsgFilterMin, uint32_
     exit(1);
 }
 
-uint32_t PostMessageA_c(void *hWnd, uint32_t Msg, uint32_t wParam, uint32_t lParam)
+uint32_t CCALL PostMessageA_c(void *hWnd, uint32_t Msg, uint32_t wParam, uint32_t lParam)
 {
 #ifdef DEBUG_USER32
     eprintf("PostMessageA: 0x%" PRIxPTR ", %i, %i, %i\n", (uintptr_t)hWnd, Msg, wParam, lParam);
@@ -3453,7 +3453,7 @@ uint32_t PostMessageA_c(void *hWnd, uint32_t Msg, uint32_t wParam, uint32_t lPar
     exit(1);
 }
 
-void PostQuitMessage_c(int32_t nExitCode)
+void CCALL PostQuitMessage_c(int32_t nExitCode)
 {
     SDL_Event event;
 #ifdef DEBUG_USER32
@@ -3467,7 +3467,7 @@ void PostQuitMessage_c(int32_t nExitCode)
     SDL_PushEvent(&event);
 }
 
-uint32_t PtInRect_c(const void *lprc, int32_t px, int32_t py)
+uint32_t CCALL PtInRect_c(const void *lprc, int32_t px, int32_t py)
 {
     if (lprc == NULL) return 0;
 
@@ -3478,7 +3478,7 @@ uint32_t PtInRect_c(const void *lprc, int32_t px, int32_t py)
 #undef RC
 }
 
-uint32_t RegisterClassA_c(void *lpWndClass)
+uint32_t CCALL RegisterClassA_c(void *lpWndClass)
 {
 #ifdef DEBUG_USER32
     eprintf("RegisterClassA\n");
@@ -3492,7 +3492,7 @@ uint32_t RegisterClassA_c(void *lpWndClass)
     return 1;
 }
 
-void *SetCursor_c(PTR32(void) hCursor)
+void * CCALL SetCursor_c(PTR32(void) hCursor)
 {
 #ifdef DEBUG_USER32
     eprintf("SetCursor: 0x%" PRIxPTR "\n", (uintptr_t) hCursor);
@@ -3507,7 +3507,7 @@ void *SetCursor_c(PTR32(void) hCursor)
     return NULL;
 }
 
-uint32_t SetCursorPos_c(int32_t X, int32_t Y)
+uint32_t CCALL SetCursorPos_c(int32_t X, int32_t Y)
 {
 #ifdef DEBUG_USER32
     eprintf("SetCursorPos: %i, %i\n", X, Y);
@@ -3521,7 +3521,7 @@ uint32_t SetCursorPos_c(int32_t X, int32_t Y)
     return 1;
 }
 
-void *SetFocus_c(void *hWnd)
+void * CCALL SetFocus_c(void *hWnd)
 {
 #ifdef DEBUG_USER32
     eprintf("SetFocus: 0x%" PRIxPTR "\n", (uintptr_t) hWnd);
@@ -3530,7 +3530,7 @@ void *SetFocus_c(void *hWnd)
     return hWnd;
 }
 
-int32_t ShowCursor_c(uint32_t bShow)
+int32_t CCALL ShowCursor_c(uint32_t bShow)
 {
 #ifdef DEBUG_USER32
     eprintf("ShowCursor: %i\n", bShow);
@@ -3556,7 +3556,7 @@ int32_t ShowCursor_c(uint32_t bShow)
     return cursor_visibility;
 }
 
-uint32_t ShowWindow_c(void *hWnd, int32_t nCmdShow)
+uint32_t CCALL ShowWindow_c(void *hWnd, int32_t nCmdShow)
 {
 #ifdef DEBUG_USER32
     eprintf("ShowWindow: 0x%" PRIxPTR ", %i\n", (uintptr_t)hWnd, nCmdShow);
@@ -3565,7 +3565,7 @@ uint32_t ShowWindow_c(void *hWnd, int32_t nCmdShow)
     return 0;
 }
 
-uint32_t TranslateMessage_c(void *pMsg)
+uint32_t CCALL TranslateMessage_c(void *pMsg)
 {
 #ifdef DEBUG_USER32
     eprintf("TranslateMessage\n");
@@ -3575,7 +3575,7 @@ uint32_t TranslateMessage_c(void *pMsg)
     return 0;
 }
 
-uint32_t UpdateWindow_c(void *hWnd)
+uint32_t CCALL UpdateWindow_c(void *hWnd)
 {
 #ifdef DEBUG_USER32
     eprintf("UpdateWindow: 0x%" PRIxPTR "\n", (uintptr_t)hWnd);
@@ -3584,14 +3584,14 @@ uint32_t UpdateWindow_c(void *hWnd)
     return 1;
 }
 
-uint32_t ValidateRect_c(void *hWnd, const void *lpRect)
+uint32_t CCALL ValidateRect_c(void *hWnd, const void *lpRect)
 {
     eprintf("Unimplemented: %s\n", "ValidateRect");
     exit(1);
 //    return ValidateRect((HWND)hWnd, (const RECT *)lpRect);
 }
 
-uint32_t WaitMessage_c(void)
+uint32_t CCALL WaitMessage_c(void)
 {
 #ifdef DEBUG_USER32
     eprintf("WaitMessage\n");

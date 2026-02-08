@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -56,7 +56,7 @@ static void BBMEM_DumpLine_c(void *hFile, const char *str)
     // do nothing
 }
 
-int MEM_Init_c(void)
+int CCALL MEM_Init_c(void)
 {
 #if 0
     int index, index2;
@@ -94,7 +94,7 @@ int MEM_Init_c(void)
     return 1;
 }
 
-void MEM_Exit_c(void)
+void CCALL MEM_Exit_c(void)
 {
     BBMEM_initialized--;
     if (BBMEM_initialized <= 0)
@@ -103,7 +103,7 @@ void MEM_Exit_c(void)
     }
 }
 
-void *MEM_malloc_c(unsigned int size, const char *module_name, const char *object_type, unsigned int line, int type)
+void * CCALL MEM_malloc_c(unsigned int size, const char *module_name, const char *object_type, unsigned int line, int type)
 {
 #ifdef ORIGINAL_MEM_ALLOC
     MEM_struct *mem;
@@ -149,7 +149,7 @@ void *MEM_malloc_c(unsigned int size, const char *module_name, const char *objec
 #endif
 }
 
-void MEM_free_c(void *mem_ptr)
+void CCALL MEM_free_c(void *mem_ptr)
 {
 #ifdef ORIGINAL_MEM_ALLOC
     MEM_struct *mem;
@@ -168,17 +168,17 @@ void MEM_free_c(void *mem_ptr)
 #endif
 }
 
-void MEM_Take_Snapshot_c(const char *name)
+void CCALL MEM_Take_Snapshot_c(const char *name)
 {
     // do nothing
 }
 
-void MEM_Check_Snapshot_c(void)
+void CCALL MEM_Check_Snapshot_c(void)
 {
     // do nothing
 }
 
-void MEM_Dump_c(void *hFile)
+void CCALL MEM_Dump_c(void *hFile)
 {
     DWORD ticks;
 
@@ -206,33 +206,33 @@ void MEM_Dump_c(void *hFile)
     }
 }
 
-void MEM_SwitchSecurity_c(unsigned int security)
+void CCALL MEM_SwitchSecurity_c(unsigned int security)
 {
     // do nothing
 }
 
-void *BASEMEM_Alloc_c(unsigned int size)
+void * CCALL BASEMEM_Alloc_c(unsigned int size)
 {
     return MEM_malloc_c(size, "BASEMEM", NULL, 0, 1);
 }
 
-int BASEMEM_Free_c(void *mem_ptr)
+int CCALL BASEMEM_Free_c(void *mem_ptr)
 {
     MEM_free_c(mem_ptr);
     return 1;
 }
 
-void BASEMEM_CopyMem_c(const void *src, void *dst, unsigned int length)
+void CCALL BASEMEM_CopyMem_c(const void *src, void *dst, unsigned int length)
 {
     memmove(dst, src, length);
 }
 
-void BASEMEM_FillMemByte_c(void *dst, unsigned int length, int c)
+void CCALL BASEMEM_FillMemByte_c(void *dst, unsigned int length, int c)
 {
     memset(dst, c, length);
 }
 
-void BBMEM_FreeMemory_c(int type)
+void CCALL BBMEM_FreeMemory_c(int type)
 {
 #if 0
     int index;
@@ -266,7 +266,7 @@ void BBMEM_FreeMemory_c(int type)
     }
 }
 
-void *BBMEM_GetPoolPointer_c(void)
+void * CCALL BBMEM_GetPoolPointer_c(void)
 {
     return BBMEM_PoolPointer;
 }

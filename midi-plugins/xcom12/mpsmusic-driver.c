@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -72,7 +72,7 @@ static char const *check_file(char const *filename)
 
 
 
-static int set_master_volume(unsigned char master_volume) // master_volume = 0 - 127
+static int MIDI_PLUGIN_API set_master_volume(unsigned char master_volume) // master_volume = 0 - 127
 {
     if (!emu_x86_setvolume((master_volume * 128) / 127))
     {
@@ -82,7 +82,7 @@ static int set_master_volume(unsigned char master_volume) // master_volume = 0 -
     return 0;
 }
 
-static void *open_file(char const *midifile)
+static void * MIDI_PLUGIN_API open_file(char const *midifile)
 {
     FILE *f;
     size_t filelen;
@@ -120,7 +120,7 @@ open_file_error:
     return NULL;
 }
 
-static void *open_buffer(void const *midibuffer, long int size)
+static void * MIDI_PLUGIN_API open_buffer(void const *midibuffer, long int size)
 {
     if (midibuffer == NULL) return NULL;
     if (size <= 0) return NULL;
@@ -133,7 +133,7 @@ static void *open_buffer(void const *midibuffer, long int size)
     return (void *) 1;
 }
 
-static long int get_data(void *handle, void *buffer, long int size)
+static long int MIDI_PLUGIN_API get_data(void *handle, void *buffer, long int size)
 {
     if (handle == NULL) return -2;
     if (buffer == NULL) return -3;
@@ -143,7 +143,7 @@ static long int get_data(void *handle, void *buffer, long int size)
     return emu_x86_getdata(buffer, (int)size);
 }
 
-static int rewind_midi(void *handle)
+static int MIDI_PLUGIN_API rewind_midi(void *handle)
 {
     if (handle == NULL) return -2;
 
@@ -155,7 +155,7 @@ static int rewind_midi(void *handle)
     return 0;
 }
 
-static int close_midi(void *handle)
+static int MIDI_PLUGIN_API close_midi(void *handle)
 {
     if (handle == NULL) return -2;
 
@@ -167,14 +167,14 @@ static int close_midi(void *handle)
     return 0;
 }
 
-static void shutdown_plugin(void)
+static void MIDI_PLUGIN_API shutdown_plugin(void)
 {
     emu_x86_shutdown();
 }
 
 
 EXPORT
-int initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const *parameters, midi_plugin_functions *functions)
+int MIDI_PLUGIN_API initialize_midi_plugin(unsigned short int rate, midi_plugin_parameters const *parameters, midi_plugin_functions *functions)
 {
     char const *drivers_cat;
     char const *mt32_roms;

@@ -31,7 +31,6 @@
 #else
 #include <unistd.h>
 #endif
-#include "Game_defs.h"
 #include "Game_vars.h"
 #include "Warcraft-proc-vfs.h"
 #include "Warcraft-proc.h"
@@ -44,7 +43,7 @@ static void Game_Set_errno_val(void)
 }
 
 
-void *Game_fopen(const char *filename, const char *mode)
+void * CCALL Game_fopen(const char *filename, const char *mode)
 {
     char temp_str[MAX_PATH];
     FILE *fp;
@@ -91,7 +90,7 @@ void *Game_fopen(const char *filename, const char *mode)
     return ret;
 }
 
-int32_t Game_unlink(const char *pathname)
+int32_t CCALL Game_unlink(const char *pathname)
 {
     char temp_str[MAX_PATH];
     int ret;

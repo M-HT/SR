@@ -282,13 +282,13 @@ extern const uint32_t errno_table[ERRNO_NUM];
 
 
 
-extern int Game_Main_Asm(int argc, char *argv[]);
-extern NORETURN void Game_StopMain_Asm(void);
+extern int CCALL Game_Main_Asm(int argc, char *argv[]);
+extern NORETURN void CCALL Game_StopMain_Asm(void);
 
 
-extern uint32_t Game_MouseMove(uint32_t state, uint32_t x, uint32_t y);
-extern uint32_t Game_MouseButton(uint32_t state, uint32_t action);
-extern void Game_RunTimer_Asm(void);
+extern uint32_t CCALL Game_MouseMove(uint32_t state, uint32_t x, uint32_t y);
+extern uint32_t CCALL Game_MouseButton(uint32_t state, uint32_t action);
+extern void CCALL Game_RunTimer_Asm(void);
 
 #ifdef __cplusplus
 extern "C" {

@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -33,5 +33,13 @@ typedef struct {
 #define EXTERNC extern "C"
 #else
 #define EXTERNC
+#endif
+
+#if defined(__GNUC__) && (defined(__i386) || (defined(__x86_64) && defined(_WIN32)))
+    #define CCALL __attribute__ ((__cdecl__))
+#elif defined(_MSC_VER)
+    #define CCALL __cdecl
+#else
+    #define CCALL
 #endif
 

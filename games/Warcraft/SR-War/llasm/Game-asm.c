@@ -35,11 +35,11 @@ extern "C" {
 extern _cpu *x86_initialize_cpu(void);
 extern void x86_deinitialize_cpu(void);
 
-extern void c_main_(CPU);
-extern void c_update_timer(CPU);
-extern void c_keyboard_interrupt(CPU);
+extern void CCALL c_main_(CPU);
+extern void CCALL c_update_timer(CPU);
+extern void CCALL c_keyboard_interrupt(CPU);
 
-extern void c_RunProcEBP(CPU);
+extern void CCALL c_RunProcEBP(CPU);
 
 #ifdef __cplusplus
 }
@@ -53,19 +53,19 @@ static jmp_buf exit_env;
 static int main_return_value;
 
 
-EXTERNC void Game_ExitMain_Asm(int32_t status)
+EXTERNC void CCALL Game_ExitMain_Asm(int32_t status)
 {
     main_return_value = status;
     longjmp(exit_env, 1);
 }
 
-void Game_StopMain_Asm(void)
+void CCALL Game_StopMain_Asm(void)
 {
     main_return_value = 1;
     longjmp(exit_env, 1);
 }
 
-int Game_Main_Asm(int argc, char *argv[])
+int CCALL Game_Main_Asm(int argc, char *argv[])
 {
     if (setjmp(exit_env) == 0)
     {
@@ -93,7 +93,7 @@ int Game_Main_Asm(int argc, char *argv[])
     }
 }
 
-uint32_t Game_MouseMove(uint32_t state, uint32_t x, uint32_t y)
+uint32_t CCALL Game_MouseMove(uint32_t state, uint32_t x, uint32_t y)
 {
     _cpu *cpu;
     uint32_t old_eax, old_ecx, old_edx, old_ebx, old_ebp, old_esi, old_edi;
@@ -145,7 +145,7 @@ uint32_t Game_MouseMove(uint32_t state, uint32_t x, uint32_t y)
     return 0;
 }
 
-uint32_t Game_MouseButton(uint32_t state, uint32_t action, uint32_t x, uint32_t y)
+uint32_t CCALL Game_MouseButton(uint32_t state, uint32_t action, uint32_t x, uint32_t y)
 {
     _cpu *cpu;
     uint32_t old_eax, old_ecx, old_edx, old_ebx, old_ebp, old_esi, old_edi;
@@ -197,7 +197,7 @@ uint32_t Game_MouseButton(uint32_t state, uint32_t action, uint32_t x, uint32_t 
     return 0;
 }
 
-void Game_RunTimer_Asm(void)
+void CCALL Game_RunTimer_Asm(void)
 {
     _cpu *cpu;
     uint32_t old_InterruptFlag, old_eflags;
@@ -217,7 +217,7 @@ void Game_RunTimer_Asm(void)
 }
 
 
-void Game_RunInt9_Asm(void)
+void CCALL Game_RunInt9_Asm(void)
 {
     _cpu *cpu;
     uint32_t old_InterruptFlag, old_eflags;
@@ -237,7 +237,7 @@ void Game_RunInt9_Asm(void)
 }
 
 
-void Game_RunAILcallback_Asm(AIL_sample_CB callback, AIL_sample *sample)
+void CCALL Game_RunAILcallback_Asm(AIL_sample_CB callback, AIL_sample *sample)
 {
     _cpu *cpu;
     uint32_t old_eax, old_ecx, old_edx, old_ebx, old_ebp, old_esi, old_edi;

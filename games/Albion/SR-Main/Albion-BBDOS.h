@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2023 Roman Pauer
+ *  Copyright (C) 2018-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,6 +26,7 @@
 #define _ALBION_BBDOS_H_INCLUDED_
 
 #include <stdint.h>
+#include "Game_defs.h"
 
 #define DOS_OPEN_MODE_READ 2
 #define DOS_OPEN_MODE_CREATE 4
@@ -40,17 +41,17 @@
 extern "C" {
 #endif
 
-extern int32_t DOS_Init(void);
-extern void DOS_Exit(void);
-extern int32_t DOS_Open(const char *path, uint32_t mode);
-extern int32_t DOS_Close(int32_t file_handle);
-extern int32_t DOS_Read(int32_t file_handle, void *buffer, uint32_t length);
-extern int32_t DOS_Write(int32_t file_handle, const void *buffer, uint32_t length);
-extern int32_t DOS_Seek(int32_t file_handle, int32_t origin, int32_t offset);
-extern int32_t DOS_GetFileLength(const char *path);
-extern int32_t DOS_exists(const char *path);
-extern int32_t DOS_setcurrentdir(const char *path);
-extern int32_t DOS_GetSeekPosition(int32_t file_handle);
+extern int32_t CCALL DOS_Init(void);
+extern void CCALL DOS_Exit(void);
+extern int32_t CCALL DOS_Open(const char *path, uint32_t mode);
+extern int32_t CCALL DOS_Close(int32_t file_handle);
+extern int32_t CCALL DOS_Read(int32_t file_handle, void *buffer, uint32_t length);
+extern int32_t CCALL DOS_Write(int32_t file_handle, const void *buffer, uint32_t length);
+extern int32_t CCALL DOS_Seek(int32_t file_handle, int32_t origin, int32_t offset);
+extern int32_t CCALL DOS_GetFileLength(const char *path);
+extern int32_t CCALL DOS_exists(const char *path);
+extern int32_t CCALL DOS_setcurrentdir(const char *path);
+extern int32_t CCALL DOS_GetSeekPosition(int32_t file_handle);
 
 
 #ifdef __cplusplus

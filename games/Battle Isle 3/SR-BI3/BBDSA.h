@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2025 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -61,44 +61,44 @@ typedef struct PACKED _DSA_Palette {
 extern "C" {
 #endif
 
-void DSA_ReuseStaticColors_c(unsigned int osVersions);
-void DSA_FreeStaticColors_c(unsigned int osVersions);
-void DSAWIN_PrepareInit_c(void *hInstance);
-void *DSAWIN_GetMainWindowHandle_c(void);
-void *DSAWIN_GetInstance_c(void);
-int DSA_Init_c(void);
-void DSA_Exit_c(void);
-int DSA_OpenScreen_c(DSA_Screen *screen, OPM_struct *opm, int param3, const char *windowName, int x, int y, int type);
-void DSA_CloseScreen_c(DSA_Screen *screen);
-void DSA_CopyMainOPMToScreen_c(DSA_Screen *screen, int onlyModified);
-void DSA_StretchOPMToScreen_c(DSA_Screen *screen, int xDst, int yDst, int widthDst, int heightDst, OPM_struct *opm, int xSrc, int ySrc, int widthSrc, int heightSrc);
-void DSA_CopyOPMToScreenEx_c(DSA_Screen *screen, int xDst, int yDst, int width, int height, OPM_struct *opm, int xSrc, int ySrc);
-void DSA_TotalRepaint_c(void);
-void DSA_MoveScreen_c(DSA_Screen *screen, int changeX, int changeY);
-int DSA_ResizeScreen_c(DSA_Screen *screen, OPM_struct *opm, int redraw);
-int DSA_DrawSizingScreen_c(DSA_Screen *screen, int16_t *rect);
-void DSA_EnterResizingMode_c(DSA_Screen *screen);
-void DSA_LeaveResizingMode_c(DSA_Screen *screen);
-void DSA_GetDSAMetrics_c(DSA_Screen *screen, int32_t *x, int32_t *y, int32_t *width, int32_t *height, uint8_t *isVisible);
-void DSA_SetDSAPos_c(DSA_Screen *screen, int x, int y, int repaint);
-void DSA_GetScreenExtends_c(int32_t *width, int32_t *height);
-void *DSA_GetActiveScreen_c(void);
-void DSA_SetActiveScreen_c(DSA_Screen *screen);
-void *DSA_GetLastTouchedScreen_c(void);
-void DSA_CopyPartOPMToScreen_c(DSA_Screen *screen, int x, int y, int width, int height);
-int DSA_ScreenVisibility_c(DSA_Screen *screen, int show);
-int DSA_LoadBackground_c(const char *path);
-void DSA_GetPalette_c(DSA_Palette *palette);
-void DSA_FixBackground_c(int isFixed);
-void DSA_SetCapture_c(DSA_Screen *screen);
-void DSA_SystemTask_c(void);
-int DSA_SetBackgroundInRAM_c(int value);
-void DSA_SetPal_c(int unused, DSA_Palette *palette, unsigned int src_start_entry, unsigned int num_entries, unsigned int dst_start_entry);
-void DSA_ActivatePal_c(void);
-void DSA_PreventPaletteRemapping_c(int valueAdd);
-int DSA_GetBackgroundOffset_c(int32_t *offsetX, int32_t *offsetY);
-void DSA_SetBackground2Black_c(int isBlack);
-int DSA_MarkBitmapAsDirty_c(int param1, int param2);
+void CCALL DSA_ReuseStaticColors_c(unsigned int osVersions);
+void CCALL DSA_FreeStaticColors_c(unsigned int osVersions);
+void CCALL DSAWIN_PrepareInit_c(void *hInstance);
+void * CCALL DSAWIN_GetMainWindowHandle_c(void);
+void * CCALL DSAWIN_GetInstance_c(void);
+int CCALL DSA_Init_c(void);
+void CCALL DSA_Exit_c(void);
+int CCALL DSA_OpenScreen_c(DSA_Screen *screen, OPM_struct *opm, int param3, const char *windowName, int x, int y, int type);
+void CCALL DSA_CloseScreen_c(DSA_Screen *screen);
+void CCALL DSA_CopyMainOPMToScreen_c(DSA_Screen *screen, int onlyModified);
+void CCALL DSA_StretchOPMToScreen_c(DSA_Screen *screen, int xDst, int yDst, int widthDst, int heightDst, OPM_struct *opm, int xSrc, int ySrc, int widthSrc, int heightSrc);
+void CCALL DSA_CopyOPMToScreenEx_c(DSA_Screen *screen, int xDst, int yDst, int width, int height, OPM_struct *opm, int xSrc, int ySrc);
+void CCALL DSA_TotalRepaint_c(void);
+void CCALL DSA_MoveScreen_c(DSA_Screen *screen, int changeX, int changeY);
+int CCALL DSA_ResizeScreen_c(DSA_Screen *screen, OPM_struct *opm, int redraw);
+int CCALL DSA_DrawSizingScreen_c(DSA_Screen *screen, int16_t *rect);
+void CCALL DSA_EnterResizingMode_c(DSA_Screen *screen);
+void CCALL DSA_LeaveResizingMode_c(DSA_Screen *screen);
+void CCALL DSA_GetDSAMetrics_c(DSA_Screen *screen, int32_t *x, int32_t *y, int32_t *width, int32_t *height, uint8_t *isVisible);
+void CCALL DSA_SetDSAPos_c(DSA_Screen *screen, int x, int y, int repaint);
+void CCALL DSA_GetScreenExtends_c(int32_t *width, int32_t *height);
+void * CCALL DSA_GetActiveScreen_c(void);
+void CCALL DSA_SetActiveScreen_c(DSA_Screen *screen);
+void * CCALL DSA_GetLastTouchedScreen_c(void);
+void CCALL DSA_CopyPartOPMToScreen_c(DSA_Screen *screen, int x, int y, int width, int height);
+int CCALL DSA_ScreenVisibility_c(DSA_Screen *screen, int show);
+int CCALL DSA_LoadBackground_c(const char *path);
+void CCALL DSA_GetPalette_c(DSA_Palette *palette);
+void CCALL DSA_FixBackground_c(int isFixed);
+void CCALL DSA_SetCapture_c(DSA_Screen *screen);
+void CCALL DSA_SystemTask_c(void);
+int CCALL DSA_SetBackgroundInRAM_c(int value);
+void CCALL DSA_SetPal_c(int unused, DSA_Palette *palette, unsigned int src_start_entry, unsigned int num_entries, unsigned int dst_start_entry);
+void CCALL DSA_ActivatePal_c(void);
+void CCALL DSA_PreventPaletteRemapping_c(int valueAdd);
+int CCALL DSA_GetBackgroundOffset_c(int32_t *offsetX, int32_t *offsetY);
+void CCALL DSA_SetBackground2Black_c(int isBlack);
+int CCALL DSA_MarkBitmapAsDirty_c(int param1, int param2);
 
 #ifdef __cplusplus
 }

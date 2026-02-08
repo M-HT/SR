@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,13 +26,14 @@
 #define _SDICMDLINE_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int cmdline_ContainsOption(int option);
-void cmdline_ReadLanguageOption(uint32_t *language);
+int CCALL cmdline_ContainsOption(int option);
+void CCALL cmdline_ReadLanguageOption(uint32_t *language);
 
 #ifdef __cplusplus
 }

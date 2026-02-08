@@ -36,7 +36,7 @@
 #define eprintf(...) fprintf(stderr,__VA_ARGS__)
 
 
-void *_alloca_probe_c(uint32_t size)
+void * CCALL _alloca_probe_c(uint32_t size)
 {
 #ifdef DEBUG_CLIB
     eprintf("_alloca_probe: %i\n", size);
@@ -57,7 +57,7 @@ void *_alloca_probe_c(uint32_t size)
 }
 
 
-int64_t _ftol_c(double *num)
+int64_t CCALL _ftol_c(double *num)
 {
 #if defined(_MSC_VER) && _MSC_VER < 1800
     return (int64_t) *num;

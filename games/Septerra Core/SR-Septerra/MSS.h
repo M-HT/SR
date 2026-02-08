@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -27,15 +27,16 @@
 
 #include <stdint.h>
 #include <sys/types.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-uint32_t ASI_startup_c (void);
-uint32_t ASI_shutdown_c (void);
-uint32_t ASI_stream_close_c (void *stream);
-int32_t ASI_stream_process_c (void *stream, void *buffer, int32_t request_size);
+uint32_t CCALL ASI_startup_c (void);
+uint32_t CCALL ASI_shutdown_c (void);
+uint32_t CCALL ASI_stream_close_c (void *stream);
+int32_t CCALL ASI_stream_process_c (void *stream, void *buffer, int32_t request_size);
 
 #ifdef __cplusplus
 }

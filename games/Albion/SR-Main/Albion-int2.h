@@ -25,6 +25,8 @@
 #if !defined(_ALBION_INT2_H_INCLUDED_)
 #define _ALBION_INT2_H_INCLUDED_
 
+#include "Game_defs.h"
+
 #pragma pack(4)
 
 typedef struct _Game_SREGS_ {
@@ -96,7 +98,7 @@ typedef union _Game_REGS_ {
 extern "C" {
 #endif
 
-extern uint32_t Game_int386x(
+extern uint32_t CCALL Game_int386x(
     const uint32_t IntNum,
     const Game_REGS *in_regs,
     Game_REGS *out_regs,

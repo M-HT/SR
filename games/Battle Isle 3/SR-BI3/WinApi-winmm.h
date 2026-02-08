@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,13 +26,14 @@
 #define _WINAPI_WINMM_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-uint32_t mciGetErrorStringA_c(uint32_t mcierr, char * pszText, uint32_t cchText);
-uint32_t mciSendCommandA_c(uint32_t mciId, uint32_t uMsg, uint32_t * dwParam1, uint32_t * dwParam2);
+uint32_t CCALL mciGetErrorStringA_c(uint32_t mcierr, char * pszText, uint32_t cchText);
+uint32_t CCALL mciSendCommandA_c(uint32_t mciId, uint32_t uMsg, uint32_t * dwParam1, uint32_t * dwParam2);
 
 #ifdef __cplusplus
 }

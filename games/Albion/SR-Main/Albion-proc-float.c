@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -24,7 +24,6 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include "Game_defs.h"
 #include "Game_vars.h"
 #include "Albion-proc-float.h"
 
@@ -37,7 +36,7 @@ const static double dconst_100_0 = 100.0;
 const static double dconst_16384_0 = 16384.0;
 const static double dconst_180_0 = 180.0;
 
-void Game_FloatProcSin(int32_t *ValuePtr)
+void CCALL Game_FloatProcSin(int32_t *ValuePtr)
 {
 //	x = sin((double) x * 2 * pi / 360) * 11 + 12
 
@@ -50,7 +49,7 @@ void Game_FloatProcSin(int32_t *ValuePtr)
 	*ValuePtr = (int32_t) ( ( sin( ((double) (*ValuePtr) * dconst_pi) / dconst_180_0 ) * dconst_11_0 ) + dconst_12_0 );
 }
 
-void Game_FloatProcSin2(int32_t *ValuePtr)
+void CCALL Game_FloatProcSin2(int32_t *ValuePtr)
 {
 //	x1 = sin((double) x0 * 2 * pi / 360) * 100
 
@@ -63,7 +62,7 @@ void Game_FloatProcSin2(int32_t *ValuePtr)
 	ValuePtr[1] = (int32_t) ( sin( ((double) (ValuePtr[0]) * dconst_pi) / dconst_180_0 ) * dconst_100_0 );
 }
 
-void Game_FloatProcSin3(int32_t *ValuePtr)
+void CCALL Game_FloatProcSin3(int32_t *ValuePtr)
 {
 //	a = x3
 //	y1 = (double)a18
@@ -117,7 +116,7 @@ void Game_FloatProcSin3(int32_t *ValuePtr)
 #undef VALUES
 }
 
-void Game_FloatProcSin4(int32_t *ValuePtr)
+void CCALL Game_FloatProcSin4(int32_t *ValuePtr)
 {
 //	a = x3
 //	y1 = (double)a18
@@ -171,7 +170,7 @@ void Game_FloatProcSin4(int32_t *ValuePtr)
 #undef VALUES
 }
 
-void Game_FloatProcCos(int32_t *ValuePtr)
+void CCALL Game_FloatProcCos(int32_t *ValuePtr)
 {
 //	x = 12 - cos((double) x * 2 * pi / 360) * 11
 
@@ -184,7 +183,7 @@ void Game_FloatProcCos(int32_t *ValuePtr)
 	*ValuePtr = (int32_t) ( dconst_12_0 - ( cos( ((double) (*ValuePtr) * dconst_pi) / dconst_180_0 ) * dconst_11_0 ) );
 }
 
-void Game_FloatProcCos2(int32_t *ValuePtr)
+void CCALL Game_FloatProcCos2(int32_t *ValuePtr)
 {
 //	x2 = cos((double) x0 * 2 * pi / 360) * 100
 
@@ -197,7 +196,7 @@ void Game_FloatProcCos2(int32_t *ValuePtr)
 	ValuePtr[2] = (int32_t) ( cos( ((double) (ValuePtr[0]) * dconst_pi) / dconst_180_0 ) * dconst_100_0 );
 }
 
-void Game_FloatProcSqrt(int32_t *ValuePtr)
+void CCALL Game_FloatProcSqrt(int32_t *ValuePtr)
 {
 //	x4 = sqrt(sqr(x0) + sqr(x1))
 
@@ -209,7 +208,7 @@ void Game_FloatProcSqrt(int32_t *ValuePtr)
 }
 
 
-void Game_FloatProcSqrt2(int32_t *ValuePtr)
+void CCALL Game_FloatProcSqrt2(int32_t *ValuePtr)
 {
 //	x0 = sqrt(sqr(z3) + sqr(z2))
 
@@ -237,7 +236,7 @@ void Game_FloatProcSqrt2(int32_t *ValuePtr)
 #undef VALUES
 }
 
-void Game_FloatProcSqrt3(int32_t *ValuePtr)
+void CCALL Game_FloatProcSqrt3(int32_t *ValuePtr)
 {
 //	x2 = sqrt(sqr(x0) + sqr(x3))
 
@@ -248,7 +247,7 @@ void Game_FloatProcSqrt3(int32_t *ValuePtr)
 	ValuePtr[2] = (int32_t) sqrt( ( ((double) ValuePtr[0]) * ((double) ValuePtr[0]) ) + ( ((double) ValuePtr[3]) * ((double) ValuePtr[3]) ) );
 }
 
-void Game_FloatProcSqrt4(int32_t *ValuePtr)
+void CCALL Game_FloatProcSqrt4(int32_t *ValuePtr)
 {
 //	x0 = sqrt(sqr(z3) + sqr(z4))
 
@@ -277,7 +276,7 @@ void Game_FloatProcSqrt4(int32_t *ValuePtr)
 #undef VALUES
 }
 
-void Game_FloatProcSqrt5(int32_t *ValuePtr)
+void CCALL Game_FloatProcSqrt5(int32_t *ValuePtr)
 {
 //	x1 = sqrt(sqr(x2) + sqr(x0))
 
@@ -288,7 +287,7 @@ void Game_FloatProcSqrt5(int32_t *ValuePtr)
 	ValuePtr[1] = (int32_t) sqrt( ( ((double) ValuePtr[2]) * ((double) ValuePtr[2]) ) + ( ((double) ValuePtr[0]) * ((double) ValuePtr[0]) ) );
 }
 
-void Game_FloatProcSqrt6(int32_t *ValuePtr)
+void CCALL Game_FloatProcSqrt6(int32_t *ValuePtr)
 {
 //	x3 = sqrt(sqr(x1) + sqr(x2) + sqr(x0))
 
@@ -299,7 +298,7 @@ void Game_FloatProcSqrt6(int32_t *ValuePtr)
 	ValuePtr[3] = (int32_t) sqrt( ( ((double) ValuePtr[1]) * ((double) ValuePtr[1]) ) + ( ((double) ValuePtr[2]) * ((double) ValuePtr[2]) )  + ( ((double) ValuePtr[0]) * ((double) ValuePtr[0]) ) );
 }
 
-void Game_FloatProcSqrt7(int32_t *ValuePtr)
+void CCALL Game_FloatProcSqrt7(int32_t *ValuePtr)
 {
 //	x4 = sqrt(sqr(x3) + sqr(x0))
 
@@ -310,7 +309,7 @@ void Game_FloatProcSqrt7(int32_t *ValuePtr)
 	ValuePtr[4] = (int32_t) sqrt( ( ((double) ValuePtr[3]) * ((double) ValuePtr[3]) ) + ( ((double) ValuePtr[0]) * ((double) ValuePtr[0]) ) );
 }
 
-void Game_FloatProcSqrt8(int32_t *ValuePtr)
+void CCALL Game_FloatProcSqrt8(int32_t *ValuePtr)
 {
 //	x0 = sqrt(sqr(x2) + sqr(x3) + sqr(x4))
 
@@ -321,7 +320,7 @@ void Game_FloatProcSqrt8(int32_t *ValuePtr)
 	ValuePtr[0] = (int32_t) sqrt( ( ((double) ValuePtr[2]) * ((double) ValuePtr[2]) ) + ( ((double) ValuePtr[3]) * ((double) ValuePtr[3]) )  + ( ((double) ValuePtr[4]) * ((double) ValuePtr[4]) ) );
 }
 
-void Game_FloatProcCosSin(int32_t *ValuePtr)
+void CCALL Game_FloatProcCosSin(int32_t *ValuePtr)
 {
 //	y3 = (double) x2 * 2 * pi / 360
 //	y0 = cos(y3) * (double) x5
@@ -358,7 +357,7 @@ void Game_FloatProcCosSin(int32_t *ValuePtr)
 #undef VALUES
 }
 
-void Game_FloatProcAtan(int32_t *ValuePtr)
+void CCALL Game_FloatProcAtan(int32_t *ValuePtr)
 {
 //	x0 = atan2((double)x3, (double)x2) * 16384
 //	x5 = (double)x0 / (pi*2)
@@ -371,7 +370,7 @@ void Game_FloatProcAtan(int32_t *ValuePtr)
 	ValuePtr[5] = (int32_t) ( ( (double) ValuePtr[0] ) / ( dconst_pi * dconst_2_0) );
 }
 
-void Game_FloatProcSinCos(int32_t *ValuePtr)
+void CCALL Game_FloatProcSinCos(int32_t *ValuePtr)
 {
 //	y114 = (double)x0 * pi / 180
 //	x119 = sin(y114) * 100

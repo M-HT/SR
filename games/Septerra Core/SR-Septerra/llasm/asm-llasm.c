@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2016 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -31,17 +31,17 @@ extern "C" {
 extern _cpu *x86_initialize_cpu(void);
 extern void x86_deinitialize_cpu(void);
 
-extern void c_GetRecordName_(CPU);
-extern void c_MessageProc_c2asm(CPU);
-extern void c_WinMain_(CPU);
-extern void c_RunWndProc_c2asm(CPU);
-extern void c_run_thread_c2asm(CPU);
+extern void CCALL c_GetRecordName_(CPU);
+extern void CCALL c_MessageProc_c2asm(CPU);
+extern void CCALL c_WinMain_(CPU);
+extern void CCALL c_RunWndProc_c2asm(CPU);
+extern void CCALL c_run_thread_c2asm(CPU);
 
 #ifdef __cplusplus
 }
 #endif
 
-EXTERNC const char *GetRecordName_asm(uint32_t RecordKey)
+EXTERNC const char * CCALL GetRecordName_asm(uint32_t RecordKey)
 {
     _cpu *cpu;
 
@@ -57,7 +57,7 @@ EXTERNC const char *GetRecordName_asm(uint32_t RecordKey)
     return (const char *)REG2PTR(eax);
 }
 
-EXTERNC uint32_t MessageProc_asm(const char *MessageText, uint32_t MessageType, uint32_t MessageCode, uint32_t (*MessageProc)(const char *, uint32_t, uint32_t))
+EXTERNC uint32_t CCALL MessageProc_asm(const char *MessageText, uint32_t MessageType, uint32_t MessageCode, uint32_t (*MessageProc)(const char *, uint32_t, uint32_t))
 {
     _cpu *cpu;
 
@@ -79,7 +79,7 @@ EXTERNC uint32_t MessageProc_asm(const char *MessageText, uint32_t MessageType, 
     return eax;
 }
 
-EXTERNC int WinMain_asm(void *hInstance, void *hPrevInstance, char *lpCmdLine, int nCmdShow)
+EXTERNC int CCALL WinMain_asm(void *hInstance, void *hPrevInstance, char *lpCmdLine, int nCmdShow)
 {
     _cpu *cpu;
     int retval;
@@ -105,7 +105,7 @@ EXTERNC int WinMain_asm(void *hInstance, void *hPrevInstance, char *lpCmdLine, i
     return retval;
 }
 
-EXTERNC uint32_t RunWndProc_asm(void *hwnd, uint32_t uMsg, uint32_t wParam, uint32_t lParam, uint32_t (*WndProc)(void *, uint32_t, uint32_t, uint32_t))
+EXTERNC uint32_t CCALL RunWndProc_asm(void *hwnd, uint32_t uMsg, uint32_t wParam, uint32_t lParam, uint32_t (*WndProc)(void *, uint32_t, uint32_t, uint32_t))
 {
     _cpu *cpu;
 
@@ -131,7 +131,7 @@ EXTERNC uint32_t RunWndProc_asm(void *hwnd, uint32_t uMsg, uint32_t wParam, uint
     return eax;
 }
 
-EXTERNC void run_thread_asm(void *arglist, void(*start_address)(void *))
+EXTERNC void CCALL run_thread_asm(void *arglist, void(*start_address)(void *))
 {
     _cpu *cpu;
 

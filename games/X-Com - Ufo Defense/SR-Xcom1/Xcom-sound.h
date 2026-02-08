@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,6 +25,8 @@
 #if !defined(_XCOM_SOUND_H_INCLUDED_)
 #define _XCOM_SOUND_H_INCLUDED_
 
+#include "Game_defs.h"
+
 struct _DIGPAK_SNDSTRUC_;
 
 extern void Game_ChannelFinished(int channel);
@@ -37,20 +39,20 @@ extern "C" {
 // note: parameters smaller than 32 bits are extended to 32 bits by callers in the original asm code
 // note: return values smaller than 32 bits are not expected by callers in the original asm code to have been extended to 32 bits
 
-extern int16_t Game_DigPlay(struct _DIGPAK_SNDSTRUC_ *sndplay);
-extern int16_t Game_AudioCapabilities(void);
-extern void Game_StopSound(void);
-extern int16_t Game_PostAudioPending(struct _DIGPAK_SNDSTRUC_ *sndplay);
-extern int16_t Game_SetPlayMode(int16_t playmode);
-extern int16_t *Game_PendingAddress(void);
-extern int16_t *Game_ReportSemaphoreAddress(void);
-extern int16_t Game_SetBackFillMode(int16_t mode);
-extern int16_t Game_VerifyDMA(char *data, int16_t length);
-extern void Game_SetDPMIMode(int16_t mode);
-extern int32_t Game_FillSoundCfg(void *buf, int32_t count);
-extern uint32_t Game_RealPtr(uint32_t ptr);
-extern void Game_InitializeSound(void);
-extern void Game_DeinitializeSound(void);
+extern int16_t CCALL Game_DigPlay(struct _DIGPAK_SNDSTRUC_ *sndplay);
+extern int16_t CCALL Game_AudioCapabilities(void);
+extern void CCALL Game_StopSound(void);
+extern int16_t CCALL Game_PostAudioPending(struct _DIGPAK_SNDSTRUC_ *sndplay);
+extern int16_t CCALL Game_SetPlayMode(int16_t playmode);
+extern int16_t * CCALL Game_PendingAddress(void);
+extern int16_t * CCALL Game_ReportSemaphoreAddress(void);
+extern int16_t CCALL Game_SetBackFillMode(int16_t mode);
+extern int16_t CCALL Game_VerifyDMA(char *data, int16_t length);
+extern void CCALL Game_SetDPMIMode(int16_t mode);
+extern int32_t CCALL Game_FillSoundCfg(void *buf, int32_t count);
+extern uint32_t CCALL Game_RealPtr(uint32_t ptr);
+extern void CCALL Game_InitializeSound(void);
+extern void CCALL Game_DeinitializeSound(void);
 
 #ifdef __cplusplus
 }

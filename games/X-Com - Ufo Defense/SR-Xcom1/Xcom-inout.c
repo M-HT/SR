@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2023 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -37,7 +37,7 @@
 
 static uint32_t palette_index, color_index;
 
-uint32_t X86_InPortProcedure(
+uint32_t CCALL X86_InPortProcedure(
     const uint16_t PortNum,
     const uint32_t PortSize)
 {
@@ -59,7 +59,7 @@ uint32_t X86_InPortProcedure(
     Game_StopMain();
 }
 
-void X86_OutPortProcedure(
+void CCALL X86_OutPortProcedure(
     const uint16_t PortNum,
     const uint32_t PortSize,
     const Game_register _eax)

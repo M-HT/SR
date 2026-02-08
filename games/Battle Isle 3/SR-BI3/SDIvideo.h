@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,22 +26,23 @@
 #define _SDIVIDEO_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-uint32_t video_RegisterClass_PRE_Video(void);
-int video_Open_PRE_Video(const char *path);
-int video_Close_PRE_Video(void);
-int video_Play_PRE_Video(uint32_t zoomed);
+uint32_t CCALL video_RegisterClass_PRE_Video(void);
+int CCALL video_Open_PRE_Video(const char *path);
+int CCALL video_Close_PRE_Video(void);
+int CCALL video_Play_PRE_Video(uint32_t zoomed);
 
-uint32_t video_RegisterClass_POST_Video(void);
-int video_Open_POST_Video(const char *path);
-int video_Close_POST_Video(void);
-int video_Play_POST_Video(uint32_t zoomed);
+uint32_t CCALL video_RegisterClass_POST_Video(void);
+int CCALL video_Open_POST_Video(const char *path);
+int CCALL video_Close_POST_Video(void);
+int CCALL video_Play_POST_Video(uint32_t zoomed);
 
-uint32_t video_RegisterClass_SS_Video(void);
+uint32_t CCALL video_RegisterClass_SS_Video(void);
 
 #ifdef __cplusplus
 }

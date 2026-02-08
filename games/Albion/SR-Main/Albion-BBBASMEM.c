@@ -31,7 +31,6 @@
 #else
 #include <unistd.h>
 #endif
-#include "Game_defs.h"
 #include "Albion-BBBASMEM.h"
 #include "Albion-BBERROR.h"
 #include "Game_memory.h"
@@ -82,7 +81,7 @@ static void BASEMEM_PushError(unsigned int error_number, int error_parameter, in
 static void BASEMEM_LocalPrintError(char *buffer, const uint8_t *data);
 
 
-int32_t BASEMEM_Init(void)
+int32_t CCALL BASEMEM_Init(void)
 {
     int index;
 
@@ -111,7 +110,7 @@ int32_t BASEMEM_Init(void)
     return 1;
 }
 
-void BASEMEM_Exit(void)
+void CCALL BASEMEM_Exit(void)
 {
     int index;
 
@@ -129,7 +128,7 @@ void BASEMEM_Exit(void)
     }
 }
 
-uint32_t BASEMEM_GetFreeMemSize(uint32_t memory_flags)
+uint32_t CCALL BASEMEM_GetFreeMemSize(uint32_t memory_flags)
 {
     switch (memory_flags & 0xff)
     {
@@ -155,7 +154,7 @@ static unsigned int BASEMEM_GetFreePhysicalMemSize(unsigned int memory_flags)
 }
 #endif
 
-void *BASEMEM_Alloc(uint32_t size, uint32_t memory_flags)
+void * CCALL BASEMEM_Alloc(uint32_t size, uint32_t memory_flags)
 {
     int index, free_region_index;
     void *mem_ptr;
@@ -234,7 +233,7 @@ void *BASEMEM_Alloc(uint32_t size, uint32_t memory_flags)
     return mem_ptr;
 }
 
-int32_t BASEMEM_Free(void *mem_ptr)
+int32_t CCALL BASEMEM_Free(void *mem_ptr)
 {
     int index, found_region_index;
 
@@ -374,17 +373,17 @@ static void *BASEMEM_Realloc(void *mem_ptr, unsigned int size)
 }
 #endif
 
-int32_t BASEMEM_LockRegion(void *mem_ptr, uint32_t length)
+int32_t CCALL BASEMEM_LockRegion(void *mem_ptr, uint32_t length)
 {
     return 1;
 }
 
-int32_t BASEMEM_UnlockRegion(void *mem_ptr, uint32_t length)
+int32_t CCALL BASEMEM_UnlockRegion(void *mem_ptr, uint32_t length)
 {
     return 1;
 }
 
-void BASEMEM_FillMemByte(void *dst, uint32_t length, int32_t c)
+void CCALL BASEMEM_FillMemByte(void *dst, uint32_t length, int32_t c)
 {
     if (dst != NULL)
     {
@@ -396,7 +395,7 @@ void BASEMEM_FillMemByte(void *dst, uint32_t length, int32_t c)
     }
 }
 
-void BASEMEM_FillMemLong(void *dst, uint32_t length, uint32_t c)
+void CCALL BASEMEM_FillMemLong(void *dst, uint32_t length, uint32_t c)
 {
     if (dst != NULL)
     {
@@ -418,7 +417,7 @@ void BASEMEM_FillMemLong(void *dst, uint32_t length, uint32_t c)
     }
 }
 
-void BASEMEM_CopyMem(const void *src, void *dst, uint32_t length)
+void CCALL BASEMEM_CopyMem(const void *src, void *dst, uint32_t length)
 {
     if ((src != NULL) && (dst != NULL))
     {
@@ -430,7 +429,7 @@ void BASEMEM_CopyMem(const void *src, void *dst, uint32_t length)
     }
 }
 
-void *BASEMEM_AlignMemptr(void *mem_ptr)
+void * CCALL BASEMEM_AlignMemptr(void *mem_ptr)
 {
     return (void *) ( (((uintptr_t)mem_ptr) + 7) & ~((uintptr_t)7) );
 }
@@ -478,7 +477,7 @@ static void BASEMEM_LocalPrintError(char *buffer, const uint8_t *data)
 #undef DATA
 }
 
-void BASEMEM_PrintReport(FILE *fp)
+void CCALL BASEMEM_PrintReport(FILE *fp)
 {
     if (fp == NULL)
     {

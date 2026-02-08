@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,22 +26,23 @@
 #define _GAME_DATAFILES_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, uint32_t (*_MessageProc)(const char *, uint32_t, uint32_t));
-void CloseGameDataFiles(void);
-int32_t RecordOpen(uint32_t RecordKey);
-int32_t RecordTryOpen(uint32_t RecordKey);
-const char *RecordGetDataFilePathAndOffset(uint32_t RecordKey, uint32_t *Offset);
-void RecordSeek(int32_t RecordHandle, int32_t Offset, int32_t Whence);
-uint32_t RecordRead(int32_t RecordHandle, uint8_t *ReadBuffer, uint32_t NumberOfBytes);
-void RecordClose(int32_t RecordHandle);
-uint32_t RecordGetSize(int32_t RecordHandle);
-uint32_t GetFirstLevelRecordKey(void);
-uint32_t GetNextLevelRecordKey(void);
+void CCALL OpenGameDataFiles(const char *ManifestFilePath, const char *_SourcePath, uint32_t (*_MessageProc)(const char *, uint32_t, uint32_t));
+void CCALL CloseGameDataFiles(void);
+int32_t CCALL RecordOpen(uint32_t RecordKey);
+int32_t CCALL RecordTryOpen(uint32_t RecordKey);
+const char * CCALL RecordGetDataFilePathAndOffset(uint32_t RecordKey, uint32_t *Offset);
+void CCALL RecordSeek(int32_t RecordHandle, int32_t Offset, int32_t Whence);
+uint32_t CCALL RecordRead(int32_t RecordHandle, uint8_t *ReadBuffer, uint32_t NumberOfBytes);
+void CCALL RecordClose(int32_t RecordHandle);
+uint32_t CCALL RecordGetSize(int32_t RecordHandle);
+uint32_t CCALL GetFirstLevelRecordKey(void);
+uint32_t CCALL GetNextLevelRecordKey(void);
 
 #ifdef __cplusplus
 }

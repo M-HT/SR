@@ -38,7 +38,6 @@
 #include <signal.h>
 #include <time.h>
 #include <sys/types.h>
-#include "Game_defs.h"
 #include "Game_vars.h"
 #include "Warcraft-proc.h"
 #include "Warcraft-timer.h"
@@ -57,7 +56,7 @@ static int signal_table[SIGNAL_NUM] = {
 };
 
 
-int32_t Game_errno(void)
+int32_t CCALL Game_errno(void)
 {
     int err;
 
@@ -66,7 +65,7 @@ int32_t Game_errno(void)
     return (err >= 0 && err < 256)?(errno_rtable[err]):(err);
 }
 
-uint32_t Game_clock(void)
+uint32_t CCALL Game_clock(void)
 {
     uint32_t ret;
 
@@ -85,7 +84,7 @@ uint32_t Game_clock(void)
     }
 }
 
-int32_t Game_cputs(const char *buf)
+int32_t CCALL Game_cputs(const char *buf)
 {
     int ret;
 
@@ -99,7 +98,7 @@ int32_t Game_cputs(const char *buf)
     return (ret)?0:EOF;
 }
 
-void Game_delay(uint32_t milliseconds)
+void CCALL Game_delay(uint32_t milliseconds)
 {
     uint32_t end;
 
@@ -113,7 +112,7 @@ void Game_delay(uint32_t milliseconds)
     }
 }
 
-int32_t Game_fclose(void *stream)
+int32_t CCALL Game_fclose(void *stream)
 {
     FILE *fp;
 
@@ -127,47 +126,47 @@ int32_t Game_fclose(void *stream)
     return fclose(fp);
 }
 
-int32_t Game_fgetc(void *stream)
+int32_t CCALL Game_fgetc(void *stream)
 {
     return fgetc((sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
 }
 
-int32_t Game_ftell(void *stream)
+int32_t CCALL  Game_ftell(void *stream)
 {
     return ftell((sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
 }
 
-int32_t Game_fputc(int32_t c, void *stream)
+int32_t CCALL Game_fputc(int32_t c, void *stream)
 {
     return fputc(c, (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
 }
 
-int32_t Game_fputs(const char *s, void *stream)
+int32_t CCALL Game_fputs(const char *s, void *stream)
 {
     return fputs(s, (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
 }
 
-char *Game_fgets(char *s, int32_t size, void *stream)
+char * CCALL Game_fgets(char *s, int32_t size, void *stream)
 {
     return fgets(s, size, (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
 }
 
-int32_t Game_fseek(void *stream, int32_t offset, int32_t whence)
+int32_t CCALL Game_fseek(void *stream, int32_t offset, int32_t whence)
 {
     return fseek((sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream, offset, whence);
 }
 
-uint32_t Game_fread(void *ptr, uint32_t size, uint32_t nmemb, void *stream)
+uint32_t CCALL Game_fread(void *ptr, uint32_t size, uint32_t nmemb, void *stream)
 {
     return (uint32_t)fread(ptr, size, nmemb, (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
 }
 
-uint32_t Game_fwrite(const void *ptr, uint32_t size, uint32_t nmemb, void *stream)
+uint32_t CCALL Game_fwrite(const void *ptr, uint32_t size, uint32_t nmemb, void *stream)
 {
     return (uint32_t)fwrite(ptr, size, nmemb, (sizeof(void *) > 4) ? *(FILE **)stream : (FILE *)stream);
 }
 
-void Game_dos_gettime(void *dtime)
+void CCALL Game_dos_gettime(void *dtime)
 {
 #pragma pack(1)
     struct PACKED watcom_dostime_t {
@@ -207,27 +206,27 @@ void Game_dos_gettime(void *dtime)
 #endif
 }
 
-int32_t Game_fmemcmp(void *s1, uint32_t s1_seg, const void *s2, uint32_t s2_seg, uint32_t n)
+int32_t CCALL Game_fmemcmp(void *s1, uint32_t s1_seg, const void *s2, uint32_t s2_seg, uint32_t n)
 {
     return memcmp(s1, s2, n);
 }
 
-void *Game_fmemcpy(void *dest, uint32_t dest_seg, const void *src, uint32_t src_seg, uint32_t n)
+void * CCALL Game_fmemcpy(void *dest, uint32_t dest_seg, const void *src, uint32_t src_seg, uint32_t n)
 {
     return memcpy(dest, src, n);
 }
 
-void *Game_fmemset(void *s, uint32_t s_seg, int32_t c, uint32_t n)
+void * CCALL Game_fmemset(void *s, uint32_t s_seg, int32_t c, uint32_t n)
 {
     return memset(s, c, n);
 }
 
-void *Game_malloc(uint32_t size)
+void * CCALL Game_malloc(uint32_t size)
 {
     return x86_malloc(size);
 }
 
-void Game_free(void *ptr)
+void CCALL Game_free(void *ptr)
 {
     x86_free(ptr);
 }
@@ -236,7 +235,7 @@ void Game_free(void *ptr)
 #define WATCOM_IOLBF  0x0200  /* line buffering */
 #define WATCOM_IONBF  0x0400  /* no buffering */
 
-int32_t Game_setvbuf(void *fp, char *buf, int32_t mode, uint32_t size)
+int32_t CCALL Game_setvbuf(void *fp, char *buf, int32_t mode, uint32_t size)
 {
     int newmode;
 
@@ -252,7 +251,7 @@ int32_t Game_setvbuf(void *fp, char *buf, int32_t mode, uint32_t size)
 #define WATCOM_SIG_DFL 2
 #define WATCOM_SIG_ERR 3
 
-uint32_t Game_signal(int32_t signum, uint32_t handler)
+uint32_t CCALL Game_signal(int32_t signum, uint32_t handler)
 {
     int newsignum;
     void (*newhandler)(int), (*oldhandler)(int);
@@ -285,7 +284,7 @@ uint32_t Game_signal(int32_t signum, uint32_t handler)
     else return 0; // oldhandler
 }
 
-uint32_t Game_strtoul(const char *nptr, PTR32(char) *endptr, int32_t base)
+uint32_t CCALL Game_strtoul(const char *nptr, PTR32(char) *endptr, int32_t base)
 {
     char *endptr2;
     unsigned long ret;
@@ -295,7 +294,7 @@ uint32_t Game_strtoul(const char *nptr, PTR32(char) *endptr, int32_t base)
     return ret;
 }
 
-int32_t Game_time(int32_t *tloc)
+int32_t CCALL Game_time(int32_t *tloc)
 {
     time_t t;
 
@@ -318,7 +317,7 @@ void Game_FlipScreen(void)
     SDL_PushEvent(&event);
 }
 
-void Game_Sync(void)
+void CCALL Game_Sync(void)
 {
 #if defined(__DEBUG__)
     fprintf(stderr, "sync\n");

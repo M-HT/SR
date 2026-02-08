@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,7 @@
 #include "BBTOOL.h"
 
 
-unsigned int TOOL_Chiffre_c(uint8_t *buffer, unsigned int length, const uint8_t *key, unsigned int keylength)
+unsigned int CCALL TOOL_Chiffre_c(uint8_t *buffer, unsigned int length, const uint8_t *key, unsigned int keylength)
 {
     unsigned int index, keyindex;
 

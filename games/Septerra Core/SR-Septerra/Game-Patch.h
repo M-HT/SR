@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2023 Roman Pauer
+ *  Copyright (C) 2023-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,12 +26,13 @@
 #define _GAME_PATCH_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void Patch_PushKeyEvent(uint32_t key);
+void CCALL Patch_PushKeyEvent(uint32_t key);
 
 #ifdef __cplusplus
 }

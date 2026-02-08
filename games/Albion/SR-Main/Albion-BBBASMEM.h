@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2023 Roman Pauer
+ *  Copyright (C) 2018-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -27,6 +27,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include "Game_defs.h"
 
 #define BASEMEM_XMS_MEMORY 1
 #define BASEMEM_DOS_MEMORY 2
@@ -41,18 +42,18 @@
 extern "C" {
 #endif
 
-int32_t BASEMEM_Init(void);
-void BASEMEM_Exit(void);
-uint32_t BASEMEM_GetFreeMemSize(uint32_t memory_flags);
-void *BASEMEM_Alloc(uint32_t size, uint32_t memory_flags);
-int32_t BASEMEM_Free(void *mem_ptr);
-int32_t BASEMEM_LockRegion(void *mem_ptr, uint32_t length);
-int32_t BASEMEM_UnlockRegion(void *mem_ptr, uint32_t length);
-void BASEMEM_FillMemByte(void *dst, uint32_t length, int32_t c);
-void BASEMEM_FillMemLong(void *dst, uint32_t length, uint32_t c);
-void BASEMEM_CopyMem(const void *src, void *dst, uint32_t length);
-void *BASEMEM_AlignMemptr(void *mem_ptr);
-void BASEMEM_PrintReport(FILE *fp);
+int32_t CCALL BASEMEM_Init(void);
+void CCALL BASEMEM_Exit(void);
+uint32_t CCALL BASEMEM_GetFreeMemSize(uint32_t memory_flags);
+void * CCALL BASEMEM_Alloc(uint32_t size, uint32_t memory_flags);
+int32_t CCALL BASEMEM_Free(void *mem_ptr);
+int32_t CCALL BASEMEM_LockRegion(void *mem_ptr, uint32_t length);
+int32_t CCALL BASEMEM_UnlockRegion(void *mem_ptr, uint32_t length);
+void CCALL BASEMEM_FillMemByte(void *dst, uint32_t length, int32_t c);
+void CCALL BASEMEM_FillMemLong(void *dst, uint32_t length, uint32_t c);
+void CCALL BASEMEM_CopyMem(const void *src, void *dst, uint32_t length);
+void * CCALL BASEMEM_AlignMemptr(void *mem_ptr);
+void CCALL BASEMEM_PrintReport(FILE *fp);
 
 
 #ifdef __cplusplus

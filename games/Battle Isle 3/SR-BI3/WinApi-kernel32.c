@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021-2025 Roman Pauer
+ *  Copyright (C) 2021-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -32,44 +32,44 @@ extern const char *SDI_install_path;
 extern const char *SDI_CD_path;
 
 
-uint32_t CloseHandle_c(void * hObject)
+uint32_t CCALL CloseHandle_c(void * hObject)
 {
     return CloseHandle((HANDLE)hObject);
 }
 
-void * CreateFileA_c(const char * lpFileName, uint32_t dwDesiredAccess, uint32_t dwShareMode, void * lpSecurityAttributes, uint32_t dwCreationDisposition, uint32_t dwFlagsAndAttributes, void * hTemplateFile)
+void * CCALL CreateFileA_c(const char * lpFileName, uint32_t dwDesiredAccess, uint32_t dwShareMode, void * lpSecurityAttributes, uint32_t dwCreationDisposition, uint32_t dwFlagsAndAttributes, void * hTemplateFile)
 {
     return CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, (LPSECURITY_ATTRIBUTES)lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, (HANDLE)hTemplateFile);
 }
 
-uint32_t FindClose_c(void * hFindFile)
+uint32_t CCALL FindClose_c(void * hFindFile)
 {
     return FindClose((HANDLE)hFindFile);
 }
 
-void * FindFirstFileA_c(const char * lpFileName, void * lpFindFileData)
+void * CCALL FindFirstFileA_c(const char * lpFileName, void * lpFindFileData)
 {
     return FindFirstFileA(lpFileName, (LPWIN32_FIND_DATAA)lpFindFileData);
 }
 
-uint32_t FindNextFileA_c(void * hFindFile, void * lpFindFileData)
+uint32_t CCALL FindNextFileA_c(void * hFindFile, void * lpFindFileData)
 {
     return FindNextFileA((HANDLE)hFindFile, (LPWIN32_FIND_DATAA)lpFindFileData);
 }
 
-uint32_t GetCurrentDirectoryA_c(uint32_t nBufferLength, char * lpBuffer)
+uint32_t CCALL GetCurrentDirectoryA_c(uint32_t nBufferLength, char * lpBuffer)
 {
     return GetCurrentDirectoryA(nBufferLength, lpBuffer);
 }
 
-uint32_t GetPrivateProfileIntA_c(const char * lpAppName, const char * lpKeyName, int32_t nDefault, const char * lpFileName)
+uint32_t CCALL GetPrivateProfileIntA_c(const char * lpAppName, const char * lpKeyName, int32_t nDefault, const char * lpFileName)
 {
     // change: use full path to SDI.INI
     //return GetPrivateProfileIntA(lpAppName, lpKeyName, nDefault, lpFileName);
     return GetPrivateProfileIntA(lpAppName, lpKeyName, nDefault, SDI_INI_path);
 }
 
-uint32_t GetPrivateProfileStringA_c(const char * lpAppName, const char * lpKeyName, const char * lpDefault, char * lpReturnedString, uint32_t nSize, const char * lpFileName)
+uint32_t CCALL GetPrivateProfileStringA_c(const char * lpAppName, const char * lpKeyName, const char * lpDefault, char * lpReturnedString, uint32_t nSize, const char * lpFileName)
 {
     // change: don't get paths from SDI.INI
     if (0 == lstrcmpiA(lpAppName, "FILES"))
@@ -117,12 +117,12 @@ uint32_t GetPrivateProfileStringA_c(const char * lpAppName, const char * lpKeyNa
     return GetPrivateProfileStringA(lpAppName, lpKeyName, lpDefault, lpReturnedString, nSize, SDI_INI_path);
 }
 
-uint32_t GetTickCount_c(void)
+uint32_t CCALL GetTickCount_c(void)
 {
     return GetTickCount();
 }
 
-void GlobalMemoryStatus_c(void * lpBuffer)
+void CCALL GlobalMemoryStatus_c(void * lpBuffer)
 {
     // change: return saturated values
     //return GlobalMemoryStatus((LPMEMORYSTATUS)lpBuffer);
@@ -153,27 +153,27 @@ void GlobalMemoryStatus_c(void * lpBuffer)
     }
 }
 
-uint32_t ReadFile_c(void * hFile, void * lpBuffer, uint32_t nNumberOfBytesToRead, uint32_t * lpNumberOfBytesRead, void * lpOverlapped)
+uint32_t CCALL ReadFile_c(void * hFile, void * lpBuffer, uint32_t nNumberOfBytesToRead, uint32_t * lpNumberOfBytesRead, void * lpOverlapped)
 {
     return ReadFile((HANDLE)hFile, lpBuffer, nNumberOfBytesToRead, (LPDWORD)lpNumberOfBytesRead, (LPOVERLAPPED)lpOverlapped);
 }
 
-uint32_t SetCurrentDirectoryA_c(const char * lpPathName)
+uint32_t CCALL SetCurrentDirectoryA_c(const char * lpPathName)
 {
     return SetCurrentDirectoryA(lpPathName);
 }
 
-uint32_t SetFilePointer_c(void * hFile, int32_t lDistanceToMove, int32_t * lpDistanceToMoveHigh, uint32_t dwMoveMethod)
+uint32_t CCALL SetFilePointer_c(void * hFile, int32_t lDistanceToMove, int32_t * lpDistanceToMoveHigh, uint32_t dwMoveMethod)
 {
     return SetFilePointer((HANDLE)hFile, lDistanceToMove, (PLONG)lpDistanceToMoveHigh, dwMoveMethod);
 }
 
-uint32_t WriteFile_c(void * hFile, const void * lpBuffer, uint32_t nNumberOfBytesToWrite, uint32_t * lpNumberOfBytesWritten, void * lpOverlapped)
+uint32_t CCALL WriteFile_c(void * hFile, const void * lpBuffer, uint32_t nNumberOfBytesToWrite, uint32_t * lpNumberOfBytesWritten, void * lpOverlapped)
 {
     return WriteFile((HANDLE)hFile, lpBuffer, nNumberOfBytesToWrite, (LPDWORD)lpNumberOfBytesWritten, (LPOVERLAPPED)lpOverlapped);
 }
 
-uint32_t WritePrivateProfileStringA_c(const char * lpAppName, const char * lpKeyName, const char * lpString, const char * lpFileName)
+uint32_t CCALL WritePrivateProfileStringA_c(const char * lpAppName, const char * lpKeyName, const char * lpString, const char * lpFileName)
 {
     // change: use full path to SDI.INI
     //return WritePrivateProfileStringA(lpAppName, lpKeyName, lpString, lpFileName);

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021 Roman Pauer
+ *  Copyright (C) 2021-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,26 +26,27 @@
 #define _WINAPI_KERNEL32_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-uint32_t CloseHandle_c(void * hObject);
-void * CreateFileA_c(const char * lpFileName, uint32_t dwDesiredAccess, uint32_t dwShareMode, void * lpSecurityAttributes, uint32_t dwCreationDisposition, uint32_t dwFlagsAndAttributes, void * hTemplateFile);
-uint32_t FindClose_c(void * hFindFile);
-void * FindFirstFileA_c(const char * lpFileName, void * lpFindFileData);
-uint32_t FindNextFileA_c(void * hFindFile, void * lpFindFileData);
-uint32_t GetCurrentDirectoryA_c(uint32_t nBufferLength, char * lpBuffer);
-uint32_t GetPrivateProfileIntA_c(const char * lpAppName, const char * lpKeyName, int32_t nDefault, const char * lpFileName);
-uint32_t GetPrivateProfileStringA_c(const char * lpAppName, const char * lpKeyName, const char * lpDefault, char * lpReturnedString, uint32_t nSize, const char * lpFileName);
-uint32_t GetTickCount_c(void);
-void GlobalMemoryStatus_c(void * lpBuffer);
-uint32_t ReadFile_c(void * hFile, void * lpBuffer, uint32_t nNumberOfBytesToRead, uint32_t * lpNumberOfBytesRead, void * lpOverlapped);
-uint32_t SetCurrentDirectoryA_c(const char * lpPathName);
-uint32_t SetFilePointer_c(void * hFile, int32_t lDistanceToMove, int32_t * lpDistanceToMoveHigh, uint32_t dwMoveMethod);
-uint32_t WriteFile_c(void * hFile, const void * lpBuffer, uint32_t nNumberOfBytesToWrite, uint32_t * lpNumberOfBytesWritten, void * lpOverlapped);
-uint32_t WritePrivateProfileStringA_c(const char * lpAppName, const char * lpKeyName, const char * lpString, const char * lpFileName);
+uint32_t CCALL CloseHandle_c(void * hObject);
+void * CCALL CreateFileA_c(const char * lpFileName, uint32_t dwDesiredAccess, uint32_t dwShareMode, void * lpSecurityAttributes, uint32_t dwCreationDisposition, uint32_t dwFlagsAndAttributes, void * hTemplateFile);
+uint32_t CCALL FindClose_c(void * hFindFile);
+void * CCALL FindFirstFileA_c(const char * lpFileName, void * lpFindFileData);
+uint32_t CCALL FindNextFileA_c(void * hFindFile, void * lpFindFileData);
+uint32_t CCALL GetCurrentDirectoryA_c(uint32_t nBufferLength, char * lpBuffer);
+uint32_t CCALL GetPrivateProfileIntA_c(const char * lpAppName, const char * lpKeyName, int32_t nDefault, const char * lpFileName);
+uint32_t CCALL GetPrivateProfileStringA_c(const char * lpAppName, const char * lpKeyName, const char * lpDefault, char * lpReturnedString, uint32_t nSize, const char * lpFileName);
+uint32_t CCALL GetTickCount_c(void);
+void CCALL GlobalMemoryStatus_c(void * lpBuffer);
+uint32_t CCALL ReadFile_c(void * hFile, void * lpBuffer, uint32_t nNumberOfBytesToRead, uint32_t * lpNumberOfBytesRead, void * lpOverlapped);
+uint32_t CCALL SetCurrentDirectoryA_c(const char * lpPathName);
+uint32_t CCALL SetFilePointer_c(void * hFile, int32_t lDistanceToMove, int32_t * lpDistanceToMoveHigh, uint32_t dwMoveMethod);
+uint32_t CCALL WriteFile_c(void * hFile, const void * lpBuffer, uint32_t nNumberOfBytesToWrite, uint32_t * lpNumberOfBytesWritten, void * lpOverlapped);
+uint32_t CCALL WritePrivateProfileStringA_c(const char * lpAppName, const char * lpKeyName, const char * lpString, const char * lpFileName);
 
 #ifdef __cplusplus
 }

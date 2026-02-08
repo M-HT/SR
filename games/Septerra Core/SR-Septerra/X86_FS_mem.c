@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2020 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -36,11 +36,12 @@
 
 uint32_t current_SEH_frame;
 #endif
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C"
 #endif
-uint32_t X86_ReadFsDword(uint32_t addr)
+uint32_t CCALL X86_ReadFsDword(uint32_t addr)
 {
 #ifdef _WIN32
     // addr == 0
@@ -64,7 +65,7 @@ uint32_t X86_ReadFsDword(uint32_t addr)
 #ifdef __cplusplus
 extern "C"
 #endif
-void X86_WriteFsDword(uint32_t addr, uint32_t value)
+void CCALL X86_WriteFsDword(uint32_t addr, uint32_t value)
 {
 #ifdef _WIN32
     // addr == 0

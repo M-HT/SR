@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2019 Roman Pauer
+ *  Copyright (C) 2019-2016 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -30,17 +30,17 @@
 extern "C" {
 #endif
 
-void x86_pushad(CPU);
-void x86_popad(CPU);
-void x86_popfd(CPU);
+extern void CCALL x86_pushad(CPU);
+extern void CCALL x86_popad(CPU);
+extern void CCALL x86_popfd(CPU);
 
-void X86_InterruptProcedure(const uint8_t IntNum, void *regs);
+extern void CCALL X86_InterruptProcedure(const uint8_t IntNum, void *regs);
 
 #ifdef __cplusplus
 }
 #endif
 
-EXTERNC void x86_int(CPU, uint32_t intno)
+EXTERNC void CCALL x86_int(CPU, uint32_t intno)
 {
         //PUSHFD
         esp -= 4;

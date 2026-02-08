@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2020-2021 Roman Pauer
+ *  Copyright (C) 2020-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,14 +26,15 @@
 #define _BBDBG_H_INCLUDED_
 
 #include <stdint.h>
+#include "platform.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void DBG_Panic_c(const char *module, int line);
-int DBG_Init_c(void);
-void DBG_Exit_c(void);
+void CCALL DBG_Panic_c(const char *module, int line);
+int CCALL DBG_Init_c(void);
+void CCALL DBG_Exit_c(void);
 
 #ifdef __cplusplus
 }

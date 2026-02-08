@@ -100,11 +100,17 @@
     #define NOINLINE __attribute__ ((__noinline__))
     #define NORETURN __attribute__ ((__noreturn__))
     #define PACKED __attribute__ ((__packed__))
+    #if defined(__i386) || (defined(__x86_64) && defined(_WIN32))
+        #define CCALL __attribute__ ((__cdecl__))
+    #else
+        #define CCALL
+    #endif
 #elif defined(_MSC_VER)
     #define INLINE __inline
     #define NOINLINE __declspec(noinline)
     #define NORETURN __declspec(noreturn)
     #define PACKED
+    #define CCALL __cdecl
     #define chdir _chdir
     #define close _close
     #define fileno _fileno
@@ -129,6 +135,7 @@
     #define NOINLINE
     #define NORETURN
     #define PACKED
+    #define CCALL
 #endif
 
 

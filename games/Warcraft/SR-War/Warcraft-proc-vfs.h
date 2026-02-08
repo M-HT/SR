@@ -25,12 +25,14 @@
 #if !defined(_WARCRAFT_PROC_VFS_H_INCLUDED_)
 #define _WARCRAFT_PROC_VFS_H_INCLUDED_
 
+#include "Game_defs.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern void *Game_fopen(const char *filename, const char *mode);
-extern int32_t Game_unlink(const char *pathname);
+extern void * CCALL Game_fopen(const char *filename, const char *mode);
+extern int32_t CCALL Game_unlink(const char *pathname);
 
 #ifdef __cplusplus
 }

@@ -24,7 +24,6 @@
 
 #include <stdlib.h>
 #include <setjmp.h>
-#include "../Game_defs.h"
 #include "llasm_cpu.h"
 
 
@@ -35,7 +34,7 @@ extern "C" {
 extern _cpu *x86_initialize_cpu(void);
 extern void x86_deinitialize_cpu(void);
 
-extern void c_RunProcEBP(CPU);
+extern void CCALL c_RunProcEBP(CPU);
 
 #ifdef __cplusplus
 }
@@ -48,19 +47,19 @@ static jmp_buf exit_env;
 static int main_return_value;
 
 
-EXTERNC void Game_ExitMain_Asm(int32_t status)
+EXTERNC void CCALL Game_ExitMain_Asm(int32_t status)
 {
     main_return_value = status;
     longjmp(exit_env, 1);
 }
 
-void Game_StopMain_Asm(void)
+void CCALL Game_StopMain_Asm(void)
 {
     main_return_value = 1;
     longjmp(exit_env, 1);
 }
 
-int Game_Main_Asm(int argc, char *argv[], void *main_proc)
+int CCALL Game_Main_Asm(int argc, char *argv[], void *main_proc)
 {
     if (setjmp(exit_env) == 0)
     {
@@ -89,7 +88,7 @@ int Game_Main_Asm(int argc, char *argv[], void *main_proc)
     }
 }
 
-void Game_RunTimer_Asm(void *timer_proc)
+void CCALL Game_RunTimer_Asm(void *timer_proc)
 {
     _cpu *cpu;
     uint32_t old_eax, old_ecx, old_edx, old_ebx, old_ebp, old_esi, old_edi;

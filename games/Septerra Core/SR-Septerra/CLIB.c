@@ -35,7 +35,6 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include "platform.h"
 #include "printf_x86.h"
 #include "ptr32.h"
 
@@ -58,13 +57,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern void run_thread_asm(void *arglist, void(*start_address)(void *));
+extern void CCALL run_thread_asm(void *arglist, void(*start_address)(void *));
 #ifdef __cplusplus
 }
 #endif
 
 
-void *memset_c(void *s, int32_t c, uint32_t n)
+void * CCALL memset_c(void *s, int32_t c, uint32_t n)
 {
 #ifdef DEBUG_CLIB
     eprintf("memset: 0x%" PRIxPTR ", 0x%x, %i\n", (uintptr_t) s, c, n);
@@ -73,7 +72,7 @@ void *memset_c(void *s, int32_t c, uint32_t n)
     return memset(s, c, n);
 }
 
-void *memcpy_c(void *dest, const void *src, uint32_t n)
+void * CCALL memcpy_c(void *dest, const void *src, uint32_t n)
 {
 #ifdef DEBUG_CLIB
     eprintf("memcpy: 0x%" PRIxPTR ", 0x%" PRIxPTR ", %i\n", (uintptr_t) dest, (uintptr_t) src, n);
@@ -86,7 +85,7 @@ void *memcpy_c(void *dest, const void *src, uint32_t n)
 }
 
 
-int32_t _stricmp_c(const char *s1, const char *s2)
+int32_t CCALL _stricmp_c(const char *s1, const char *s2)
 {
 #ifdef DEBUG_CLIB
     eprintf("_stricmp: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s) - %i\n", (uintptr_t) s1, s1, (uintptr_t) s2, s2, strcasecmp(s1, s2));
@@ -95,7 +94,7 @@ int32_t _stricmp_c(const char *s1, const char *s2)
     return strcasecmp(s1, s2);
 }
 
-char *strncpy_c(char *dest, const char *src, uint32_t n)
+char * CCALL strncpy_c(char *dest, const char *src, uint32_t n)
 {
 #ifdef DEBUG_CLIB
     eprintf("strncpy: 0x%" PRIxPTR ", 0x%" PRIxPTR " (%s), %i\n", (uintptr_t) dest, (uintptr_t) src, src, n);
@@ -104,7 +103,7 @@ char *strncpy_c(char *dest, const char *src, uint32_t n)
     return strncpy(dest, src, n);
 }
 
-int32_t strncmp_c(const char *s1, const char *s2, uint32_t n)
+int32_t CCALL strncmp_c(const char *s1, const char *s2, uint32_t n)
 {
 #ifdef DEBUG_CLIB
     eprintf("strncmp: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s), %i - %i\n", (uintptr_t) s1, s1, (uintptr_t) s2, s2, n, strncmp(s1, s2, n));
@@ -113,7 +112,7 @@ int32_t strncmp_c(const char *s1, const char *s2, uint32_t n)
     return strncmp(s1, s2, n);
 }
 
-char *strncat_c(char *dest, const char *src, uint32_t n)
+char * CCALL strncat_c(char *dest, const char *src, uint32_t n)
 {
 #ifdef DEBUG_CLIB
     eprintf("strncat: 0x%" PRIxPTR " (%s), 0x%" PRIxPTR " (%s), %i\n", (uintptr_t) dest, dest, (uintptr_t) src, src, n);
@@ -122,7 +121,7 @@ char *strncat_c(char *dest, const char *src, uint32_t n)
     return strncat(dest, src, n);
 }
 
-void *malloc_c(uint32_t size)
+void * CCALL malloc_c(uint32_t size)
 {
 #ifdef DEBUG_CLIB
     eprintf("malloc: %i\n", size);
@@ -131,7 +130,7 @@ void *malloc_c(uint32_t size)
     return x86_malloc(size);
 }
 
-void free_c(void *ptr)
+void CCALL free_c(void *ptr)
 {
 #ifdef DEBUG_CLIB
     eprintf("free: 0x%" PRIxPTR "\n", (uintptr_t) ptr);
@@ -140,7 +139,7 @@ void free_c(void *ptr)
     x86_free(ptr);
 }
 
-void *calloc_c(uint32_t nmemb, uint32_t size)
+void * CCALL calloc_c(uint32_t nmemb, uint32_t size)
 {
 #ifdef DEBUG_CLIB
     eprintf("calloc: %i, %i\n", nmemb, size);
@@ -150,7 +149,7 @@ void *calloc_c(uint32_t nmemb, uint32_t size)
 }
 
 
-int32_t atol_c(const char *nptr)
+int32_t CCALL atol_c(const char *nptr)
 {
 #ifdef DEBUG_CLIB
     eprintf("atol: 0x%" PRIxPTR " (%s) - %i\n", (uintptr_t) nptr, nptr, (int)atol(nptr));
@@ -159,7 +158,7 @@ int32_t atol_c(const char *nptr)
     return atol(nptr);
 }
 
-int32_t toupper_c(int32_t c)
+int32_t CCALL toupper_c(int32_t c)
 {
 #ifdef DEBUG_CLIB
     eprintf("toupper: %i (%c) - %i\n", c, c, toupper(c));
@@ -169,7 +168,7 @@ int32_t toupper_c(int32_t c)
 }
 
 
-int32_t sprintf2_c(char *str, const char *format, uint32_t *ap)
+int32_t CCALL sprintf2_c(char *str, const char *format, uint32_t *ap)
 {
     int res;
 
@@ -186,7 +185,7 @@ int32_t sprintf2_c(char *str, const char *format, uint32_t *ap)
     return res;
 }
 
-int32_t sscanf2_c(const char *str, const char *format, uint32_t *ap)
+int32_t CCALL sscanf2_c(const char *str, const char *format, uint32_t *ap)
 {
 #define MAX_VALUES 2
     int res, num, index;
@@ -254,7 +253,7 @@ int32_t sscanf2_c(const char *str, const char *format, uint32_t *ap)
 }
 
 
-int32_t system_c(const char *command)
+int32_t CCALL system_c(const char *command)
 {
 #ifdef DEBUG_CLIB
     eprintf("system: 0x%" PRIxPTR " (%s)\n", (uintptr_t) command, command);
@@ -263,7 +262,7 @@ int32_t system_c(const char *command)
     return 0;
 }
 
-void srand_c(uint32_t seed)
+void CCALL srand_c(uint32_t seed)
 {
 #ifdef DEBUG_CLIB
     eprintf("srand: 0x%x\n", seed);
@@ -272,7 +271,7 @@ void srand_c(uint32_t seed)
     srand(seed);
 }
 
-int32_t rand_c(void)
+int32_t CCALL rand_c(void)
 {
 #ifdef DEBUG_CLIB
     eprintf("rand\n");
@@ -283,13 +282,13 @@ int32_t rand_c(void)
 }
 
 
-void __report_gsfailure_c(void)
+void CCALL __report_gsfailure_c(void)
 {
     fprintf(stderr, "security cookie check failed\n");
     exit(0x409);
 }
 
-int32_t _except_handler4_c(int32_t _1, void *TargetFrame, int32_t _3)
+int32_t CCALL _except_handler4_c(int32_t _1, void *TargetFrame, int32_t _3)
 {
     fprintf(stderr, "exception handler: %i\n", 4);
     exit(0);
@@ -321,7 +320,7 @@ static void *run_thread(void *arg)
 }
 #endif
 
-uint32_t _beginthread_c(void(*start_address)(void *), uint32_t stack_size, void *arglist)
+uint32_t CCALL _beginthread_c(void(*start_address)(void *), uint32_t stack_size, void *arglist)
 {
     run_thread_args *thread_args;
 
@@ -387,7 +386,7 @@ uint32_t _beginthread_c(void(*start_address)(void *), uint32_t stack_size, void 
 #endif
 }
 
-void sync_c(void)
+void CCALL sync_c(void)
 {
 #ifdef DEBUG_CLIB
     eprintf("sync\n");

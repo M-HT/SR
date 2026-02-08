@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2018-2023 Roman Pauer
+ *  Copyright (C) 2018-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -26,6 +26,7 @@
 #define _ALBION_BBERROR_H_INCLUDED_
 
 #include <stdint.h>
+#include "Game_defs.h"
 
 typedef void (*ERROR_OutputFuncPtr)(const char *error_string);
 typedef void (*ERROR_PrintErrorPtr)(char *buffer, const uint8_t *data);
@@ -34,14 +35,14 @@ typedef void (*ERROR_PrintErrorPtr)(char *buffer, const uint8_t *data);
 extern "C" {
 #endif
 
-extern void ERROR_Init(ERROR_OutputFuncPtr output_func_ptr);
-extern void ERROR_ClearStack(void);
-extern int32_t ERROR_PushError(ERROR_PrintErrorPtr error_print_error_ptr, const char *error_prefix, int32_t error_data_len, const uint8_t *error_data);
+extern void CCALL ERROR_Init(ERROR_OutputFuncPtr output_func_ptr);
+extern void CCALL ERROR_ClearStack(void);
+extern int32_t CCALL ERROR_PushError(ERROR_PrintErrorPtr error_print_error_ptr, const char *error_prefix, int32_t error_data_len, const uint8_t *error_data);
 // todo: remove
-extern int32_t ERROR_PushErrorDOS(ERROR_PrintErrorPtr error_print_error_ptr, const char *error_prefix, int32_t error_data_len, const uint8_t *error_data);
-extern void ERROR_PopError(void);
-extern int32_t ERROR_IsStackEmpty(void);
-extern void ERROR_PrintAllErrors(uint32_t flags);
+extern int32_t CCALL ERROR_PushErrorDOS(ERROR_PrintErrorPtr error_print_error_ptr, const char *error_prefix, int32_t error_data_len, const uint8_t *error_data);
+extern void CCALL ERROR_PopError(void);
+extern int32_t CCALL ERROR_IsStackEmpty(void);
+extern void CCALL ERROR_PrintAllErrors(uint32_t flags);
 
 
 #ifdef __cplusplus

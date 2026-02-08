@@ -26,7 +26,6 @@
 #define _TIME_BITS 64
 #include <stdio.h>
 #include <time.h>
-#include "Game_defs.h"
 #include "Game_vars.h"
 #include "Xcom-int.h"
 #include "Xcom-int3.h"
@@ -35,7 +34,7 @@
 #include "Game_thread.h"
 #include "Game-int.h"
 
-void X86_InterruptProcedure(
+void CCALL X86_InterruptProcedure(
     const uint8_t IntNum,
     _cpu_regs *regs)
 {

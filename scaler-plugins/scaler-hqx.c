@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021-2025 Roman Pauer
+ *  Copyright (C) 2021-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -35,7 +35,7 @@
     #define EXPORT
 #endif
 
-static void scale(int factor, const void *src, void *dst, int src_width, int src_height, int y_first, int y_last)
+static void SCALER_PLUGIN_API scale(int factor, const void *src, void *dst, int src_width, int src_height, int y_first, int y_last)
 {
     if (y_first < 0) y_first = 0;
     if (y_last > src_height) y_last = src_height;
@@ -60,17 +60,17 @@ static void scale(int factor, const void *src, void *dst, int src_width, int src
     }
 }
 
-static int get_maximum_scale_factor(void)
+static int SCALER_PLUGIN_API get_maximum_scale_factor(void)
 {
     return 4;
 }
 
-static void shutdown_plugin(void)
+static void SCALER_PLUGIN_API shutdown_plugin(void)
 {
 }
 
 EXPORT
-int initialize_scaler_plugin(scaler_plugin_functions *functions)
+int SCALER_PLUGIN_API initialize_scaler_plugin(scaler_plugin_functions *functions)
 {
     if (functions == NULL) return -2;
 

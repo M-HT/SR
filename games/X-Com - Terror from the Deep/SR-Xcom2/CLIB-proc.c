@@ -42,7 +42,7 @@ static void file_out(char character, void* arg)
     fputc(character, (FILE *)arg);
 }
 
-int32_t CLIB_vprintf(const char *format, uint32_t *ap)
+int32_t CCALL CLIB_vprintf(const char *format, uint32_t *ap)
 {
     int res;
 
@@ -59,7 +59,7 @@ int32_t CLIB_vprintf(const char *format, uint32_t *ap)
     return res;
 }
 
-int32_t CLIB_vfprintf(void *stream, const char *format, uint32_t *ap)
+int32_t CCALL CLIB_vfprintf(void *stream, const char *format, uint32_t *ap)
 {
     int res;
     FILE *fp;

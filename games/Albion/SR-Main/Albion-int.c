@@ -23,14 +23,13 @@
  */
 
 #include <stdio.h>
-#include "Game_defs.h"
 #include "Game_vars.h"
 #include "Albion-int.h"
 #include "Albion-timer.h"
 #include "Game_thread.h"
 #include "Game-int.h"
 
-void X86_InterruptProcedure(
+void CCALL X86_InterruptProcedure(
     const uint8_t IntNum,
     _cpu_regs *regs)
 {

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -23,13 +23,12 @@
  */
 
 #include <stdio.h>
-#include "Game_defs.h"
 #include "Game_vars.h"
 #include "Warcraft-int.h"
 #include "Game_thread.h"
 #include "Game-int.h"
 
-void X86_InterruptProcedure(
+void CCALL X86_InterruptProcedure(
     const uint8_t IntNum,
     _cpu_regs *regs)
 {

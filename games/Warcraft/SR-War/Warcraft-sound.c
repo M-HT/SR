@@ -629,9 +629,7 @@ void CCALL Game_AIL_start_sample(AIL_sample *S)
                     }
                     else
 #endif
-#if SDL_VERSION_ATLEAST(2,0,0)
                     if (Game_ResamplingQuality <= 0)
-#endif
                     {
                         // interpolated resampling
                         resample_type = 2;

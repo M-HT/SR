@@ -47,27 +47,14 @@ static int SMK_double_pixels;
 static SDL_sem *SMK_FuncSem;
 static volatile int main_result;
 
-#if SDL_VERSION_ATLEAST(2,0,0)
 static SDL_Texture *SMK_Texture[3];
 static SDL_Texture *SMK_ScaledTexture[3];
-#elif defined(ALLOW_OPENGL)
-static GLuint SMK_GLTexture[3];
-static GLuint SMK_GLFramebuffer[3];
-static GLuint SMK_GLScaledTexture[3];
-
-static PFNGLGENFRAMEBUFFERSEXTPROC gl_glGenFramebuffersEXT;
-static PFNGLDELETEFRAMEBUFFERSEXTPROC gl_glDeleteFramebuffersEXT;
-static PFNGLFRAMEBUFFERTEXTURE2DEXTPROC gl_glFramebufferTexture2DEXT;
-static PFNGLBINDFRAMEBUFFEREXTPROC gl_glBindFramebufferEXT;
-#endif
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
 static void *SMK_TextureData;
 static void *SMK_ScaledTextureData;
 static int SMK_CurrentTexture;
 static int SMK_ScaleFactor;
 static int SMK_ScaledTextureWidth;
 static int SMK_ScaledTextureHeight;
-#endif
 
 static Uint32 palette_out[256];
 
@@ -77,143 +64,6 @@ static SDL_AudioCVT audio_cvt;
 static uint8_t *audio_cvtbuf;
 static int audio_directcvt;
 
-
-#if defined(GP2X) && defined(__GNUC__)
-static void __attribute__ ((noinline, naked)) BufferToScreen320x240x16Asm(uint16_t *dst, uint8_t *src, uint32_t *pal, uint32_t Height, uint32_t Width, uint32_t WidthDiff)
-{
-//input:
-// r0 - dst
-// r1 - src
-// r2 - palette
-// r3 - Height
-// [sp] - Width
-// [sp+4] - screen->w
-//
-//temp:
-// ip - Width
-// lr - screen->w - Width
-// v1 - horizontal counter
-// v2 - *src
-// v3 - *pal
-// v4 - *dst
-// v5 - *dst2
-	asm(
-		"stmfd sp!, {v1-v5, lr}" "\n"
-		"ldr ip, [sp, #(6*4)]" "\n"
-		"ldr lr, [sp, #(7*4)]" "\n"
-
-		"rsb v1, r3, #240" "\n"
-		"mul v2, v1, lr" "\n"
-		"add r0, r0, v2" "\n"
-		"rsb v1, ip, #320" "\n"
-		"add r0, r0, v1" "\n"
-
-		"sub lr, lr, ip" "\n"
-
-		"1:" "\n"
-		"mov v1, ip, lsr #2" "\n"
-
-		"2:" "\n"
-		"ldr v2, [r1], #4" "\n"
-		"and v4, v2, #0x00ff" "\n"
-		"ldr v4, [r2, v4, lsl #2]" "\n"
-
-		"and v3, v2, #0x00ff00" "\n"
-		"ldr v3, [r2, v3, lsr #6]" "\n"
-		"orr v4, v4, v3, lsl #16" "\n"
-
-		"and v5, v2, #0x00ff0000" "\n"
-		"ldr v5, [r2, v5, lsr #14]" "\n"
-
-		"mov v3, v2, lsr #24" "\n"
-		"ldr v3, [r2, v3, lsl #2]" "\n"
-		"orr v5, v5, v3, lsl #16" "\n"
-
-		"stmia r0!, {v4, v5}" "\n"
-
-		"subS v1, v1, #1" "\n"
-		"bne 2b" "\n"
-
-		"add r0, r0, lr" "\n"
-
-		"subS r3, r3, #1" "\n"
-		"bne 1b" "\n"
-
-		//exit
-		"ldmfd sp!, {v1-v5, pc}" "\n"
-	);
-}
-
-static void __attribute__ ((noinline, naked)) BufferToScreen320x240x16DoubleAsm(uint16_t *dst, uint8_t *src, uint32_t *pal, uint32_t Height, uint32_t Width, uint32_t WidthDiff)
-{
-//input:
-// r0 - dst
-// r1 - src
-// r2 - palette
-// r3 - Height
-// [sp] - Width
-// [sp+4] - screen->w
-//
-//temp:
-// ip - Width
-// lr - screen->w - Width
-// v1 - horizontal counter
-// v2 - *src
-// v3 - *pal
-// v4 - *dst
-// v5 - *dst2
-// v6 - dst+w
-	asm(
-		"stmfd sp!, {v1-v6, lr}" "\n"
-		"ldr ip, [sp, #(7*4)]" "\n"
-		"ldr lr, [sp, #(8*4)]" "\n"
-
-		"rsb v1, r3, #120" "\n"
-		"mul v2, v1, lr" "\n"
-		"add r0, r0, v2, lsl #1" "\n"
-		"rsb v1, ip, #320" "\n"
-		"add r0, r0, v1" "\n"
-
-		"add v6, r0, lr" "\n"
-
-		"rsb lr, ip, lr, lsl #1" "\n"
-
-		"1:" "\n"
-		"mov v1, ip, lsr #2" "\n"
-
-		"2:" "\n"
-		"ldr v2, [r1], #4" "\n"
-		"and v4, v2, #0x00ff" "\n"
-		"ldr v4, [r2, v4, lsl #2]" "\n"
-
-		"and v3, v2, #0x00ff00" "\n"
-		"ldr v3, [r2, v3, lsr #6]" "\n"
-		"orr v4, v4, v3, lsl #16" "\n"
-
-		"and v5, v2, #0x00ff0000" "\n"
-		"ldr v5, [r2, v5, lsr #14]" "\n"
-
-		"mov v3, v2, lsr #24" "\n"
-		"ldr v3, [r2, v3, lsl #2]" "\n"
-		"orr v5, v5, v3, lsl #16" "\n"
-
-		"stmia r0!, {v4, v5}" "\n"
-		"stmia v6!, {v4, v5}" "\n"
-
-		"subS v1, v1, #1" "\n"
-		"bne 2b" "\n"
-
-		"add r0, r0, lr" "\n"
-		"add v6, v6, lr" "\n"
-
-		"subS r3, r3, #1" "\n"
-		"bne 1b" "\n"
-
-		//exit
-		"ldmfd sp!, {v1-v6, pc}" "\n"
-	);
-}
-#endif
 
 static void Blit_32(SDL_Surface *surface, uint32_t *pdst)
 {
@@ -248,17 +98,6 @@ static void Blit_32(SDL_Surface *surface, uint32_t *pdst)
 
 static void Blit_16(SDL_Surface *surface, uint16_t *pdst)
 {
-#if defined(GP2X) && defined(__GNUC__)
-    BufferToScreen320x240x16Asm
-    (
-        (uint16_t *) surface->pixels,
-        Frame->Video,
-        (uint32_t *) palette_out,
-        Smack->PaddedHeight,
-        Smack->PaddedWidth,
-        surface->w
-    );
-#else
     int smk_width, smk_height, dst_pitch, x, y;
     uint8_t *psrc;
 
@@ -286,7 +125,6 @@ static void Blit_16(SDL_Surface *surface, uint16_t *pdst)
         }
         pdst = (uint16_t *)(dst_pitch + (uintptr_t)pdst);
     }
-#endif
 }
 
 static void Blit_32_double_height(SDL_Surface *surface, uint32_t *pdst)
@@ -325,17 +163,6 @@ static void Blit_32_double_height(SDL_Surface *surface, uint32_t *pdst)
 
 static void Blit_16_double_height(SDL_Surface *surface, uint16_t *pdst)
 {
-#if defined(GP2X) && defined(__GNUC__)
-    BufferToScreen320x240x16DoubleAsm
-    (
-        (uint16_t *) surface->pixels,
-        Frame->Video,
-        (uint32_t *) palette_out,
-        Smack->PaddedHeight,
-        Smack->PaddedWidth,
-        surface->w
-    );
-#else
     int smk_width, smk_height, dst_pitch, x, y;
     uint8_t *psrc;
     uint16_t *pdst2;
@@ -366,7 +193,6 @@ static void Blit_16_double_height(SDL_Surface *surface, uint16_t *pdst)
         pdst = (uint16_t *)(2 * dst_pitch + (uintptr_t)pdst);
         pdst2 = (uint16_t *)(dst_pitch + (uintptr_t)pdst);
     }
-#endif
 }
 
 static void Blit_32_double_pixels(SDL_Surface *surface, uint32_t *pdst)
@@ -515,7 +341,6 @@ static void Blit_16_double_height_double_pixels(SDL_Surface *surface, uint16_t *
 
 static void eventloop_initialize(void)
 {
-#if SDL_VERSION_ATLEAST(2,0,0)
     int index;
     SDL_RendererInfo info;
 
@@ -651,195 +476,15 @@ static void eventloop_initialize(void)
 
         goto main_init_exit;
     }
-#else
-#ifdef ALLOW_OPENGL
-    if (Game_UseOpenGL)
-    {
-        int index;
-        GLint scaling_quality, max_texture_size;
-
-        // flush GL errors
-        while(glGetError() != GL_NO_ERROR);
-
-        scaling_quality = (Game_ScalingQuality)?GL_LINEAR:GL_NEAREST;
-
-        if (Scaler_ScaleTexture)
-        {
-            int horizontal_factor, vertical_factor;
-
-            gl_glGenFramebuffersEXT = (PFNGLGENFRAMEBUFFERSEXTPROC) SDL_GL_GetProcAddress("glGenFramebuffersEXT");
-            gl_glDeleteFramebuffersEXT = (PFNGLDELETEFRAMEBUFFERSEXTPROC) SDL_GL_GetProcAddress("glDeleteFramebuffersEXT");
-            gl_glFramebufferTexture2DEXT = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC) SDL_GL_GetProcAddress("glFramebufferTexture2DEXT");
-            gl_glBindFramebufferEXT = (PFNGLBINDFRAMEBUFFEREXTPROC) SDL_GL_GetProcAddress("glBindFramebufferEXT");
-
-            if (!SMK_ScaleFactor)
-            {
-                horizontal_factor = vertical_factor = 2;
-
-                while ((horizontal_factor + 1) * 320 <= (int)Picture_Width) horizontal_factor++;
-                while ((vertical_factor + 1) * 200 <= (int)Picture_Height) vertical_factor++;
-
-                if (horizontal_factor > GAME_MAX_3D_ENGINE_FACTOR) horizontal_factor = GAME_MAX_3D_ENGINE_FACTOR;
-                if (vertical_factor > GAME_MAX_3D_ENGINE_FACTOR) vertical_factor = GAME_MAX_3D_ENGINE_FACTOR;
-
-                max_texture_size = 0;
-                glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
-                if (max_texture_size > (int)Picture_Width)
-                {
-                    while (horizontal_factor * 320 > max_texture_size) horizontal_factor--;
-                }
-                if (max_texture_size > (int)Picture_Height)
-                {
-                    while (vertical_factor * 200 > max_texture_size) vertical_factor--;
-                }
-
-                SMK_ScaleFactor = 1;
-            }
-            else
-            {
-                horizontal_factor = vertical_factor = SMK_ScaleFactor;
-            }
-
-            SMK_ScaledTextureWidth = horizontal_factor * 320;
-            SMK_ScaledTextureHeight = vertical_factor * 200;
-
-            glGenTextures(3, &(SMK_GLScaledTexture[0]));
-            if (glGetError() != GL_NO_ERROR) goto main_init_exit;
-
-            for (index = 0; index < 3; index++)
-            {
-                glBindTexture(GL_TEXTURE_2D, SMK_GLScaledTexture[index]);
-
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, scaling_quality);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, scaling_quality);
-
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SMK_ScaledTextureWidth, SMK_ScaledTextureHeight, 0, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, NULL);
-            }
-
-            gl_glGenFramebuffersEXT(3, &(SMK_GLFramebuffer[0]));
-
-            for (index = 0; index < 3; index++)
-            {
-                gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, SMK_GLFramebuffer[index]);
-
-                gl_glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, SMK_GLScaledTexture[index], 0);
-            }
-
-            scaling_quality = GL_NEAREST;
-        }
-
-        if (Scaler_ScaleTextureData)
-        {
-            if (!SMK_ScaleFactor)
-            {
-                int max_factor;
-
-                SMK_ScaleFactor = 2;
-
-                while (((SMK_ScaleFactor + 1) * 320 <= (int)Picture_Width) ||
-                       ((SMK_ScaleFactor + 1) * 200 <= (int)Picture_Height)
-                      ) SMK_ScaleFactor++;
-
-                max_factor = ScalerPlugin_get_maximum_scale_factor();
-                if (Scaler_ScaleFactor > max_factor) Scaler_ScaleFactor = max_factor;
-
-                max_texture_size = 0;
-                glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
-                if (max_texture_size > (int)Picture_Width)
-                {
-                    while (SMK_ScaleFactor * 320 > max_texture_size) SMK_ScaleFactor--;
-                }
-                if (max_texture_size > (int)Picture_Height)
-                {
-                    while (SMK_ScaleFactor * 200 > max_texture_size) SMK_ScaleFactor--;
-                }
-            }
-        }
-        else
-        {
-            SMK_ScaleFactor = (SMK_double_pixels)?2:1;
-        }
-
-        if (Scaler_ScaleTextureData)
-        {
-            SMK_ScaledTextureData = malloc(SMK_ScaleFactor * 320 * SMK_ScaleFactor * 200 * Display_Bitsperpixel / 8);
-        }
-
-        glGenTextures(3, &(SMK_GLTexture[0]));
-        if ((!Scaler_ScaleTexture) && (glGetError() != GL_NO_ERROR)) goto main_init_exit;
-
-        for (index = 0; index < 3; index++)
-        {
-            glBindTexture(GL_TEXTURE_2D, SMK_GLTexture[index]);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, scaling_quality);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, scaling_quality);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SMK_ScaleFactor * 320, SMK_ScaleFactor * 200, 0, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Scaler_ScaleTextureData ? SMK_ScaledTextureData : SMK_TextureData);
-        }
-
-        if ((glGetError() != GL_NO_ERROR) || (Scaler_ScaleTextureData && (SMK_ScaledTextureData == NULL)))
-        {
-            if (SMK_ScaledTextureData != NULL)
-            {
-                free(SMK_ScaledTextureData);
-                SMK_ScaledTextureData = NULL;
-            }
-
-            glBindTexture(GL_TEXTURE_2D, 0);
-
-            glDeleteTextures(3, &(SMK_GLTexture[0]));
-            SMK_GLTexture[0] = 0;
-
-            if (SMK_GLFramebuffer[0] != 0)
-            {
-                gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-                gl_glDeleteFramebuffersEXT(3, &(SMK_GLFramebuffer[0]));
-                SMK_GLFramebuffer[0] = 0;
-            }
-
-            if (SMK_GLScaledTexture[0] != 0)
-            {
-                glDeleteTextures(3, &(SMK_GLScaledTexture[0]));
-                SMK_GLScaledTexture[0] = 0;
-            }
-
-            // flush GL errors
-            while(glGetError() != GL_NO_ERROR);
-
-            goto main_init_exit;
-        }
-    }
-    else
-#endif
-    {
-        // clear screen
-        int clear_screen;
-        for (clear_screen = 3; clear_screen != 0; clear_screen--)
-        {
-            SDL_FillRect(Game_Screen, NULL, 0);
-            SDL_Flip(Game_Screen);
-        }
-    }
-#endif
 
     main_result = 1;
 
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
 main_init_exit:
-#endif
     SDL_SemPost(SMK_FuncSem);
 }
 
 static void eventloop_deinitialize(void)
 {
-#if SDL_VERSION_ATLEAST(2,0,0)
     if (SMK_ScaledTextureData != NULL)
     {
         free(SMK_ScaledTextureData);
@@ -865,44 +510,12 @@ static void eventloop_deinitialize(void)
         SDL_DestroyTexture(SMK_ScaledTexture[0]);
         SMK_ScaledTexture[0] = NULL;
     }
-#elif defined(ALLOW_OPENGL)
-    if (SMK_ScaledTextureData != NULL)
-    {
-        free(SMK_ScaledTextureData);
-        SMK_ScaledTextureData = NULL;
-    }
-
-    if ((SMK_GLTexture[0] != 0) || (SMK_GLScaledTexture[0] != 0))
-    {
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
-    if (SMK_GLTexture[0] != 0)
-    {
-        glDeleteTextures(3, &(SMK_GLTexture[0]));
-        SMK_GLTexture[0] = 0;
-    }
-
-    if (SMK_GLFramebuffer[0] != 0)
-    {
-        gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-        gl_glDeleteFramebuffersEXT(3, &(SMK_GLFramebuffer[0]));
-        SMK_GLFramebuffer[0] = 0;
-    }
-
-    if (SMK_GLScaledTexture[0] != 0)
-    {
-        glDeleteTextures(3, &(SMK_GLScaledTexture[0]));
-        SMK_GLScaledTexture[0] = 0;
-    }
-#endif
 
     SDL_SemPost(SMK_FuncSem);
 }
 
 static void eventloop_flip(void)
 {
-#if SDL_VERSION_ATLEAST(2,0,0)
     if (Scaler_ScaleTextureData)
     {
         SDL_UpdateTexture(SMK_Texture[SMK_CurrentTexture], NULL, SMK_ScaledTextureData, SMK_ScaleFactor * 320 * Display_Bitsperpixel / 8);
@@ -934,86 +547,12 @@ static void eventloop_flip(void)
     {
         SMK_CurrentTexture = 0;
     }
-#elif defined(ALLOW_OPENGL)
-    if (Game_UseOpenGL)
-    {
-        static const GLfloat QuadVertices[2*4] = {
-            -1.0f,  1.0f,
-             1.0f,  1.0f,
-             1.0f, -1.0f,
-            -1.0f, -1.0f,
-        };
-        static const GLfloat QuadTexCoords[2*4] = {
-            0.0f, 0.0f,
-            1.0f, 0.0f,
-            1.0f, 1.0f,
-            0.0f, 1.0f
-        };
-        static const GLfloat QuadScaleTexCoords[2*4] = {
-            0.0f, 1.0f,
-            1.0f, 1.0f,
-            1.0f, 0.0f,
-            0.0f, 0.0f,
-        };
-
-        glBindTexture(GL_TEXTURE_2D, SMK_GLTexture[SMK_CurrentTexture]);
-
-        if (Scaler_ScaleTextureData)
-        {
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SMK_ScaleFactor * 320, SMK_ScaleFactor * 200, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, SMK_ScaledTextureData);
-        }
-        else
-        {
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ((SMK_double_pixels)?640:320), ((SMK_double_pixels)?400:200), GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, SMK_TextureData);
-        }
-
-        glEnable(GL_TEXTURE_2D);
-
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-        if (Scaler_ScaleTexture)
-        {
-            gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, SMK_GLFramebuffer[SMK_CurrentTexture]);
-
-            glViewport(0, 0, SMK_ScaledTextureWidth, SMK_ScaledTextureHeight);
-
-            glVertexPointer(2, GL_FLOAT, 0, &(QuadVertices[0]));
-            glTexCoordPointer(2, GL_FLOAT, 0, &(QuadScaleTexCoords[0]));
-            glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-            gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-
-            glViewport(Picture_Position_UL_X, Picture_Position_UL_Y, Picture_Width, Picture_Height);
-
-            glBindTexture(GL_TEXTURE_2D, SMK_GLScaledTexture[SMK_CurrentTexture]);
-        }
-
-        glVertexPointer(2, GL_FLOAT, 0, &(QuadVertices[0]));
-        glTexCoordPointer(2, GL_FLOAT, 0, &(QuadTexCoords[0]));
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        glDisableClientState(GL_VERTEX_ARRAY);
-
-        glDisable(GL_TEXTURE_2D);
-
-        SDL_GL_SwapBuffers();
-
-        SMK_CurrentTexture++;
-        if (SMK_CurrentTexture > 2)
-        {
-            SMK_CurrentTexture = 0;
-        }
-    }
-#endif
 }
 
 static int initialize_display(void)
 {
     SDL_Event event;
 
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     if (Game_AdvancedScaling)
     {
         SMK_ScaleFactor = Game_ScaleFactor;
@@ -1021,7 +560,6 @@ static int initialize_display(void)
         SMK_double_pixels = 0;
     }
     else
-#endif
     {
         SMK_double_pixels = ((Display_Width >= 640) && (Display_Height >= 400))?1:0;
     }
@@ -1057,25 +595,15 @@ static int initialize_display(void)
     if (SMK_FuncSem == NULL) return 0;
 
 
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     SMK_TextureData = NULL;
     SMK_CurrentTexture = 0;
-#if !SDL_VERSION_ATLEAST(2,0,0)
-    if (Game_UseOpenGL)
-#endif
-    {
-        SMK_TextureData = malloc(((SMK_double_pixels)?640*400:320*200) * (Display_Bitsperpixel / 8));
-        if (SMK_TextureData == NULL) goto init_exit1;
 
-        memset(SMK_TextureData, 0, ((SMK_double_pixels)?640*400:320*200) * (Display_Bitsperpixel / 8));
-    }
-#endif
+    SMK_TextureData = malloc(((SMK_double_pixels)?640*400:320*200) * (Display_Bitsperpixel / 8));
+    if (SMK_TextureData == NULL) goto init_exit1;
 
-#if SDL_VERSION_ATLEAST(2,0,0)
+    memset(SMK_TextureData, 0, ((SMK_double_pixels)?640*400:320*200) * (Display_Bitsperpixel / 8));
+
     SMK_Texture[0] = NULL;
-#elif defined(ALLOW_OPENGL)
-    SMK_GLTexture[0] = 0;
-#endif
 
     if (Thread_Exit) goto init_exit2;
 
@@ -1095,17 +623,13 @@ static int initialize_display(void)
     return 1;
 
 init_exit2:
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     if (SMK_TextureData != NULL)
     {
         free(SMK_TextureData);
         SMK_TextureData = NULL;
     }
-#endif
 
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
 init_exit1:
-#endif
     SDL_DestroySemaphore(SMK_FuncSem);
     SMK_FuncSem = NULL;
     return 0;
@@ -1129,13 +653,11 @@ static void deinitialize_display(void)
         SDL_SemWait(SMK_FuncSem);
     }
 
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     if (SMK_TextureData != NULL)
     {
         free(SMK_TextureData);
         SMK_TextureData = NULL;
     }
-#endif
 
     if (SMK_FuncSem != NULL)
     {
@@ -1152,85 +674,38 @@ static void BufferToScreen(void)
     // set palette
     if (Smack->FrameTypes[Smack->CurrentFrame] & 1)
     {
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
-#if !SDL_VERSION_ATLEAST(2,0,0)
-        if (Game_UseOpenGL)
-#endif
-        {
-            if (Display_Bitsperpixel == 32)
-            {
-                for (index = 0; index < 256; index++)
-                {
-                    palette_out[index] = ((*(Frame->Palette))[index].r << 16) | ((*(Frame->Palette))[index].g << 8) | ((*(Frame->Palette))[index].b);
-                }
-            }
-            else
-            {
-                for (index = 0; index < 256; index++)
-                {
-                    palette_out[index] = (((*(Frame->Palette))[index].r & 0xf8) << 8) | (((*(Frame->Palette))[index].g & 0xfc) << 3) | ((*(Frame->Palette))[index].b >> 3);
-                }
-            }
-        }
-#if !SDL_VERSION_ATLEAST(2,0,0)
-        else
-#endif
-#endif
-
-#if !SDL_VERSION_ATLEAST(2,0,0)
+        if (Display_Bitsperpixel == 32)
         {
             for (index = 0; index < 256; index++)
             {
-                palette_out[index] = SDL_MapRGB(Game_Screen->format, (*(Frame->Palette))[index].r, (*(Frame->Palette))[index].g, (*(Frame->Palette))[index].b);
+                palette_out[index] = ((*(Frame->Palette))[index].r << 16) | ((*(Frame->Palette))[index].g << 8) | ((*(Frame->Palette))[index].b);
             }
         }
-#endif
+        else
+        {
+            for (index = 0; index < 256; index++)
+            {
+                palette_out[index] = (((*(Frame->Palette))[index].r & 0xf8) << 8) | (((*(Frame->Palette))[index].g & 0xfc) << 3) | ((*(Frame->Palette))[index].b >> 3);
+            }
+        }
     }
 
 
     // display frame
 
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
-#if !SDL_VERSION_ATLEAST(2,0,0)
-    if (Game_UseOpenGL)
-#endif
+    if (Smack->Flags & 4)
     {
-        if (Smack->Flags & 4)
-        {
-            blit_double_height(NULL, SMK_TextureData);
-        }
-        else
-        {
-            blit_normal_height(NULL, SMK_TextureData);
-        }
-
-        if (Scaler_ScaleTextureData)
-        {
-            ScalerPlugin_scale(SMK_ScaleFactor, SMK_TextureData, SMK_ScaledTextureData, 320, 200, 1);
-        }
+        blit_double_height(NULL, SMK_TextureData);
     }
-#if !SDL_VERSION_ATLEAST(2,0,0)
     else
-#endif
-#endif
-
-#if !SDL_VERSION_ATLEAST(2,0,0)
     {
-        SDL_LockSurface(Game_Screen);
-
-        if (Smack->Flags & 4)
-        {
-            blit_double_height(Game_Screen, NULL);
-        }
-        else
-        {
-            blit_normal_height(Game_Screen, NULL);
-        }
-
-        SDL_UnlockSurface(Game_Screen);
-        SDL_Flip(Game_Screen);
+        blit_normal_height(NULL, SMK_TextureData);
     }
-#endif
+
+    if (Scaler_ScaleTextureData)
+    {
+        ScalerPlugin_scale(SMK_ScaleFactor, SMK_TextureData, SMK_ScaledTextureData, 320, 200, 1);
+    }
 
     if (Thread_Exit) return;
 
@@ -1276,11 +751,7 @@ static void play_smk(const char *filename)
     Uint32 lastticks, ticks;
     int delay;
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     if (Game_Window == NULL) return;
-#else
-    if (Game_Screen == NULL) return;
-#endif
 
     // stop timer, events, ...
     SMK_Playing = 1;

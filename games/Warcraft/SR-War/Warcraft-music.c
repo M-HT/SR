@@ -279,12 +279,7 @@ void CCALL Game_AIL_start_sequence(AIL_sequence *S)
 
     if (S->midi_music == NULL)
     {
-        S->midi_music = Mix_LoadMUS_RW(
-            S->midi_RW
-#if SDL_VERSION_ATLEAST(2,0,0)
-            , 0
-#endif
-        );
+        S->midi_music = Mix_LoadMUS_RW(S->midi_RW, 0);
         if (S->midi_music == NULL) return;
     }
 

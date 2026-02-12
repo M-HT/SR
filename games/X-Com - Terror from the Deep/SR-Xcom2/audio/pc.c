@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -50,21 +50,6 @@ void Init_Audio2(void)
 
 int Config_Audio(char *str, char *param)
 {
-    int num_int;
-
-//senquack - on GP2X, this doesn't really do much, I have left it out of the .cfg files
-//					so GP2X users don't get confused.
-    if ( strcasecmp(str, "Audio_Volume") == 0)	// str equals "Audio_Volume"
-    {
-        num_int = 0;
-        sscanf(param, "%i", &num_int);
-        if (num_int < 0) Game_AudioMasterVolume = 0;
-        else if (num_int > MIX_MAX_VOLUME) Game_AudioMasterVolume = MIX_MAX_VOLUME;
-        else Game_AudioMasterVolume = num_int;
-
-        return 1;
-    }
-
     return 0;
 }
 
@@ -72,30 +57,3 @@ void Cleanup_Audio(void)
 {
 }
 
-void Change_HW_Audio_Volume(int amount)
-{
-    SDL_Event event;
-    int newvolume;
-
-    newvolume = Game_AudioMasterVolume + amount;
-
-    if (newvolume < 0)
-    {
-        Game_AudioMasterVolume = 0;
-    }
-    else if (newvolume > 128)
-    {
-        Game_AudioMasterVolume = 128;
-    }
-    else
-    {
-        Game_AudioMasterVolume = newvolume;
-    }
-
-    event.type = SDL_USEREVENT;
-    event.user.code = EC_SET_VOLUME;
-    event.user.data1 = NULL;
-    event.user.data2 = NULL;
-
-    SDL_PushEvent(&event);
-}

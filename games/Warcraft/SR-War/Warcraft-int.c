@@ -57,11 +57,7 @@ void CCALL X86_InterruptProcedure(
 #endif
 					if (AL == 0x13)
 					{
-					#if SDL_VERSION_ATLEAST(2,0,0)
 						if (Game_Window != NULL)
-					#else
-						if (Game_Screen != NULL)
-					#endif
 						{
 							event.type = SDL_USEREVENT;
 							event.user.code = EC_DISPLAY_DESTROY;
@@ -82,11 +78,7 @@ void CCALL X86_InterruptProcedure(
 
 						SDL_SemWait(Game_DisplaySem);
 
-					#if SDL_VERSION_ATLEAST(2,0,0)
 						if (Game_Window == NULL)
-					#else
-						if (Game_Screen == NULL)
-					#endif
 						{
 #if defined(__DEBUG__)
 							fprintf (stderr, "Error: Couldn't set video mode\n");
@@ -98,11 +90,7 @@ void CCALL X86_InterruptProcedure(
 					}
 					else if (AL == 3)
 					{
-					#if SDL_VERSION_ATLEAST(2,0,0)
 						if (Game_Window != NULL)
-					#else
-						if (Game_Screen != NULL)
-					#endif
 						{
 							event.type = SDL_USEREVENT;
 							event.user.code = EC_DISPLAY_DESTROY;
@@ -126,11 +114,7 @@ void CCALL X86_InterruptProcedure(
 				case 0x0f:
 				// Get Current Video Mode
 
-				#if SDL_VERSION_ATLEAST(2,0,0)
 					if (Game_Window == NULL)
-				#else
-					if (Game_Screen == NULL)
-				#endif
 					{
 						AH = 80;	// number of character columns
 						AL = 3;		// display mode

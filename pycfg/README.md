@@ -5,5 +5,3 @@ A configuration utility that can be used on Linux (sorry Windows users) to chang
 The utility has some limitations -- edit the configuration files to overcome these.
 
 * On PC, the resolution can be selected only from predefined values -- when editing, any resolution can be used (mainly usable in window mode).
-
-* On Pandora, the button mappings can't be modified (or shown).

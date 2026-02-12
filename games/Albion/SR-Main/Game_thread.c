@@ -34,11 +34,7 @@
 #include "Game_memory.h"
 #include "main.h"
 #include "display.h"
-#ifdef USE_SDL2
-    #include <SDL2/SDL_mixer.h>
-#else
-    #include <SDL/SDL_mixer.h>
-#endif
+#include <SDL_mixer.h>
 
 int Game_Main(void)
 {
@@ -178,9 +174,6 @@ int Game_MainThread(void *data)
 int Game_FlipThread(void *data)
 {
     SDL_Event event;
-#if !SDL_VERSION_ATLEAST(2,0,0)
-    int clear_screen;
-#endif
 
 #undef FPS_WRITE
 
@@ -190,10 +183,6 @@ int Game_FlipThread(void *data)
     LastDisplayTicks = SDL_GetTicks();
     NumDisplay = 0;
     LastTimer = Game_VSyncTick;
-#endif
-
-#if !SDL_VERSION_ATLEAST(2,0,0)
-    clear_screen = 0;
 #endif
 
     while (1)
@@ -219,100 +208,42 @@ fprintf(stderr, "fps: %.3f    tps: %.3f\n", (float) NumDisplay * 1000 / (Current
         }
 #endif
 
-    #if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
-    #if !SDL_VERSION_ATLEAST(2,0,0)
-        if (Game_UseOpenGL)
-    #endif
+        if (Game_AdvancedScaling)
         {
-            if (Game_AdvancedScaling)
-            {
-                Display_Advanced_Flip_Procedure(&(Game_FrameBuffer[Game_DisplayStart * 360]), Game_TextureData, Game_TextureData2, &Game_UseTextureData2);
-            }
-            else
-            {
-                Display_Flip_Procedure(&(Game_FrameBuffer[Game_DisplayStart * 360]), Game_TextureData);
-            }
-
-            if (Scaler_ScaleTextureData)
-            {
-                ScalerPlugin_scale(Scaler_ScaleFactor, Game_TextureData, Game_ScaledTextureData, Render_Width, Render_Height, 1);
-                if (Game_UseTextureData2)
-                {
-                    uint32_t *src, *dst;
-                    int counter;
-
-                    src = (uint32_t *) Game_TextureData2;
-                    dst = (uint32_t *) Game_ScaledTextureData;
-
-                    for (counter = Scaler_ScaleFactor * Render_Width * Scaler_ScaleFactor * Render_Height; counter != 0; counter -= 8)
-                    {
-                        if (src[0]) dst[0] = src[0];
-                        if (src[1]) dst[1] = src[1];
-                        if (src[2]) dst[2] = src[2];
-                        if (src[3]) dst[3] = src[3];
-                        if (src[4]) dst[4] = src[4];
-                        if (src[5]) dst[5] = src[5];
-                        if (src[6]) dst[6] = src[6];
-                        if (src[7]) dst[7] = src[7];
-
-                        src += 8;
-                        dst += 8;
-                    }
-                }
-            }
+            Display_Advanced_Flip_Procedure(&(Game_FrameBuffer[Game_DisplayStart * 360]), Game_TextureData, Game_TextureData2, &Game_UseTextureData2);
         }
-    #if !SDL_VERSION_ATLEAST(2,0,0)
         else
-    #endif
-    #endif
-
-    #if !SDL_VERSION_ATLEAST(2,0,0)
         {
-            /* ??? */
-
-            SDL_LockSurface(Game_Screen);
-
-            if (Display_ChangeMode != 0)
-            {
-                if (Change_Display_Mode(Display_ChangeMode))
-                {
-                    clear_screen = 3;
-                }
-
-                Display_ChangeMode = 0;
-
-                Game_VideoAspectX = ((360-1) << 16) / (Picture_Width-1);
-                Game_VideoAspectY = ((240-1) << 16) / (Picture_Height-1);
-
-                Game_VideoAspectXR = ((Picture_Width-1) << 16) / (360-1);
-                Game_VideoAspectYR = ((Picture_Height-1) << 16) / (240-1);
-
-                Game_RepositionMouse();
-            }
-
-            if (clear_screen)
-            {
-                SDL_Rect rect;
-
-                clear_screen--;
-
-                rect.x = 0;
-                rect.y = 0;
-                rect.w = Game_Screen->w;
-                rect.h = Game_Screen->h;
-                SDL_FillRect(Game_Screen, &rect, 0);
-            }
-
-            Display_Flip_Procedure(&(Game_FrameBuffer[Game_DisplayStart * 360]), Game_Screen->pixels);
-
-            /* ??? */
-            SDL_UnlockSurface(Game_Screen);
-
-            VirtualKeyboard_Draw();
-
-            SDL_Flip(Game_Screen);
+            Display_Flip_Procedure(&(Game_FrameBuffer[Game_DisplayStart * 360]), Game_TextureData);
         }
-    #endif
+
+        if (Scaler_ScaleTextureData)
+        {
+            ScalerPlugin_scale(Scaler_ScaleFactor, Game_TextureData, Game_ScaledTextureData, Render_Width, Render_Height, 1);
+            if (Game_UseTextureData2)
+            {
+                uint32_t *src, *dst;
+                int counter;
+
+                src = (uint32_t *) Game_TextureData2;
+                dst = (uint32_t *) Game_ScaledTextureData;
+
+                for (counter = Scaler_ScaleFactor * Render_Width * Scaler_ScaleFactor * Render_Height; counter != 0; counter -= 8)
+                {
+                    if (src[0]) dst[0] = src[0];
+                    if (src[1]) dst[1] = src[1];
+                    if (src[2]) dst[2] = src[2];
+                    if (src[3]) dst[3] = src[3];
+                    if (src[4]) dst[4] = src[4];
+                    if (src[5]) dst[5] = src[5];
+                    if (src[6]) dst[6] = src[6];
+                    if (src[7]) dst[7] = src[7];
+
+                    src += 8;
+                    dst += 8;
+                }
+            }
+        }
 
         event.type = SDL_USEREVENT;
         event.user.code = EC_DISPLAY_FLIP_FINISH;

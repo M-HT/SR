@@ -259,18 +259,14 @@ static int mouse_last_x[3], mouse_last_y[3], mouse_current_x[3], mouse_current_y
 static int mouse_last_peep[3];
 // doubleclick detection - END
 
-#if SDL_VERSION_ATLEAST(2,0,0)
 static SDL_Window *mouse_window = NULL;
 static SDL_Renderer *mouse_renderer = NULL;
 static int mouse_clip_w = 0;
 static int mouse_clip_h = 0;
-#endif
 
 static SDL_Joystick *joystick = NULL;
-#if SDL_VERSION_ATLEAST(2,0,0)
 static SDL_GameController *controller = NULL;
 static int controller_base_axis;
-#endif
 static unsigned int joystick_hat_position = 0;
 static int controller_axis_x = 0;
 static int controller_axis_y = 0;
@@ -280,10 +276,8 @@ static int controller_frac_y;
 static uint32_t controller_mouse_last_time;
 static SDL_Event priority_event;
 static SDL_Surface *virtual_keyboard_surface = NULL;
-#if SDL_VERSION_ATLEAST(2,0,0)
 static SDL_Texture *virtual_keyboard_texture = NULL;
 static SDL_Surface *virtual_keyboard_texture_surface = NULL;
-#endif
 static int virtual_keyboard_state = 0;
 static unsigned int virtual_keyboard_disabled = 0;
 static int virtual_keyboard_pos_x;
@@ -419,7 +413,6 @@ void init_sleepmode(void)
 }
 #endif
 
-#if SDL_VERSION_ATLEAST(2,0,0)
 static void warp_mouse(int x, int y)
 {
     if (mouse_renderer != NULL)
@@ -447,7 +440,6 @@ static void warp_mouse(int x, int y)
         SDL_WarpMouseInWindow(mouse_window, x, y);
     }
 }
-#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -479,7 +471,6 @@ void delete_virtual_keyboard(void)
         SDL_FreeSurface(virtual_keyboard_surface);
         virtual_keyboard_surface = NULL;
     }
-#if SDL_VERSION_ATLEAST(2,0,0)
     if (virtual_keyboard_texture != NULL)
     {
         SDL_DestroyTexture(virtual_keyboard_texture);
@@ -490,7 +481,6 @@ void delete_virtual_keyboard(void)
         SDL_FreeSurface(virtual_keyboard_texture_surface);
         virtual_keyboard_texture_surface = NULL;
     }
-#endif
 }
 
 static void vk_draw_chr(SDL_Surface *surface, uint8_t chr, int x, int y)
@@ -600,13 +590,7 @@ static void vk_invert_area(SDL_Surface *surface, int x, int y, int w, int h)
 #ifdef __cplusplus
 extern "C"
 #endif
-int display_virtual_keyboard(
-#if SDL_VERSION_ATLEAST(2,0,0)
-    SDL_Renderer *renderer
-#else
-    SDL_Surface *surface, SDL_Rect *update_area
-#endif
-)
+int display_virtual_keyboard(SDL_Renderer *renderer)
 {
     SDL_Rect vkrect;
     int row, column;
@@ -620,13 +604,9 @@ int display_virtual_keyboard(
 
     if (virtual_keyboard_state < 0)
     {
-#if SDL_VERSION_ATLEAST(2,0,0)
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
         SDL_RenderFillRect(renderer, &vkrect);
-#else
-        SDL_FillRect(surface, &vkrect, 0);
-#endif
 
         virtual_keyboard_state = 0;
     }
@@ -646,12 +626,9 @@ int display_virtual_keyboard(
             virtual_keyboard_surface->format->palette->colors[1].r = 255;
             virtual_keyboard_surface->format->palette->colors[1].g = 255;
             virtual_keyboard_surface->format->palette->colors[1].b = 255;
-#if SDL_VERSION_ATLEAST(2,0,0)
             virtual_keyboard_surface->format->palette->colors[0].a = 128;
             virtual_keyboard_surface->format->palette->colors[1].a = 255;
-#endif
         }
-#if SDL_VERSION_ATLEAST(2,0,0)
         if (virtual_keyboard_texture == NULL)
         {
             Uint32 format, Rmask, Gmask, Bmask, Amask;
@@ -693,7 +670,6 @@ int display_virtual_keyboard(
                 SDL_SetTextureBlendMode(virtual_keyboard_texture, SDL_BLENDMODE_BLEND);
             }
         }
-#endif
 
         memset(virtual_keyboard_surface->pixels, 0, virtual_keyboard_surface->h * virtual_keyboard_surface->pitch);
 
@@ -733,7 +709,6 @@ int display_virtual_keyboard(
             vk_invert_area(virtual_keyboard_surface, (vkfont_chr_width_pixels + 2 * 2) * virtual_keyboard_pos_x + 4, (vkfont_chr_height + 2 * 2) * virtual_keyboard_pos_y + 4, vkfont_chr_width_pixels + 2 * 2, vkfont_chr_height + 2 * 2);
         }
 
-#if SDL_VERSION_ATLEAST(2,0,0)
         if (SDL_LockTexture(virtual_keyboard_texture, NULL, &virtual_keyboard_texture_surface->pixels, &virtual_keyboard_texture_surface->pitch) >= 0)
         {
             SDL_UpperBlit(virtual_keyboard_surface, NULL, virtual_keyboard_texture_surface, NULL);
@@ -741,22 +716,7 @@ int display_virtual_keyboard(
         }
 
         SDL_RenderCopy(renderer, virtual_keyboard_texture, NULL, &vkrect);
-#else
-        SDL_UpperBlit(virtual_keyboard_surface, NULL, surface, &vkrect);
-#endif
     }
-
-#if !SDL_VERSION_ATLEAST(2,0,0)
-    if (update_area != NULL)
-    {
-        if (vkrect.x > update_area->x) vkrect.x = update_area->x;
-        if (vkrect.y > update_area->y) vkrect.y = update_area->y;
-        if ((vkrect.x + vkrect.w) < (update_area->x + update_area->w)) vkrect.w = update_area->x + update_area->w - vkrect.x;
-        if ((vkrect.y + vkrect.h) < (update_area->y + update_area->h)) vkrect.h = update_area->y + update_area->h - vkrect.y;
-
-        SDL_UpdateRect(surface, vkrect.x, vkrect.y, vkrect.w, vkrect.h);
-    }
-#endif
 
     return 1;
 }
@@ -767,7 +727,6 @@ static void open_controller_or_joystick(int device_index)
 
     num_joysticks = SDL_NumJoysticks();
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     // prefer game controllers over joysticks
     for (index = 0; index < num_joysticks; index++)
     {
@@ -809,7 +768,6 @@ static void open_controller_or_joystick(int device_index)
     }
 
     if (controller == NULL)
-#endif
     for (index = 0; index < num_joysticks; index++)
     {
         if ((device_index >= 0) && (index != device_index))
@@ -827,13 +785,7 @@ static void open_controller_or_joystick(int device_index)
                 continue;
             }
 
-            printf("Using joystick: %s\n",
-#if SDL_VERSION_ATLEAST(2,0,0)
-                SDL_JoystickName(joystick)
-#else
-                SDL_JoystickName(index)
-#endif
-            );
+            printf("Using joystick: %s\n", SDL_JoystickName(joystick));
             break;
         }
     }
@@ -972,7 +924,6 @@ static int check_controller_event(SDL_Event *event, int remove)
             controller_frac_y = dy - (newy << 12);
             newy += mouse_y;
 
-#if SDL_VERSION_ATLEAST(2,0,0)
             if (Display_Mode)
             {
                 if (newx < 0) newx = 0;
@@ -982,7 +933,6 @@ static int check_controller_event(SDL_Event *event, int remove)
                 else if (newy >= mouse_clip_h) newy = mouse_clip_h - 1;
             }
             else
-#endif
             {
                 if (newx < 0) newx = 0;
                 else if (newx >= 640) newx = 639;
@@ -1039,17 +989,11 @@ static int find_event(SDL_Event *event, int remove, int wait)
     {
         int num_events, keep_event;
         int mouse_button;
-#if SDL_VERSION_ATLEAST(2,0,0)
         SDL_Window *window;
         SDL_Renderer *renderer;
-#endif
 
 
-#if SDL_VERSION_ATLEAST(2,0,0)
         num_events = SDL_PeepEvents(event, 1, (remove)?SDL_GETEVENT:SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
-#else
-        num_events = SDL_PeepEvents(event, 1, (remove)?SDL_GETEVENT:SDL_PEEKEVENT, SDL_ALLEVENTS);
-#endif
         if (num_events < 0) return 0; // error
         if (num_events == 0) // no events
         {
@@ -1065,11 +1009,7 @@ static int find_event(SDL_Event *event, int remove, int wait)
             }
             else if (can_sleep)
             {
-                if (Display_DelayAfterFlip
-#if SDL_VERSION_ATLEAST(2,0,0)
-                    || Display_VSync
-#endif
-                )
+                if (Display_DelayAfterFlip || Display_VSync)
                 {
                     static Uint32 last_time;
                     Uint32 current_time;
@@ -1156,7 +1096,6 @@ static int find_event(SDL_Event *event, int remove, int wait)
                     modvalue = KMOD_LALT;
                     break;
 
-#if SDL_VERSION_ATLEAST(2,0,0)
                 case SDLK_LGUI:
                     modvalue = KMOD_LGUI;
                     break;
@@ -1164,7 +1103,6 @@ static int find_event(SDL_Event *event, int remove, int wait)
                 case SDLK_RGUI:
                     modvalue = KMOD_RGUI;
                     break;
-#endif
 
                 default:
                     modvalue = KMOD_NONE;
@@ -1195,7 +1133,6 @@ static int find_event(SDL_Event *event, int remove, int wait)
             }
             mouse_x = event->motion.x;
             mouse_y = event->motion.y;
-#if SDL_VERSION_ATLEAST(2,0,0)
             if (Display_Mode)
             {
                 int newx, newy;
@@ -1231,7 +1168,6 @@ static int find_event(SDL_Event *event, int remove, int wait)
                     warp_mouse(newx, newy);
                 }
             }
-#endif
             break;
 
         case SDL_MOUSEBUTTONDOWN:
@@ -1239,17 +1175,7 @@ static int find_event(SDL_Event *event, int remove, int wait)
             // mouse button events
             if (event->button.button == SDL_BUTTON_LEFT)
             {
-                if (event->button.state == SDL_PRESSED)
-                {
-#ifdef PANDORA
-                    if (keyboard_mods & KMOD_RSHIFT) // L button on Pandora
-                    {
-                        event->button.button = SDL_BUTTON_RIGHT;
-                        mouse_right_button_mod = 1;
-                    }
-#endif
-                }
-                else
+                if (event->button.state != SDL_PRESSED)
                 {
                     if (mouse_right_button_mod)
                     {
@@ -1276,7 +1202,6 @@ static int find_event(SDL_Event *event, int remove, int wait)
             mouse_x = event->button.x;
             mouse_y = event->button.y;
             handle_mouse_button((event->button.state == SDL_PRESSED)?1:0, mouse_button, event->button.button, 0, remove);
-#if SDL_VERSION_ATLEAST(2,0,0)
             if (Display_Mode)
             {
                 if (mouse_x < 0) mouse_x = 0;
@@ -1285,7 +1210,6 @@ static int find_event(SDL_Event *event, int remove, int wait)
                 if (mouse_y < 0) mouse_y = 0;
                 else if (mouse_y >= mouse_clip_h) mouse_y = mouse_clip_h - 1;
             }
-#endif
             break;
 
         case SDL_JOYAXISMOTION:
@@ -1502,7 +1426,6 @@ static int find_event(SDL_Event *event, int remove, int wait)
             }
             break;
 
-#if SDL_VERSION_ATLEAST(2,0,0)
 #if SDL_VERSION_ATLEAST(2,0,4)
         case SDL_AUDIODEVICEADDED:
         case SDL_AUDIODEVICEREMOVED:
@@ -1855,41 +1778,6 @@ static int find_event(SDL_Event *event, int remove, int wait)
             }
             break;
 
-#else
-        case SDL_ACTIVEEVENT:
-            // Application loses/gains visibility
-            switch (event->active.state)
-            {
-            case SDL_APPMOUSEFOCUS:
-                break;
-            case SDL_APPINPUTFOCUS:
-            case SDL_APPACTIVE:
-                keep_event = 1;
-                break;
-            default:
-                break;
-            }
-            break;
-
-        case SDL_EVENT_RESERVEDA:
-        case SDL_EVENT_RESERVEDB:
-            // reserved for future use
-            break;
-
-        case SDL_VIDEORESIZE:
-        case SDL_VIDEOEXPOSE:
-            break;
-
-        case SDL_EVENT_RESERVED2:
-        case SDL_EVENT_RESERVED3:
-        case SDL_EVENT_RESERVED4:
-        case SDL_EVENT_RESERVED5:
-        case SDL_EVENT_RESERVED6:
-        case SDL_EVENT_RESERVED7:
-            // reserved for future use
-            break;
-#endif
-
         default:
             // user events
             break;
@@ -1899,11 +1787,7 @@ static int find_event(SDL_Event *event, int remove, int wait)
 
         if (!remove)
         {
-#if SDL_VERSION_ATLEAST(2,0,0)
             num_events = SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
-#else
-            num_events = SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_ALLEVENTS);
-#endif
             if (num_events <= 0) return 0; // error or no events
         }
     };
@@ -2022,14 +1906,6 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event, int remove)
         case SDL_KEYDOWN:
         case SDL_KEYUP:
             // key events
-#if !SDL_VERSION_ATLEAST(2,0,0)
-            /*if ((event->key.keysym.unicode > 0) && (event->key.keysym.unicode < 128))
-            {
-                vkey = vkey_table[event->key.keysym.unicode];
-                scancode = scancode_table[event->key.keysym.unicode];
-            }
-            else*/
-#endif
             if (event->key.keysym.sym < 128)
             {
                 vkey = vkey_table[event->key.keysym.sym];
@@ -2300,7 +2176,6 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event, int remove)
                     break;
 
 
-#if SDL_VERSION_ATLEAST(2,0,0)
                 case SDLK_PAUSE:
                     vkey = 0x13;
                     break;
@@ -2425,89 +2300,10 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event, int remove)
                     scancode = 0x1c;
                     break;
 
-#else
-                case SDLK_KP0:
-                    vkey = (event->key.keysym.mod & KMOD_NUM)?VK_NUMPAD0:VK_INSERT;
-                    scancode = 0x52;
-                    break;
-
-                case SDLK_KP1:
-                    vkey = (event->key.keysym.mod & KMOD_NUM)?VK_NUMPAD1:VK_END;
-                    scancode = 0x4f;
-                    break;
-
-                case SDLK_KP2:
-                    vkey = (event->key.keysym.mod & KMOD_NUM)?VK_NUMPAD2:VK_DOWN;
-                    scancode = 0x50;
-                    break;
-
-                case SDLK_KP3:
-                    vkey = (event->key.keysym.mod & KMOD_NUM)?VK_NUMPAD3:VK_NEXT;
-                    scancode = 0x51;
-                    break;
-
-                case SDLK_KP4:
-                    vkey = (event->key.keysym.mod & KMOD_NUM)?VK_NUMPAD4:VK_LEFT;
-                    scancode = 0x4b;
-                    break;
-
-                case SDLK_KP5:
-                    vkey = (event->key.keysym.mod & KMOD_NUM)?VK_NUMPAD5:VK_CLEAR;
-                    scancode = 0x4c;
-                    break;
-
-                case SDLK_KP6:
-                    vkey = (event->key.keysym.mod & KMOD_NUM)?VK_NUMPAD6:VK_RIGHT;
-                    scancode = 0x4d;
-                    break;
-
-                case SDLK_KP7:
-                    vkey = (event->key.keysym.mod & KMOD_NUM)?VK_NUMPAD7:VK_HOME;
-                    scancode = 0x47;
-                    break;
-
-                case SDLK_KP8:
-                    vkey = (event->key.keysym.mod & KMOD_NUM)?VK_NUMPAD8:VK_UP;
-                    scancode = 0x48;
-                    break;
-
-                case SDLK_KP9:
-                    vkey = (event->key.keysym.mod & KMOD_NUM)?VK_NUMPAD9:VK_PRIOR;
-                    scancode = 0x49;
-                    break;
-
-
-                case SDLK_NUMLOCK:
-                    vkey = VK_NUMLOCK;
-                    scancode = 0x45;
-                    break;
-
-                case SDLK_SCROLLOCK:
-                    vkey = VK_SCROLL;
-                    scancode = 0x46;
-                    break;
-
-                case SDLK_LSUPER:
-                    vkey = VK_LWIN;
-                    scancode = 0x5b;
-                    break;
-
-                case SDLK_RSUPER:
-                    vkey = VK_RWIN;
-                    scancode = 0x5c;
-                    break;
-
-#endif
                 }
             }
 
-            translate_key(lpMsg, (event->type == SDL_KEYUP)?1:0, vkey, scancode,
-#if SDL_VERSION_ATLEAST(2,0,0)
-                event->key.repeat
-#else
-                0
-#endif
-            );
+            translate_key(lpMsg, (event->type == SDL_KEYUP)?1:0, vkey, scancode, event->key.repeat);
 
             break;
 
@@ -2728,7 +2524,6 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event, int remove)
         }
         break;
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     case SDL_CONTROLLERBUTTONDOWN:
     case SDL_CONTROLLERBUTTONUP:
         // game controller button event
@@ -2815,22 +2610,6 @@ static void translate_event(lpmsg lpMsg, SDL_Event *event, int remove)
             break;
         }
         break;
-#else
-    case SDL_ACTIVEEVENT:
-        // Application loses/gains visibility
-        switch (event->active.state)
-        {
-        case SDL_APPINPUTFOCUS:
-            lpMsg->message = (event->active.gain)?WM_SETFOCUS:WM_KILLFOCUS;
-            break;
-        case SDL_APPACTIVE:
-            lpMsg->message = WM_SYSCOMMAND;
-            lpMsg->wParam = (event->active.gain)?SC_RESTORE:SC_MINIMIZE;
-        default:
-            break;
-        }
-        break;
-#endif
 
     default:
         break;
@@ -2857,17 +2636,10 @@ void * CCALL CreateWindowExA_c(uint32_t dwExStyle, const char *lpClassName, cons
     eprintf("CreateWindowExA: 0x%x, %s, %s, 0x%x, %i, %i, %i, %i\n", dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight);
 #endif
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     SDL_version linked;
 
     SDL_GetVersion(&linked);
     sdl_versionnum = SDL_VERSIONNUM(linked.major, linked.minor, linked.patch);
-#else
-    const SDL_version *linked;
-
-    linked = SDL_Linked_Version();
-    sdl_versionnum = SDL_VERSIONNUM(linked->major, linked->minor, linked->patch);
-#endif
 
     priority_event.type = 0;
     controller_mouse_last_time = SoundEngine_Counter;
@@ -2884,17 +2656,9 @@ void * CCALL CreateWindowExA_c(uint32_t dwExStyle, const char *lpClassName, cons
         }
     }
 #else
-    if (Input_GameController && (joystick == NULL)
-#if SDL_VERSION_ATLEAST(2,0,0)
-        && (controller == NULL)
-#endif
-    )
+    if (Input_GameController && (joystick == NULL) && (controller == NULL))
     {
-        SDL_InitSubSystem(SDL_INIT_JOYSTICK
-#if SDL_VERSION_ATLEAST(2,0,0)
-            | SDL_INIT_GAMECONTROLLER
-#endif
-        );
+        SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
 
 #if SDL_VERSION_ATLEAST(2,0,2)
         if (sdl_versionnum >= SDL_VERSIONNUM(2,0,2))
@@ -2904,13 +2668,6 @@ void * CCALL CreateWindowExA_c(uint32_t dwExStyle, const char *lpClassName, cons
 #endif
 
         open_controller_or_joystick(-1);
-
-#if !SDL_VERSION_ATLEAST(2,0,0)
-        if (joystick == NULL)
-        {
-            SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
-        }
-#endif
     }
 #endif
 
@@ -2994,14 +2751,10 @@ uint32_t CCALL GetCursorPos_c(void *lpPoint)
     eprintf("GetCursorPos: 0x%" PRIxPTR " - ", (uintptr_t)lpPoint);
 #endif
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     // SDL_GetMouseState returns real window coordinates instead of renderer logical coordinates
     // also last event coordinates are probably more appropriate for Septerra Core
     x = mouse_x;
     y = mouse_y;
-#else
-    SDL_GetMouseState(&x, &y);
-#endif
 
     ((lppoint)lpPoint)->x = x;
     ((lppoint)lpPoint)->y = y;
@@ -3123,63 +2876,8 @@ void * CCALL LoadCursorA_c(void *hInstance, PTR32(const char) lpCursorName)
 
         if (predefined_cursor == 32514) // IDC_WAIT
         {
-        // Septerra Core loads and sets cursor only once and doesn't free it, so SDL cursor can be used directly
-#if SDL_VERSION_ATLEAST(2,0,0)
+            // Septerra Core loads and sets cursor only once and doesn't free it, so SDL cursor can be used directly
             cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAIT);
-#else
-            const static Uint8 data[2 * 23] = {
-                0x7f, 0xfc,     /* 0111 1111 1111 1100 */   /*  .............   */
-                0x80, 0x02,     /* 1000 0000 0000 0010 */   /* .XXXXXXXXXXXXX.  */
-                0xbf, 0xfa,     /* 1011 1111 1111 1010 */   /* .X...........X.  */
-                0xb5, 0x5a,     /* 1011 0101 0101 1010 */   /* .X..X.X.X.X..X.  */
-                0xaa, 0xaa,     /* 1010 1010 1010 1010 */   /* .X.X.X.X.X.X.X.  */
-                0xb5, 0x5a,     /* 1011 0101 0101 1010 */   /* .X..X.X.X.X..X.  */
-                0x9a, 0xb2,     /* 1001 1010 1011 0010 */   /* .XX..X.X.X..XX.  */
-                0x4d, 0x64,     /* 0100 1101 0110 0100 */   /*  .XX..X.X..XX.   */
-                0x26, 0xc8,     /* 0010 0110 1100 1000 */   /*   .XX..X..XX.    */
-                0x13, 0x90,     /* 0001 0011 1001 0000 */   /*    .XX...XX.     */
-                0x0b, 0xa0,     /* 0000 1011 1010 0000 */   /*     .X...X.      */
-                0x0a, 0xa0,     /* 0000 1010 1010 0000 */   /*     .X.X.X.      */
-                0x0b, 0xa0,     /* 0000 1011 1010 0000 */   /*     .X...X.      */
-                0x13, 0x90,     /* 0001 0011 1001 0000 */   /*    .XX...XX.     */
-                0x26, 0xc8,     /* 0010 0110 1100 1000 */   /*   .XX..X..XX.    */
-                0x4f, 0x64,     /* 0100 1111 0110 0100 */   /*  .XX....X..XX.   */
-                0x9f, 0xf2,     /* 1001 1111 1111 0010 */   /* .XX.........XX.  */
-                0xba, 0xba,     /* 1011 1010 1011 1010 */   /* .X...X.X.X...X.  */
-                0xb5, 0x5a,     /* 1011 0101 0101 1010 */   /* .X..X.X.X.X..X.  */
-                0xaa, 0xaa,     /* 1010 1010 1010 1010 */   /* .X.X.X.X.X.X.X.  */
-                0x95, 0x52,     /* 1001 0101 0101 0010 */   /* .XX.X.X.X.X.XX.  */
-                0x80, 0x02,     /* 1000 0000 0000 0010 */   /* .XXXXXXXXXXXXX.  */
-                0x7f, 0xfc,     /* 0111 1111 1111 1100 */   /*  .............   */
-            };
-            const static Uint8 mask[2 * 23] = {
-                0x7f, 0xfc,     /* 0111 1111 1111 1100 */   /*  .............   */
-                0xff, 0xfe,     /* 1111 1111 1111 1110 */   /* .XXXXXXXXXXXXX.  */
-                0xff, 0xfe,     /* 1111 1111 1111 1110 */   /* .X...........X.  */
-                0xff, 0xfe,     /* 1111 1111 1111 1110 */   /* .X..X.X.X.X..X.  */
-                0xff, 0xfe,     /* 1111 1111 1111 1110 */   /* .X.X.X.X.X.X.X.  */
-                0xff, 0xfe,     /* 1111 1111 1111 1110 */   /* .X..X.X.X.X..X.  */
-                0xff, 0xfe,     /* 1111 1111 1111 1110 */   /* .XX..X.X.X..XX.  */
-                0x7f, 0xfc,     /* 0111 1111 1111 1100 */   /*  .XX..X.X..XX.   */
-                0x3f, 0xf8,     /* 0011 1111 1111 1000 */   /*   .XX..X..XX.    */
-                0x1f, 0xf0,     /* 0001 1111 1111 0000 */   /*    .XX...XX.     */
-                0x0f, 0xe0,     /* 0000 1111 1110 0000 */   /*     .X...X.      */
-                0x0f, 0xe0,     /* 0000 1111 1110 0000 */   /*     .X.X.X.      */
-                0x0f, 0xe0,     /* 0000 1111 1110 0000 */   /*     .X...X.      */
-                0x1f, 0xf0,     /* 0001 1111 1111 0000 */   /*    .XX...XX.     */
-                0x3f, 0xf8,     /* 0011 1111 1111 1000 */   /*   .XX..X..XX.    */
-                0x7f, 0xfc,     /* 0111 1111 1111 1100 */   /*  .XX....X..XX.   */
-                0xff, 0xfe,     /* 1111 1111 1111 1110 */   /* .XX.........XX.  */
-                0xff, 0xfe,     /* 1111 1111 1111 1110 */   /* .X...X.X.X...X.  */
-                0xff, 0xfe,     /* 1111 1111 1111 1110 */   /* .X..X.X.X.X..X.  */
-                0xff, 0xfe,     /* 1111 1111 1111 1110 */   /* .X.X.X.X.X.X.X.  */
-                0xff, 0xfe,     /* 1111 1111 1111 1110 */   /* .XX.X.X.X.X.XX.  */
-                0xff, 0xfe,     /* 1111 1111 1111 1110 */   /* .XXXXXXXXXXXXX.  */
-                0x7f, 0xfc,     /* 0111 1111 1111 1100 */   /*  .............   */
-            };
-
-            cursor = SDL_CreateCursor((Uint8 *) data, (Uint8 *) mask, 16, 23, 7, 11);
-#endif
             if (cursor != NULL)
             {
                 PTR32(void) result;
@@ -3249,7 +2947,6 @@ void * CCALL LoadImageA_c(void *hinst, const char *lpszName, uint32_t uType, int
 
 uint32_t CCALL MessageBoxA_c(void *hWnd, const char *lpText, const char *lpCaption, uint32_t uType)
 {
-#if SDL_VERSION_ATLEAST(2,0,0)
     SDL_MessageBoxData data;
     SDL_MessageBoxButtonData buttons[3];
 
@@ -3383,7 +3080,7 @@ uint32_t CCALL MessageBoxA_c(void *hWnd, const char *lpText, const char *lpCapti
             }
         }
     }
-#endif
+
     eprintf("MessageBoxA: 0x%x\n\tCaption: %s\n\tText: %s\n", uType, lpCaption, lpText);
 
     if ((uType & MB_TYPEMASK) == 0)
@@ -3513,11 +3210,7 @@ uint32_t CCALL SetCursorPos_c(int32_t X, int32_t Y)
     eprintf("SetCursorPos: %i, %i\n", X, Y);
 #endif
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     warp_mouse(X, Y);
-#else
-    SDL_WarpMouse(X, Y);
-#endif
     return 1;
 }
 

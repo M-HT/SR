@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -577,11 +577,7 @@ int MidiPlugin_Startup(void)
     // start thread
     thread_finish = 0;
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     MP_thread = SDL_CreateThread(MidiPlugin_ProcessData, "midi", NULL);
-#else
-    MP_thread = SDL_CreateThread(MidiPlugin_ProcessData, NULL);
-#endif
     if (MP_thread == NULL)
     {
         fprintf(stderr, "%s: error: %s\n", "midi", "failed to create thread");
@@ -649,7 +645,7 @@ void MidiPlugin_SetMusicVolume(void)
 
     if (Game_Music)
     {
-        new_volume = (Game_AudioMasterVolume * Game_MusicSequence.volume * Game_AudioMusicVolume * 127) >> 21;
+        new_volume = (Game_MusicSequence.volume * Game_AudioMusicVolume * 127) >> 14;
 
         LockSem(MP_sequence.sem);
 

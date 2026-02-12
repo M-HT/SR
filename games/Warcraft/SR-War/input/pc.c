@@ -49,10 +49,8 @@ static int Input_GameController;
 static int Controller_Deadzone;
 
 static SDL_Joystick *joystick = NULL;
-#if SDL_VERSION_ATLEAST(2,0,0)
 static SDL_GameController *controller = NULL;
 static int controller_base_axis;
-#endif
 static unsigned int joystick_hat_position = 0;
 static int controller_axis_x = 0;
 static int controller_axis_y = 0;
@@ -68,13 +66,8 @@ void EmulateKey(int type, int key)
 
     pump_event.type = type;
     pump_event.key.state = (type == SDL_KEYUP)?SDL_RELEASED:SDL_PRESSED;
-#if SDL_VERSION_ATLEAST(2,0,0)
     pump_event.key.repeat = 0;
     pump_event.key.keysym.sym = (SDL_Keycode) key;
-#else
-    pump_event.key.keysym.sym = (SDLKey) key;
-    pump_event.key.keysym.unicode = 0;
-#endif
     pump_event.key.keysym.mod = KMOD_NONE;
 
     SDL_PushEvent(&pump_event);
@@ -170,7 +163,6 @@ static void open_controller_or_joystick(int device_index)
 
     num_joysticks = SDL_NumJoysticks();
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     // prefer game controllers over joysticks
     for (index = 0; index < num_joysticks; index++)
     {
@@ -212,7 +204,6 @@ static void open_controller_or_joystick(int device_index)
     }
 
     if (controller == NULL)
-#endif
     for (index = 0; index < num_joysticks; index++)
     {
         if ((device_index >= 0) && (index != device_index))
@@ -230,13 +221,7 @@ static void open_controller_or_joystick(int device_index)
                 continue;
             }
 
-            fprintf(stderr, "Using joystick: %s\n",
-#if SDL_VERSION_ATLEAST(2,0,0)
-                SDL_JoystickName(joystick)
-#else
-                SDL_JoystickName(index)
-#endif
-            );
+            fprintf(stderr, "Using joystick: %s\n", SDL_JoystickName(joystick));
             break;
         }
     }
@@ -260,11 +245,7 @@ void Init_Input2(void)
 {
     if (Input_GameController)
     {
-        SDL_InitSubSystem(SDL_INIT_JOYSTICK
-#if SDL_VERSION_ATLEAST(2,0,0)
-            | SDL_INIT_GAMECONTROLLER
-#endif
-        );
+        SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
 
 #if SDL_VERSION_ATLEAST(2,0,2)
         if (Game_SDLVersionNum >= SDL_VERSIONNUM(2,0,2))
@@ -274,13 +255,6 @@ void Init_Input2(void)
 #endif
 
         open_controller_or_joystick(-1);
-
-#if !SDL_VERSION_ATLEAST(2,0,0)
-        if (joystick == NULL)
-        {
-            SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
-        }
-#endif
     }
 }
 
@@ -602,7 +576,6 @@ int Handle_Input_Event2(SDL_Event *_event)
             }
             break;
 
-#if SDL_VERSION_ATLEAST(2,0,0)
         case SDL_CONTROLLERAXISMOTION:
             if (controller != NULL)
             {
@@ -745,7 +718,7 @@ int Handle_Input_Event2(SDL_Event *_event)
                 }
             }
             break;
-#endif
+
         default:
             return 0;
     }

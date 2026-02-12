@@ -368,7 +368,7 @@ void MidiPlugin2_SetMusicVolume(void)
 
     if (Game_Music)
     {
-        new_volume = (Game_AudioMasterVolume * Game_MusicSequence.volume * Game_AudioMusicVolume * 127) >> 21;
+        new_volume = (Game_MusicSequence.volume * Game_AudioMusicVolume * 127) >> 14;
 
         MP2_functions.set_volume(new_volume);
     }

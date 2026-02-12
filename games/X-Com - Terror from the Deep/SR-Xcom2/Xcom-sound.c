@@ -413,9 +413,7 @@ static int16_t Game_InsertSample(int pending, DIGPAK_SNDSTRUC *sndplay)
             }
             else
 #endif
-#if SDL_VERSION_ATLEAST(2,0,0)
             if (Game_ResamplingQuality <= 0)
-#endif
             {
                 // interpolated resampling
                 resample_type = 2;
@@ -789,11 +787,7 @@ static void sound_player(void *udata, Uint8 *stream, int len)
         len2 = alen - sound_read_index;
         if (len2 > len) len2 = len;
 
-#if SDL_VERSION_ATLEAST(2,0,0)
-        SDL_MixAudioFormat(stream, &(abuf[sound_read_index]), Game_AudioFormat, len2, (Game_AudioSampleVolume * Game_AudioMasterVolume) >> 7);
-#else
-        SDL_MixAudio(stream, &(abuf[sound_read_index]), len2, (Game_AudioSampleVolume * Game_AudioMasterVolume) >> 7);
-#endif
+        SDL_MixAudioFormat(stream, &(abuf[sound_read_index]), Game_AudioFormat, len2, Game_AudioSampleVolume);
         stream += len2;
         len -= len2;
 
@@ -833,11 +827,7 @@ static void sound_player(void *udata, Uint8 *stream, int len)
 
                     len2 = (alen <= len) ? alen : len;
 
-#if SDL_VERSION_ATLEAST(2,0,0)
-                    SDL_MixAudioFormat(stream, abuf, Game_AudioFormat, len2, (Game_AudioSampleVolume * Game_AudioMasterVolume) >> 7);
-#else
-                    SDL_MixAudio(stream, abuf, len2, (Game_AudioSampleVolume * Game_AudioMasterVolume) >> 7);
-#endif
+                    SDL_MixAudioFormat(stream, abuf, Game_AudioFormat, len2, Game_AudioSampleVolume);
                     stream += len2;
                     len -= len2;
 

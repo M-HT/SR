@@ -27,14 +27,6 @@
 
 #include <errno.h>
 #include <stdio.h>
-#ifdef USE_SDL2
-    #include <SDL2/SDL.h>
-#else
-    #include <SDL/SDL.h>
-    #ifdef ALLOW_OPENGL
-        #include <SDL/SDL_opengl.h>
-    #endif
-#endif
 #include "Game_defs.h"
 
 #if defined(DEFINE_VARIABLES)
@@ -68,7 +60,6 @@ EXTERNAL_VARIABLE void *Game_AllocatedMemory[256];	/* dos allocated memory table
 EXTERNAL_VARIABLE pixel_format_orig Game_Palette_Or[256];	/* original palette (rgba) */
 EXTERNAL_VARIABLE uint32_t Game_ScreenWindowNum;	/* screen number in video bank */
 EXTERNAL_VARIABLE volatile uint32_t Game_DisplayStart;		/* offset in video memory where display starts */
-EXTERNAL_VARIABLE uint32_t Game_ESP_Original_Value;	/* original value of ESP */
 EXTERNAL_VARIABLE uint32_t Game_NextMemory;			/* next memory place to allocate in memory table */
 EXTERNAL_VARIABLE SDL_Cursor *Game_OldCursor;		/* original cursor */
 EXTERNAL_VARIABLE SDL_Cursor *Game_NoCursor;		/* invisible cursor */
@@ -96,7 +87,6 @@ EXTERNAL_VARIABLE uint32_t Display_Bitsperpixel;	/* display bits per pixel */
 EXTERNAL_VARIABLE uint32_t Display_Fullscreen;		/* display - fulscreen ? */
 EXTERNAL_VARIABLE uint32_t Display_FSType;			/* fulscreen type */
 EXTERNAL_VARIABLE uint32_t Display_MouseLocked;		/* is mouse locked in the window ? */
-EXTERNAL_VARIABLE volatile int32_t Display_ChangeMode;		/* flag to change display mode: 1 = forward, -1 = backward */
 EXTERNAL_VARIABLE uint32_t Render_Width;			/* render width */
 EXTERNAL_VARIABLE uint32_t Render_Height;			/* render height */
 EXTERNAL_VARIABLE uint32_t Picture_Width;			/* picture width */
@@ -114,23 +104,11 @@ EXTERNAL_VARIABLE int Game_ScaleFactor;				/* factor for advanced scaler: 0 = ma
 EXTERNAL_VARIABLE int Game_ExtraScalerThreads;		/* number of extra threads for advanced scaler: -1 = auto */
 EXTERNAL_VARIABLE Game_Advanced_Flip_Procedure Display_Advanced_Flip_Procedure;	/* advanced flip procedure */
 
-#if SDL_VERSION_ATLEAST(2,0,0)
 EXTERNAL_VARIABLE SDL_Window *Game_Window;
 EXTERNAL_VARIABLE SDL_Renderer *Game_Renderer;
 EXTERNAL_VARIABLE SDL_Texture *Game_Texture[3];
 EXTERNAL_VARIABLE SDL_Texture *Game_Texture2[3];
 EXTERNAL_VARIABLE SDL_Texture *Game_ScaledTexture[3];
-#else
-EXTERNAL_VARIABLE SDL_Surface *Game_Screen;
-#ifdef ALLOW_OPENGL
-EXTERNAL_VARIABLE uint32_t Game_UseOpenGL;			/* use OpenGL for drawing ? */
-EXTERNAL_VARIABLE GLuint Game_GLTexture[3];
-EXTERNAL_VARIABLE GLuint Game_GLTexture2[3];
-EXTERNAL_VARIABLE GLuint Game_GLFramebuffer[3];
-EXTERNAL_VARIABLE GLuint Game_GLScaledTexture[3];
-#endif
-#endif
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
 EXTERNAL_VARIABLE void *Game_TextureData;
 EXTERNAL_VARIABLE void *Game_TextureData2;
 EXTERNAL_VARIABLE void *Game_ScaledTextureData;
@@ -139,7 +117,6 @@ EXTERNAL_VARIABLE int Game_UseTextureData2;
 EXTERNAL_VARIABLE int Scaler_ScaleFactor;
 EXTERNAL_VARIABLE int Scaler_ScaleTextureData;
 EXTERNAL_VARIABLE int Scaler_ScaleTexture;
-#endif
 
 // global audio variables
 EXTERNAL_CVAR_BGN uint32_t Game_Sound;				/* is sound enabled ? */ EXTERNAL_CVAR_END
@@ -155,9 +132,6 @@ EXTERNAL_VARIABLE int Game_ResamplingQuality;		/* audio resampling quality
                                                        0: normal quality
                                                        1: higher quality */
 EXTERNAL_VARIABLE int Game_SwapSoundChannels;		/* swap left and right sound channel ? */
-EXTERNAL_VARIABLE int Game_VolumeDelta;             /*  0: Volume is stationary
-                                                        1: Volume is increasing
-                                                       -1: Volume is decreasing	*/
 EXTERNAL_VARIABLE int Game_MidiSubsystem;			/* MIDI subsystem
                                                        0: SDL_mixer
                                                        1: WildMidi
@@ -173,17 +147,6 @@ EXTERNAL_VARIABLE int Game_OPL3Emulator;			/* OPL3 emulator
                                                        0: fast - DOSBox
                                                        1: precise - Nuked OPL3 */
 EXTERNAL_VARIABLE int Game_MT32DelaySysex;			/* Add delays when sending sysex messages on MT-32 ? (to prevent buffer overflow with Rev.0 MT-32) */
-
-// global input variables
-//senquack - now we keep track of what mouse buttons are currently pressed so
-//				we can support two ways of using the touchscreen.  The first way
-//				lets users touch/tap the screen and that is LMB, and if they
-//				hold the buttom assigned to RMB while touch/tapping the screen,
-//				that is RMB.  The second way lets users only move the cursor
-//				when touching the touchscreen, and only then the buttons for
-//				LMB/RMB are pressed are mouse clicks registered.
-EXTERNAL_VARIABLE uint32_t Game_RMBActive;	/* 1 if button for RMB is held  */
-EXTERNAL_VARIABLE uint32_t Game_TouchscreenButtonEvents;	/* New option, see comments above */
 
 // 3d engine variables
 EXTERNAL_CVAR_BGN volatile uint32_t Game_UseEnhanced3DEngine; EXTERNAL_CVAR_END

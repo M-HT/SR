@@ -322,9 +322,6 @@ int Game_MainThread(void *data)
 int Game_FlipThread(void *data)
 {
     SDL_Event event;
-#if !SDL_VERSION_ATLEAST(2,0,0)
-    int clear_screen;
-#endif
 
 #undef FPS_WRITE
 
@@ -334,10 +331,6 @@ int Game_FlipThread(void *data)
     LastDisplayTicks = SDL_GetTicks();
     NumDisplay = 0;
     LastTimer = Game_VSyncTick;
-#endif
-
-#if !SDL_VERSION_ATLEAST(2,0,0)
-    clear_screen = 0;
 #endif
 
     while (1)
@@ -367,76 +360,12 @@ fprintf(stderr, "fps: %.3f    tps: %.3f\n", (float) NumDisplay * 1000 / (Current
 
         if (Game_DisplayActive)
         {
-        #if SDL_VERSION_ATLEAST(2,0,0)
             Display_Flip_Procedure(Game_FrameBuffer, Game_TextureData);
 
             if (Scaler_ScaleTextureData)
             {
                 ScalerPlugin_scale(Scaler_ScaleFactor, Game_TextureData, Game_ScaledTextureData, Render_Width, Render_Height, 1);
             }
-        #else
-        #ifdef ALLOW_OPENGL
-            if (Game_UseOpenGL)
-            {
-                Display_Flip_Procedure(Game_FrameBuffer, Game_TextureData);
-
-                if (Scaler_ScaleTextureData)
-                {
-                    ScalerPlugin_scale(Scaler_ScaleFactor, Game_TextureData, Game_ScaledTextureData, Render_Width, Render_Height, 1);
-                }
-            }
-            else
-        #endif
-            {
-                /* ??? */
-
-                SDL_LockSurface(Game_Screen);
-
-                if (Display_ChangeMode != 0)
-                {
-                    int mousex, mousey;
-
-                    Game_GetGameMouse(&mousex, &mousey);
-
-                    if (Change_Display_Mode(Display_ChangeMode))
-                    {
-                        clear_screen = 3;
-                    }
-
-                    Display_ChangeMode = 0;
-
-                    Game_VideoAspectX = ((320-1) << 16) / (Picture_Width-1);
-                    Game_VideoAspectY = ((200-1) << 16) / (Picture_Height-1);
-
-                    Game_VideoAspectXR = ((Picture_Width-1) << 16) / (320-1);
-                    Game_VideoAspectYR = ((Picture_Height-1) << 16) / (200-1);
-
-                    Game_RepositionMouse(mousex, mousey);
-                }
-
-                if (clear_screen)
-                {
-                    SDL_Rect rect;
-
-                    clear_screen--;
-
-                    rect.x = 0;
-                    rect.y = 0;
-                    rect.w = Game_Screen->w;
-                    rect.h = Game_Screen->h;
-                    SDL_FillRect(Game_Screen, &rect, 0);
-                }
-
-                Display_Flip_Procedure(Game_FrameBuffer, Game_Screen->pixels);
-
-                /* ??? */
-                SDL_UnlockSurface(Game_Screen);
-
-                VirtualKeyboard_Draw();
-
-                SDL_Flip(Game_Screen);
-            }
-        #endif
         }
 
         SDL_UnlockMutex(Game_ScreenMutex);

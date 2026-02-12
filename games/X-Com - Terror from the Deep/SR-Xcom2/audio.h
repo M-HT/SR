@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -29,6 +29,5 @@ void Init_Audio(void);
 void Init_Audio2(void);
 int Config_Audio(char *str, char *param);
 void Cleanup_Audio(void);
-void Change_HW_Audio_Volume(int amount);
 
 #endif /* _AUDIO_H_INCLUDED_ */

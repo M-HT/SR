@@ -22,9 +22,6 @@
 
 Import('device', 'env')
 
-if device == 'gp2x' or device == 'pandora':
-    obj = env.Object(device + '.c')
-else:
-    obj = env.Object('pc.c')
+obj = env.Object('pc.c')
 
 Return('obj')

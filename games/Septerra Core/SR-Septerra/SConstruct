@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2019-2025 Roman Pauer
+#  Copyright (C) 2019-2026 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -30,7 +30,7 @@ vars.Add(EnumVariable('debug', 'Set debug level (0 = release version)', '0',
                                  ignorecase=2))
 vars.Add(BoolVariable('mingw', 'Set to use MinGW instead of default compiler', False))
 vars.Add(EnumVariable('device', 'Set target device', 'none',
-                                 allowed_values=('none', 'pc-windows', 'pc-linux', 'arm-linux-llasm', 'pc-linux-llasm', 'pandora-llasm', 'pyra-llasm', 'pc64-linux-llasm', 'arm64-linux-llasm'),
+                                 allowed_values=('none', 'pc-windows', 'pc-linux', 'arm-linux-llasm', 'pc-linux-llasm', 'pyra-llasm', 'pc64-linux-llasm', 'arm64-linux-llasm'),
                                  ignorecase=2))
 vars.Add(EnumVariable('speexdsp', 'Use SpeexDSP library for higher quality resampling', '0',
                                  allowed_values=('0', '1'),
@@ -154,22 +154,6 @@ elif device == 'pc-windows':
                    LINKFLAGS = '-m32 -mwindows',
                    LIBS      = ['mingw32', 'SDL2main', 'SDL2', 'mpg123-0', 'quicktime', 'winmm']
                   )
-elif device == 'pandora':
-    compiler_path = os.environ['PNDSDK'] + '/'
-    compiler_prefix = 'pandora-'
-
-    env['CC']      = compiler_prefix + 'gcc'
-    env['CXX']     = compiler_prefix + 'g++'
-    env['CPPPATH'] = [compiler_path + 'usr/include', compiler_path + 'usr/include/SDL']
-    env['LIBPATH'] = [compiler_path + 'usr/lib']
-    env['AS']      = compiler_prefix + 'as'
-    env['ENV']['PATH'] = compiler_path + 'bin' + os.pathsep + env['ENV']['PATH']
-    env.Append(CCFLAGS    = '-DPANDORA -pipe -march=armv7-a -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp -mthumb-interwork',
-               LINKFLAGS  = '-Wl,-z,noexecstack',
-               LIBS       = ['SDL', 'ts', 'pthread', 'm', 'dl', 'rt', 'z', 'mpg123', 'quicktime'],
-               LLASMFLAGS = '-inline-float',
-               LLVMFLAGS  = '-mtriple=thumbv7a-unknown-linux-eabi -mcpu=cortex-a8 -float-abi=soft'
-              )
 elif device == 'pyra':
     env.Append(CCFLAGS    = '-DPYRA -pipe -march=armv7ve+simd -mcpu=cortex-a15 -mtune=cortex-a15 -mfpu=neon-vfpv4 -mfloat-abi=hard -mthumb',
                LINKFLAGS  = '-Wl,-z,noexecstack',

@@ -152,23 +152,17 @@
 struct IDirectDraw_c {
     PTR32(void) lpVtbl;
     uint32_t RefCount;
-#if SDL_VERSION_ATLEAST(2,0,0)
     SDL_Window *Window;
     SDL_Renderer *Renderer;
     SDL_Texture *Texture[3];
-#else
-    SDL_Surface *Screen;
-#endif
 };
 
 struct IDirectDrawSurface_c {
     PTR32(void) lpVtbl;
     uint32_t RefCount;
-#if SDL_VERSION_ATLEAST(2,0,0)
     int current_texture;
     SDL_Renderer *Renderer;
     SDL_Texture *Texture[3];
-#endif
     SDL_Surface *Surface;
     int primary, backbuffer, mustlock, was_flipped;
     struct IDirectDrawSurface_c *lpBackbuffer;
@@ -308,19 +302,12 @@ extern uint8_t Patch_IsPreselected[4];
 extern "C" {
 #endif
 extern void delete_virtual_keyboard(void);
-extern int display_virtual_keyboard(
-#if SDL_VERSION_ATLEAST(2,0,0)
-    SDL_Renderer *renderer
-#else
-    SDL_Surface *surface, SDL_Rect *update_area
-#endif
-);
+extern int display_virtual_keyboard(SDL_Renderer *renderer);
 #ifdef __cplusplus
 }
 #endif
 
 
-#if SDL_VERSION_ATLEAST(2,0,0)
 #ifdef __cplusplus
 extern "C"
 #endif
@@ -328,7 +315,6 @@ SDL_Renderer *GetSurfaceRenderer(struct IDirectDrawSurface_c *lpThis)
 {
     return lpThis->Renderer;
 }
-#endif
 
 
 uint32_t CCALL DirectDrawCreate_c(void *lpGUID, PTR32(struct IDirectDraw_c) *lplpDD, void *pUnkOuter)
@@ -423,7 +409,7 @@ uint32_t CCALL IDirectDraw_Release_c(struct IDirectDraw_c *lpThis)
     if (lpThis->RefCount == 0)
     {
         delete_virtual_keyboard();
-#if SDL_VERSION_ATLEAST(2,0,0)
+
         if (lpThis->Window != NULL)
         {
             SDL_HideWindow(lpThis->Window);
@@ -447,7 +433,7 @@ uint32_t CCALL IDirectDraw_Release_c(struct IDirectDraw_c *lpThis)
             SDL_DestroyWindow(lpThis->Window);
             lpThis->Window = NULL;
         }
-#endif
+
         x86_free(lpThis);
         return 0;
     }
@@ -529,7 +515,6 @@ uint32_t CCALL IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct 
         lpDDS_c->backbuffer = 0;
         lpDDS_c->was_flipped = 0;
 
-#if SDL_VERSION_ATLEAST(2,0,0)
         lpDDS_c->current_texture = 0;
         lpDDS_c->Renderer = lpThis->Renderer;
         lpDDS_c->Texture[0] = lpThis->Texture[0];
@@ -537,10 +522,6 @@ uint32_t CCALL IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct 
         lpDDS_c->Texture[2] = lpThis->Texture[2];
         lpDDS_c->Surface = NULL;
         lpDDS_c->mustlock = 1;
-#else
-        lpDDS_c->Surface = lpThis->Screen;
-        lpDDS_c->mustlock = SDL_MUSTLOCK(lpDDS_c->Surface);
-#endif
 
         lpDDS_c->lpBackbuffer = (struct IDirectDrawSurface_c *)x86_malloc(sizeof(struct IDirectDrawSurface_c));
 
@@ -560,7 +541,6 @@ uint32_t CCALL IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct 
         lpDDS_c->lpBackbuffer->was_flipped = 0;
         lpDDS_c->lpBackbuffer->lpBackbuffer = NULL;
 
-#if SDL_VERSION_ATLEAST(2,0,0)
         {
             Uint32 format;
             int width, height;
@@ -584,18 +564,6 @@ uint32_t CCALL IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct 
                 }
             }
         }
-#else
-        lpDDS_c->lpBackbuffer->Surface = SDL_CreateRGBSurface(
-            SDL_SWSURFACE,
-            lpThis->Screen->w,
-            lpThis->Screen->h,
-            lpThis->Screen->format->BitsPerPixel,
-            lpThis->Screen->format->Rmask,
-            lpThis->Screen->format->Gmask,
-            lpThis->Screen->format->Bmask,
-            lpThis->Screen->format->Amask
-        );
-#endif
 
         if (lpDDS_c->lpBackbuffer->Surface == NULL)
         {
@@ -609,7 +577,6 @@ uint32_t CCALL IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct 
 
         lpDDS_c->lpBackbuffer->mustlock = SDL_MUSTLOCK(lpDDS_c->lpBackbuffer->Surface);
 
-#if SDL_VERSION_ATLEAST(2,0,0)
         lpDDS_c->Surface = SDL_CreateRGBSurfaceFrom(
             NULL,
             lpDDS_c->lpBackbuffer->Surface->w,
@@ -632,7 +599,6 @@ uint32_t CCALL IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct 
 #endif
             return DDERR_OUTOFVIDEOMEMORY;
         }
-#endif
 
         *lplpDDSurface = lpDDS_c;
 
@@ -851,7 +817,6 @@ uint32_t CCALL IDirectDraw_SetDisplayMode_c(struct IDirectDraw_c *lpThis, uint32
         return DDERR_INVALIDPARAMS;
     }
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     if (dwBPP != 16)
     {
 #ifdef DEBUG_DDRAW
@@ -943,39 +908,13 @@ uint32_t CCALL IDirectDraw_SetDisplayMode_c(struct IDirectDraw_c *lpThis, uint32
 #endif
         return DDERR_UNSUPPORTEDMODE;
     }
-#else
-#ifdef PANDORA
-    lpThis->Screen = SDL_SetVideoMode(dwWidth, dwHeight, dwBPP, SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_FULLSCREEN);
-#else
-    lpThis->Screen = SDL_SetVideoMode(dwWidth, dwHeight, dwBPP, SDL_HWSURFACE);
-#endif
-    if (lpThis->Screen == NULL)
-    {
-#ifdef DEBUG_DDRAW
-        eprintf("error\n");
-#endif
-        return DDERR_UNSUPPORTEDMODE;
-    }
-
-    SDL_WM_SetCaption("Septerra Core", NULL);
-#endif
-
-#if !SDL_VERSION_ATLEAST(2,0,0)
-    SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
-#endif
 
     // Septerra Core waits for focus on start
     {
         SDL_Event event;
 
-#if SDL_VERSION_ATLEAST(2,0,0)
         event.type = SDL_WINDOWEVENT;
         event.window.event = SDL_WINDOWEVENT_FOCUS_GAINED;
-#else
-        event.type = SDL_ACTIVEEVENT;
-        event.active.gain = 1;
-        event.active.state = SDL_APPINPUTFOCUS;
-#endif
 
         SDL_PushEvent(&event);
     }
@@ -1047,20 +986,11 @@ uint32_t CCALL IDirectDrawSurface_Release_c(struct IDirectDrawSurface_c *lpThis)
 #endif
     if (lpThis->RefCount == 0)
     {
-#if SDL_VERSION_ATLEAST(2,0,0)
         if (lpThis->Surface != NULL)
         {
             SDL_FreeSurface(lpThis->Surface);
             lpThis->Surface = NULL;
         }
-#else
-        if ((lpThis->Surface != NULL) && !lpThis->primary)
-        {
-            SDL_FreeSurface(lpThis->Surface);
-            lpThis->Surface = NULL;
-        }
-#endif
-
         if (lpThis->lpBackbuffer != NULL)
         {
             IDirectDrawSurface_Release_c(lpThis->lpBackbuffer);
@@ -1127,7 +1057,6 @@ uint32_t CCALL IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, str
             dstrect.h = lpDestRect->bottom - lpDestRect->top;
         }
 
-#if SDL_VERSION_ATLEAST(2,0,0)
         if (lpThis->primary)
         {
             Uint8 r, g, b;
@@ -1159,22 +1088,6 @@ uint32_t CCALL IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, str
 
             return DD_OK;
         }
-#endif
-
-#if !SDL_VERSION_ATLEAST(2,0,0)
-        if (lpThis->primary)
-        {
-            if (lpThis->was_flipped && (lpDestRect != NULL) && (lpThis->Surface->flags & SDL_DOUBLEBUF))
-            {
-                SDL_BlitSurface(lpThis->lpBackbuffer->Surface, NULL, lpThis->Surface, NULL);
-                lpThis->was_flipped--;
-            }
-            else
-            {
-                lpThis->was_flipped = 0;
-            }
-        }
-#endif
 
         if (0 != SDL_FillRect(lpThis->Surface, (lpDestRect != NULL)?&dstrect:NULL, lpDDBltFX->dwFillColor))
         {
@@ -1183,24 +1096,6 @@ uint32_t CCALL IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, str
 #endif
             return DDERR_SURFACEBUSY;
         }
-
-#if !SDL_VERSION_ATLEAST(2,0,0)
-        if (lpThis->primary)
-        {
-            if ((lpDestRect != NULL) && !(lpThis->Surface->flags & SDL_DOUBLEBUF))
-            {
-                if (!display_virtual_keyboard(lpThis->Surface, &dstrect))
-                {
-                    SDL_UpdateRect(lpThis->Surface, dstrect.x, dstrect.y, dstrect.w, dstrect.h);
-                }
-            }
-            else
-            {
-                display_virtual_keyboard(lpThis->Surface, NULL);
-                SDL_Flip(lpThis->Surface);
-            }
-        }
-#endif
 
 #ifdef DEBUG_DDRAW
         eprintf("OK\n");
@@ -1296,7 +1191,6 @@ uint32_t CCALL IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, str
             }
         }
 
-#if SDL_VERSION_ATLEAST(2,0,0)
         if (lpThis->primary)
         {
             if (0 != SDL_LockTexture(lpThis->Texture[lpThis->current_texture], NULL, (void **)&(lpThis->Surface->pixels), &(lpThis->Surface->pitch)))
@@ -1309,30 +1203,10 @@ uint32_t CCALL IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, str
 
             lpThis->was_flipped = 0;
         }
-#endif
-
-#if !SDL_VERSION_ATLEAST(2,0,0)
-        if (lpThis->primary)
-        {
-            if (lpThis->was_flipped && (lpDestRect != NULL) && (lpThis->Surface->flags & SDL_DOUBLEBUF))
-            {
-                SDL_BlitSurface(lpThis->lpBackbuffer->Surface, NULL, lpThis->Surface, NULL);
-                lpThis->was_flipped--;
-            }
-            else
-            {
-                lpThis->was_flipped = 0;
-            }
-        }
-#endif
 
         if (dwFlags & DDBLT_KEYSRCOVERRIDE)
         {
-#if SDL_VERSION_ATLEAST(2,0,0)
             SDL_SetColorKey(lpDDSrcSurface->Surface, SDL_TRUE, lpDDBltFX->ddckSrcColorkey.dwColorSpaceLowValue);
-#else
-            SDL_SetColorKey(lpDDSrcSurface->Surface, SDL_SRCCOLORKEY, lpDDBltFX->ddckSrcColorkey.dwColorSpaceLowValue);
-#endif
         }
         else
         {
@@ -1348,12 +1222,10 @@ uint32_t CCALL IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, str
             {
                 SDL_SetColorKey(lpDDSrcSurface->Surface, 0, 0);
             }
-#if SDL_VERSION_ATLEAST(2,0,0)
             if (lpThis->primary)
             {
                 SDL_UnlockTexture(lpThis->Texture[lpThis->current_texture]);
             }
-#endif
 #ifdef DEBUG_DDRAW
             eprintf("error\n");
 #endif
@@ -1384,7 +1256,6 @@ uint32_t CCALL IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, str
 
         if (lpThis->primary)
         {
-#if SDL_VERSION_ATLEAST(2,0,0)
             SDL_UnlockTexture(lpThis->Texture[lpThis->current_texture]);
 
             SDL_RenderCopy(lpThis->Renderer, lpThis->Texture[lpThis->current_texture], NULL, NULL);
@@ -1394,20 +1265,6 @@ uint32_t CCALL IDirectDrawSurface_Blt_c(struct IDirectDrawSurface_c *lpThis, str
             // clear next frame
             SDL_SetRenderDrawColor(lpThis->Renderer, 0, 0, 0, 255);
             SDL_RenderClear(lpThis->Renderer);
-#else
-            if ((lpDestRect != NULL) && !(lpThis->Surface->flags & SDL_DOUBLEBUF))
-            {
-                if (!display_virtual_keyboard(lpThis->Surface, &dstrect))
-                {
-                    SDL_UpdateRect(lpThis->Surface, dstrect.x, dstrect.y, dstrect.w, dstrect.h);
-                }
-            }
-            else
-            {
-                display_virtual_keyboard(lpThis->Surface, NULL);
-                SDL_Flip(lpThis->Surface);
-            }
-#endif
         }
 
         if (dwFlags & DDBLT_KEYSRCOVERRIDE)
@@ -1458,7 +1315,6 @@ uint32_t CCALL IDirectDrawSurface_EnumOverlayZOrders_c(struct IDirectDrawSurface
 //    return IDirectDrawSurface_EnumOverlayZOrders(lpThis->lpObject, param1, param2, (LPDDENUMSURFACESCALLBACK)param3);
 }
 
-#if SDL_VERSION_ATLEAST(2,0,0)
 static void CopyBackbufferSurfaceToTexture(SDL_Surface *Surface, SDL_Texture *Texture)
 {
     uint8_t *dst, *src;
@@ -1494,7 +1350,6 @@ static void CopyBackbufferSurfaceToTexture(SDL_Surface *Surface, SDL_Texture *Te
         SDL_UnlockTexture(Texture);
     }
 }
-#endif
 
 uint32_t CCALL IDirectDrawSurface_Flip_c(struct IDirectDrawSurface_c *lpThis, struct IDirectDrawSurface_c * lpDDSurfaceTargetOverride, uint32_t dwFlags)
 {
@@ -1524,7 +1379,6 @@ uint32_t CCALL IDirectDrawSurface_Flip_c(struct IDirectDrawSurface_c *lpThis, st
 
     if (lpDDSurfaceTargetOverride == NULL)
     {
-#if SDL_VERSION_ATLEAST(2,0,0)
         lpThis->current_texture++;
         if (lpThis->current_texture > 2)
         {
@@ -1541,13 +1395,6 @@ uint32_t CCALL IDirectDrawSurface_Flip_c(struct IDirectDrawSurface_c *lpThis, st
         // clear next frame
         SDL_SetRenderDrawColor(lpThis->Renderer, 0, 0, 0, 255);
         SDL_RenderClear(lpThis->Renderer);
-#else
-        SDL_BlitSurface(lpThis->lpBackbuffer->Surface, NULL, lpThis->Surface, NULL);
-        display_virtual_keyboard(lpThis->Surface, NULL);
-        SDL_Flip(lpThis->Surface);
-
-        SDL_Delay(Display_DelayAfterFlip);
-#endif
 
         lpThis->was_flipped = 2;
 
@@ -1694,11 +1541,7 @@ static uint32_t GetSurfaceDesc(struct IDirectDrawSurface_c *lpThis, struct _ddsu
     lpDDSurfaceDesc->dwRefreshRate = 60;
     lpDDSurfaceDesc->ddsCaps.dwCaps =
         ((lpThis->primary)?DDSCAPS_PRIMARYSURFACE:((lpThis->backbuffer)?DDSCAPS_BACKBUFFER:DDSCAPS_OFFSCREENPLAIN)) |
-#if SDL_VERSION_ATLEAST(2,0,0)
         ((lpThis->primary)?DDSCAPS_VIDEOMEMORY:DDSCAPS_SYSTEMMEMORY)
-#else
-        ((lpThis->Surface->flags & SDL_HWSURFACE)?DDSCAPS_VIDEOMEMORY:DDSCAPS_SYSTEMMEMORY)
-#endif
     ;
     lpDDSurfaceDesc->ddpfPixelFormat.dwSize = 32;
     lpDDSurfaceDesc->ddpfPixelFormat.dwFlags = (Surface->format->BitsPerPixel == 8)?(DDPF_PALETTEINDEXED8 | DDPF_RGB):(DDPF_RGB);
@@ -1772,13 +1615,9 @@ uint32_t CCALL IDirectDrawSurface_IsLost_c(struct IDirectDrawSurface_c *lpThis)
         return DDERR_INVALIDPARAMS;
     }
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     if ((lpThis->primary && (lpThis->Texture[0] == NULL)) ||
         (!lpThis->primary && (lpThis->Surface == NULL))
        )
-#else
-    if (lpThis->Surface == NULL)
-#endif
     {
 #ifdef DEBUG_DDRAW
         eprintf("lost\n");

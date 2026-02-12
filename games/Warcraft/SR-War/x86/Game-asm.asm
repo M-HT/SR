@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2019 Roman Pauer
+;;  Copyright (C) 2016-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -24,11 +24,9 @@
 %include "asm_xti.inc"
 
 %ifidn __OUTPUT_FORMAT__, win32
-    %define Game_ESP_Original_Value _Game_ESP_Original_Value
     %define Game_MouseTable _Game_MouseTable
 %endif
 
-extern Game_ESP_Original_Value
 extern Game_MouseTable
 
 extern main_
@@ -401,3 +399,14 @@ __Z23Game_RunAILcallback_AsmPFvP11_AIL_sampleES0_:
         retn
 
 ; end procedure Game_RunAILcallback_Asm
+
+
+%ifidn __OUTPUT_FORMAT__, elf32
+section .bss nobits alloc noexec write align=4
+%else
+section .bss bss align=4
+%endif
+
+Game_ESP_Original_Value:
+resd 1
+

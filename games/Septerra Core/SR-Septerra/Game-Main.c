@@ -46,12 +46,6 @@
 #include "Game-Memory.h"
 #include "platform.h"
 
-#if (SDL_MAJOR_VERSION == 1) && SDL_VERSION_ATLEAST(1, 2, 50)
-#warning Compilation using sdl12-compat detected.
-#warning The compiled program might not work properly.
-#warning Compilation using SDL2 is recommended.
-#endif
-
 #ifdef _WIN32
 #define WINAPI_NODEF_DEFINITIONS
 #endif
@@ -224,14 +218,6 @@ int main(int argc, char *argv[])
     }
 
     atexit(SDL_Quit);
-
-#if (SDL_MAJOR_VERSION == 1)
-    const SDL_version *link_version = SDL_Linked_Version();
-    if (SDL_VERSIONNUM(link_version->major, link_version->minor, link_version->patch) >= SDL_VERSIONNUM(1,2,50))
-    {
-        fprintf(stderr, "Warning: sdl12-compat detected.\nWarning: The program might not work properly.\nWarning: Using SDL2 version is recommended.\n");
-    }
-#endif
 
 #ifdef _WIN32
     init_libquicktime();

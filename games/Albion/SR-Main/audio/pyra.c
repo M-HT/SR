@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -27,12 +27,12 @@
 
 void Init_Audio(void)
 {
-    Game_AudioMusicVolume = 80;
     Game_AudioFormat = AUDIO_S16SYS;
     Game_AudioChannels = 2;
     Game_AudioRate = 22050;
     Game_AudioBufferSize = 2048;
     Game_ResamplingQuality = 0;
+    Game_SwapSoundChannels = 1;
     Game_MidiSubsystem = 3;
 }
 
@@ -49,6 +49,3 @@ void Cleanup_Audio(void)
 {
 }
 
-void Change_HW_Audio_Volume(int amount)
-{
-}

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -31,60 +31,18 @@
 
 static int DisplayMode;
 
-static int ScaleOutput, ScaledWidth, ScaledHeight, Fullscreen;
-static uint32_t *ScaleSrc;
+static int ScaledWidth, ScaledHeight, Fullscreen;
 
-#if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
 static pixel_format_disp Game_PaletteAlpha[256];
-#endif
-#if !SDL_VERSION_ATLEAST(2,0,0)
-static uint32_t interpolation_matrix2[256*256];
-#define IM2_LOOKUP(a, b) ( interpolation_matrix2[(((uint32_t) (a)) << 8) + ((uint32_t) (b))] )
-#endif
 
 static void Set_Palette_Value2(uint32_t index, uint32_t r, uint32_t g, uint32_t b)
 {
-#if !SDL_VERSION_ATLEAST(2,0,0)
-    uint32_t *val1, *val2;
-    pixel_format_disp pixel;
-#endif
-
-#if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
     Game_PaletteAlpha[index].s.r = r;
     Game_PaletteAlpha[index].s.g = g;
     Game_PaletteAlpha[index].s.b = b;
     Game_PaletteAlpha[index].s.a = 255;
-#endif
-
-#define MAXDIFF 128
-#define INTERPOLATE(a, b) (((int32_t)(a) - (int32_t)(b) >= MAXDIFF) ? ((3 * (a) + (b)) >> 2) : (((int32_t)(a) - (int32_t)(b) <= -MAXDIFF) ? ((3 * (b) + (a)) >> 2) : (((a) + (b)) >> 1)))
-
-#if !SDL_VERSION_ATLEAST(2,0,0)
-    if (ScaleOutput || Game_AdvancedScaling) return;
-
-    val1 = &(interpolation_matrix2[index * 256]);
-    val2 = &(interpolation_matrix2[index]);
-
-    pixel.pix = 0;
-
-    for (index = 0; index < 256; index++)
-    {
-        pixel.s.r = INTERPOLATE(r, (uint32_t) Game_Palette_Or[index].s.r);
-        pixel.s.g = INTERPOLATE(g, (uint32_t) Game_Palette_Or[index].s.g);
-        pixel.s.b = INTERPOLATE(b, (uint32_t) Game_Palette_Or[index].s.b);
-
-        *val1 = *val2 = pixel.pix;
-
-        val1++;
-        val2 += 256;
-    }
-#endif
-
-#undef INTERPOLATE
-#undef MAXDIFF
 }
 
-#if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
 static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, uint32_t *dst2, int *dst2_used)
 {
     int counter, DrawOverlay;
@@ -447,7 +405,6 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
         }
     }
 }
-#endif
 
 static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
 {
@@ -638,601 +595,19 @@ static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
 #undef WRITE_PIXEL2
 }
 
-/*
-static void Flip_360x240x8_to_640x480x32_in_720x480(uint8_t *src, uint32_t *dst)
-{
-    int x, y;
-
-#define WRITE_PIXEL2(x1, x2) dst[(x2)] = dst[1 + (x2)] = dst[720 + (x2)] = dst[721 + (x2)] = Game_Palette[src[(x1)]].pix;
-#define WRITE_PIXEL1(x1, x2) dst[(x2)] = dst[720 + (x2)] = Game_Palette[src[(x1)]].pix;
-
-    dst += 40;
-
-    for (y = 240; y != 0; y--)
-    {
-        for (x = 360; x != 0; x-=9)
-        {
-            //
-            // 221222122
-            //
-
-            WRITE_PIXEL2(0, 0)
-            WRITE_PIXEL2(1, 2)
-            WRITE_PIXEL1(2, 4)
-            WRITE_PIXEL2(3, 5)
-            WRITE_PIXEL2(4, 7)
-            WRITE_PIXEL2(5, 9)
-            WRITE_PIXEL1(6, 11)
-            WRITE_PIXEL2(7, 12)
-            WRITE_PIXEL2(8, 14)
-
-            src+=9;
-            dst+=16;
-        }
-        dst+=800;
-    }
-
-#undef WRITE_PIXEL1
-#undef WRITE_PIXEL2
-}
-*/
-
-/*
-static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated(uint8_t *src, uint32_t *dst)
-{
-    int x, y;
-
-// http://www.compuphase.com/graphic/scale3.htm
-#define AVERAGE(a, b) ( ((((a) ^ (b)) & 0xfffefefeL) >> 1) + ((a) & (b)) )
-#define WRITE_PIXEL2(x1, x2) dst[(x2)] = dst[1 + (x2)] = dst[720 + (x2)] = dst[721 + (x2)] = Game_Palette[src[(x1)]].pix;
-#define WRITE_PIXEL3(x1, x2) \
-    { \
-        dst[(x2)] = dst[720 + (x2)] = Game_Palette[src[(x1)]].pix; \
-        dst[2 + (x2)] = dst[722 + (x2)] = Game_Palette[src[1 + (x1)]].pix; \
-        dst[1 + (x2)] = dst[721 + (x2)] = AVERAGE(Game_Palette[src[(x1)]].pix, Game_Palette[src[1 + (x1)]].pix); \
-    }
-
-    dst += 40;
-
-    for (y = 240; y != 0; y--)
-    {
-        for (x = 360; x != 0; x-=9)
-        {
-            //
-            // 2322232
-            //
-
-            WRITE_PIXEL2(0, 0)
-            WRITE_PIXEL3(1, 2)
-            WRITE_PIXEL2(3, 5)
-            WRITE_PIXEL2(4, 7)
-            WRITE_PIXEL2(5, 9)
-            WRITE_PIXEL3(6, 11)
-            WRITE_PIXEL2(8, 14)
-
-            src+=9;
-            dst+=16;
-        }
-        dst+=800;
-    }
-
-#undef WRITE_PIXEL3
-#undef WRITE_PIXEL2
-#undef AVERAGE
-}
-*/
-
-/*
-static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2(uint8_t *src, uint32_t *dst)
-{
-    int x, y;
-    pixel_format_disp pixel;
-
-#define MAXDIFF 128
-#define INTERPOLATE(a, b) (((a) >= (b)) ? ( ((a) - (b) >= MAXDIFF) ? ((3 * ((uint32_t)(a)) + (b)) / 4) : ((((uint32_t)(a)) + (b)) / 2) ) : ( ((b) - (a) >= MAXDIFF) ? ((3 * ((uint32_t)(b)) + (a)) / 4) : ((((uint32_t)(a)) + (b)) / 2) ) )
-#define WRITE_PIXEL2(x1, x2) dst[(x2)] = dst[1 + (x2)] = dst[720 + (x2)] = dst[721 + (x2)] = Game_Palette[src[(x1)]].pix;
-#define WRITE_PIXEL3(x1, x2) \
-    { \
-        pixel1.pix = Game_Palette[src[(x1)]].pix; \
-        pixel2.pix = Game_Palette[src[1 + (x1)]].pix; \
-        dst[(x2)] = dst[720 + (x2)] = pixel1.pix; \
-        dst[2 + (x2)] = dst[722 + (x2)] = pixel2.pix; \
-        pixel.s.r = INTERPOLATE(pixel1.s.r, pixel2.s.r); \
-        pixel.s.g = INTERPOLATE(pixel1.s.g, pixel2.s.g); \
-        pixel.s.b = INTERPOLATE(pixel1.s.b, pixel2.s.b); \
-        dst[1 + (x2)] = dst[721 + (x2)] = pixel.pix; \
-    }
-
-    pixel.pix = 0;
-    dst += 40;
-
-    for (y = 240; y != 0; y--)
-    {
-        for (x = 360; x != 0; x-=9)
-        {
-            //
-            // 2322232
-            //
-
-            pixel_format_disp pixel1, pixel2;
-
-            WRITE_PIXEL2(0, 0)
-            WRITE_PIXEL3(1, 2)
-            WRITE_PIXEL2(3, 5)
-            WRITE_PIXEL2(4, 7)
-            WRITE_PIXEL2(5, 9)
-            WRITE_PIXEL3(6, 11)
-            WRITE_PIXEL2(8, 14)
-
-            src+=9;
-            dst+=16;
-        }
-        dst+=800;
-    }
-
-#undef WRITE_PIXEL3
-#undef WRITE_PIXEL2
-#undef INTERPOLATE
-#undef MAXDIFF
-}
-*/
-
-#if !SDL_VERSION_ATLEAST(2,0,0)
-static void Flip_360x240x8_to_640x480x32_in_720x480_interpolated2_lt(uint8_t *src, uint32_t *dst)
-{
-    int x, y, DrawOverlay, ViewportX_9, ViewportWidth_9, ViewportX2_9;
-    Game_OverlayInfo OverlayInfo;
-
-#define WRITE_PIXEL2(x1, x2) dst[(x2)] = dst[1 + (x2)] = dst[720 + (x2)] = dst[721 + (x2)] = Game_Palette[src[(x1)]].pix;
-#define WRITE_PIXEL3(x1, x2) \
-    { \
-        dst[(x2)] = dst[720 + (x2)] = Game_Palette[src[(x1)]].pix; \
-        dst[1 + (x2)] = dst[721 + (x2)] = IM2_LOOKUP(src[(x1)], src[1 + (x1)]); \
-        dst[2 + (x2)] = dst[722 + (x2)] = Game_Palette[src[1 + (x1)]].pix; \
-    }
-
-#define OVERLAY_PIXEL2(x1, x2) \
-    { \
-        if (src[(x1)] == orig[(x1)]) \
-        { \
-            dst[(x2)] = Game_Palette[src2[(x2)]].pix; \
-            dst[(x2) + 1] = Game_Palette[src2[(x2) + 1]].pix; \
-            dst[(x2) + 720] = Game_Palette[src2[(x2) + 800]].pix; \
-            dst[(x2) + 721] = Game_Palette[src2[(x2) + 801]].pix; \
-        } \
-        else \
-        { \
-            dst[(x2)] = dst[1 + (x2)] = dst[720 + (x2)] = dst[721 + (x2)] = Game_Palette[src[(x1)]].pix; \
-        } \
-    }
-#define OVERLAY_PIXEL3(x1, x2) \
-    { \
-        if (src[(x1)] == orig[(x1)]) \
-        { \
-            if (src[(x1) + 1] == orig[(x1) + 1]) \
-            { \
-                dst[(x2)] = Game_Palette[src2[(x2)]].pix; \
-                dst[(x2) + 1] = Game_Palette[src2[(x2) + 1]].pix; \
-                dst[(x2) + 2] = Game_Palette[src2[(x2) + 2]].pix; \
-                dst[(x2) + 720] = Game_Palette[src2[(x2) + 800]].pix; \
-                dst[(x2) + 721] = Game_Palette[src2[(x2) + 801]].pix; \
-                dst[(x2) + 722] = Game_Palette[src2[(x2) + 802]].pix; \
-            } \
-            else \
-            { \
-                dst[(x2)] = Game_Palette[src2[(x2)]].pix; \
-                dst[1 + (x2)] = IM2_LOOKUP(src2[(x2) + 1], src[1 + (x1)]); \
-                dst[(x2) + 720] = Game_Palette[src2[(x2) + 800]].pix; \
-                dst[721 + (x2)] = IM2_LOOKUP(src2[(x2) + 801], src[1 + (x1)]); \
-                dst[2 + (x2)] = dst[722 + (x2)] = Game_Palette[src[1 + (x1)]].pix; \
-            } \
-        } \
-        else \
-        { \
-            if (src[(x1) + 1] == orig[(x1) + 1]) \
-            { \
-                dst[(x2)] = dst[720 + (x2)] = Game_Palette[src[(x1)]].pix; \
-                dst[1 + (x2)] = IM2_LOOKUP(src[(x1)], src2[(x2) + 801]); \
-                dst[(x2) + 2] = Game_Palette[src2[(x2) + 2]].pix; \
-                dst[721 + (x2)] = IM2_LOOKUP(src[(x1)], src2[(x2) + 801]); \
-                dst[(x2) + 722] = Game_Palette[src2[(x2) + 802]].pix; \
-            } \
-            else \
-            { \
-                dst[(x2)] = dst[720 + (x2)] = Game_Palette[src[(x1)]].pix; \
-                dst[1 + (x2)] = dst[721 + (x2)] = IM2_LOOKUP(src[(x1)], src[1 + (x1)]); \
-                dst[2 + (x2)] = dst[722 + (x2)] = Game_Palette[src[1 + (x1)]].pix; \
-            } \
-        } \
-    }
-
-    OverlayInfo = Game_OverlayDisplay;
-    DrawOverlay = Get_DrawOverlay(src, &OverlayInfo);
-
-    dst += 40;
-
-    if (DrawOverlay)
-    {
-        uint8_t *zalsrc, *src2, *tmpsrc2, *orig;
-        uint32_t *zaldst, *tmpdst;
-
-        // display part above the viewport
-        for (y = OverlayInfo.ViewportY; y != 0; y--)
-        {
-            for (x = 360; x != 0; x-=9)
-            {
-                //
-                // 2322232
-                //
-
-                WRITE_PIXEL2(0, 0)
-                WRITE_PIXEL3(1, 2)
-                WRITE_PIXEL2(3, 5)
-                WRITE_PIXEL2(4, 7)
-                WRITE_PIXEL2(5, 9)
-                WRITE_PIXEL3(6, 11)
-                WRITE_PIXEL2(8, 14)
-
-                src+=9;
-                dst+=16;
-            }
-            dst+=720+(720-640);
-        }
-
-        zalsrc = src;
-        zaldst = dst;
-
-        // display part left of the viewport
-        ViewportX_9 = OverlayInfo.ViewportX - (OverlayInfo.ViewportX % 9);
-        if (ViewportX_9 != 0)
-        {
-            for (y = OverlayInfo.ViewportHeight; y != 0; y--)
-            {
-                tmpdst = dst;
-                for (x = ViewportX_9; x != 0; x-=9)
-                {
-                    //
-                    // 2322232
-                    //
-
-                    WRITE_PIXEL2(0, 0)
-                    WRITE_PIXEL3(1, 2)
-                    WRITE_PIXEL2(3, 5)
-                    WRITE_PIXEL2(4, 7)
-                    WRITE_PIXEL2(5, 9)
-                    WRITE_PIXEL3(6, 11)
-                    WRITE_PIXEL2(8, 14)
-
-                    src+=9;
-                    dst+=16;
-                }
-                src+=(360-ViewportX_9);
-                dst = tmpdst + 2*720;
-            }
-        }
-
-        // display part right of the viewport
-        ViewportWidth_9 = OverlayInfo.ViewportWidth + (OverlayInfo.ViewportX - ViewportX_9);
-        if ( (ViewportWidth_9 % 9) != 0)
-        {
-            ViewportWidth_9 = ViewportWidth_9 + 9 - (ViewportWidth_9 % 9);
-        }
-        if ((ViewportX_9 + ViewportWidth_9) != 360)
-        {
-            src = zalsrc + ViewportX_9 + ViewportWidth_9;
-            dst = zaldst + (((ViewportX_9 + ViewportWidth_9) * 16) / 9);
-            ViewportX2_9 = 360 - (ViewportX_9 + ViewportWidth_9);
-            for (y = OverlayInfo.ViewportHeight; y != 0; y--)
-            {
-                tmpdst = dst;
-                for (x = ViewportX2_9; x != 0; x-=9)
-                {
-                    //
-                    // 2322232
-                    //
-
-                    WRITE_PIXEL2(0, 0)
-                    WRITE_PIXEL3(1, 2)
-                    WRITE_PIXEL2(3, 5)
-                    WRITE_PIXEL2(4, 7)
-                    WRITE_PIXEL2(5, 9)
-                    WRITE_PIXEL3(6, 11)
-                    WRITE_PIXEL2(8, 14)
-
-                    src+=9;
-                    dst+=16;
-                }
-                src+=(360-ViewportX2_9);
-                dst = tmpdst + 2*720;
-            }
-
-        }
-
-        // display part below the viewport
-        src = zalsrc + 360 * OverlayInfo.ViewportHeight;
-        dst = zaldst + 720 * 2 * OverlayInfo.ViewportHeight;
-        for (y = 240 - (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight); y != 0; y--)
-        {
-            for (x = 360; x != 0; x-=9)
-            {
-                //
-                // 2322232
-                //
-
-                WRITE_PIXEL2(0, 0)
-                WRITE_PIXEL3(1, 2)
-                WRITE_PIXEL2(3, 5)
-                WRITE_PIXEL2(4, 7)
-                WRITE_PIXEL2(5, 9)
-                WRITE_PIXEL3(6, 11)
-                WRITE_PIXEL2(8, 14)
-
-                src+=9;
-                dst+=16;
-            }
-            dst+=720+(720-640);
-        }
-
-        // the viewport
-        src = zalsrc + ViewportX_9;
-        orig = OverlayInfo.ScreenViewpartOriginal + 360 * OverlayInfo.ViewportY + ViewportX_9;
-        dst = zaldst + ((ViewportX_9 * 16) / 9);
-        src2 = OverlayInfo.ScreenViewpartOverlay + OverlayInfo.ViewportY*2 * 800 + ((ViewportX_9 * 16) / 9);
-        for (y = OverlayInfo.ViewportHeight; y != 0; y--)
-        {
-            tmpsrc2 = src2;
-            tmpdst = dst;
-            for (x = ViewportWidth_9; x != 0; x-=9)
-            {
-                //
-                // 2322232
-                //
-
-                OVERLAY_PIXEL2(0, 0)
-                OVERLAY_PIXEL3(1, 2)
-                OVERLAY_PIXEL2(3, 5)
-                OVERLAY_PIXEL2(4, 7)
-                OVERLAY_PIXEL2(5, 9)
-                OVERLAY_PIXEL3(6, 11)
-                OVERLAY_PIXEL2(8, 14)
-
-                src+=9;
-                orig+=9;
-                src2+=16;
-                dst+=16;
-            }
-            src+=(360-ViewportWidth_9);
-            orig+=(360-ViewportWidth_9);
-            src2 = tmpsrc2 + 2*800;
-            dst = tmpdst + 2*720;
-        }
-
-        if (DrawOverlay & 1)
-        {
-            dst = zaldst + 720 * 2 * (OverlayInfo.ViewportHeight - 2) + (((OverlayInfo.ViewportX + 1) * 16) / 9);
-            src2 = OverlayInfo.ScreenViewpartOverlay + (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight - 2)*2 * 800 + (((OverlayInfo.ViewportX + 1) * 16) / 9);
-            for (x = 8; x != 0; x--)
-            {
-                dst[0] = Game_Palette[src2[0]].pix;
-                dst[1] = Game_Palette[src2[1]].pix;
-                dst[720] = Game_Palette[src2[800]].pix;
-                dst[721] = Game_Palette[src2[801]].pix;
-
-                src2+=2;
-                dst+=2;
-            }
-        }
-
-        if (DrawOverlay & 2)
-        {
-            dst = zaldst + 720 * 2 * (OverlayInfo.ViewportHeight - 2) + (((OverlayInfo.ViewportX + OverlayInfo.ViewportWidth - 10) * 16) / 9);
-            src2 = OverlayInfo.ScreenViewpartOverlay + (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight - 2)*2 * 800 + (((OverlayInfo.ViewportX + OverlayInfo.ViewportWidth - 10) * 16) / 9);
-            for (x = 8; x != 0; x--)
-            {
-                dst[0] = Game_Palette[src2[0]].pix;
-                dst[1] = Game_Palette[src2[1]].pix;
-                dst[720] = Game_Palette[src2[800]].pix;
-                dst[721] = Game_Palette[src2[801]].pix;
-
-                src2+=2;
-                dst+=2;
-            }
-        }
-    }
-    else
-    {
-        for (y = 240; y != 0; y--)
-        {
-            for (x = 360; x != 0; x-=9)
-            {
-                //
-                // 2322232
-                //
-
-                WRITE_PIXEL2(0, 0)
-                WRITE_PIXEL3(1, 2)
-                WRITE_PIXEL2(3, 5)
-                WRITE_PIXEL2(4, 7)
-                WRITE_PIXEL2(5, 9)
-                WRITE_PIXEL3(6, 11)
-                WRITE_PIXEL2(8, 14)
-
-                src+=9;
-                dst+=16;
-            }
-            dst+=720+(720-640);
-        }
-    }
-
-#undef OVERLAY_PIXEL3
-#undef OVERLAY_PIXEL2
-#undef WRITE_PIXEL3
-#undef WRITE_PIXEL2
-}
-#endif
-
-#if !defined(ALLOW_OPENGL) && !SDL_VERSION_ATLEAST(2,0,0)
-static void Flip_360x240x8_to_WxHx32_bilinear(uint8_t *src, uint32_t *dst)
-{
-    uint32_t src_y, src_ydelta, src_ypos, src_xdelta, src_xpos, src_xpos_0, dst_xlastsize, height, width, val1, val2, dstval;
-    uint32_t *srcline1, *srcline2;
-
-    Flip_360x240x8_to_720x480x32(src, ScaleSrc);
-
-    dst_xlastsize = (((ScaledWidth << 16) / 720) + 0xffff) >> 16;
-    src_xdelta = (720 << 16) / ScaledWidth;
-    if (720 > ScaledWidth)
-    {
-        src_xpos_0 = ((720 - ScaledWidth) << 16) / 720;
-    }
-    else
-    {
-        src_xpos_0 = 0;
-    }
-
-    src_ydelta = (480 << 16) / ScaledHeight;
-    if (480 > ScaledHeight)
-    {
-        src_ypos = ((480 - ScaledHeight) << 16) / 480;
-    }
-    else
-    {
-        src_ypos = 0;
-    }
-
-    for (height = ScaledHeight; height != 0; height--)
-    {
-        src_xpos = src_xpos_0;
-
-        src_y = src_ypos >> 16;
-        srcline1 = ScaleSrc + 720 * src_y;
-        srcline2 = srcline1 + 719;
-
-        if ((src_y < 479) && ((src_ypos & 0xffff) != 0))
-        {
-            // bilinear
-            for (width = ScaledWidth - dst_xlastsize; width != 0; width--)
-            {
-                uint32_t tmpval1, tmpval2;
-
-                val1 = srcline1[0];
-                val2 = srcline1[1];
-
-                // r
-                tmpval1 = (((int)(val1 & 0xff)) << 2) + (((((int)(val2 & 0xff)) - ((int)(val1 & 0xff))) * (int)src_xpos) >> 14);
-                // g
-                tmpval1 |= ( (((int)((val1 >> 8) & 0xff)) << 2) + (((((int)((val2 >> 8) & 0xff)) - ((int)((val1 >> 8) & 0xff))) * (int)src_xpos) >> 14) ) << 10;
-                // b
-                tmpval1 |= ( (((int)((val1 >> 16) & 0xff)) << 2) + (((((int)((val2 >> 16) & 0xff)) - ((int)((val1 >> 16) & 0xff))) * (int)src_xpos) >> 14) ) << 20;
-
-                val1 = srcline1[720];
-                val2 = srcline1[721];
-
-                // r
-                tmpval2 = (((int)(val1 & 0xff)) << 2) + (((((int)(val2 & 0xff)) - ((int)(val1 & 0xff))) * (int)src_xpos) >> 14);
-                // g
-                tmpval2 |= ( (((int)((val1 >> 8) & 0xff)) << 2) + (((((int)((val2 >> 8) & 0xff)) - ((int)((val1 >> 8) & 0xff))) * (int)src_xpos) >> 14) ) << 10;
-                // b
-                tmpval2 |= ( (((int)((val1 >> 16) & 0xff)) << 2) + (((((int)((val2 >> 16) & 0xff)) - ((int)((val1 >> 16) & 0xff))) * (int)src_xpos) >> 14) ) << 20;
-
-                // r
-                dstval = ( ((int)(tmpval1 & 0x3ff)) + (((((int)(tmpval2 & 0x3ff)) - ((int)(tmpval1 & 0x3ff))) * (int)(src_ypos & 0xffff)) >> 16) ) >> 2;
-                // g
-                dstval |= ( ( ((int)((tmpval1 >> 10) & 0x3ff)) + (((((int)((tmpval2 >> 10) & 0x3ff)) - ((int)((tmpval1 >> 10) & 0x3ff))) * (int)(src_ypos & 0xffff)) >> 16) ) & 0x3fc ) << 6;
-                // b
-                dstval |= ( ( ((int)((tmpval1 >> 20) & 0x3ff)) + (((((int)((tmpval2 >> 20) & 0x3ff)) - ((int)((tmpval1 >> 20) & 0x3ff))) * (int)(src_ypos & 0xffff)) >> 16) ) & 0x3fc ) << 14;
-
-                *dst = dstval;
-
-                dst++;
-                src_xpos += src_xdelta;
-                srcline1 += (src_xpos >> 16);
-                src_xpos &= 0xffff;
-            }
-
-            if (dst_xlastsize != 0)
-            {
-                val1 = srcline2[0];
-                val2 = srcline2[720];
-
-                // r
-                dstval = ((int)(val1 & 0xff)) + (((((int)(val2 & 0xff)) - ((int)(val1 & 0xff))) * (int)(src_ypos & 0xffff)) >> 16);
-                // g
-                dstval |= ( ((int)((val1 >> 8) & 0xff)) + (((((int)((val2 >> 8) & 0xff)) - ((int)((val1 >> 8) & 0xff))) * (int)(src_ypos & 0xffff)) >> 16) ) << 8;
-                // b
-                dstval |= ( ((int)((val1 >> 16) & 0xff)) + (((((int)((val2 >> 16) & 0xff)) - ((int)((val1 >> 16) & 0xff))) * (int)(src_ypos & 0xffff)) >> 16) ) << 16;
-            }
-            for (width = dst_xlastsize; width != 0; width--)
-            {
-                *dst = dstval;
-
-                dst++;
-            }
-        }
-        else
-        {
-            // linear
-            for (width = ScaledWidth - dst_xlastsize; width != 0; width--)
-            {
-                val1 = srcline1[0];
-                val2 = srcline1[1];
-
-                // r
-                dstval = ((int)(val1 & 0xff)) + (((((int)(val2 & 0xff)) - ((int)(val1 & 0xff))) * (int)src_xpos) >> 16);
-                // g
-                dstval |= ( ((int)((val1 >> 8) & 0xff)) + (((((int)((val2 >> 8) & 0xff)) - ((int)((val1 >> 8) & 0xff))) * (int)src_xpos) >> 16) ) << 8;
-                // b
-                dstval |= ( ((int)((val1 >> 16) & 0xff)) + (((((int)((val2 >> 16) & 0xff)) - ((int)((val1 >> 16) & 0xff))) * (int)src_xpos) >> 16) ) << 16;
-
-                *dst = dstval;
-
-                dst++;
-                src_xpos += src_xdelta;
-                srcline1 += (src_xpos >> 16);
-                src_xpos &= 0xffff;
-            }
-
-            dstval = *srcline2;
-            for (width = dst_xlastsize; width != 0; width--)
-            {
-                *dst = dstval;
-
-                dst++;
-            }
-        }
-
-        src_ypos += src_ydelta;
-    }
-}
-#endif
-
 void Init_Display(void)
 {
-#if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
     Display_FSType = 1;
-#else
-    Display_FSType = 0;
-#endif
     Game_UseEnhanced3DEngineNewValue = 1;
 
-    ScaleOutput = 0;
     ScaledWidth = 720;
     ScaledHeight = 480;
     Fullscreen = 0;
-    ScaleSrc = NULL;
 }
 
 void Init_Display2(void)
 {
     Init_Palette();
-
-#if !SDL_VERSION_ATLEAST(2,0,0)
-    memset(&(interpolation_matrix2[0]), 0, sizeof(interpolation_matrix2));
-#endif
-
-#if !SDL_VERSION_ATLEAST(2,0,0) && !defined(ALLOW_OPENGL)
-    Game_AdvancedScaling = 0;
-#endif
 
     if (Fullscreen && Display_FSType)
     {
@@ -1249,24 +624,6 @@ void Init_Display2(void)
         if (ScaledHeight < 480) ScaledHeight = 480;
     }
 
-    if ((ScaledWidth != 720) || (ScaledHeight != 480) || (Fullscreen && Display_FSType))
-    {
-        ScaleOutput = 1;
-
-    #if SDL_VERSION_ATLEAST(2,0,0)
-    #elif defined(ALLOW_OPENGL)
-        Game_UseOpenGL = 1;
-    #else
-        ScaleSrc = (uint32_t *) malloc(720*480*4+4);
-        if (ScaleSrc == NULL)
-        {
-            ScaleOutput = 0;
-            ScaledWidth = 720;
-            ScaledHeight = 480;
-        }
-    #endif
-    }
-
     DisplayMode = 0;
     Display_Width = ScaledWidth;
     Display_Height = ScaledHeight;
@@ -1281,7 +638,6 @@ void Init_Display2(void)
     Picture_Position_UL_Y = 0;
     Picture_Position_BR_X = ScaledWidth - 1;
     Picture_Position_BR_Y = ScaledHeight - 1;
-#if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
     if (Game_AdvancedScaling)
     {
         Render_Width = 360;
@@ -1289,13 +645,6 @@ void Init_Display2(void)
         Display_Advanced_Flip_Procedure = (Game_Advanced_Flip_Procedure) &Flip_360x240x8_to_360x240x32_advanced;
     }
     else
-#else
-    if (ScaleOutput)
-    {
-        Display_Flip_Procedure = (Game_Flip_Procedure) &Flip_360x240x8_to_WxHx32_bilinear;
-    }
-    else
-#endif
     {
         Display_Flip_Procedure = (Game_Flip_Procedure) &Flip_360x240x8_to_720x480x32;
     }
@@ -1351,44 +700,5 @@ int Config_Display(char *str, char *param)
 
 void Cleanup_Display(void)
 {
-    if (ScaleSrc != NULL)
-    {
-        free(ScaleSrc);
-        ScaleSrc = NULL;
-    }
 }
-
-#if !SDL_VERSION_ATLEAST(2,0,0)
-int Change_Display_Mode(int direction)
-{
-    int ClearScreen;
-
-    if (ScaleOutput || Game_AdvancedScaling) return 0;
-
-    ClearScreen = 0;
-    DisplayMode = (DisplayMode + direction + 2) % 2;
-
-    switch (DisplayMode)
-    {
-        case 0:
-            Render_Width = 720;
-            Picture_Width = 720;
-            Picture_Position_UL_X = 0;
-            Picture_Position_BR_X = 719;
-            Display_Flip_Procedure = (Game_Flip_Procedure) &Flip_360x240x8_to_720x480x32;
-            break;
-        case 1:
-            Render_Width = 640;
-            Picture_Width = 640;
-            Picture_Position_UL_X = 40;
-            Picture_Position_BR_X = 679;
-            Display_Flip_Procedure = (Game_Flip_Procedure) &Flip_360x240x8_to_640x480x32_in_720x480_interpolated2_lt;
-
-            ClearScreen = 1;
-            break;
-    }
-
-    return ClearScreen;
-}
-#endif
 

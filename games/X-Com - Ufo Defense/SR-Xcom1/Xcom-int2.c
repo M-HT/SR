@@ -65,11 +65,7 @@ uint32_t CCALL Game_int386x(
 #endif
 
 #if (EXE_BUILD != EXE_COMBINED)
-                #if SDL_VERSION_ATLEAST(2,0,0)
                     if (Game_Window != NULL)
-                #else
-                    if (Game_Screen != NULL)
-                #endif
                     {
                         event.type = SDL_USEREVENT;
                         event.user.code = EC_DISPLAY_DESTROY;
@@ -91,11 +87,7 @@ uint32_t CCALL Game_int386x(
 
                     SDL_SemWait(Game_DisplaySem);
 
-                #if SDL_VERSION_ATLEAST(2,0,0)
                     if (Game_Window == NULL)
-                #else
-                    if (Game_Screen == NULL)
-                #endif
                     {
 #if defined(__DEBUG__)
                         fprintf (stderr, "Error: Couldn't set video mode\n");

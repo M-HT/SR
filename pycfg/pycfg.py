@@ -2,7 +2,7 @@
 # The script also works with python2
 
 #
-#  Copyright (C) 2014-2024 Roman Pauer
+#  Copyright (C) 2014-2026 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -163,203 +163,87 @@ class ConfigFile:
             self.AddEntry("Screenshot_Enabled", "yes/no", "no")
             self.AddEntry("Screenshot_Automatic_Filename", "yes/no", "no")
 
-        if platform == "pandora":
-            self.AddEntry("Use_Alternative_SDL", "yes/no", "yes")
-
 
         # display entries
-        if platform == "pandora":
-            self.AddEntry("Display_Mode", "double_pixels/fullscreen/correct_aspect_ratio", ("double_pixels" if game == "albion" else "fullscreen"))
+        if game == "albion":
+            self.AddEntry("Display_ScaledWidth", "640-3840", "720")
+            self.AddEntry("Display_ScaledHeight", "480-2160", "480")
+        else:
+            self.AddEntry("Display_ScaledWidth", "640-3840", "640")
+            self.AddEntry("Display_ScaledHeight", "400-2160", "400")
 
-        if platform == "gp2x":
-            if game == "albion":
-                self.AddEntry("Tvout_Scaling", "on/off", "on")
-            else:
-                self.AddEntry("Display", "stretched/original", "stretched")
-
-        if platform == "pc" or platform == "pyra":
-            if game == "albion":
-                self.AddEntry("Display_ScaledWidth", "640-3840", "720")
-                self.AddEntry("Display_ScaledHeight", "480-2160", "480")
-            else:
-                self.AddEntry("Display_ScaledWidth", "640-3840", "640")
-                self.AddEntry("Display_ScaledHeight", "400-2160", "400")
-
-            self.AddEntry("Display_Fullscreen", "yes/no", ("yes" if platform == "pyra" else "no"))
-            self.AddEntry("Display_MouseCursor", "normal/minimal/none", "normal")
+        self.AddEntry("Display_Fullscreen", "yes/no", ("yes" if platform == "pyra" else "no"))
+        self.AddEntry("Display_MouseCursor", "normal/minimal/none", "normal")
 
         if game == "albion":
-            if platform == "pc" or platform == "pyra" or platform == "pandora":
-                self.AddEntry("Display_Enhanced_3D_Rendering", "on/off", "on")
+            self.AddEntry("Display_Enhanced_3D_Rendering", "on/off", "on")
 
-        if platform == "pc" or platform == "pyra":
-            self.AddEntry("Display_Scaling", "basic/basicnb/advanced/advancednb", ("advanced" if platform == "pyra" else "basic"))
-            self.AddEntry("Display_AdvancedScaler", "normal/hqx/xbrz", "normal")
-            self.AddEntry("Display_ScalerFactor", "max/2/3/4/5/6", "max")
-            self.AddEntry("Display_ExtraScalerThreads", "auto/0/1/2/3/4/5/6/7", "auto")
+        self.AddEntry("Display_Scaling", "basic/basicnb/advanced/advancednb", ("advanced" if platform == "pyra" else "basic"))
+        self.AddEntry("Display_AdvancedScaler", "normal/hqx/xbrz", "normal")
+        self.AddEntry("Display_ScalerFactor", "max/2/3/4/5/6", "max")
+        self.AddEntry("Display_ExtraScalerThreads", "auto/0/1/2/3/4/5/6/7", "auto")
 
         # audio entries
-        self.AddEntry("Audio_Channels", "stereo/mono", ("mono" if platform == "gp2x" else "stereo"))
+        self.AddEntry("Audio_Channels", "stereo/mono", "stereo")
         self.AddEntry("Audio_Resolution", "16/8", "16")
         self.AddEntry("Audio_Sample_Rate", "11025-384000", ("44100" if platform == "pc" else "22050"))
         self.AddEntry("Audio_Resampling_Quality", "0/1", ("1" if platform == "pc" else "0"))
 
-        if platform == "gp2x":
-            self.AddEntry("Audio_MIDI_Subsystem", "wildmidi/adlmidi/sdl_mixer", "sdl_mixer")
-        else:
-            midi_values = "alsa/wildmidi/bassmidi/adlmidi/sdl_mixer"
-            if game == "xcom1" or game == "xcom2":
-                midi_values += "/adlib-dosbox_opl"
-                if platform == "pc" or platform == "pyra":
-                    midi_values += "/mt32-munt/awe32-emu8k"
-            midi_values += "/mt32-alsa"
-            self.AddEntry("Audio_MIDI_Subsystem", midi_values, "adlmidi")
+        midi_values = "alsa/wildmidi/bassmidi/adlmidi/sdl_mixer"
+        if game == "xcom1" or game == "xcom2":
+            midi_values += "/adlib-dosbox_opl/mt32-munt/awe32-emu8k"
+        midi_values += "/mt32-alsa"
+        self.AddEntry("Audio_MIDI_Subsystem", midi_values, "adlmidi")
 
-            if "alsa" in midi_values or "mt32-alsa" in midi_values:
-                self.AddEntry("Audio_MIDI_Device", "*", "")
+        if "alsa" in midi_values or "mt32-alsa" in midi_values:
+            self.AddEntry("Audio_MIDI_Device", "*", "")
 
-            if "bassmidi" in midi_values:
-                self.AddEntry("Audio_SoundFont_Path", "*", "")
+        if "bassmidi" in midi_values:
+            self.AddEntry("Audio_SoundFont_Path", "*", "")
 
-            if "mt32-munt" in midi_values:
-                self.AddEntry("Audio_MT32_Roms_Path", "*", "")
+        if "mt32-munt" in midi_values:
+            self.AddEntry("Audio_MT32_Roms_Path", "*", "")
 
-            if "awe32-emu8k" in midi_values:
-                self.AddEntry("Audio_AWE32_Rom_Path", "*", "")
+        if "awe32-emu8k" in midi_values:
+            self.AddEntry("Audio_AWE32_Rom_Path", "*", "")
 
-            if game == "xcom1" or game == "xcom2":
-                self.AddEntry("Audio_OPL3_BankNumber", "0-77", "77")
+        if game == "xcom1" or game == "xcom2":
+            self.AddEntry("Audio_OPL3_BankNumber", "0-77", "77")
 
-            if "mt32-alsa" in midi_values:
-                self.AddEntry("Audio_MT32_Delay_Sysex", "yes/no", "no")
+        if "mt32-alsa" in midi_values:
+            self.AddEntry("Audio_MT32_Delay_Sysex", "yes/no", "no")
 
-        if platform == "pc" or platform == "pyra":
-            self.AddEntry("Audio_OPL3_Emulator", "fast/precise", "precise" if platform == "pc" else "fast")
+        self.AddEntry("Audio_OPL3_Emulator", "fast/precise", "precise" if platform == "pc" else "fast")
 
         if game == "albion":
             self.AddEntry("Audio_Swap_Channels", "yes/no", "yes")
 
         if game == "warcraft":
-            self.AddEntry("Audio_Music_Volume", "0-127", ("50" if platform == "gp2x" else "80"))
+            self.AddEntry("Audio_Music_Volume", "0-127", "80")
 
         if game == "xcom1" or game == "xcom2":
-            self.AddEntry("Audio_Music_Volume", "0-128", ("128" if platform == "gp2x" else "128"))
-            self.AddEntry("Audio_Sample_Volume", "0-128", ("64" if platform == "gp2x" else "128"))
+            self.AddEntry("Audio_Music_Volume", "0-128", "128")
+            self.AddEntry("Audio_Sample_Volume", "0-128", "128")
 
             self.AddEntry("Audio_Buffer_Size", "256-65536", ("2048" if platform == "pc" else "1024"))
         else:
-            self.AddEntry("Audio_Buffer_Size", "256-65536", ("256" if platform == "gp2x" else ("4096" if platform == "pc" else "2048")))
+            self.AddEntry("Audio_Buffer_Size", "256-65536", ("4096" if platform == "pc" else "2048"))
 
 
         # keys entries
-        if (platform == "pc" or platform == "pyra") and game == "albion":
+        if game == "albion":
             self.AddEntry("Keys_WSAD", "WSAD/ArrowKeys", "WSAD")
             self.AddEntry("Keys_ArrowKeys", "ArrowKeys/WSAD", "ArrowKeys")
 
 
         # input entries
-        if platform == "pandora":
-            self.AddEntry("Input_Mode", "touchscreen_dpad/touchscreen_abxy/keyboard_dpad", "touchscreen_dpad")
-
         if platform == "pc":
             self.AddEntry("Input_GameController", "no/yes", "no")
             self.AddEntry("Controller_Deadzone", "0-8190", "1000")
 
-        if platform == "pc" or platform == "pyra" or platform == "pandora":
-            if game == "warcraft":
-                self.AddEntry("Input_MouseHelper", "on/off", "off")
-                self.AddEntry("Input_SelectGroupTreshold", "0-20", "6")
-
-        if platform == "pandora":
-            if game == "xcom1" or game == "xcom2":
-                self.AddEntry("Input_Old_Touchscreen_Mode", "on/off", "off")
-
-            # todo: Button_
-
-        if platform == "gp2x":
-            if game == "albion" or game == "xcom1" or game == "xcom2":
-                self.AddEntry("Touchscreen", "on/off", "off")
-
-            if game == "albion":
-                self.AddEntry("Stylus_Clicks", "on/off", "off")
-                self.AddEntry("Cursor_Buttons", "dpad/abxy", "dpad")
-
-            if game == "xcom1" or game == "xcom2":
-                self.AddEntry("Scrollbuttons", "F100/F200_rh/F200_lh", "F100")
-
-            # todo: Button_
-
-        #   pandora
-        # Action_key_esc
-        # Action_mouse_left_button
-        # Action_mouse_right_button
-        # Action_virtual_keyboard
-        # Action_toggle_scaling
-        # Action_pause
-        # Action_none
-
-        #   albion pandora
-        # Action_key_alt
-        # Action_key_pagedown
-        # Action_key_pageup
-        # Action_key_tab
-
-        #   warcraft pandora
-        # Action_key_fN - N = 1-10
-        # Action_key_X - X = 32-127
-        # Action_macro_key_X_mouse_left_button - X = 32-127
-        # Action_combo_mouse_left_button_select_group
-
-        #   xcom1, xcom2 pandora
-        # Action_key_enter
-        # Action_levelup
-        # Action_leveldown
-        # Action_selectnextsoldier
-        # Action_deselectcurrentsoldier
-
-        #   gp2x
-        # Action_key_backspace
-        # Action_key_X - X = 32-127
-        # Action_key_
-        # Action_mouse_left_button
-        # Action_mouse_right_button
-        # Action_virtual_keyboard
-        # Action_volume_increase
-        # Action_volume_decrease
-        # Action_none
-
-        #   albion gp2x
-        # Action_key_alt
-        # Action_key_ctrl
-        # Action_key_esc
-        # Action_key_pagedown
-        # Action_key_pageup
-        # Action_key_tab
-        # Action_key_fN - N = 1-6
-        # Action_toggle_scaling
-        # Action_pause
-
-        #   warcraft gp2x
-        # Action_key_ctrl
-        # Action_key_enter
-        # Action_key_esc
-        # Action_key_shift
-        # Action_key_fN - N = 1-10
-        # Action_macro_key_X_mouse_left_button - X = 32-127
-        # Action_combo_mouse_left_button_select_group
-
-        #   xcom1, xcom2 gp2x
-        # Action_key_enter
-        # Action_virtual_keyboard
-        # Action_rotateup
-        # Action_rotatedown
-        # Action_rotateleft
-        # Action_rotateright
-        # Action_levelup
-        # Action_leveldown
-        # Action_selectnextsoldier
-        # Action_deselectcurrentsoldier
-        # Action_pause
+        if game == "warcraft":
+            self.AddEntry("Input_MouseHelper", "on/off", "off")
+            self.AddEntry("Input_SelectGroupTreshold", "0-20", "6")
 
     def AddEntry(self, entry_name, data_format, default_value):
         self.Entries[entry_name.lower()] = ConfigEntry(entry_name, data_format, default_value)
@@ -655,30 +539,11 @@ class ConfigGUI:
                 if num_extra_options != 0:
                     self.CreateSeparator(vbox)
 
-        if self.CfgFile.HasEntry("Display_Mode") or self.CfgFile.HasEntry("Tvout_Scaling") or self.CfgFile.HasEntry("Display") or self.CfgFile.HasEntry("Display_Fullscreen") or self.CfgFile.HasEntry("Display_MouseCursor") or self.CfgFile.HasEntry("Display_Enhanced_3D_Rendering"):
+        if self.CfgFile.HasEntry("Display_Fullscreen") or self.CfgFile.HasEntry("Display_MouseCursor") or self.CfgFile.HasEntry("Display_Enhanced_3D_Rendering"):
             vbox = self.AddPageFrameVBox(notebook, "Display", "Display")
 
             IsFirst = True
-            if self.CfgFile.HasEntry("Display_Mode"):
-                IsFirst = False
-                description = "Select initial scaling mode."
-                if game == "albion":
-                    description += "\nOriginal game resolution is 360x240 displayed with aspect ratio 4:3.\ndouble_pixels = 720x480\nfullscreen = 800x480\ncorrect_aspect_ratio = 640x480"
-                else:
-                    description += "\nOriginal game resolution is 320x200 displayed with aspect ratio 4:3.\ndouble_pixels = 640x400\nfullscreen = 800x480\ncorrect_aspect_ratio = 640x480"
-
-                self.CreateRadioSet2(vbox, "Display Mode:", "Display_Mode", None, description)
-            elif self.CfgFile.HasEntry("Tvout_Scaling"):
-                IsFirst = False
-                self.CreateRadioSet2(vbox, "Tvout Scaling:", "Tvout_Scaling", None, "If the TV-output mode of the GP2X is being used, this setting allows to select\nwhether the image will be scaled down from a width of 360 to 320 or just left at 360.\nMost users will want to leave this on.")
-            elif self.CfgFile.HasEntry("Display"):
-                IsFirst = False
-                description = "Select whether game is displayed in original resolution or stretched to fullscreen."
-                if self.CfgFile.HasEntry("Touchscreen"):
-                    description += "\nNote: Display is forced into stretched mode on F200s when using touchscreen."
-
-                self.CreateRadioSet2(vbox, "Display:", "Display", None, description)
-            elif self.CfgFile.HasEntry("Display_Fullscreen"):
+            if self.CfgFile.HasEntry("Display_Fullscreen"):
                 IsFirst = False
                 self.CreateRadioSet2(vbox, "Display Scaled Width:", "Display_ScaledWidth", ("640/720" if game == "albion" else "640") + "/960/1280/1600/1920/2240/2560/2880/3840", "Default value is " + ("720" if game == "albion" else "640") + ". Correct display aspect ratio is 4:3.")
                 self.CreateSeparator(vbox)
@@ -716,11 +581,6 @@ class ConfigGUI:
                 self.CreateSeparator(vbox)
                 self.CreateRadioSet2(vbox, "Display Extra Scaler Threads:", "Display_ExtraScalerThreads", None, "Number of extra threads used for advanced scaling.\nAuto means number of threads based on number of cpu cores.")
 
-        if self.CfgFile.HasEntry("Use_Alternative_SDL"):
-            vbox = self.AddPageFrameVBox(notebook, "SDL", "SDL")
-
-            self.CreateRadioSet(vbox, "Use Alternative SDL ?", "Use_Alternative_SDL", "Select whether to use alternative SDL library by notaz or the firmware SDL library.\nAlternative SDL library by notaz uses OMAP specific driver and\ncontains vsync code, but some input methods (nubs, mouse) might not work.")
-
         if self.CfgFile.HasEntry("Screenshot_Format"):
             vbox = self.AddPageFrameVBox(notebook, "Screenshots", "Screenshot settings")
 
@@ -735,21 +595,10 @@ class ConfigGUI:
             self.CreateRadioSet(vbox, "Use WSAD keys as WSAD keys or as arrow keys ?", "Keys_WSAD")
             self.CreateRadioSet(vbox, "Use arrow keys as arrow keys or as WSAD keys ?", "Keys_ArrowKeys")
 
-        if self.CfgFile.HasEntry("Input_Mode") or self.CfgFile.HasEntry("Input_GameController") or self.CfgFile.HasEntry("Input_MouseHelper"):
+        if self.CfgFile.HasEntry("Input_GameController") or self.CfgFile.HasEntry("Input_MouseHelper"):
             vbox = self.AddPageFrameVBox(notebook, "Input", "Input")
 
             dpad_input_mode = True
-            if self.CfgFile.HasEntry("Input_Mode"):
-                dpad_input_mode = self.CfgFile.GetEntryValue("Input_Mode").lower() == "keyboard_dpad"
-
-                description = "Select input mode."
-                if game == "albion":
-                    description += "\ntouchscreen_dpad = right-handed touchscreen input\n     (dpad = cursor keys, L+touchscreen = right mouse button)\ntouchscreen_abxy = left-handed touchscreen input\n     (abxy = cursor keys, R+touchscreen = right mouse button)\nkeyboard_dpad = input without touchscreen\n     (dpad = mouse movement / cursor keys,\n       L = switch between mouse movement and cursor keys)"
-                else:
-                    description += "\ntouchscreen_dpad = right-handed touchscreen input\n     (dpad = cursor keys, L = shift)\ntouchscreen_abxy = left-handed touchscreen input\n     (abxy = cursor keys, R = shift)\nkeyboard_dpad = input without touchscreen\n     (dpad = mouse movement, L+dpad = cursor keys)"
-
-                self.CreateRadioSet(vbox, "Input Mode:", "Input_Mode", description, True)
-
             if self.CfgFile.HasEntry("Input_GameController"):
                 self.CreateRadioSet(vbox, "Game Controller:", "Input_GameController", "Select whether to use game controller or joystick as mouse / keyboard.")
 
@@ -761,7 +610,7 @@ class ConfigGUI:
             mouse_helper = False
             if dpad_input_mode and self.CfgFile.HasEntry("Input_MouseHelper"):
                 mouse_helper = True
-                if self.CfgFile.HasEntry("Input_Mode") or self.CfgFile.HasEntry("Input_GameController"):
+                if self.CfgFile.HasEntry("Input_GameController"):
                     vbox = self.AddPageFrameVBox(notebook, "Input2", "Input2")
 
                 description = "Select whether mouse helper is enabled."
@@ -777,41 +626,6 @@ class ConfigGUI:
                 self.CreateSeparator(vbox)
 
                 self.CreateScale(vbox, "Select Group Treshold:", "Input_SelectGroupTreshold", "Select treshold (distance in pixels) in " + ("mouse" if mouse_helper else "touchscreen") + " input before\nleft mouse click changes to ctrl + left mouse click (select group).", dpad_input_mode and not mouse_helper)
-
-            if self.CfgFile.HasEntry("Input_Old_Touchscreen_Mode"):
-                self.CreateSeparator(vbox)
-
-                self.CreateRadioSet(vbox, "Old Touchscreen Mode:", "Input_Old_Touchscreen_Mode", "Select whether to use old touchscreen mode.\nOld touchscreen mode emulates left mouse click when pressing the touchscreen\ninstead of when releasing the touchscreen.", dpad_input_mode)
-
-        if self.CfgFile.HasEntry("Touchscreen"):
-            vbox = self.AddPageFrameVBox(notebook, "Input", "Input")
-
-            description = "Select whether touchscreen is used.\nHas no effect on F100 units."
-            if self.CfgFile.HasEntry("Display"):
-                description += "\nWhen Touchscreen=on, display is forced into stretched mode."
-
-            self.CreateRadioSet(vbox, "Touchscreen:", "Touchscreen", description, True)
-
-            if self.CfgFile.HasEntry("Stylus_Clicks"):
-                self.CreateSeparator(vbox)
-
-                self.CreateRadioSet(vbox, "Stylus Clicks:", "Stylus_Clicks", "When this is on, when the stylus is tapped and held, it will register that the left mouse button is pressed\nand when the button assigned to right mouse button is held while tapping and holding the stylus, it will\nregister that the right mouse button is pressed.\nWhen this is off, the stylus will only move the cursor around.", self.CfgFile.GetEntryValue("Touchscreen").lower() == "off")
-
-            if self.CfgFile.HasEntry("Cursor_Buttons"):
-                self.CreateSeparator(vbox)
-
-                self.CreateRadioSet(vbox, "Cursor Buttons:", "Cursor_Buttons", "Select which buttons are used as cursor buttons.\n", True)
-
-            if self.CfgFile.HasEntry("Scrollbuttons"):
-                self.CreateSeparator(vbox)
-
-                self.CreateRadioSet(vbox, "Scrollbuttons:", "Scrollbuttons", "Select method to scroll battlescape (and presumably also rotate geoscape).\nF100 uses L+Stick/DPAD (it's also for F200 users wishing to not use touchscreen to play game)\nF200_RH is for right-handed touchscreen users: DPAD\nF200_LH is for left-handed touchscreen users: A/B/X/Y as pseudo-dpad", True)
-
-        if platform == "pandora" or platform == "gp2x":
-            vbox = self.AddPageFrameVBox(notebook, "Buttons", "Buttons")
-            self.CreateEntryLabel(vbox, "Button mappings:", 5)
-            self.CreateSeparator(vbox)
-            self.CreateEntryLabel(vbox, "Button mappings are currently not editable using this configuration tool.\nThey can be changed by editing the configuration file directly.", 20)
 
         # Create a bunch of buttons
         hbox = gtk.HBox(homogeneous=True, spacing=0)
@@ -1375,5 +1189,5 @@ if len(sys.argv) >= 4:
 else:
     print("Not enough parameters: game platform file_path")
     print("\tgame = albion / xcom1 / xcom2 / warcraft")
-    print("\tplatform = pc / pyra / pandora / gp2x")
+    print("\tplatform = pc / pyra")
 

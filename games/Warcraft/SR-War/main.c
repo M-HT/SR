@@ -32,23 +32,6 @@
 #include <unistd.h>
 #endif
 #include <time.h>
-#ifdef USE_SDL2
-    #include <SDL2/SDL.h>
-    #include <SDL2/SDL_thread.h>
-    #include <SDL2/SDL_version.h>
-    #include <SDL2/SDL_mixer.h>
-#else
-    #include <SDL/SDL.h>
-    #include <SDL/SDL_thread.h>
-    #include <SDL/SDL_version.h>
-    #include <SDL/SDL_mixer.h>
-#endif
-
-#if (SDL_MAJOR_VERSION == 1) && SDL_VERSION_ATLEAST(1, 2, 50)
-#warning Compilation using sdl12-compat detected.
-#warning The compiled program might not work properly.
-#warning Compilation using SDL2 is recommended.
-#endif
 
 #include "Game_defs.h"
 
@@ -73,15 +56,7 @@
 #include "audio.h"
 #include "input.h"
 
-#if defined(ALLOW_OPENGL) && !SDL_VERSION_ATLEAST(2,0,0)
-static int gl_FBO = 0;
-static PFNGLGENFRAMEBUFFERSEXTPROC gl_glGenFramebuffersEXT;
-static PFNGLDELETEFRAMEBUFFERSEXTPROC gl_glDeleteFramebuffersEXT;
-static PFNGLFRAMEBUFFERTEXTURE2DEXTPROC gl_glFramebufferTexture2DEXT;
-static PFNGLBINDFRAMEBUFFEREXTPROC gl_glBindFramebufferEXT;
-#endif
 
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
 static void Display_RecalculateResolution(int w, int h)
 {
     if (Display_FSType == 1)
@@ -117,13 +92,11 @@ static void Display_RecalculateResolution(int w, int h)
     Game_VideoAspectXR = ((Picture_Width-1) << 16) / (320-1);
     Game_VideoAspectYR = ((Picture_Height-1) << 16) / (200-1);
 }
-#endif
 
 static void Game_Display_Create(void)
 {
     SDL_LockMutex(Game_ScreenMutex);
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     if (Display_Fullscreen && Display_FSType)
     {
         Game_Window = SDL_CreateWindow("SDL Warcraft", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_HIDDEN | (Display_MouseLocked ? SDL_WINDOW_INPUT_GRABBED : 0));
@@ -377,312 +350,6 @@ static void Game_Display_Create(void)
 
         Game_DisplayActive = 1;
     }
-#else
-    {
-        Uint32 flags;
-
-    #ifdef ALLOW_OPENGL
-        if (Game_UseOpenGL)
-        {
-            if (Display_Bitsperpixel == 32)
-            {
-                SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 8 );
-                SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 8 );
-                SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 8 );
-            }
-            else if (Display_Bitsperpixel == 16)
-            {
-                SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 5 );
-                SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 6 );
-                SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 5 );
-            }
-            SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-
-            flags = SDL_OPENGL;
-            if (Display_Fullscreen)
-            {
-                flags |= SDL_FULLSCREEN | SDL_NOFRAME;
-            }
-        }
-        else
-    #endif
-        if (Display_Fullscreen)
-        {
-            flags = SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_FULLSCREEN | SDL_NOFRAME;
-        }
-        else
-        {
-            flags = SDL_SWSURFACE;
-        }
-
-    #ifdef ALLOW_OPENGL
-        if (Display_Fullscreen && Display_FSType)
-        {
-            Game_Screen = SDL_SetVideoMode (0, 0, 0, flags);
-
-            if (Game_Screen != NULL)
-            {
-                Display_RecalculateResolution(Game_Screen->w, Game_Screen->h);
-            }
-        }
-        else
-    #endif
-        {
-            Game_Screen = SDL_SetVideoMode (Display_Width, Display_Height, Display_Bitsperpixel, flags);
-        }
-    }
-
-#ifdef ALLOW_OPENGL
-    if ((Game_Screen != NULL) && Game_UseOpenGL)
-    do {
-        int index;
-        GLint scaling_quality, max_texture_size;
-
-        // Scaler_ScaleTexture and Scaler_ScaleTextureData are mutually exclusive
-        if (Scaler_ScaleTextureData)
-        {
-            if (ScalerPlugin_Startup())
-            {
-                SDL_WM_GrabInput(SDL_GRAB_OFF);
-                Game_Screen = NULL;
-
-                break;
-            }
-        }
-
-        // flush GL errors
-        while(glGetError() != GL_NO_ERROR);
-
-        glViewport(Picture_Position_UL_X, Picture_Position_UL_Y, Picture_Width, Picture_Height);
-
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-
-        scaling_quality = (Game_ScalingQuality)?GL_LINEAR:GL_NEAREST;
-
-        if (Scaler_ScaleTexture)
-        {
-            int horizontal_factor, vertical_factor;
-
-            if (!gl_FBO)
-            {
-                gl_glGenFramebuffersEXT = (PFNGLGENFRAMEBUFFERSEXTPROC) SDL_GL_GetProcAddress("glGenFramebuffersEXT");
-                gl_glDeleteFramebuffersEXT = (PFNGLDELETEFRAMEBUFFERSEXTPROC) SDL_GL_GetProcAddress("glDeleteFramebuffersEXT");
-                gl_glFramebufferTexture2DEXT = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC) SDL_GL_GetProcAddress("glFramebufferTexture2DEXT");
-                gl_glBindFramebufferEXT = (PFNGLBINDFRAMEBUFFEREXTPROC) SDL_GL_GetProcAddress("glBindFramebufferEXT");
-
-                if ((gl_glGenFramebuffersEXT != NULL) &&
-                    (gl_glDeleteFramebuffersEXT != NULL) &&
-                    (gl_glFramebufferTexture2DEXT != NULL) &&
-                    (gl_glBindFramebufferEXT != NULL)
-                   )
-                {
-                    gl_FBO = 1;
-                }
-                else
-                {
-                    gl_FBO = -1;
-                }
-            }
-
-            if (gl_FBO <= 0)
-            {
-                SDL_WM_GrabInput(SDL_GRAB_OFF);
-                Game_Screen = NULL;
-
-                break;
-            }
-
-            if (!Scaler_ScaleFactor)
-            {
-                horizontal_factor = vertical_factor = 2;
-
-                while ((horizontal_factor + 1) * Render_Width <= Picture_Width) horizontal_factor++;
-                while ((vertical_factor + 1) * Render_Height <= Picture_Height) vertical_factor++;
-
-                if (horizontal_factor > GAME_MAX_SCALE_FACTOR) horizontal_factor = GAME_MAX_SCALE_FACTOR;
-                if (vertical_factor > GAME_MAX_SCALE_FACTOR) vertical_factor = GAME_MAX_SCALE_FACTOR;
-
-                max_texture_size = 0;
-                glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
-                if (max_texture_size > (int)Picture_Width)
-                {
-                    while (horizontal_factor * (int)Render_Width > max_texture_size) horizontal_factor--;
-                }
-                if (max_texture_size > (int)Picture_Height)
-                {
-                    while (vertical_factor * (int)Render_Height > max_texture_size) vertical_factor--;
-                }
-
-                Scaler_ScaleFactor = 1;
-            }
-            else
-            {
-                horizontal_factor = vertical_factor = Scaler_ScaleFactor;
-            }
-
-            Scaler_ScaledTextureWidth = horizontal_factor * Render_Width;
-            Scaler_ScaledTextureHeight = vertical_factor * Render_Height;
-
-            glGenTextures(3, &(Game_GLScaledTexture[0]));
-
-            for (index = 0; index < 3; index++)
-            {
-                glBindTexture(GL_TEXTURE_2D, Game_GLScaledTexture[index]);
-
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, scaling_quality);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, scaling_quality);
-
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, Scaler_ScaledTextureWidth, Scaler_ScaledTextureHeight, 0, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, NULL);
-            }
-
-            gl_glGenFramebuffersEXT(3, &(Game_GLFramebuffer[0]));
-
-            for (index = 0; index < 3; index++)
-            {
-                gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, Game_GLFramebuffer[index]);
-
-                gl_glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, Game_GLScaledTexture[index], 0);
-            }
-
-            scaling_quality = GL_NEAREST;
-        }
-
-        if (Scaler_ScaleTextureData)
-        {
-            if (!Scaler_ScaleFactor)
-            {
-                int max_factor;
-
-                Scaler_ScaleFactor = 2;
-
-                while (((Scaler_ScaleFactor + 1) * Render_Width <= Picture_Width) ||
-                       ((Scaler_ScaleFactor + 1) * Render_Height <= Picture_Height)
-                      ) Scaler_ScaleFactor++;
-
-                if (Scaler_ScaleFactor > GAME_MAX_SCALE_FACTOR) Scaler_ScaleFactor = GAME_MAX_SCALE_FACTOR;
-
-                max_factor = ScalerPlugin_get_maximum_scale_factor();
-                if (Scaler_ScaleFactor > max_factor) Scaler_ScaleFactor = max_factor;
-
-                max_texture_size = 0;
-                glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
-                if (max_texture_size > (int)Picture_Width)
-                {
-                    while (Scaler_ScaleFactor * (int)Render_Width > max_texture_size) Scaler_ScaleFactor--;
-                }
-                if (max_texture_size > (int)Picture_Height)
-                {
-                    while (Scaler_ScaleFactor * (int)Render_Height > max_texture_size) Scaler_ScaleFactor--;
-                }
-            }
-        }
-        else
-        {
-            Scaler_ScaleFactor = 1;
-        }
-
-        if (Scaler_ScaleTextureData)
-        {
-            Game_ScaledTextureData = malloc(Scaler_ScaleFactor * Render_Width * Scaler_ScaleFactor * Render_Height * Display_Bitsperpixel / 8);
-        }
-
-        glGenTextures(3, &(Game_GLTexture[0]));
-
-        for (index = 0; index < 3; index++)
-        {
-            glBindTexture(GL_TEXTURE_2D, Game_GLTexture[index]);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, scaling_quality);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, scaling_quality);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, Scaler_ScaleFactor * Render_Width, Scaler_ScaleFactor * Render_Height, 0, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Scaler_ScaleTextureData ? Game_ScaledTextureData : Game_TextureData);
-        }
-
-        if ((glGetError() != GL_NO_ERROR) || (Scaler_ScaleTextureData && (Game_ScaledTextureData == NULL)))
-        {
-            if (Game_ScaledTextureData != NULL)
-            {
-                free(Game_ScaledTextureData);
-                Game_ScaledTextureData = NULL;
-            }
-
-            glBindTexture(GL_TEXTURE_2D, 0);
-
-            glDeleteTextures(3, &(Game_GLTexture[0]));
-            Game_GLTexture[0] = 0;
-
-            if (Game_GLFramebuffer[0] != 0)
-            {
-                gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-                gl_glDeleteFramebuffersEXT(3, &(Game_GLFramebuffer[0]));
-                Game_GLFramebuffer[0] = 0;
-            }
-
-            if (Game_GLScaledTexture[0] != 0)
-            {
-                glDeleteTextures(3, &(Game_GLScaledTexture[0]));
-                Game_GLScaledTexture[0] = 0;
-            }
-
-            // flush GL errors
-            while(glGetError() != GL_NO_ERROR);
-
-            SDL_WM_GrabInput(SDL_GRAB_OFF);
-            Game_Screen = NULL;
-        }
-    } while (0);
-#endif
-
-    if (Game_Screen != NULL)
-    {
-        int mousex, mousey;
-
-        SDL_ShowCursor(SDL_DISABLE);
-        SDL_WM_SetCaption ("SDL Warcraft", NULL);
-
-        Reposition_Display();
-
-        if (Display_MouseLocked)
-        {
-            Game_OldCursor = SDL_GetCursor();
-            SDL_SetCursor(Game_NoCursor);
-
-            SDL_WM_GrabInput(SDL_GRAB_ON);
-
-            SDL_WarpMouse(0, 0);
-        }
-        else
-        {
-            if (Display_Fullscreen || (Game_MouseCursor == 2))
-            {
-                Game_OldCursor = SDL_GetCursor();
-                SDL_SetCursor(Game_NoCursor);
-            }
-            else if (Game_MouseCursor == 1)
-            {
-                Game_OldCursor = SDL_GetCursor();
-                SDL_SetCursor(Game_MinCursor);
-            }
-
-            SDL_GetMouseState(&mousex, &mousey);
-            SDL_WarpMouse(mousex, mousey);
-
-            SDL_ShowCursor(SDL_ENABLE);
-        }
-
-        Game_DisplayActive = 1;
-    }
-#endif
 
     SDL_UnlockMutex(Game_ScreenMutex);
 
@@ -704,33 +371,12 @@ static void Game_Display_Destroy(int post)
     VirtualKeyboard_Delete();
 
     // clear screen
-#if SDL_VERSION_ATLEAST(2,0,0)
     SDL_SetRenderDrawColor(Game_Renderer, 0, 0, 0, 255);
     SDL_RenderClear(Game_Renderer);
     SDL_RenderPresent(Game_Renderer);
-#else
-#ifdef ALLOW_OPENGL
-    if (Game_UseOpenGL)
-    {
-        // do nothing
-    }
-    else
-#endif
-    {
-        SDL_Rect rect;
-
-        rect.x = 0;
-        rect.y = 0;
-        rect.w = Game_Screen->w;
-        rect.h = Game_Screen->h;
-        SDL_FillRect(Game_Screen, &rect, 0);
-        SDL_Flip(Game_Screen);
-    }
-#endif
 
     SDL_ShowCursor(SDL_DISABLE);
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     SDL_HideWindow(Game_Window);
 
     SDL_SetRelativeMouseMode(SDL_FALSE);
@@ -762,40 +408,6 @@ static void Game_Display_Destroy(int post)
     Game_Renderer = NULL;
     SDL_DestroyWindow(Game_Window);
     Game_Window = NULL;
-#else
-    SDL_WM_GrabInput(SDL_GRAB_OFF);
-    //SDL_FreeSurface(Game_Screen);
-    Game_Screen = NULL;
-
-#ifdef ALLOW_OPENGL
-    if (Game_UseOpenGL)
-    {
-        if (Game_ScaledTextureData != NULL)
-        {
-            free(Game_ScaledTextureData);
-            Game_ScaledTextureData = NULL;
-        }
-
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        glDeleteTextures(3, &(Game_GLTexture[0]));
-        Game_GLTexture[0] = 0;
-
-        if (Game_GLFramebuffer[0] != 0)
-        {
-            gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-            gl_glDeleteFramebuffersEXT(3, &(Game_GLFramebuffer[0]));
-            Game_GLFramebuffer[0] = 0;
-        }
-
-        if (Game_GLScaledTexture[0] != 0)
-        {
-            glDeleteTextures(3, &(Game_GLScaledTexture[0]));
-            Game_GLScaledTexture[0] = 0;
-        }
-    }
-#endif
-#endif
 
     SDL_UnlockMutex(Game_ScreenMutex);
 
@@ -833,11 +445,7 @@ void Game_CleanState(int imm)
     memset(&Game_MouseTable, 0, sizeof(Game_MouseTable));
     memset(&Game_Palette_Or, 0, sizeof(Game_Palette_Or));
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     if (Game_Window != NULL)
-#else
-    if (Game_Screen != NULL)
-#endif
     {
         if (imm)
         {
@@ -890,13 +498,11 @@ static void Game_Cleanup(void)
 
     Game_CleanState(1);
 
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     if (Game_TextureData != NULL)
     {
         free(Game_TextureData);
         Game_TextureData = NULL;
     }
-#endif
 
     if (Game_MidiDevice != NULL)
     {
@@ -1043,10 +649,6 @@ static int Game_Initialize(void)
         Game_stdin = NULL;
     }
 
-    Display_ChangeMode = 0;
-
-    Game_VolumeDelta = 0;
-
     Game_SoundFontPath = NULL;
     Game_MidiDevice = NULL;
     Game_OPL3Emulator = 0;
@@ -1073,28 +675,16 @@ static int Game_Initialize(void)
     Game_ScaleFactor = 0;
     Game_ExtraScalerThreads = -1;
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     Game_Window = NULL;
     Game_Renderer = NULL;
     Game_Texture[0] = NULL;
     Game_ScaledTexture[0] = NULL;
-#else
-    Game_Screen = NULL;
-#if defined(ALLOW_OPENGL)
-    Game_UseOpenGL = 0;
-    Game_GLTexture[0] = 0;
-    Game_GLFramebuffer[0] = 0;
-    Game_GLScaledTexture[0] = 0;
-#endif
-#endif
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     Game_TextureData = NULL;
     Game_ScaledTextureData = NULL;
     Game_CurrentTexture = 0;
     Scaler_ScaleFactor = 0;
     Scaler_ScaleTextureData = 0;
     Scaler_ScaleTexture = 0;
-#endif
 
     Init_Display();
     Init_Audio();
@@ -1107,28 +697,12 @@ static int Game_Initialize(void)
         return -1;
     }
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     {
         SDL_version linked_version;
 
         SDL_GetVersion(&linked_version);
         Game_SDLVersionNum = SDL_VERSIONNUM(linked_version.major, linked_version.minor, linked_version.patch);
     }
-#else
-    {
-        const SDL_version *linked_version;
-
-        linked_version = SDL_Linked_Version();
-        Game_SDLVersionNum = SDL_VERSIONNUM(linked_version->major, linked_version->minor, linked_version->patch);
-    }
-#endif
-
-#if (SDL_MAJOR_VERSION == 1)
-    if (Game_SDLVersionNum >= SDL_VERSIONNUM(1,2,50))
-    {
-        fprintf(stderr, "Warning: sdl12-compat detected.\nWarning: The program might not work properly.\nWarning: Using SDL2 version is recommended.\n");
-    }
-#endif
 
     Game_NoCursor = SDL_CreateCursor(&Game_NoCursorData, &Game_NoCursorData, 8, 1, 0, 0);
 
@@ -1245,7 +819,7 @@ static void Game_Initialize2(void)
 
         if ( SDL_InitSubSystem(SDL_INIT_AUDIO) == 0 )
         {
-#if SDL_VERSION_ATLEAST(2,0,0) && (SDL_VERSIONNUM(SDL_MIXER_MAJOR_VERSION, SDL_MIXER_MINOR_VERSION, SDL_MIXER_PATCHLEVEL) >= SDL_VERSIONNUM(2, 0, 2))
+#if SDL_VERSIONNUM(SDL_MIXER_MAJOR_VERSION, SDL_MIXER_MINOR_VERSION, SDL_MIXER_PATCHLEVEL) >= SDL_VERSIONNUM(2, 0, 2)
             const SDL_version *link_version = Mix_Linked_Version();
             if (SDL_VERSIONNUM(link_version->major, link_version->minor, link_version->patch) >= SDL_VERSIONNUM(2,0,2))
             {
@@ -1369,7 +943,6 @@ static void Game_Initialize2(void)
     Init_Audio2();
     Init_Input2();
 
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     if (Game_AdvancedScaling)
     {
         Scaler_ScaleFactor = Game_ScaleFactor;
@@ -1383,9 +956,6 @@ static void Game_Initialize2(void)
         Scaler_ScaleTexture = 0;
         Scaler_ScaleFactor = 1;
     }
-#else
-    Game_AdvancedScaling = 0;
-#endif
 
     Game_VideoAspectX = ((320-1) << 16) / (Picture_Width-1);
     Game_VideoAspectY = ((200-1) << 16) / (Picture_Height-1);
@@ -1393,14 +963,7 @@ static void Game_Initialize2(void)
     Game_VideoAspectXR = ((Picture_Width-1) << 16) / (320-1);
     Game_VideoAspectYR = ((Picture_Height-1) << 16) / (200-1);
 
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
-#if !SDL_VERSION_ATLEAST(2,0,0)
-    if (Game_UseOpenGL)
-#endif
-    {
-        Game_TextureData = malloc(Render_Width * Render_Height * Display_Bitsperpixel / 8);
-    }
-#endif
+    Game_TextureData = malloc(Render_Width * Render_Height * Display_Bitsperpixel / 8);
 }
 
 static void Game_Event_Loop(void)
@@ -1413,29 +976,17 @@ static void Game_Event_Loop(void)
     uint32_t AppInputFocus;
     uint32_t AppActive;
     int FlipActive, CreateAfterFlip, DestroyAfterFlip, NumEvents, PumpEvents;
-#if SDL_VERSION_ATLEAST(2,0,0)
     int ClearRenderer, MouseOldX, MouseOldY;
-#endif
 
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     TimerThread = SDL_CreateThread(Game_TimerThread, "timer", NULL);
-#else
-    TimerThread = SDL_CreateThread(Game_TimerThread, NULL);
-#endif
-
     if (TimerThread == NULL)
     {
         fprintf(stderr, "Error: Unable to start timer thread\n");
         return;
     }
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     FlipThread = SDL_CreateThread(Game_FlipThread, "flip", NULL);
-#else
-    FlipThread = SDL_CreateThread(Game_FlipThread, NULL);
-#endif
-
     if (FlipThread == NULL)
     {
         fprintf(stderr, "Error: Unable to start flip thread\n");
@@ -1448,12 +999,7 @@ static void Game_Event_Loop(void)
         return;
     }
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     MainThread = SDL_CreateThread(Game_MainThread, "main", NULL);
-#else
-    MainThread = SDL_CreateThread(Game_MainThread, NULL);
-#endif
-
     if (MainThread == NULL)
     {
         fprintf(stderr, "Error: Unable to start main thread\n");
@@ -1469,24 +1015,12 @@ static void Game_Event_Loop(void)
         return;
     }
 
-#if SDL_VERSION_ATLEAST(2,0,0)
     AppMouseFocus = 1;
     AppInputFocus = 1;
     AppActive = 1;
     ClearRenderer = 0;
     MouseOldX = 0;
     MouseOldY = 0;
-#else
-    {
-        uint32_t AppState;
-
-        AppState = SDL_GetAppState();
-
-        AppMouseFocus = AppState & SDL_APPMOUSEFOCUS;
-        AppInputFocus = AppState & SDL_APPINPUTFOCUS;
-        AppActive = AppState & SDL_APPACTIVE;
-    }
-#endif
 
     FlipActive = 0;
     CreateAfterFlip = 0;
@@ -1496,11 +1030,7 @@ static void Game_Event_Loop(void)
 
     while (!Thread_Exited)
     {
-#if SDL_VERSION_ATLEAST(2,0,0)
         NumEvents = SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
-#else
-        NumEvents = SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_ALLEVENTS);
-#endif
         if (NumEvents <= 0) // error or no events
         {
             if (PumpEvents)
@@ -1520,7 +1050,6 @@ static void Game_Event_Loop(void)
 
         switch(event.type)
         {
-        #if SDL_VERSION_ATLEAST(2,0,0)
             case SDL_WINDOWEVENT:
                 switch (event.window.event)
                 {
@@ -1564,35 +1093,10 @@ static void Game_Event_Loop(void)
 
                 break;
                 // case SDL_WINDOWEVENT:
-        #else
-            case SDL_ACTIVEEVENT:
-                if (event.active.state & SDL_APPMOUSEFOCUS)
-                {
-                    AppMouseFocus = event.active.gain;
-                }
-                if (event.active.state & SDL_APPINPUTFOCUS)
-                {
-                    AppInputFocus = event.active.gain;
-                }
-                if (event.active.state & SDL_APPACTIVE)
-                {
-                    AppActive = event.active.gain;
-                }
-
-                break;
-                // case SDL_ACTIVEEVENT:
-        #endif
 
             case SDL_KEYDOWN:
             case SDL_KEYUP:
-                if (
-                #if SDL_VERSION_ATLEAST(2,0,0)
-                    !event.key.repeat &&
-                    Game_Window != NULL
-                #else
-                    Game_Screen != NULL
-                #endif
-                    && AppActive && AppInputFocus)
+                if (!event.key.repeat && Game_Window != NULL && AppActive && AppInputFocus)
                 {
                     if (VK_Visible)
                     {
@@ -1622,29 +1126,19 @@ static void Game_Event_Loop(void)
                 break;
                 // case SDL_KEYDOWN, SDL_KEYUP:
             case SDL_MOUSEMOTION:
-                #if SDL_VERSION_ATLEAST(2,0,0)
-                    if ((event.motion.xrel == 0) && (event.motion.yrel == 0))
-                    {
-                        // warping the mouse doesn't fill relative motion attributes in SDL2
-                        event.motion.xrel = event.motion.x - MouseOldX;
-                        event.motion.yrel = event.motion.y - MouseOldY;
-                    }
-                    MouseOldX = event.motion.x;
-                    MouseOldY = event.motion.y;
-                #endif
+                if ((event.motion.xrel == 0) && (event.motion.yrel == 0))
+                {
+                    // warping the mouse doesn't fill relative motion attributes in SDL2
+                    event.motion.xrel = event.motion.x - MouseOldX;
+                    event.motion.yrel = event.motion.y - MouseOldY;
+                }
+                MouseOldX = event.motion.x;
+                MouseOldY = event.motion.y;
                 // fallthrough
             case SDL_MOUSEBUTTONUP:
             case SDL_MOUSEBUTTONDOWN:
-        #if SDL_VERSION_ATLEAST(2,0,0)
             case SDL_MOUSEWHEEL:
-        #endif
-                if (
-                #if SDL_VERSION_ATLEAST(2,0,0)
-                    Game_Window != NULL
-                #else
-                    Game_Screen != NULL
-                #endif
-                    && AppActive && AppInputFocus && AppMouseFocus)
+                if (Game_Window != NULL && AppActive && AppInputFocus && AppMouseFocus)
                 {
                     if (VK_Visible)
                     {
@@ -1694,10 +1188,6 @@ static void Game_Event_Loop(void)
                         else
                         {
                             Game_Display_Create();
-                        #if !SDL_VERSION_ATLEAST(2,0,0)
-                            // workaround for sdl12-compat
-                            AppActive = SDL_GetAppState() & SDL_APPACTIVE;
-                        #endif
                         }
 
                         break;
@@ -1718,17 +1208,10 @@ static void Game_Event_Loop(void)
 
                     case EC_DISPLAY_FLIP_START:
                         if (!FlipActive &&
-                        #if SDL_VERSION_ATLEAST(2,0,0)
                             Game_Window != NULL
-                        #else
-                            Game_Screen != NULL
-                        #endif
                             )
                         {
                             FlipActive = 1;
-
-                            /* ??? */
-/*								SDL_LockSurface(Game_Screen);*/
 
                             SDL_SemPost(Game_FlipSem);
                         }
@@ -1739,7 +1222,6 @@ static void Game_Event_Loop(void)
                     case EC_DISPLAY_FLIP_FINISH:
                         if (FlipActive)
                         {
-                        #if SDL_VERSION_ATLEAST(2,0,0)
                             if (Game_DisplayActive)
                             {
                                 if (Scaler_ScaleTextureData)
@@ -1780,85 +1262,6 @@ static void Game_Event_Loop(void)
                                     Game_CurrentTexture = 0;
                                 }
                             }
-                        #elif defined(ALLOW_OPENGL)
-                            if (Game_UseOpenGL && Game_DisplayActive)
-                            {
-                                static const GLfloat QuadVertices[2*4] = {
-                                    -1.0f,  1.0f,
-                                     1.0f,  1.0f,
-                                     1.0f, -1.0f,
-                                    -1.0f, -1.0f,
-                                };
-                                static const GLfloat QuadTexCoords[2*4] = {
-                                    0.0f, 0.0f,
-                                    1.0f, 0.0f,
-                                    1.0f, 1.0f,
-                                    0.0f, 1.0f
-                                };
-                                static const GLfloat QuadScaleTexCoords[2*4] = {
-                                    0.0f, 1.0f,
-                                    1.0f, 1.0f,
-                                    1.0f, 0.0f,
-                                    0.0f, 0.0f,
-                                };
-
-                                glBindTexture(GL_TEXTURE_2D, Game_GLTexture[Game_CurrentTexture]);
-
-                                if (Scaler_ScaleTextureData)
-                                {
-                                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Scaler_ScaleFactor * Render_Width, Scaler_ScaleFactor * Render_Height, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Game_ScaledTextureData);
-                                }
-                                else
-                                {
-                                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Render_Width, Render_Height, GL_BGRA, (Display_Bitsperpixel == 32)?GL_UNSIGNED_INT_8_8_8_8_REV:GL_UNSIGNED_SHORT_5_6_5_REV, Game_TextureData);
-                                }
-
-                                glEnable(GL_TEXTURE_2D);
-
-                                glEnableClientState(GL_VERTEX_ARRAY);
-                                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-                                if (Scaler_ScaleTexture)
-                                {
-                                    gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, Game_GLFramebuffer[Game_CurrentTexture]);
-
-                                    glViewport(0, 0, Scaler_ScaledTextureWidth, Scaler_ScaledTextureHeight);
-
-                                    glVertexPointer(2, GL_FLOAT, 0, &(QuadVertices[0]));
-                                    glTexCoordPointer(2, GL_FLOAT, 0, &(QuadScaleTexCoords[0]));
-                                    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-                                    gl_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-
-                                    glViewport(Picture_Position_UL_X, Picture_Position_UL_Y, Picture_Width, Picture_Height);
-
-                                    glBindTexture(GL_TEXTURE_2D, Game_GLScaledTexture[Game_CurrentTexture]);
-                                }
-
-                                glVertexPointer(2, GL_FLOAT, 0, &(QuadVertices[0]));
-                                glTexCoordPointer(2, GL_FLOAT, 0, &(QuadTexCoords[0]));
-                                glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-                                VirtualKeyboard_Draw();
-
-                                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                                glDisableClientState(GL_VERTEX_ARRAY);
-
-                                glDisable(GL_TEXTURE_2D);
-
-                                SDL_GL_SwapBuffers();
-
-                                Game_CurrentTexture++;
-                                if (Game_CurrentTexture > 2)
-                                {
-                                    Game_CurrentTexture = 0;
-                                }
-                            }
-                        #endif
-
-                            /* ??? */
-/*								SDL_UnlockSurface(Game_Screen);
-                            SDL_Flip(Game_Screen);*/
 
                             FlipActive = 0;
 
@@ -1897,21 +1300,11 @@ static void Game_Event_Loop(void)
                             int mousex, mousey;
 
                             SDL_GetMouseState(&mousex, &mousey);
-                        #if SDL_VERSION_ATLEAST(2,0,0)
                             SDL_WarpMouseInWindow(Game_Window, mousex + (int)(intptr_t) event.user.data1, mousey + (int)(intptr_t) event.user.data2);
-                        #else
-                            SDL_WarpMouse(mousex + (int)(intptr_t) event.user.data1, mousey + (int)(intptr_t) event.user.data2);
-                        #endif
                         }
                         break;
                     case EC_MOUSE_SET:
-                        {
-                        #if SDL_VERSION_ATLEAST(2,0,0)
-                            SDL_WarpMouseInWindow(Game_Window, (int)(intptr_t) event.user.data1, (int)(intptr_t) event.user.data2);
-                        #else
-                            SDL_WarpMouse((int)(intptr_t) event.user.data1, (int)(intptr_t) event.user.data2);
-                        #endif
-                        }
+                        SDL_WarpMouseInWindow(Game_Window, (int)(intptr_t) event.user.data1, (int)(intptr_t) event.user.data2);
                         break;
                     case EC_DELAY:
                         SDL_Delay((Uint32)(uintptr_t) event.user.data1);

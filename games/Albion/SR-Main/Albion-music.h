@@ -28,11 +28,7 @@
 #include "Game_defs.h"
 
 #define USE_RWOPS
-#ifdef USE_SDL2
-    #include <SDL2/SDL_mixer.h>
-#else
-    #include <SDL/SDL_mixer.h>
-#endif
+#include <SDL_mixer.h>
 #undef USE_RWOPS
 
 typedef struct _AIL_sequence

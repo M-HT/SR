@@ -27,14 +27,6 @@
 
 #include <errno.h>
 #include <stdio.h>
-#ifdef USE_SDL2
-    #include <SDL2/SDL.h>
-#else
-    #include <SDL/SDL.h>
-    #ifdef ALLOW_OPENGL
-        #include <SDL/SDL_opengl.h>
-    #endif
-#endif
 #include "Game_defs.h"
 
 #if defined(DEFINE_VARIABLES)
@@ -68,7 +60,6 @@ EXTERNAL_CVAR_BGN PTR32(uint8_t) Game_ScreenWindow;	/* video bank (64KiB) */ EXT
 EXTERNAL_VARIABLE uint32_t Game_InterruptTable[256];	/* interrupt table */
 EXTERNAL_VARIABLE void *Game_MouseTable[8];			/* mouse functions table */
 EXTERNAL_VARIABLE pixel_format_orig Game_Palette_Or[256];	/* original palette (rgba) */
-EXTERNAL_VARIABLE uint32_t Game_ESP_Original_Value;	/* original value of ESP */
 EXTERNAL_VARIABLE uint32_t Game_NextMemory;			/* next memory place to allocate in memory table */
 EXTERNAL_VARIABLE SDL_Cursor *Game_OldCursor;		/* original cursor */
 EXTERNAL_VARIABLE SDL_Cursor *Game_NoCursor;		/* invisible cursor */
@@ -97,7 +88,6 @@ EXTERNAL_VARIABLE uint32_t Display_Bitsperpixel;	/* display bits per pixel */
 EXTERNAL_VARIABLE uint32_t Display_Fullscreen;		/* display - fulscreen ? */
 EXTERNAL_VARIABLE uint32_t Display_FSType;			/* fulscreen type */
 EXTERNAL_VARIABLE uint32_t Display_MouseLocked;		/* is mouse locked in the window ? */
-EXTERNAL_VARIABLE volatile int32_t Display_ChangeMode;		/* flag to change display mode: 1 = forward, -1 = backward */
 EXTERNAL_VARIABLE uint32_t Render_Width;			/* render width */
 EXTERNAL_VARIABLE uint32_t Render_Height;			/* render height */
 EXTERNAL_VARIABLE uint32_t Picture_Width;			/* picture width */
@@ -114,21 +104,10 @@ EXTERNAL_VARIABLE uint32_t Game_AdvancedScaler;		/* advanced scaler: 0 = none, 1
 EXTERNAL_VARIABLE int Game_ScaleFactor;				/* factor for advanced scaler: 0 = max */
 EXTERNAL_VARIABLE int Game_ExtraScalerThreads;		/* number of extra threads for advanced scaler: -1 = auto */
 
-#if SDL_VERSION_ATLEAST(2,0,0)
 EXTERNAL_VARIABLE SDL_Window *Game_Window;
 EXTERNAL_VARIABLE SDL_Renderer *Game_Renderer;
 EXTERNAL_VARIABLE SDL_Texture *Game_Texture[3];
 EXTERNAL_VARIABLE SDL_Texture *Game_ScaledTexture[3];
-#else
-EXTERNAL_VARIABLE SDL_Surface *Game_Screen;
-#ifdef ALLOW_OPENGL
-EXTERNAL_VARIABLE uint32_t Game_UseOpenGL;			/* use OpenGL for drawing ? */
-EXTERNAL_VARIABLE GLuint Game_GLTexture[3];
-EXTERNAL_VARIABLE GLuint Game_GLFramebuffer[3];
-EXTERNAL_VARIABLE GLuint Game_GLScaledTexture[3];
-#endif
-#endif
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
 EXTERNAL_VARIABLE void *Game_TextureData;
 EXTERNAL_VARIABLE void *Game_ScaledTextureData;
 EXTERNAL_VARIABLE int Game_CurrentTexture;
@@ -137,7 +116,6 @@ EXTERNAL_VARIABLE int Scaler_ScaleTextureData;
 EXTERNAL_VARIABLE int Scaler_ScaleTexture;
 EXTERNAL_VARIABLE int Scaler_ScaledTextureWidth;
 EXTERNAL_VARIABLE int Scaler_ScaledTextureHeight;
-#endif
 
 EXTERNAL_VARIABLE int Game_Delay_Game;				/* time in ms to delay the game in timer tick */
 EXTERNAL_VARIABLE int Game_Main_Loop_VSync_Ticks;	/* maximum number of vsync ticks to wait in game main loop */
@@ -146,7 +124,6 @@ EXTERNAL_CVAR_BGN int32_t Game_Skip_Scrolling_SlowDown;	/* skip scrolling slowdo
 // global audio variables
 EXTERNAL_VARIABLE uint32_t Game_Sound;				/* is sound enabled ? */
 EXTERNAL_VARIABLE uint32_t Game_Music;				/* is music enabled ? */
-EXTERNAL_VARIABLE uint32_t Game_AudioMasterVolume;	/* audio master volume */
 EXTERNAL_VARIABLE unsigned int Game_AudioFormat;	/* audio format */
 EXTERNAL_VARIABLE unsigned int Game_AudioChannels;	/* number of audio channels */
 EXTERNAL_VARIABLE int Game_AudioRate;				/* audio rate (Hz) */
@@ -163,10 +140,6 @@ EXTERNAL_VARIABLE int16_t Game_AudioSemaphore;
 EXTERNAL_VARIABLE Game_sample Game_samples[2];      /* active and pending game sample */
 EXTERNAL_VARIABLE Mix_Chunk Game_AudioChunk;        /* playing audio chunk */
 EXTERNAL_VARIABLE Game_SoundConfig Game_SoundCfg;   /* content of file sound.cfg */
-//senquack - SOUND STUFF
-EXTERNAL_VARIABLE int Game_VolumeDelta;					/*  0: Volume is stationary
-                                                            1: Volume is increasing
-                                                           -1: Volume is decreasing	*/
 //senquack - New ability to set relative loudness of music and sound, music
 //					is too soft on GP2X otherwise.
 EXTERNAL_VARIABLE int Game_AudioSampleVolume;	// Sample volume as x/128 % of overall volume

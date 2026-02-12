@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016-2021 Roman Pauer
+@@  Copyright (C) 2016-2026 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,6 @@
 
 .arm
 
-.extern Game_ESP_Original_Value
 .extern Game_MouseTable
 
 .extern main_
@@ -316,3 +315,10 @@ __Z23Game_RunAILcallback_AsmPFvP11_AIL_sampleES0_:
         ldmfd sp!, {v1-v8,pc}
 
 # end procedure Game_RunAILcallback_Asm
+
+
+.section .bss
+
+Game_ESP_Original_Value:
+.skip 4
+

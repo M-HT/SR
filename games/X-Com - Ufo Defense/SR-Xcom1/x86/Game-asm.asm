@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2016-2023 Roman Pauer
+;;  Copyright (C) 2016-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -23,11 +23,6 @@
 %include "misc.inc"
 %include "asm_xti.inc"
 
-%ifidn __OUTPUT_FORMAT__, win32
-    %define Game_ESP_Original_Value _Game_ESP_Original_Value
-%endif
-
-extern Game_ESP_Original_Value
 
 global Game_ExitMain_Asm
 global _Game_ExitMain_Asm
@@ -176,3 +171,14 @@ _Game_RunTimer_Asm:
         retn
 
 ; end procedure Game_RunTimer_Asm
+
+
+%ifidn __OUTPUT_FORMAT__, elf32
+section .bss nobits alloc noexec write align=4
+%else
+section .bss bss align=4
+%endif
+
+Game_ESP_Original_Value:
+resd 1
+

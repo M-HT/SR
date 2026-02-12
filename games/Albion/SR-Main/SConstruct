@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016-2025 Roman Pauer
+#  Copyright (C) 2016-2026 Roman Pauer
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy of
 #  this software and associated documentation files (the "Software"), to deal in
@@ -30,10 +30,7 @@ vars.Add(EnumVariable('debug', 'Set debug level (0 = release version)', '0',
                                  ignorecase=2))
 vars.Add(BoolVariable('mingw', 'Set to use MinGW instead of default compiler', False))
 vars.Add(EnumVariable('device', 'Set target device', 'none',
-                                 allowed_values=('none', 'pc-windows', 'pc-linux', 'arm-linux', 'gp2x', 'pandora', 'pyra', 'pc-linux-llasm', 'pandora-llasm', 'pyra-llasm', 'pc64-linux-llasm', 'arm64-linux-llasm'),
-                                 ignorecase=2))
-vars.Add(EnumVariable('sdl', 'Set SDL version', '2',
-                                 allowed_values=('1', '2'),
+                                 allowed_values=('none', 'pc-windows', 'pc-linux', 'arm-linux', 'pyra', 'pc-linux-llasm', 'pyra-llasm', 'pc64-linux-llasm', 'arm64-linux-llasm'),
                                  ignorecase=2))
 vars.Add(EnumVariable('speexdsp', 'Use SpeexDSP library for higher quality resampling', '0',
                                  allowed_values=('0', '1'),
@@ -43,7 +40,6 @@ env = Environment(variables = vars)
 debug = int(env['debug'])
 mingw = env['mingw']
 device = env['device']
-sdl = int(env['sdl'])
 speexdsp = int(env['speexdsp'])
 clean = env.GetOption('clean')
 
@@ -74,11 +70,6 @@ llasm_version = False
 if device.endswith('-llasm'):
     llasm_version = True
     device = device[0:-6]
-
-if device == 'gp2x' or device == 'pandora':
-    sdl = 1
-elif device == 'pyra':
-    sdl = 2
 
 if mingw:
     env = Environment(tools = ['mingw'])
@@ -121,136 +112,54 @@ if 'PATH_LIB' in os.environ:
 if device == 'pc-linux':
     env.Append(CCFLAGS    = '-m32',
                LINKFLAGS  = '-m32 -Wl,-z,noexecstack',
-               CPPPATH    = ['/usr/local/include'],
+               CPPPATH    = ['/usr/include/SDL2', '/usr/local/include/SDL2', '/usr/local/include'],
                LIBPATH    = ['/usr/local/lib'],
+               LIBS       = ['SDL2_mixer', 'SDL2', 'pthread', 'm', 'dl'],
                LLASMFLAGS = '-inline-idiv',
                LLVMFLAGS  = '-mtriple=i686-unknown-linux-gnu'
               )
-    if sdl == 2:
-        env.Append(CCFLAGS = '-DUSE_SDL2',
-                   LIBS    = ['SDL2_mixer', 'SDL2', 'pthread', 'm', 'dl']
-                  )
-    else:
-        env.Append(CCFLAGS = '-DALLOW_OPENGL',
-                   LIBS    = ['SDL_mixer', 'SDL', 'pthread', 'm', 'dl', 'GL']
-                  )
 elif device == 'pc64-linux':
     env.Append(CCFLAGS    = '-m64 -x c++',
                LINKFLAGS  = '-m64 -Wl,-z,noexecstack',
-               CPPPATH    = ['/usr/local/include'],
+               CPPPATH    = ['/usr/include/SDL2', '/usr/local/include/SDL2', '/usr/local/include'],
                LIBPATH    = ['/usr/local/lib'],
+               LIBS       = ['SDL2_mixer', 'SDL2', 'pthread', 'm', 'dl'],
                LLASMFLAGS = '-m64 -inline-idiv',
                LLVMFLAGS  = '-mtriple=x86_64-unknown-linux-gnu'
               )
-    if sdl == 2:
-        env.Append(CCFLAGS = '-DUSE_SDL2',
-                   LIBS    = ['SDL2_mixer', 'SDL2', 'pthread', 'm', 'dl']
-                  )
-    else:
-        env.Append(CCFLAGS = '-DALLOW_OPENGL',
-                   LIBS    = ['SDL_mixer', 'SDL', 'pthread', 'm', 'dl', 'GL']
-                  )
 elif device == 'arm-linux':
     env.Append(LINKFLAGS = '-Wl,-z,noexecstack',
-               CPPPATH   = ['/usr/local/include'],
+               CPPPATH   = ['/usr/include/SDL2', '/usr/local/include/SDL2', '/usr/local/include'],
                LIBPATH   = ['/usr/local/lib'],
+               LIBS      = ['SDL2_mixer', 'SDL2', 'pthread', 'm', 'dl'],
                ASFLAGS   = '-I arm/'
               )
-    if sdl == 2:
-        env.Append(CCFLAGS = '-DUSE_SDL2',
-                   LIBS    = ['SDL2_mixer', 'SDL2', 'pthread', 'm', 'dl']
-                  )
-    else:
-        env.Append(CCFLAGS = '-DALLOW_OPENGL',
-                   LIBS    = ['SDL_mixer', 'SDL', 'pthread', 'm', 'dl', 'GL']
-                  )
     # see arm/armconf.inc for explanation of these options (and others)
     env.Append(ASFLAGS = '--defsym USE_R9=1 --defsym ALLOW_UNALIGNED_MEMORY_ACCESS=1')
 elif device == 'arm64-linux':
     env.Append(CCFLAGS    = '-x c++',
                LINKFLAGS  = '-Wl,-z,noexecstack',
-               CPPPATH    = ['/usr/local/include'],
+               CPPPATH    = ['/usr/include/SDL2', '/usr/local/include/SDL2', '/usr/local/include'],
                LIBPATH    = ['/usr/local/lib'],
+               LIBS       = ['SDL2_mixer', 'SDL2', 'pthread', 'm', 'dl'],
                LLASMFLAGS = '-m64 -inline-idiv',
                LLVMFLAGS  = '-mtriple=arm64-unknown-linux-gnu'
               )
-    if sdl == 2:
-        env.Append(CCFLAGS = '-DUSE_SDL2',
-                   LIBS    = ['SDL2_mixer', 'SDL2', 'pthread', 'm', 'dl']
-                  )
-    else:
-        env.Append(CCFLAGS = '-DALLOW_OPENGL',
-                   LIBS    = ['SDL_mixer', 'SDL', 'pthread', 'm', 'dl', 'GL']
-                  )
 elif device == 'pc-windows':
     if env['CC'] == 'cl':
         env.Append(CCFLAGS   = '/Dmain=SDL_main /MD',
-                   LINKFLAGS = '/SUBSYSTEM:windows'
+                   LINKFLAGS = '/SUBSYSTEM:windows',
+                   LIBS      = ['SDL2main', 'SDL2_mixer', 'SDL2', 'zlib', 'user32', 'shell32']
                   )
     else:
         env.Append(CCFLAGS   = '-m32 -Dmain=SDL_main',
-                   LINKFLAGS = '-m32 -mwindows'
+                   LINKFLAGS = '-m32 -mwindows',
+                   LIBS      = ['mingw32', 'SDL2main', 'SDL2_mixer', 'SDL2', 'z']
                   )
-    if sdl == 2:
-        if env['CC'] == 'cl':
-            env.Append(CCFLAGS = '/DUSE_SDL2',
-                       LIBS    = ['SDL2main', 'SDL2_mixer', 'SDL2', 'zlib', 'user32', 'shell32']
-                      )
-        else:
-            env.Append(CCFLAGS = '-DUSE_SDL2',
-                       LIBS    = ['mingw32', 'SDL2main', 'SDL2_mixer', 'SDL2', 'z']
-                      )
-    else:
-        if env['CC'] == 'cl':
-            env.Append(CCFLAGS = '/DALLOW_OPENGL',
-                       LIBS    = ['SDLmain', 'SDL_mixer', 'SDL', 'opengl32', 'zlib', 'user32']
-                      )
-        else:
-            env.Append(CCFLAGS = '-DALLOW_OPENGL -D_GNU_SOURCE=1',
-                       LIBS    = ['mingw32', 'SDLmain', 'SDL_mixer', 'SDL', 'opengl32', 'z']
-                      )
-elif device == 'gp2x':
-    compiler_path = '/opt/open2x/gcc-4.1.1-glibc-2.3.6/'
-    compiler_prefix = 'arm-open2x-linux-'
-
-    env['CC']      = compiler_prefix + 'gcc'
-    env['CXX']     = compiler_prefix + 'g++'
-    env['CPPPATH'] = [compiler_path + 'include/SDL/midi', compiler_path + 'include/SDL', compiler_path + 'include']
-    env['LIBPATH'] = [compiler_path + 'lib/mixer-midi', compiler_path + 'lib']
-    env['AS']      = compiler_prefix + 'as'
-    env['ENV']['PATH'] = compiler_path + 'bin' + os.pathsep + env['ENV']['PATH']
-    env.Append(CCFLAGS   = '-DGP2X -march=armv4t -mtune=arm920t',
-               LINKFLAGS = '-static -Wl,-z,noexecstack',
-               LIBS      = ['SDL_mixer', 'SDL', 'pthread', 'm', 'armmem', 'dl', 'z'],
-               ASFLAGS   = '-EL -march=armv4t -mfpu=softfpa -I arm/'
-              )
-    # see arm/armconf.inc for explanation of these options (and others)
-    env.Append(ASFLAGS = '--defsym USE_R9=1 --defsym ALLOW_UNALIGNED_PC=1 --defsym ALLOW_UNALIGNED_STACK=1')
-elif device == 'pandora':
-    compiler_path = os.environ['PNDSDK'] + '/'
-    compiler_prefix = 'pandora-'
-
-    env['CC']      = compiler_prefix + 'gcc'
-    env['CXX']     = compiler_prefix + 'g++'
-    env['CPPPATH'] = [compiler_path + 'usr/include']
-    env['LIBPATH'] = [compiler_path + 'usr/lib']
-    env['AS']      = compiler_prefix + 'as'
-    env['ENV']['PATH'] = compiler_path + 'bin' + os.pathsep + env['ENV']['PATH']
-    env.Append(CCFLAGS   = '-DPANDORA -pipe -march=armv7-a -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=vfpv3 -mfloat-abi=softfp',
-               LINKFLAGS = '-Wl,-z,noexecstack',
-               LIBS      = ['SDL_mixer', 'mad', 'SDL', 'ts', 'pthread', 'm', 'dl'],
-               ASFLAGS   = '-EL -march=armv7-a -mcpu=cortex-a8 -mfpu=vfpv3 -mfloat-abi=softfp -I arm/'
-              )
-    if llasm_version:
-        env.Append(CCFLAGS    = '-mthumb-interwork',
-                   LLASMFLAGS = '',
-                   LLVMFLAGS  = '-mtriple=thumbv7a-unknown-linux-eabi -mcpu=cortex-a8 -float-abi=soft'
-                  )
-    # see arm/armconf.inc for explanation of these options (and others)
-    env.Append(ASFLAGS = '--defsym USE_R9=1 --defsym ALLOW_UNALIGNED_MEMORY_ACCESS=1')
 elif device == 'pyra':
-    env.Append(CCFLAGS    = '-DUSE_SDL2 -DPYRA -pipe -march=armv7ve+simd -mcpu=cortex-a15 -mtune=cortex-a15 -mfpu=neon-vfpv4 -mfloat-abi=hard -mthumb',
+    env.Append(CCFLAGS    = '-DPYRA -pipe -march=armv7ve+simd -mcpu=cortex-a15 -mtune=cortex-a15 -mfpu=neon-vfpv4 -mfloat-abi=hard -mthumb',
                LINKFLAGS  = '-Wl,-z,noexecstack',
+               CPPPATH    = ['/usr/include/SDL2'],
                LIBS       = ['SDL2_mixer', 'SDL2', 'pthread', 'm', 'dl'],
                ASFLAGS    = '-EL -march=armv7ve -mcpu=cortex-a15 -mfpu=neon-vfpv4 -mfloat-abi=hard -I arm/',
                LLASMFLAGS = '-inline-idiv',

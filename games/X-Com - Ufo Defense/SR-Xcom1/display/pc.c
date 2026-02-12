@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -27,8 +27,7 @@
 #include "palette32bgra.h"
 #include <string.h>
 
-static int ScaleOutput, ScaledWidth, ScaledHeight, Fullscreen;
-static uint32_t *ScaleSrc;
+static int ScaledWidth, ScaledHeight, Fullscreen;
 
 static void Set_Palette_Value2(uint32_t index, uint32_t r, uint32_t g, uint32_t b)
 {
@@ -82,197 +81,18 @@ static void Flip_320x200x8_to_320x200x32(const uint8_t *src, uint32_t *dst)
     }
 }
 
-#if !defined(ALLOW_OPENGL) && !SDL_VERSION_ATLEAST(2,0,0)
-static void Flip_320x200x8_to_WxHx32_bilinear(uint8_t *src, uint32_t *dst)
-{
-    uint32_t src_y, src_ydelta, src_ypos, src_xdelta, src_xpos, src_xpos_0, dst_xlastsize, height, width, val1, val2, dstval;
-    uint32_t *srcline1, *srcline2;
-
-    Flip_320x200x8_to_320x200x32(src, ScaleSrc);
-
-    dst_xlastsize = (((ScaledWidth << 16) / 640) + 0xffff) >> 16;
-    src_xdelta = (640 << 16) / ScaledWidth;
-    if (640 > ScaledWidth)
-    {
-        src_xpos_0 = ((640 - ScaledWidth) << 16) / 640;
-    }
-    else
-    {
-        src_xpos_0 = 0;
-    }
-
-    src_ydelta = (400 << 16) / ScaledHeight;
-    if (400 > ScaledHeight)
-    {
-        src_ypos = ((400 - ScaledHeight) << 16) / 400;
-    }
-    else
-    {
-        src_ypos = 0;
-    }
-
-    for (height = ScaledHeight; height != 0; height--)
-    {
-        src_xpos = src_xpos_0;
-
-        src_y = src_ypos >> 16;
-        srcline1 = ScaleSrc + 320 * (src_y >> 1);
-        srcline2 = srcline1 + 319;
-
-        if ((src_y < 399) && ((src_ypos & 0xffff) != 0) && ((src_y & 1) != 0))
-        {
-            // bilinear
-            for (width = ScaledWidth - dst_xlastsize; width != 0; width--)
-            {
-                if ((src_xpos & 0x10000) != 0)
-                {
-                    uint32_t tmpval1, tmpval2;
-
-                    val1 = srcline1[0];
-                    val2 = srcline1[1];
-
-                    // r
-                    tmpval1 = (((int)(val1 & 0xff)) << 2) + (((((int)(val2 & 0xff)) - ((int)(val1 & 0xff))) * (int)(src_xpos & 0xffff)) >> 14);
-                    // g
-                    tmpval1 |= ( (((int)((val1 >> 8) & 0xff)) << 2) + (((((int)((val2 >> 8) & 0xff)) - ((int)((val1 >> 8) & 0xff))) * (int)(src_xpos & 0xffff)) >> 14) ) << 10;
-                    // b
-                    tmpval1 |= ( (((int)((val1 >> 16) & 0xff)) << 2) + (((((int)((val2 >> 16) & 0xff)) - ((int)((val1 >> 16) & 0xff))) * (int)(src_xpos & 0xffff)) >> 14) ) << 20;
-
-                    val1 = srcline1[320];
-                    val2 = srcline1[321];
-
-                    // r
-                    tmpval2 = (((int)(val1 & 0xff)) << 2) + (((((int)(val2 & 0xff)) - ((int)(val1 & 0xff))) * (int)(src_xpos & 0xffff)) >> 14);
-                    // g
-                    tmpval2 |= ( (((int)((val1 >> 8) & 0xff)) << 2) + (((((int)((val2 >> 8) & 0xff)) - ((int)((val1 >> 8) & 0xff))) * (int)(src_xpos & 0xffff)) >> 14) ) << 10;
-                    // b
-                    tmpval2 |= ( (((int)((val1 >> 16) & 0xff)) << 2) + (((((int)((val2 >> 16) & 0xff)) - ((int)((val1 >> 16) & 0xff))) * (int)(src_xpos & 0xffff)) >> 14) ) << 20;
-
-                    // r
-                    dstval = ( ((int)(tmpval1 & 0x3ff)) + (((((int)(tmpval2 & 0x3ff)) - ((int)(tmpval1 & 0x3ff))) * (int)(src_ypos & 0xffff)) >> 16) ) >> 2;
-                    // g
-                    dstval |= ( ( ((int)((tmpval1 >> 10) & 0x3ff)) + (((((int)((tmpval2 >> 10) & 0x3ff)) - ((int)((tmpval1 >> 10) & 0x3ff))) * (int)(src_ypos & 0xffff)) >> 16) ) & 0x3fc ) << 6;
-                    // b
-                    dstval |= ( ( ((int)((tmpval1 >> 20) & 0x3ff)) + (((((int)((tmpval2 >> 20) & 0x3ff)) - ((int)((tmpval1 >> 20) & 0x3ff))) * (int)(src_ypos & 0xffff)) >> 16) ) & 0x3fc ) << 14;
-
-                    *dst = dstval;
-
-                    dst++;
-                    src_xpos += src_xdelta;
-                    srcline1 += (src_xpos >> 17);
-                    src_xpos &= 0x1ffff;
-                }
-                else
-                {
-                    val1 = srcline1[0];
-                    val2 = srcline1[320];
-
-                    // r
-                    dstval = ((int)(val1 & 0xff)) + (((((int)(val2 & 0xff)) - ((int)(val1 & 0xff))) * (int)(src_ypos & 0xffff)) >> 16);
-                    // g
-                    dstval |= ( ((int)((val1 >> 8) & 0xff)) + (((((int)((val2 >> 8) & 0xff)) - ((int)((val1 >> 8) & 0xff))) * (int)(src_ypos & 0xffff)) >> 16) ) << 8;
-                    // b
-                    dstval |= ( ((int)((val1 >> 16) & 0xff)) + (((((int)((val2 >> 16) & 0xff)) - ((int)((val1 >> 16) & 0xff))) * (int)(src_ypos & 0xffff)) >> 16) ) << 16;
-
-                    *dst = dstval;
-
-                    dst++;
-                    src_xpos += src_xdelta;
-                    srcline1 += (src_xpos >> 17);
-                    src_xpos &= 0x1ffff;
-                }
-            }
-
-            if (dst_xlastsize != 0)
-            {
-                val1 = srcline2[0];
-                val2 = srcline2[320];
-
-                // r
-                dstval = ((int)(val1 & 0xff)) + (((((int)(val2 & 0xff)) - ((int)(val1 & 0xff))) * (int)(src_ypos & 0xffff)) >> 16);
-                // g
-                dstval |= ( ((int)((val1 >> 8) & 0xff)) + (((((int)((val2 >> 8) & 0xff)) - ((int)((val1 >> 8) & 0xff))) * (int)(src_ypos & 0xffff)) >> 16) ) << 8;
-                // b
-                dstval |= ( ((int)((val1 >> 16) & 0xff)) + (((((int)((val2 >> 16) & 0xff)) - ((int)((val1 >> 16) & 0xff))) * (int)(src_ypos & 0xffff)) >> 16) ) << 16;
-            }
-            for (width = dst_xlastsize; width != 0; width--)
-            {
-                *dst = dstval;
-
-                dst++;
-            }
-        }
-        else
-        {
-            // linear
-            for (width = ScaledWidth - dst_xlastsize; width != 0; width--)
-            {
-                if ((src_xpos & 0x10000) != 0)
-                {
-                    val1 = srcline1[0];
-                    val2 = srcline1[1];
-
-                    // r
-                    dstval = ((int)(val1 & 0xff)) + (((((int)(val2 & 0xff)) - ((int)(val1 & 0xff))) * (int)(src_xpos & 0xffff)) >> 16);
-                    // g
-                    dstval |= ( ((int)((val1 >> 8) & 0xff)) + (((((int)((val2 >> 8) & 0xff)) - ((int)((val1 >> 8) & 0xff))) * (int)(src_xpos & 0xffff)) >> 16) ) << 8;
-                    // b
-                    dstval |= ( ((int)((val1 >> 16) & 0xff)) + (((((int)((val2 >> 16) & 0xff)) - ((int)((val1 >> 16) & 0xff))) * (int)(src_xpos & 0xffff)) >> 16) ) << 16;
-
-                    *dst = dstval;
-
-                    dst++;
-                    src_xpos += src_xdelta;
-                    srcline1 += (src_xpos >> 17);
-                    src_xpos &= 0x1ffff;
-                }
-                else
-                {
-                    *dst = *srcline1;
-
-                    dst++;
-                    src_xpos += src_xdelta;
-                    srcline1 += (src_xpos >> 17);
-                    src_xpos &= 0x1ffff;
-                }
-            }
-
-            dstval = *srcline2;
-            for (width = dst_xlastsize; width != 0; width--)
-            {
-                *dst = dstval;
-
-                dst++;
-            }
-        }
-
-        src_ypos += src_ydelta;
-    }
-}
-#endif
-
 void Init_Display(void)
 {
-#if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
     Display_FSType = 1;
-#else
-    Display_FSType = 0;
-#endif
 
-    ScaleOutput = 0;
     ScaledWidth = 640;
     ScaledHeight = 400;
     Fullscreen = 0;
-    ScaleSrc = NULL;
 }
 
 void Init_Display2(void)
 {
     Init_Palette();
-
-#if !SDL_VERSION_ATLEAST(2,0,0) && !defined(ALLOW_OPENGL)
-    Game_AdvancedScaling = 0;
-#endif
 
     if (Fullscreen && Display_FSType)
     {
@@ -289,24 +109,6 @@ void Init_Display2(void)
         if (ScaledHeight < 400) ScaledHeight = 400;
     }
 
-    if ((ScaledWidth != 640) || (ScaledHeight != 400) || (Fullscreen && Display_FSType))
-    {
-        ScaleOutput = 1;
-
-    #if SDL_VERSION_ATLEAST(2,0,0)
-    #elif defined(ALLOW_OPENGL)
-        Game_UseOpenGL = 1;
-    #else
-        ScaleSrc = (uint32_t *) malloc(320*200*4+4);
-        if (ScaleSrc == NULL)
-        {
-            ScaleOutput = 0;
-            ScaledWidth = 640;
-            ScaledHeight = 400;
-        }
-    #endif
-    }
-
     Display_Width = ScaledWidth;
     Display_Height = ScaledHeight;
     Display_Bitsperpixel = 32;
@@ -320,7 +122,6 @@ void Init_Display2(void)
     Picture_Position_UL_Y = 0;
     Picture_Position_BR_X = ScaledWidth-1;
     Picture_Position_BR_Y = ScaledHeight-1;
-#if SDL_VERSION_ATLEAST(2,0,0) || defined(ALLOW_OPENGL)
     if (Game_AdvancedScaling)
     {
         Render_Width = 320;
@@ -328,13 +129,6 @@ void Init_Display2(void)
         Display_Flip_Procedure = (Game_Flip_Procedure) &Flip_320x200x8_to_320x200x32;
     }
     else
-#else
-    if (ScaleOutput)
-    {
-        Display_Flip_Procedure = (Game_Flip_Procedure) &Flip_320x200x8_to_WxHx32_bilinear;
-    }
-    else
-#endif
     {
         Display_Flip_Procedure = (Game_Flip_Procedure) &Flip_320x200x8_to_640x400x32;
     }
@@ -388,21 +182,7 @@ int Config_Display(char *str, char *param)
     return 0;
 }
 
-void Reposition_Display(void)
-{
-}
-
 void Cleanup_Display(void)
 {
-    if (ScaleSrc != NULL)
-    {
-        free(ScaleSrc);
-        ScaleSrc = NULL;
-    }
-}
-
-int Change_Display_Mode(int direction)
-{
-    return 0;
 }
 

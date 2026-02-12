@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -28,9 +28,7 @@
 void Init_Display(void);
 void Init_Display2(void);
 int Config_Display(char *str, char *param);
-void Reposition_Display(void);
 void Cleanup_Display(void);
 void Set_Palette_Value(uint32_t index, uint32_t r, uint32_t g, uint32_t b);
-int Change_Display_Mode(int direction);
 
 #endif /* _DISPLAY_H_INCLUDED_ */

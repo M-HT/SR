@@ -31,11 +31,7 @@
 #include "Albion-sound.h"
 #include "Albion-AIL.h"
 #include "Game_memory.h"
-#ifdef USE_SDL2
-    #include <SDL2/SDL_mixer.h>
-#else
-    #include <SDL/SDL_mixer.h>
-#endif
+#include <SDL_mixer.h>
 #ifdef USE_SPEEXDSP_RESAMPLER
 #include <speex/speex_resampler.h>
 #endif
@@ -557,9 +553,7 @@ void CCALL Game_AIL_start_sample(struct _AIL_sample *S)
                     }
                     else
 #endif
-#if SDL_VERSION_ATLEAST(2,0,0)
                     if (Game_ResamplingQuality <= 0)
-#endif
                     {
                         // interpolated resampling
                         resample_type = 2;

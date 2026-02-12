@@ -50,7 +50,7 @@
 #include "Albion-proc-vfs.h"
 #include "display/overlay.h"
 
-#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__)) || defined(GP2X)
+#if defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__)
 #undef ZLIB_DYNAMIC
 #else
 #define ZLIB_DYNAMIC 1
@@ -134,7 +134,6 @@ static INLINE uint8_t *write_32le(uint8_t *ptr, uint32_t value)
     return ptr + 4;
 }
 
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
 static uint8_t *fill_png_pixel_data_advanced(uint32_t *src, int remaining, uint8_t *curptr)
 {
     int x, y, ret;
@@ -204,14 +203,11 @@ static uint8_t *fill_png_pixel_data_advanced(uint32_t *src, int remaining, uint8
 
     return curptr;
 }
-#endif
 
 static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverlay, int remaining, uint8_t *curptr)
 {
     int x, y, ret, overlay_y;
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     int counter, counter2;
-#endif
     uint8_t value;
     uint16_t *dst16;
     uint8_t *dst8, *src2, *orig;
@@ -228,14 +224,12 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
         case 2:
             pixel_data = (uint8_t *) alloca(724*2);
             break;
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
         case 5:
             pixel_data = (uint8_t *) alloca((360 * Scaler_ScaleFactor + 4) * 2);
             break;
         case 6:
             pixel_data = (uint8_t *) alloca((360 * Scaler_ScaleFactor + 4) * Scaler_ScaleFactor);
             break;
-#endif
         default:
             pixel_data = NULL;
             break;
@@ -278,14 +272,12 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
                 memcpy(&(pixel_data[4]), src, 360);
                 src += 360;
 
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
                 if (image_mode != 0)
                 {
                     src2_stride = Scaler_ScaleFactor * 360;
                     src2_factor = Scaler_ScaleFactor;
                 }
                 else
-#endif
                 {
                     src2_stride = 800;
                     src2_factor = 2;
@@ -429,7 +421,6 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
             }
         }
     }
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     else if (image_mode == 5)
     {
         pixel_data[3] = 0; // filter for first line
@@ -490,7 +481,6 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
             }
         }
     }
-#endif
     else if (image_mode == 2)
     {
         pixel_data[3] = 0; // filter for first line
@@ -713,7 +703,6 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
             }
         }
     }
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     else if (image_mode == 6)
     {
         for (counter = 0; counter < Scaler_ScaleFactor; counter++)
@@ -937,7 +926,6 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
             }
         }
     }
-#endif
 
     if (ret != Z_STREAM_END)
     {
@@ -969,10 +957,8 @@ void CCALL Game_save_screenshot(const char *filename)
     char *filename2;
 
     int x, y;
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     int counter, counter2;
     uint8_t value;
-#endif
     uint8_t *src, *orig, *src2, *dst;
 
 #ifdef ZLIB_DYNAMIC
@@ -1025,7 +1011,6 @@ void CCALL Game_save_screenshot(const char *filename)
     screenshot_src = &(Game_FrameBuffer[loc_182010 * 360 * 240]);
     DrawOverlay = Get_DrawOverlay(screenshot_src, &Game_OverlayDraw);
 
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     if (Game_AdvancedScaling)
     {
         if ((Game_ScreenshotEnhancedResolution != 0) && (Scaler_ScaleFactor > 1))
@@ -1055,7 +1040,6 @@ void CCALL Game_save_screenshot(const char *filename)
         }
     }
     else
-#endif
     {
         if ((Render_Width == 720) && (Game_ScreenshotEnhancedResolution != 0))
         {
@@ -1541,20 +1525,10 @@ void CCALL Game_save_screenshot(const char *filename)
         curptr += 4;
 
         // write Pixels per unit, X axis
-        curptr = write_32be(curptr,
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
-            (Game_AdvancedScaling)?(Scaler_ScaleTextureData * 320):
-#endif
-            640
-        );
+        curptr = write_32be(curptr, (Game_AdvancedScaling)?(Scaler_ScaleTextureData * 320):640);
 
         // write Pixels per unit, Y axis
-        curptr = write_32be(curptr,
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
-            (Game_AdvancedScaling)?(Scaler_ScaleTextureData * 240):
-#endif
-            480
-        );
+        curptr = write_32be(curptr, (Game_AdvancedScaling)?(Scaler_ScaleTextureData * 240):480);
 
         // write Unit specifier
         *curptr = 0;
@@ -1625,7 +1599,6 @@ void CCALL Game_save_screenshot(const char *filename)
     }
 
     // fill pixel data
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     if (image_mode == 11)
     {
         uint32_t *palette, *buf_unscaled, *src32, *dst32;
@@ -1799,7 +1772,6 @@ void CCALL Game_save_screenshot(const char *filename)
 
     }
     else
-#endif
     if (Game_ScreenshotFormat == 5)
     {
         curptr = fill_png_pixel_data(screenshot_src, image_mode, DrawOverlay, width_in_file * height + (2000 - 16) - (int)(curptr - buffer), curptr);
@@ -1817,14 +1789,12 @@ void CCALL Game_save_screenshot(const char *filename)
         {
             unsigned int src2_stride, src2_factor;
 
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
             if (image_mode != 0)
             {
                 src2_stride = Scaler_ScaleFactor * 360;
                 src2_factor = Scaler_ScaleFactor;
             }
             else
-#endif
             {
                 src2_stride = 800;
                 src2_factor = 2;
@@ -1897,7 +1867,6 @@ void CCALL Game_save_screenshot(const char *filename)
                 curptr += width_in_file;
             }
         }
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
         else if (image_mode == 5)
         {
             src = screenshot_src;
@@ -1932,7 +1901,6 @@ void CCALL Game_save_screenshot(const char *filename)
                 curptr += (Scaler_ScaleFactor - 1) * width_in_file;
             }
         }
-#endif
         else if (image_mode == 2)
         {
             src = screenshot_src;
@@ -2062,7 +2030,6 @@ void CCALL Game_save_screenshot(const char *filename)
                 curptr += width_in_file;
             }
         }
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
         else if (image_mode == 6)
         {
             src = screenshot_src;
@@ -2257,7 +2224,6 @@ void CCALL Game_save_screenshot(const char *filename)
                 curptr += (Scaler_ScaleFactor - 1) * width_in_file;
             }
         }
-#endif
     }
 
     if ((Game_ScreenshotFormat == 0) || (Game_ScreenshotFormat == 1) || (Game_ScreenshotFormat == 2))

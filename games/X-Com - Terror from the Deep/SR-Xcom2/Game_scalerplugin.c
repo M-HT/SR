@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2021-2025 Roman Pauer
+ *  Copyright (C) 2021-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -155,17 +155,7 @@ int ScalerPlugin_Startup(void)
     }
     else
     {
-#if SDL_VERSION_ATLEAST(2,0,0)
         cpu_count = SDL_GetCPUCount();
-#elif (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
-        SYSTEM_INFO info;
-        GetSystemInfo(&info);
-        cpu_count = info.dwNumberOfProcessors;
-#elif defined(_SC_NPROCESSORS_ONLN)
-        cpu_count = (int)sysconf(_SC_NPROCESSORS_ONLN);
-#else
-        cpu_count = 1;
-#endif
 
         if (cpu_count < 3) extra_num = 0;
         else if (cpu_count < 6) extra_num = 1;
@@ -195,11 +185,7 @@ int ScalerPlugin_Startup(void)
             break;
         }
 
-#if SDL_VERSION_ATLEAST(2,0,0)
         extra_threads[index].thread = SDL_CreateThread((int (*)(void *))ScalerPlugin_Thread, "scaler", &extra_threads[index]);
-#else
-        extra_threads[index].thread = SDL_CreateThread((int (*)(void *))ScalerPlugin_Thread, &extra_threads[index]);
-#endif
         if (extra_threads[index].thread == NULL)
         {
             SDL_DestroySemaphore(extra_threads[index].finishcmd);

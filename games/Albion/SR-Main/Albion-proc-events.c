@@ -2,7 +2,7 @@
 
 /**
  *
- *  Copyright (C) 2016-2024 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -89,165 +89,6 @@ void Game_ProcessKEvents(void)
                     if (alt_code_state >= 1) alt_code_state = -1;
                     goto _after_switch1;
                 }
-            #if !SDL_VERSION_ATLEAST(2,0,0)
-                else if ((cevent->key.keysym.unicode > 0) && (cevent->key.keysym.unicode < 128))
-                {
-                    scancode = scancode_table[cevent->key.keysym.unicode];
-                    ascii_code = cevent->key.keysym.unicode;
-                }
-                else if (cevent->key.keysym.unicode != 0)
-                {
-                    scancode = 0;
-                    ascii_code = 0;
-
-                    if ((ascii_code == 0) && (Albion_Font_Lang != AL_UNKNOWN))
-                    {
-                        switch (cevent->key.keysym.unicode)
-                        {
-                            case 0x00E4: // ä
-                                ascii_code = 0x84;
-                                break;
-                            case 0x00C4: // Ä
-                                ascii_code = 0x8e;
-                                break;
-                            case 0x00F6: // ö
-                                ascii_code = 0x94;
-                                break;
-                            case 0x00D6: // Ö
-                                ascii_code = 0x99;
-                                break;
-                            case 0x00FC: // ü
-                                ascii_code = 0x81;
-                                break;
-                            case 0x00DC: // Ü
-                                ascii_code = 0x9a;
-                                break;
-                            case 0x00DF: // ß
-                                ascii_code = 0xe1;
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-
-                    if ((ascii_code == 0) && (Albion_Font_Lang == AL_ENG_FRE))
-                    {
-                        switch (cevent->key.keysym.unicode)
-                        {
-                            case 0x00E9: // é
-                                ascii_code = 0x82;
-                                break;
-                            case 0x00E2: // â
-                                ascii_code = 0x83;
-                                break;
-                            case 0x00E0: // à
-                                ascii_code = 0x85;
-                                break;
-                            case 0x00E7: // ç
-                                ascii_code = 0x87;
-                                break;
-                            case 0x00EA: // ê
-                                ascii_code = 0x88;
-                                break;
-                            case 0x00EB: // ë
-                                ascii_code = 0x89;
-                                break;
-                            case 0x00E8: // è
-                                ascii_code = 0x8a;
-                                break;
-                            case 0x00EF: // ï
-                                ascii_code = 0x8b;
-                                break;
-                            case 0x00EE: // î
-                                ascii_code = 0x8c;
-                                break;
-                            case 0x00EC: // ì
-                                ascii_code = 0x8d;
-                                break;
-                            case 0x00F4: // ô
-                                ascii_code = 0x93;
-                                break;
-                            case 0x00F2: // ò
-                                ascii_code = 0x95;
-                                break;
-                            case 0x00FB: // û
-                                ascii_code = 0x96;
-                                break;
-                            case 0x00F9: // ù
-                                ascii_code = 0x97;
-                                break;
-                            case 0x00E1: // á
-                                ascii_code = 0xa0;
-                                break;
-                            case 0x00ED: // í
-                                ascii_code = 0xa1;
-                                break;
-                            case 0x00F3: // ó
-                                ascii_code = 0xa2;
-                                break;
-                            case 0x00FA: // ú
-                                ascii_code = 0xa3;
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-
-                    if ((ascii_code == 0) && (Albion_Font_Lang == AL_CZE))
-                    {
-                        switch (cevent->key.keysym.unicode)
-                        {
-                            case 0x00E9: // é
-                                ascii_code = 0x82;
-                                break;
-                            case 0x00E1: // á
-                                ascii_code = 0x83;
-                                break;
-                            case 0x010F: // ď
-                                ascii_code = 0x85;
-                                break;
-                            case 0x010D: // č
-                                ascii_code = 0x87;
-                                break;
-                            case 0x011B: // ě
-                                ascii_code = 0x88;
-                                break;
-                            case 0x0148: // ň
-                                ascii_code = 0x89;
-                                break;
-                            case 0x0159: // ř
-                                ascii_code = 0x8a;
-                                break;
-                            case 0x0161: // š
-                                ascii_code = 0x8b;
-                                break;
-                            case 0x0165: // ť
-                                ascii_code = 0x8c;
-                                break;
-                            case 0x017E: // ž
-                                ascii_code = 0x8d;
-                                break;
-                            case 0x00F3: // ó
-                                ascii_code = 0x93;
-                                break;
-                            case 0x00FA: // ú
-                                ascii_code = 0x95;
-                                break;
-                            case 0x016F: // ů
-                                ascii_code = 0x96;
-                                break;
-                            case 0x00FD: // ý
-                                ascii_code = 0x97;
-                                break;
-                            case 0x00ED: // í
-                                ascii_code = 0xa0;
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                }
-            #endif
                 else
                 {
                     ascii_code = 0;
@@ -265,14 +106,6 @@ void Game_ProcessKEvents(void)
                             ascii_code -= 32;
                         }
                     }
-
-                #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__)) && !SDL_VERSION_ATLEAST(2,0,0)
-                    if (ascii_code == 61 && cevent->type == SDL_KEYDOWN && cevent->key.keysym.unicode == 0)
-                    {
-                        // handle dead key (´/ˇ), which doesn't act like dead key
-                        ascii_code = 0;
-                    }
-                #endif
 
                     if (cevent->key.keysym.mod & KMOD_SHIFT)
                     {
@@ -324,92 +157,52 @@ void Game_ProcessKEvents(void)
 
                     switch((int) cevent->key.keysym.sym)
                     {
-                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_0:
-                    #else
-                        case SDLK_KP0:
-                    #endif
                             scancode = 0x52;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '0';
 
                             break;
-                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_1:
-                    #else
-                        case SDLK_KP1:
-                    #endif
                             scancode = 0x4f;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '1';
 
                             break;
-                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_2:
-                    #else
-                        case SDLK_KP2:
-                    #endif
                             scancode = 0x50;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '2';
 
                             break;
-                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_3:
-                    #else
-                        case SDLK_KP3:
-                    #endif
                             scancode = 0x51;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '3';
 
                             break;
-                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_4:
-                    #else
-                        case SDLK_KP4:
-                    #endif
                             scancode = 0x4b;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '4';
 
                             break;
-                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_5:
-                    #else
-                        case SDLK_KP5:
-                    #endif
                             scancode = 0x4c;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '5';
 
                             break;
-                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_6:
-                    #else
-                        case SDLK_KP6:
-                    #endif
                             scancode = 0x4d;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '6';
 
                             break;
-                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_7:
-                    #else
-                        case SDLK_KP7:
-                    #endif
                             scancode = 0x47;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '7';
 
                             break;
-                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_8:
-                    #else
-                        case SDLK_KP8:
-                    #endif
                             scancode = 0x48;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '8';
 
                             break;
-                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_KP_9:
-                    #else
-                        case SDLK_KP9:
-                    #endif
                             scancode = 0x49;
                             if (cevent->key.keysym.mod & KMOD_NUM) ascii_code = '9';
 
@@ -584,11 +377,7 @@ void Game_ProcessKEvents(void)
                         case SDLK_F15:
                             if (alt_code_state >= 1) alt_code_state = -1;
                             goto _after_switch1;
-                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_NUMLOCKCLEAR:
-                    #else
-                        case SDLK_NUMLOCK:
-                    #endif
                             scancode = 0x45;
 
                             break;
@@ -596,11 +385,7 @@ void Game_ProcessKEvents(void)
                             scancode = 0x3a;
 
                             break;
-                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_SCROLLLOCK:
-                    #else
-                        case SDLK_SCROLLOCK:
-                    #endif
                             scancode = 0x46;
 
                             break;
@@ -632,19 +417,11 @@ void Game_ProcessKEvents(void)
                             }
 
                             break;
-                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_LGUI:
-                    #else
-                        case SDLK_LSUPER:
-                    #endif
                             scancode = 0x5b;
 
                             break;
-                    #if SDL_VERSION_ATLEAST(2,0,0)
                         case SDLK_RGUI:
-                    #else
-                        case SDLK_RSUPER:
-                    #endif
                             scancode = 0x5c;
 
                             break;
@@ -916,51 +693,13 @@ int Game_ProcessMEvents(void)
                 // case SDL_MOUSEMOTION:
             case SDL_MOUSEBUTTONUP:
             case SDL_MOUSEBUTTONDOWN:
-                //senquack - now we keep track of what mouse buttons are currently pressed so
-                //           we can support two ways of using the touchscreen.  The first way
-                //           lets users touch/tap the screen and that is LMB, and if they
-                //           hold the buttom assigned to RMB while touch/tapping the screen,
-                //           that is RMB.  The second way lets users only move the cursor
-                //           when touching the touchscreen, and only then the buttons for
-
                 if (cevent->button.button == SDL_BUTTON_LEFT ||
                     cevent->button.button == SDL_BUTTON_RIGHT)
                 {
                     int XPosDiff, YPosDiff;
                     uint32_t ret;
 
-                    if (Game_TouchscreenButtonEvents)
-                    {
-                        // We are using GP2X's touchscreen and the game is configured to
-                        // register LMB presses when stylus is pressed and only register
-                        // RMB presses when the button for RMB is held and the stylus is
-                        // then pressed
-                        if (cevent->button.state != SDL_PRESSED)
-                        {
-                            // When one mouse button goes up, make sure both go up
-                            ret = Game_MouseButton(0, 2);
-                            ret = Game_MouseButton(0, 4);
-                        }
-                        else
-                        {
-                            if (Game_RMBActive)
-                            {
-                                // Button assigned to RMB is held, force RMB down and force LMB up
-                                ret = Game_MouseButton(0, 3); // RMB down
-                                ret = Game_MouseButton(0, 2); // LMB up
-                            }
-                            else
-                            {
-                                // Button assigned to RMB is not held, force LMB down and force RMB up
-                                ret = Game_MouseButton(0, 1); // LMB down
-                                ret = Game_MouseButton(0, 4); // RMB up
-                            }
-                        }
-                    }
-                    else
-                    {
-                        ret = Game_MouseButton(0 /*SDL_GetMouseState(NULL, NULL)*/, ((cevent->button.state == SDL_PRESSED)?1:2) + ((cevent->button.button == SDL_BUTTON_LEFT)?0:2));
-                    }
+                    ret = Game_MouseButton(0 /*SDL_GetMouseState(NULL, NULL)*/, ((cevent->button.state == SDL_PRESSED)?1:2) + ((cevent->button.button == SDL_BUTTON_LEFT)?0:2));
 
                     if ((Display_MouseLocked || Display_Fullscreen) && !ret)
                     {
@@ -971,40 +710,12 @@ int Game_ProcessMEvents(void)
                             Game_RepositionMouse();
                         }
                     }
-                //senquack - added support for toggling scaling using mouse wheel:
                 }
-        #if SDL_VERSION_ATLEAST(2,0,0)
-            // handled below
-        #else
-                else if (cevent->button.button == SDL_BUTTON_WHEELUP)
-                {
-                    if (cevent->type == SDL_MOUSEBUTTONUP) {
-                        Display_ChangeMode = 1;
-                    }
-                }
-                else if (cevent->button.button == SDL_BUTTON_WHEELDOWN)
-                {
-                    if (cevent->type == SDL_MOUSEBUTTONUP) {
-                        Display_ChangeMode = -1;
-                    }
-                }
-        #endif
 
                 break;
                 // case SDL_MOUSEBUTTONUP, SDL_MOUSEBUTTONDOWN:
-        #if SDL_VERSION_ATLEAST(2,0,0)
-            case SDL_MOUSEWHEEL:
-                if (cevent->wheel.y > 0)
-                {
-                    Display_ChangeMode = 1;
-                }
-                else if (cevent->wheel.y < 0)
-                {
-                    Display_ChangeMode = -1;
-                }
+            default:
                 break;
-                // case SDL_MOUSEWHEEL:
-        #endif
         } // switch(event.type)
 
 

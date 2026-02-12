@@ -223,17 +223,6 @@ int Game_TimerThread(void *data)
         {
             VSyncAction = 0;
 
-            if (Game_VolumeDelta == 1)
-            {
-//senquack - SOUND STUFF
-                Change_HW_Audio_Volume(1);
-            }
-            else if (Game_VolumeDelta == -1)
-            {
-//senquack - SOUND STUFF
-                Change_HW_Audio_Volume(-1);
-            }
-
             Game_VSyncTick++;
 
             Game_FlipScreen();

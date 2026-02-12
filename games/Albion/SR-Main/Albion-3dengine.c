@@ -4609,7 +4609,6 @@ extern "C"
 #endif
 void CCALL draw_3dscene(void)
 {
-#if defined(ALLOW_OPENGL) || SDL_VERSION_ATLEAST(2,0,0)
     if (Game_AdvancedScaling)
     {
         // using factor greater than 6 introduces visible artifacts (oveflow or loss of precision in fixed point calculations)
@@ -4620,7 +4619,6 @@ void CCALL draw_3dscene(void)
         Game_ScreenWidth = Scaler_ScaleFactor * Render_Width;
     }
     else
-#endif
     {
         Engine_RenderWidth = Render_Width;
         Engine_RenderHeight = Render_Height;

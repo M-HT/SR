@@ -1,5 +1,5 @@
 @@
-@@  Copyright (C) 2016-2023 Roman Pauer
+@@  Copyright (C) 2016-2026 Roman Pauer
 @@
 @@  Permission is hereby granted, free of charge, to any person obtaining a copy of
 @@  this software and associated documentation files (the "Software"), to deal in
@@ -24,8 +24,6 @@
 .include "asm_xti.inc"
 
 .arm
-
-.extern Game_ESP_Original_Value
 
 
 .global Game_ExitMain_Asm
@@ -125,4 +123,10 @@ _Game_RunTimer_Asm:
         ldmfd sp!, {v1-v8,pc}
 
 # end procedure Game_RunTimer_Asm
+
+
+.section .bss
+
+Game_ESP_Original_Value:
+.skip 4
 

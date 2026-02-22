@@ -33,6 +33,7 @@
 #include "Game_vars.h"
 #include "Albion-music-midiplugin.h"
 #include "Albion-music-xmiplayer.h"
+#include "Game_memory.h"
 #include "xmi2mid.h"
 #include "midi-plugins.h"
 
@@ -930,7 +931,7 @@ void MidiPlugin_AIL_release_sequence_handle(AIL_sequence *S)
     if (mp_sequence == NULL)
     {
         S->status = MP_STOPPED;
-        free(S);
+        x86_free(S);
         return;
     }
 
@@ -958,7 +959,7 @@ void MidiPlugin_AIL_release_sequence_handle(AIL_sequence *S)
 
     SDL_SemPost(mp_sequence->sem);
 
-    free(S);
+    x86_free(S);
 }
 
 int32_t MidiPlugin_AIL_init_sequence(AIL_sequence *S, void *start, int32_t sequence_num)

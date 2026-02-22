@@ -35,7 +35,7 @@ void Init_Audio(void)
 
     Game_AudioMusicVolume = 128;    // Music's relative loudness x/128
     Game_AudioSampleVolume = 128;   // Sound sample relative loudness x/128
-    Game_MidiSubsystem = 1;
+    Game_MidiSubsystem = 3;
 }
 
 void Init_Audio2(void)

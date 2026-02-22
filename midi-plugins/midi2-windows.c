@@ -23,6 +23,12 @@
  */
 
 #if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+    #define PLUGIN_ENABLED
+#else
+    #undef PLUGIN_ENABLED
+#endif
+
+#ifdef PLUGIN_ENABLED
     #ifndef WINVER
     #define WINVER 0x0602
     #endif
@@ -49,7 +55,7 @@
 
 static int midi_type;
 
-#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
 // Multimedia Class Scheduler Service Functions
 typedef HANDLE(WINAPI *AvSetMmThreadCharacteristicsWFunc) (LPCWSTR TaskName, LPDWORD TaskIndex);
 typedef BOOL(WINAPI *AvRevertMmThreadCharacteristicsFunc) (HANDLE AvrtHandle);
@@ -283,7 +289,7 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 	do_sleep = 1;
 	midi_stream_exists = 1;
 
-	while (1)
+	for (;;)
 	{
 		if (do_sleep)
 		{
@@ -500,6 +506,14 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 			continue;
 		}
 
+		if ((!midi_stream_exists) && (midi_loop_count == 0))
+		{
+			midi_eof = 1;
+			LeaveCriticalSection(&midi_critical_section);
+			do_sleep = 1;
+			continue;
+		}
+
 		events = (midi_event_info *) midi_events;
 		current_event = midi_current_event;
 		base_time = midi_base_time;
@@ -548,17 +562,20 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 		}
 
 		insert_events = 0;
-		if (midi_new_volume != midi_current_volume)
+		if (midi_stream_exists)
 		{
-			midi_current_volume = midi_new_volume;
-			insert_events |= 1;
-		}
-		if (state_mt32_display == 5)
-		{
-			if (GetTickCount() - BaseTicks >= 5000)
+			if (midi_new_volume != midi_current_volume)
 			{
-				state_mt32_display = 2;
-				insert_events |= 2;
+				midi_current_volume = midi_new_volume;
+				insert_events |= 1;
+			}
+			if (state_mt32_display == 5)
+			{
+				if (GetTickCount() - BaseTicks >= 5000)
+				{
+					state_mt32_display = 2;
+					insert_events |= 2;
+				}
 			}
 		}
 
@@ -600,10 +617,10 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 
 				event->dwDeltaTime = 0;
 				event->dwStreamID = 0;
-				event->dwEvent = MEVT_F_LONG | 11;
+				event->dwEvent = MEVT_F_LONG | (sizeof(sysex_mt32_reset_display) - 1);
 
-				memcpy(event->dwParms, sysex_mt32_reset_display, 11);
-				current_queue_send->header.dwBytesRecorded += offsetof(MIDIEVENT, dwParms) + ((11 + 3) & ~3);
+				memcpy(event->dwParms, sysex_mt32_reset_display, sizeof(sysex_mt32_reset_display) - 1);
+				current_queue_send->header.dwBytesRecorded += offsetof(MIDIEVENT, dwParms) + ((sizeof(sysex_mt32_reset_display) + 2) & ~3);
 			}
 
 			if (MMSYSERR_NOERROR == midiStreamOut(hStream, &(current_queue_send->header), sizeof(MIDIHDR)))
@@ -707,7 +724,7 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 
 		midi_current_event = current_event;
 
-		if (current_queue_send->header.dwBytesRecorded)
+		if (current_queue_send->header.dwBytesRecorded && midi_stream_exists)
 		{
 			if (MMSYSERR_NOERROR == midiStreamOut(hStream, &(current_queue_send->header), sizeof(MIDIHDR)))
 			{
@@ -1270,7 +1287,7 @@ static int MIDI_PLUGIN2_API play(void const *midibuffer, long int size, int loop
 
     if (loop_count < -1) loop_count = -1;
 
-#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
 	if (hStream == NULL) return -3;
 
 	close_midi();
@@ -1364,7 +1381,7 @@ static int MIDI_PLUGIN2_API play(void const *midibuffer, long int size, int loop
 
 static int MIDI_PLUGIN2_API pause(void)
 {
-#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
 	if (hStream == NULL) return -1;
 	if (!midi_loaded) return -2;
 
@@ -1432,7 +1449,7 @@ static int MIDI_PLUGIN2_API pause(void)
 
 static int MIDI_PLUGIN2_API resume(void)
 {
-#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
 	if (hStream == NULL) return -1;
 	if (!midi_loaded) return -2;
 
@@ -1463,7 +1480,7 @@ static int MIDI_PLUGIN2_API resume(void)
 
 static int MIDI_PLUGIN2_API halt(void)
 {
-#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
 	if (hStream == NULL) return -1;
 
 	close_midi();
@@ -1477,7 +1494,7 @@ static int MIDI_PLUGIN2_API set_volume(unsigned char volume) // volume = 0 - 127
 {
     if (volume > 127) volume = 127;
 
-#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
 	if (hStream == NULL) return -1;
 
 	midi_new_volume = volume;
@@ -1491,7 +1508,7 @@ static int MIDI_PLUGIN2_API set_loop_count(int loop_count) // -1 = unlimited
 {
     if (loop_count < -1) loop_count = -1;
 
-#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
 	if (hStream == NULL) return -1;
 	if (!midi_loaded) return -2;
 
@@ -1504,7 +1521,7 @@ static int MIDI_PLUGIN2_API set_loop_count(int loop_count) // -1 = unlimited
 
 static void MIDI_PLUGIN2_API shutdown_plugin(void)
 {
-#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
 	if (hNotificationInstance != NULL)
 	{
 		dyn_CM_Unregister_Notification(hNotificationInstance);
@@ -1614,7 +1631,7 @@ int MIDI_PLUGIN2_API initialize_midi_plugin2(midi_plugin2_parameters const *para
     functions->set_loop_count = &set_loop_count;
     functions->shutdown_plugin = &shutdown_plugin;
 
-#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
 {
 	char const *device_name;
 	unsigned char const *sysex_events, *controller_events;

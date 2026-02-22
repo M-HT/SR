@@ -835,7 +835,13 @@ static int Game_Initialize(void)
         return -3;
     }
 
-    Game_FrameBuffer = (uint8_t *) ((65535 + (uintptr_t)Game_FrameMemory) & ~(uintptr_t)0xffff);
+    // 32-bit pointer to frame buffer must be aligned to 65536 bytes
+    {
+        PTR32(uint8_t) frame_buffer;
+        frame_buffer = Game_FrameMemory;
+        SET_PTR32_VALUE(frame_buffer, (GET_PTR32_VALUE(frame_buffer) + 65535) & ~(uint32_t)0xffff);
+        Game_FrameBuffer = frame_buffer;
+    }
     memset(Game_FrameBuffer, 0, 65536);
 
     if (sizeof(void *) > 4)
@@ -1200,7 +1206,7 @@ static void Game_Event_Loop(void)
 
     PumpEvents = 1;
 
-    while (!Thread_Exited)
+    while (!Thread_Exited || !Thread_Exit)
     {
         NumEvents = SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
         if (NumEvents <= 0) // error or no events

@@ -154,8 +154,10 @@ EXTERNAL_VARIABLE int Game_MidiSubsystem;			/* MIDI subsystem
                                                        12: AWE32 - pcem emu8k emulator
                                                        21: native Windows
                                                        22: ALSA
+                                                       23: CoreMIDI
                                                        31: MT32 - native Windows
-                                                       32: MT32 - ALSA */
+                                                       32: MT32 - ALSA
+                                                       33: MT32 - CoreMIDI */
 EXTERNAL_VARIABLE int Game_LoadMidiFiles;			// Load midi files from disk ?
 EXTERNAL_VARIABLE int Game_MidiRemapGM2MT32;		// Remap General MIDI to MT32
 EXTERNAL_VARIABLE char *Game_SoundFontPath;			/* Path to SoundFont file */

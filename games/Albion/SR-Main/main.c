@@ -313,8 +313,8 @@ static void Game_Display_Create(void)
 
         if (Game_AdvancedScaling && (Scaler_ScaleFactor > 2))
         {
-            free(Game_ScreenViewpartOverlay[0]);
-            Game_ScreenViewpartOverlay[0] = (uint8_t *) malloc(Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * 192 * 2);
+            x86_free(Game_ScreenViewpartOverlay[0]);
+            Game_ScreenViewpartOverlay[0] = (uint8_t *) x86_malloc(Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * 192 * 2);
             Game_ScreenViewpartOverlay[1] = Game_ScreenViewpartOverlay[0] + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * 192;
             Game_OverlayDisplay.ScreenViewpartOverlay = Game_OverlayDraw.ScreenViewpartOverlay = Game_ScreenViewpartOverlay[0];
         }
@@ -620,7 +620,7 @@ static void Game_Cleanup(void)
 
     if (Game_ScreenViewpartOverlay[0] != NULL)
     {
-        free(Game_ScreenViewpartOverlay[0]);
+        x86_free(Game_ScreenViewpartOverlay[0]);
         Game_ScreenViewpartOverlay[0] = NULL;
         Game_ScreenViewpartOverlay[1] = NULL;
     }
@@ -990,7 +990,7 @@ static int Game_Initialize(void)
 
     if (Game_UseEnhanced3DEngineNewValue)
     {
-        Game_ScreenViewpartOverlay[0] = (uint8_t *) malloc(800*384*2);
+        Game_ScreenViewpartOverlay[0] = (uint8_t *) x86_malloc(800*384*2);
         if (Game_ScreenViewpartOverlay[0] == NULL)
         {
             fprintf(stderr, "Error: Not enough memory\n");
@@ -1282,7 +1282,7 @@ static void Game_Event_Loop(void)
 
     PumpEvents = 1;
 
-    while (!Thread_Exited)
+    while (!Thread_Exited || !Thread_Exit)
     {
         NumEvents = SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
         if (NumEvents <= 0) // error or no events

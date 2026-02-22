@@ -131,8 +131,10 @@ EXTERNAL_VARIABLE int Game_MidiSubsystem;			/* MIDI subsystem
                                                        3: ADLMIDI
                                                        11: native Windows
                                                        12: ALSA
+                                                       13: CoreMIDI
                                                        21: MT32 - native Windows
-                                                       22: MT32 - ALSA */
+                                                       22: MT32 - ALSA
+                                                       23: MT32 - CoreMIDI */
 EXTERNAL_VARIABLE char *Game_SoundFontPath;			/* Path to SoundFont file */
 EXTERNAL_VARIABLE char *Game_MidiDevice;			/* MIDI device name */
 EXTERNAL_VARIABLE int Game_OPL3Emulator;			/* OPL3 emulator

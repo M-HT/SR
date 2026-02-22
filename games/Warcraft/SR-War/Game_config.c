@@ -204,6 +204,10 @@ void Game_ReadConfig(void)
                 {
                     Game_MidiSubsystem = 12;
                 }
+                else if ( strcasecmp(param, "coremidi") == 0 ) // param equals "coremidi"
+                {
+                    Game_MidiSubsystem = 13;
+                }
                 else if ( strcasecmp(param, "mt32-nativewindows") == 0 ) // param equals "mt32-nativewindows"
                 {
                     Game_MidiSubsystem = 21;
@@ -211,6 +215,10 @@ void Game_ReadConfig(void)
                 else if ( strcasecmp(param, "mt32-alsa") == 0 ) // param equals "mt32-alsa"
                 {
                     Game_MidiSubsystem = 22;
+                }
+                else if ( strcasecmp(param, "mt32-coremidi") == 0 ) // param equals "mt32-coremidi"
+                {
+                    Game_MidiSubsystem = 23;
                 }
                 else if ( strcasecmp(param, "sdl_mixer") == 0 ) // param equals "sdl_mixer"
                 {

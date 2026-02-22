@@ -95,7 +95,7 @@ int16_t Game_ProcessAudio(void)
 
     if (!(Game_samples[0].active))
     {
-        if (Game_samples[1].active)
+        if (Game_samples[1].active && !sound_initialized)
         {
             start = Game_samples[0].start;
 

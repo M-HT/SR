@@ -22,7 +22,13 @@
  *
  */
 
-#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__) || defined(__APPLE__))
+    #define PLUGIN_ENABLED
+#else
+    #undef PLUGIN_ENABLED
+#endif
+
+#ifdef PLUGIN_ENABLED
     #include <alsa/asoundlib.h>
     #include <pthread.h>
     #include <limits.h>
@@ -35,7 +41,7 @@
 
 static int midi_type;
 
-#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
 typedef struct {
     uint32_t tick;
     uint8_t type, channel, data1, data2;
@@ -261,7 +267,7 @@ static void *midi_thread_proc(void *arg)
     do_sleep = 1;
     dst_port_exists = 1;
 
-    while (1)
+    for (;;)
     {
         if (do_sleep)
         {
@@ -379,9 +385,15 @@ static void *midi_thread_proc(void *arg)
                         if ((input_event->data.addr.client == dst_client_id) && (input_event->data.addr.port == dst_port_id))
                         {
                             dst_port_exists = 0;
-                            if (midi_loaded && (midi_loop_count == 0))
+
+                            if (midi_loaded)
                             {
-                                midi_eof = 1;
+                                pthread_mutex_lock(&midi_mutex);
+                                if (midi_loaded && (midi_loop_count == 0))
+                                {
+                                    midi_eof = 1;
+                                }
+                                pthread_mutex_unlock(&midi_mutex);
                             }
                         }
                     }
@@ -402,6 +414,14 @@ static void *midi_thread_proc(void *arg)
 
         if ((!midi_loaded) || (!midi_playing) || (midi_eof))
         {
+            pthread_mutex_unlock(&midi_mutex);
+            do_sleep = 1;
+            continue;
+        }
+
+        if ((!dst_port_exists) && (midi_loop_count == 0))
+        {
+            midi_eof = 1;
             pthread_mutex_unlock(&midi_mutex);
             do_sleep = 1;
             continue;
@@ -440,20 +460,23 @@ static void *midi_thread_proc(void *arg)
         }
 
         insert_events = 0;
-        if (midi_new_volume != midi_current_volume)
+        if (dst_port_exists)
         {
-            midi_current_volume = midi_new_volume;
-            insert_events |= 1;
-        }
-        if (state_mt32_display == 5)
-        {
-            clock_gettime(CLOCK_MONOTONIC, &_tp);
-            _tp.tv_sec -= base_tp.tv_sec;
-            if (_tp.tv_nsec < base_tp.tv_nsec) _tp.tv_sec--;
-            if (_tp.tv_sec >= 5)
+            if (midi_new_volume != midi_current_volume)
             {
-                state_mt32_display = 2;
-                insert_events |= 2;
+                midi_current_volume = midi_new_volume;
+                insert_events |= 1;
+            }
+            if (state_mt32_display == 5)
+            {
+                clock_gettime(CLOCK_MONOTONIC, &_tp);
+                _tp.tv_sec -= base_tp.tv_sec;
+                if (_tp.tv_nsec < base_tp.tv_nsec) _tp.tv_sec--;
+                if (_tp.tv_sec >= 5)
+                {
+                    state_mt32_display = 2;
+                    insert_events |= 2;
+                }
             }
         }
 
@@ -478,7 +501,7 @@ static void *midi_thread_proc(void *arg)
             }
             if (insert_events & 2)
             {
-                snd_seq_ev_set_variable(&event, 11, (uint8_t *)sysex_mt32_reset_display);
+                snd_seq_ev_set_variable(&event, sizeof(sysex_mt32_reset_display) - 1, (uint8_t *)sysex_mt32_reset_display);
                 event.type = SND_SEQ_EVENT_SYSEX;
                 snd_seq_event_output(midi_seq, &event);
             }
@@ -585,7 +608,10 @@ static void *midi_thread_proc(void *arg)
                     break;
             }
 
-            snd_seq_event_output(midi_seq, &event);
+            if (dst_port_exists)
+            {
+                snd_seq_event_output(midi_seq, &event);
+            }
 
             current_event++;
             if (current_event > num_events) break;
@@ -1054,7 +1080,7 @@ static int MIDI_PLUGIN2_API play(void const *midibuffer, long int size, int loop
 
     if (loop_count < -1) loop_count = -1;
 
-#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
     if (midi_seq == NULL) return -3;
 
     close_midi();
@@ -1134,7 +1160,7 @@ static int MIDI_PLUGIN2_API play(void const *midibuffer, long int size, int loop
 
 static int MIDI_PLUGIN2_API pause_0(void)
 {
-#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
     snd_seq_event_t event;
     int chan, note, num;
 
@@ -1158,7 +1184,7 @@ static int MIDI_PLUGIN2_API pause_0(void)
         if (state_mt32_display == 2 && !mt32_delay)
         {
             state_mt32_display = 4;
-            snd_seq_ev_set_variable(&event, 30, (uint8_t *)sysex_mt32_display);
+            snd_seq_ev_set_variable(&event, sizeof(sysex_mt32_display) - 1, (uint8_t *)sysex_mt32_display);
             event.type = SND_SEQ_EVENT_SYSEX;
             snd_seq_event_output(midi_seq, &event);
         }
@@ -1217,7 +1243,7 @@ static int MIDI_PLUGIN2_API pause_0(void)
 
 static int MIDI_PLUGIN2_API resume(void)
 {
-#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
     snd_seq_event_t event;
 
     if (midi_seq == NULL) return -1;
@@ -1256,7 +1282,7 @@ static int MIDI_PLUGIN2_API resume(void)
         if (state_mt32_display == 4)
         {
             state_mt32_display = 2;
-            snd_seq_ev_set_variable(&event, 11, (uint8_t *)sysex_mt32_reset_display);
+            snd_seq_ev_set_variable(&event, sizeof(sysex_mt32_reset_display), (uint8_t *)sysex_mt32_reset_display);
             event.dest.client = dst_client_id;
             event.dest.port = dst_port_id;
             event.type = SND_SEQ_EVENT_SYSEX;
@@ -1276,7 +1302,7 @@ static int MIDI_PLUGIN2_API resume(void)
 
 static int MIDI_PLUGIN2_API halt(void)
 {
-#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
     if (midi_seq == NULL) return -1;
 
     close_midi();
@@ -1290,7 +1316,7 @@ static int MIDI_PLUGIN2_API set_volume(unsigned char volume) // volume = 0 - 127
 {
     if (volume > 127) volume = 127;
 
-#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
     if (midi_seq == NULL) return -1;
 
     midi_new_volume = volume;
@@ -1304,7 +1330,7 @@ static int MIDI_PLUGIN2_API set_loop_count(int loop_count) // -1 = unlimited
 {
     if (loop_count < -1) loop_count = -1;
 
-#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
     if (midi_seq == NULL) return -1;
     if (!midi_loaded) return -2;
 
@@ -1317,7 +1343,7 @@ static int MIDI_PLUGIN2_API set_loop_count(int loop_count) // -1 = unlimited
 
 static void MIDI_PLUGIN2_API shutdown_plugin(void)
 {
-#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
     if (midi_seq != NULL)
     {
         if (midi_loaded)
@@ -1394,7 +1420,7 @@ int MIDI_PLUGIN2_API initialize_midi_plugin2(midi_plugin2_parameters const *para
     functions->set_loop_count = &set_loop_count;
     functions->shutdown_plugin = &shutdown_plugin;
 
-#if !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#ifdef PLUGIN_ENABLED
 {
     char const *address;
     unsigned char const *sysex_events, *controller_events;

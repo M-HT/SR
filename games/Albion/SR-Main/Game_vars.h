@@ -139,8 +139,10 @@ EXTERNAL_VARIABLE int Game_MidiSubsystem;			/* MIDI subsystem
                                                        3: ADLMIDI
                                                        11: native Windows
                                                        12: ALSA
+                                                       13: CoreMIDI
                                                        21: MT32 - native Windows
-                                                       22: MT32 - ALSA */
+                                                       22: MT32 - ALSA
+                                                       23: MT32 - CoreMIDI */
 EXTERNAL_VARIABLE char *Game_SoundFontPath;			/* Path to SoundFont file */
 EXTERNAL_VARIABLE char *Game_MidiDevice;			/* MIDI device name */
 EXTERNAL_VARIABLE int Game_OPL3Emulator;			/* OPL3 emulator
@@ -258,7 +260,7 @@ extern "C" {
 #endif
 
 extern uint32_t mouse_pos[2];
-extern PTR32(uint8_t) screen_window_ptr[4];
+extern PTR32(uint8_t) screen_window_ptr[]; // if this is defined as screen_window_ptr[4], then clang thinks it's aligned to 16 bytes (it's not) and generates movdqa instruction which crashes
 extern uint8_t keyboard_keys[0x80];
 
 extern int32_t errno_val;

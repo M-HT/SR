@@ -226,6 +226,10 @@ void Game_ReadConfig(void)
                 {
                     Game_MidiSubsystem = 22;
                 }
+                else if ( strcasecmp(param, "coremidi") == 0 ) // param equals "coremidi"
+                {
+                    Game_MidiSubsystem = 23;
+                }
                 else if ( strcasecmp(param, "sdl_mixer") == 0 ) // param equals "sdl_mixer"
                 {
                     Game_MidiSubsystem = 0;
@@ -249,6 +253,10 @@ void Game_ReadConfig(void)
                 else if ( strcasecmp(param, "mt32-alsa") == 0 ) // param equals "mt32-alsa"
                 {
                     Game_MidiSubsystem = 32;
+                }
+                else if ( strcasecmp(param, "mt32-coremidi") == 0 ) // param equals "mt32-coremidi"
+                {
+                    Game_MidiSubsystem = 33;
                 }
             }
             else if ( strcasecmp(str, "SoundFont_Path") == 0 ) // str equals "SoundFont_Path"

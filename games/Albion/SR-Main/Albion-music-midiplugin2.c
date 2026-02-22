@@ -33,6 +33,7 @@
 #include "Game_vars.h"
 #include "Albion-music-midiplugin2.h"
 #include "Albion-music-xmiplayer.h"
+#include "Game_memory.h"
 #include "xmi2mid.h"
 #include "midi-plugins.h"
 #include "midi-plugins2.h"
@@ -482,7 +483,6 @@ int MidiPlugin2_Startup(void)
     #define get_proc_address GetProcAddress
 
     if (Game_MidiSubsystem == 11 || Game_MidiSubsystem == 21) plugin_name = ".\\midi2-windows.dll";
-    else if (Game_MidiSubsystem == 12 || Game_MidiSubsystem == 22) plugin_name = ".\\midi2-alsa.dll";
     else
     {
         fprintf(stderr, "%s: error: %s\n", "midi2", "unknown plugin");
@@ -501,8 +501,11 @@ int MidiPlugin2_Startup(void)
     #define free_library dlclose
     #define get_proc_address dlsym
 
-    if (Game_MidiSubsystem == 11 || Game_MidiSubsystem == 21) plugin_name = "./midi2-windows.so";
-    else if (Game_MidiSubsystem == 12 || Game_MidiSubsystem == 22) plugin_name = "./midi2-alsa.so";
+#if defined(__APPLE__)
+    if (Game_MidiSubsystem == 13 || Game_MidiSubsystem == 23) plugin_name = "./midi2-coremidi.so";
+#else
+    if (Game_MidiSubsystem == 12 || Game_MidiSubsystem == 22) plugin_name = "./midi2-alsa.so";
+#endif
     else
     {
         fprintf(stderr, "%s: error: %s\n", "midi2", "unknown plugin");
@@ -714,7 +717,7 @@ void MidiPlugin2_AIL_release_sequence_handle(AIL_sequence *S)
     if (mp_sequence == NULL)
     {
         S->status = MP_STOPPED;
-        free(S);
+        x86_free(S);
         return;
     }
 
@@ -745,7 +748,7 @@ void MidiPlugin2_AIL_release_sequence_handle(AIL_sequence *S)
 
     SDL_SemPost(mp_sequence->sem);
 
-    free(S);
+    x86_free(S);
 }
 
 int32_t MidiPlugin2_AIL_init_sequence(AIL_sequence *S, void *start, int32_t sequence_num)

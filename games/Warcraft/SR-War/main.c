@@ -1028,7 +1028,7 @@ static void Game_Event_Loop(void)
 
     PumpEvents = 1;
 
-    while (!Thread_Exited)
+    while (!Thread_Exited || !Thread_Exit)
     {
         NumEvents = SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
         if (NumEvents <= 0) // error or no events

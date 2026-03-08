@@ -27,7 +27,7 @@ IF NOT "%LOCAL_USE_SPEEXDSP%" == "" (
 gcc -s -shared -static-libgcc -o midi-wildmidi.dll -m64 -O2 -Wall %SPEEXDSP_COMPILE% midi-wildmidi.c midi.def -I./include -lWildMidi %SPEEXDSP_LINK% -L./lib/x64
 gcc -s -shared -o midi-bassmidi.dll -m64 -O2 -Wall midi-bassmidi.c midi.def -I./include -lbassmidi -lbass -L./lib/x64
 gcc -s -shared -static-libgcc -o midi-adlmidi.dll -m64 -O2 -Wall %SPEEXDSP_COMPILE% midi-adlmidi.c midi.def -I./include -lADLMIDI %SPEEXDSP_LINK% -L./lib/x64
-gcc -s -shared -static-libgcc -o midi2-windows.dll -m64 -O2 -Wall midi2-windows.c midi2.def -lwinmm
+gcc -s -shared -static-libgcc -o midi2-windows.dll -m64 -O2 -Wall midi2-windows.c midi2.def -lwinmm -luuid
 
 cd xcom12
 

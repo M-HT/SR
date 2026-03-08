@@ -107,7 +107,7 @@ int Game_TimerThread(void *data)
     LastTimerTick = SDL_GetTicks();
     TickCounter = 0;
 
-    while (1)
+    for (;;)
     {
         SDL_Delay(1);
 
@@ -138,7 +138,7 @@ int Game_TimerThread(void *data)
 
         if (Thread_Exit && Thread_Exited)
         {
-            return 0;
+            break;
         }
 
         if (SMK_Playing) continue;

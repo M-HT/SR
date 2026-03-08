@@ -31,7 +31,7 @@ link /NOLOGO /DLL /OUT:midi-bassmidi.dll midi-bassmidi.obj /DEF:midi.def /MACHIN
 cl /nologo /c /O2 /W3 /MD %SPEEXDSP_COMPILE% midi-adlmidi.c /I.\include
 link /NOLOGO /DLL /OUT:midi-adlmidi.dll midi-adlmidi.obj /DEF:midi.def /MACHINE:X64 ADLMIDI.lib %SPEEXDSP_LINK% /LIBPATH:.\lib\x64
 cl /nologo /c /O2 /W3 /MD midi2-windows.c
-link /NOLOGO /DLL /OUT:midi2-windows.dll midi2-windows.obj /DEF:midi2.def /MACHINE:X64 winmm.lib
+link /NOLOGO /DLL /OUT:midi2-windows.dll midi2-windows.obj /DEF:midi2.def /MACHINE:X64 winmm.lib uuid.lib
 
 del *.obj *.exp *.lib
 

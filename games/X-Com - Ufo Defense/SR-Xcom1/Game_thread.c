@@ -253,6 +253,9 @@ void Game_StopMain(void)
 
 int Game_MainThread(void *data)
 {
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+    Game_InitThreadConcurency();
+#endif
 
     Game_CleanState(Thread_Exit);
 
@@ -316,6 +319,9 @@ int Game_MainThread(void *data)
         SDL_PushEvent(&event);
     }
 
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+    Game_CloseThreadConcurency();
+#endif
     return 0;
 }
 
@@ -333,10 +339,10 @@ int Game_FlipThread(void *data)
     LastTimer = Game_VSyncTick;
 #endif
 
-    while (1)
+    for (;;)
     {
         SDL_SemWait(Game_FlipSem);
-        if (Thread_Exit) return 0;
+        if (Thread_Exit) break;
 
 #ifdef FPS_WRITE
         CurrentTicks = SDL_GetTicks();
@@ -377,6 +383,8 @@ fprintf(stderr, "fps: %.3f    tps: %.3f\n", (float) NumDisplay * 1000 / (Current
 
         SDL_PushEvent(&event);
 
-        if (Thread_Exit) return 0;
+        if (Thread_Exit) break;
     }
+
+    return 0;
 }

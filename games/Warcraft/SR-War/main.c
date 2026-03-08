@@ -56,6 +56,90 @@
 #include "audio.h"
 #include "input.h"
 
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+#if !defined(LOAD_LIBRARY_SEARCH_SYSTEM32)
+#define LOAD_LIBRARY_SEARCH_SYSTEM32 0x800
+#endif
+
+static int thread_concurency_libs;
+static HRESULT (WINAPI *dyn_RoInitialize)(DWORD);
+static void (WINAPI *dyn_RoUninitialize)();
+static HRESULT (WINAPI *dyn_CoInitializeEx)(LPVOID, DWORD);
+static void (WINAPI *dyn_CoUninitialize)();
+
+static void Game_InitThreadConcurencyLibs(void)
+{
+    HMODULE hLib;
+
+    thread_concurency_libs = 0;
+
+    hLib = LoadLibraryExW(L"combase.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (hLib != NULL)
+    {
+        dyn_RoInitialize = (HRESULT (WINAPI *)(DWORD))GetProcAddress(hLib, "RoInitialize");
+        dyn_RoUninitialize = (void (WINAPI *)())GetProcAddress(hLib, "RoUninitialize");
+        if (dyn_RoInitialize != NULL && dyn_RoUninitialize != NULL)
+        {
+            thread_concurency_libs = 1;
+        }
+        else
+        {
+            FreeLibrary(hLib);
+            hLib = NULL;
+        }
+    }
+
+    if (thread_concurency_libs == 0)
+    {
+        hLib = LoadLibraryExW(L"ole32.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+        if (hLib != NULL)
+        {
+            dyn_CoInitializeEx = (HRESULT (WINAPI *)(LPVOID, DWORD))GetProcAddress(hLib, "CoInitializeEx");
+            dyn_CoUninitialize = (void (WINAPI *)())GetProcAddress(hLib, "CoUninitialize");
+            if (dyn_CoInitializeEx != NULL && dyn_CoUninitialize != NULL)
+            {
+                thread_concurency_libs = 2;
+            }
+            else
+            {
+                FreeLibrary(hLib);
+                hLib = NULL;
+            }
+        }
+    }
+
+    Game_InitThreadConcurency();
+}
+
+void Game_InitThreadConcurency(void)
+{
+    if (thread_concurency_libs == 1)
+    {
+        dyn_RoInitialize(1); // RO_INIT_MULTITHREADED
+    }
+    else if (thread_concurency_libs == 2)
+    {
+        dyn_CoInitializeEx(NULL, 0); // COINIT_MULTITHREADED
+    }
+}
+
+void Game_CloseThreadConcurency(void)
+{
+    if (thread_concurency_libs == 1)
+    {
+        dyn_RoUninitialize();
+    }
+    else if (thread_concurency_libs == 2)
+    {
+        dyn_CoUninitialize();
+    }
+}
+
+#endif
+
 
 static void Display_RecalculateResolution(int w, int h)
 {
@@ -1281,17 +1365,18 @@ static void Game_Event_Loop(void)
                         break;
                         // case EC_DISPLAY_FLIP_FINISH:
                     case EC_PROGRAM_QUIT:
-                        if (Thread_Exit) exit(1);
+                        if (!Thread_Exit)
+                        {
+                            Thread_Exit = 1;
 
-                        Thread_Exit = 1;
+                            SDL_SemPost(Game_FlipSem);
 
-                        SDL_SemPost(Game_FlipSem);
+                            SDL_WaitThread(FlipThread, NULL);
 
-                        SDL_WaitThread(FlipThread, NULL);
+                            SDL_WaitThread(MainThread, NULL);
 
-                        SDL_WaitThread(MainThread, NULL);
-
-                        SDL_WaitThread(TimerThread, NULL);
+                            SDL_WaitThread(TimerThread, NULL);
+                        }
 
                         break;
                         // case EC_PROGRAM_QUIT:
@@ -1339,6 +1424,10 @@ int main (int argc, char *argv[])
         fprintf(stderr, "Error initializing memory allocator\n");
         return 1;
     }
+#endif
+
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+    Game_InitThreadConcurencyLibs();
 #endif
 
     Game_ConfigFilename[0] = 0;
@@ -1408,6 +1497,10 @@ int main (int argc, char *argv[])
     Cleanup_Input();
     Cleanup_Audio();
     Cleanup_Display();
+
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+    Game_CloseThreadConcurency();
+#endif
 
 #if !defined(x86_malloc)
     x86_deinit_malloc();

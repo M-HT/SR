@@ -420,7 +420,9 @@ static void *midi_thread_proc(void *arg)
                 int32_t unique_id;
                 if (MIDIObjectGetIntegerProperty(midi_endpoint, kMIDIPropertyUniqueID, &unique_id) == noErr)
                 {
+                    pthread_mutex_lock(&notification_mutex);
                     midi_unique_id = unique_id;
+                    pthread_mutex_unlock(&notification_mutex);
                 }
             }
 
@@ -1327,12 +1329,12 @@ static void notify_procedure(const MIDINotification *message, void * __nullable 
             {
                 if (MIDIObjectGetIntegerProperty(addremove->child, kMIDIPropertyUniqueID, &unique_id) == noErr)
                 {
+                    pthread_mutex_lock(&notification_mutex);
                     if (unique_id == midi_unique_id)
                     {
-                        pthread_mutex_lock(&notification_mutex);
                         notification_events |= NOTIFY_ADD;
-                        pthread_mutex_unlock(&notification_mutex);
                     }
+                    pthread_mutex_unlock(&notification_mutex);
                 }
             }
             break;
@@ -1364,12 +1366,12 @@ static void notify_procedure(const MIDINotification *message, void * __nullable 
                     {
                         if (MIDIObjectGetIntegerProperty(propchange->object, kMIDIPropertyUniqueID, &unique_id) == noErr)
                         {
+                            pthread_mutex_lock(&notification_mutex);
                             if (unique_id == midi_unique_id)
                             {
-                                pthread_mutex_lock(&notification_mutex);
                                 notification_events |= NOTIFY_ADD;
-                                pthread_mutex_unlock(&notification_mutex);
                             }
+                            pthread_mutex_unlock(&notification_mutex);
                         }
                     }
                 }

@@ -126,7 +126,7 @@ int Game_TimerThread(void *data)
     TickCounter = 0;
     SkipDelay = 0;
 
-    while (1)
+    for (;;)
     {
         if (SkipDelay)
         {
@@ -164,7 +164,7 @@ int Game_TimerThread(void *data)
 
         if (Thread_Exit && Thread_Exited)
         {
-            return 0;
+            break;
         }
 
         Game_TimerTick++;

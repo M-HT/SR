@@ -62,16 +62,21 @@
 #define GAME_MAX_SCALE_FACTOR (6)
 
 
-#if !defined(MAX_PATH)
-    #if defined(_MAX_PATH)
-        #define MAX_PATH _MAX_PATH
-    #elif defined(_POSIX_PATH_MAX)
-        #define MAX_PATH _POSIX_PATH_MAX
-    #elif defined(PATH_MAX)
-        #define MAX_PATH PATH_MAX
-    #else
-        #define MAX_PATH 256
-    #endif
+#if !defined(MAX_PATH) || MAX_PATH < 260
+    #undef MAX_PATH
+    #define MAX_PATH 260
+#endif
+#if defined(_MAX_PATH) && _MAX_PATH > MAX_PATH
+    #undef MAX_PATH
+    #define MAX_PATH _MAX_PATH
+#endif
+#if defined(_POSIX_PATH_MAX) && _POSIX_PATH_MAX > MAX_PATH
+    #undef MAX_PATH
+    #define MAX_PATH _POSIX_PATH_MAX
+#endif
+#if defined(PATH_MAX) && PATH_MAX > MAX_PATH
+    #undef MAX_PATH
+    #define MAX_PATH PATH_MAX
 #endif
 
 

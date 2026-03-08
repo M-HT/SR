@@ -23,7 +23,13 @@
  */
 
 #include <stdlib.h>
+#if !(defined(__GNUC__) && defined(_WIN64))
 #include <setjmp.h>
+#if defined(_MSC_VER) && defined(_WIN64)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+#endif
 #include "llasm_cpu.h"
 
 
@@ -42,7 +48,15 @@ extern void CCALL c_RunProcEBP(CPU);
 
 EXTERNCVAR uint32_t X86_InterruptFlag;
 
+#if defined(__GNUC__) && defined(_WIN64)
+static intptr_t exit_env[5];
+#else
 static jmp_buf exit_env;
+#if defined(_MSC_VER) && defined(_WIN64)
+static int (*dyn_intrinsic_setjmp)(jmp_buf, void *);
+static void (*dyn_longjmp)(jmp_buf, int);
+#endif
+#endif
 
 static int main_return_value;
 
@@ -50,18 +64,50 @@ static int main_return_value;
 EXTERNC void CCALL Game_ExitMain_Asm(int32_t status)
 {
     main_return_value = status;
+#if defined(__GNUC__) && defined(_WIN64)
+    __builtin_longjmp(exit_env, 1);
+#elif defined(_MSC_VER) && defined(_WIN64)
+    (dyn_longjmp != NULL) ? dyn_longjmp(exit_env, 1) : longjmp(exit_env, 1);
+#else
     longjmp(exit_env, 1);
+#endif
 }
 
 void CCALL Game_StopMain_Asm(void)
 {
     main_return_value = 1;
+#if defined(__GNUC__) && defined(_WIN64)
+    __builtin_longjmp(exit_env, 1);
+#elif defined(_MSC_VER) && defined(_WIN64)
+    (dyn_longjmp != NULL) ? dyn_longjmp(exit_env, 1) : longjmp(exit_env, 1);
+#else
     longjmp(exit_env, 1);
+#endif
 }
 
 int CCALL Game_Main_Asm(int argc, char *argv[], void *main_proc)
 {
+#if defined(__GNUC__) && defined(_WIN64)
+    if (__builtin_setjmp(exit_env) == 0)
+#elif defined(_MSC_VER) && defined(_WIN64)
+    HMODULE hLib;
+
+    hLib = GetModuleHandleW(L"ucrtbase.dll");
+    if (hLib != NULL)
+    {
+        dyn_intrinsic_setjmp = (int (*)(jmp_buf, void *))GetProcAddress(hLib, "__intrinsic_setjmp");
+        dyn_longjmp = (void (*)(jmp_buf, int))GetProcAddress(hLib, "longjmp");
+    }
+    if (hLib == NULL || dyn_intrinsic_setjmp == NULL || dyn_longjmp == NULL)
+    {
+        dyn_intrinsic_setjmp = NULL;
+        dyn_longjmp = NULL;
+    }
+
+    if (((dyn_intrinsic_setjmp != NULL) ? dyn_intrinsic_setjmp(exit_env, NULL) : setjmp(exit_env)) == 0)
+#else
     if (setjmp(exit_env) == 0)
+#endif
     {
         _cpu *cpu;
         int retval;

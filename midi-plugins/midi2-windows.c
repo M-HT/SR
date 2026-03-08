@@ -64,6 +64,10 @@ typedef BOOL(WINAPI *AvRevertMmThreadCharacteristicsFunc) (HANDLE AvrtHandle);
 typedef CONFIGRET(WINAPI *CM_Register_Notification_Func) (PCM_NOTIFY_FILTER pFilter, PVOID pContext, PCM_NOTIFY_CALLBACK pCallback, PHCMNOTIFICATION pNotifyContext);
 typedef CONFIGRET(WINAPI *CM_Unregister_Notification_Func) (HCMNOTIFICATION NotifyContext);
 
+#if !defined(LOAD_LIBRARY_SEARCH_SYSTEM32)
+	#define LOAD_LIBRARY_SEARCH_SYSTEM32 0x800
+#endif
+
 enum {
 	NOTIFY_UNREGISTER = 1 << 0,
 	NOTIFY_REREGISTER = 1 << 1,
@@ -72,8 +76,8 @@ enum {
 
 typedef struct {
 	uint32_t tick;
-	uint32_t event;
-	uint8_t *sysex;
+	uint32_t data_or_len;
+	void *sysex;
 	uint32_t time;
 } midi_event_info;
 
@@ -120,11 +124,26 @@ static CRITICAL_SECTION midi_critical_section, notification_critical_section;
 
 static void calculate_next_sysex_tick(preprocess_state *state);
 static void calculate_event_time(preprocess_state *state);
-static int add_midi_event(preprocess_state *state, uint8_t status, uint8_t byte1, uint8_t byte2, const uint8_t *data_ptr, unsigned int data_len);
 static void free_midi_data(midi_event_info *data);
+
+#ifdef _WIN64
+static int (*dyn_add_midi_event)(preprocess_state *state, uint8_t status, uint8_t byte1, uint8_t byte2, const uint8_t *data_ptr, unsigned int data_len);
+static int (*dyn_send_initial_sysex_events)(unsigned char const *sysex_events);
+#define add_midi_event dyn_add_midi_event
+#define send_initial_sysex_events dyn_send_initial_sysex_events
+#else
+static int add_midi_event(preprocess_state *state, uint8_t status, uint8_t byte1, uint8_t byte2, const uint8_t *data_ptr, unsigned int data_len);
 static int send_initial_sysex_events(unsigned char const *sysex_events);
+#endif
 
 #include "midi2-common.h"
+
+#ifdef _WIN64
+#undef add_midi_event
+#undef send_initial_sysex_events
+static void shutdown_plugin_common(void);
+#include "midi2-windows-midi2.h"
+#endif
 
 
 static void calculate_next_sysex_tick(preprocess_state *state)
@@ -137,7 +156,7 @@ static void calculate_event_time(preprocess_state *state)
 	div_t divres;
 
 	// calculate event time in nanoseconds
-	divres = div(state->last_tick - state->tempo_tick, state->time_division);
+	divres = div((int)(state->last_tick - state->tempo_tick), (int)state->time_division);
 
 	state->last_time = ( ((1000 * divres.rem) * (uint64_t)state->tempo) / state->time_division )
 	                 + ( (divres.quot * (uint64_t)state->tempo) * 1000 )
@@ -160,7 +179,7 @@ static int add_midi_event(preprocess_state *state, uint8_t status, uint8_t byte1
 
 	if ((status >> 4) != MIDI_STATUS_SYSEX)
 	{
-		event.event = MEVT_F_SHORT | (status) | (((uint32_t)byte1) << 8) | (((uint32_t)byte2) << 16);
+		event.data_or_len = MEVT_F_SHORT | (status) | (((uint32_t)byte1) << 8) | (((uint32_t)byte2) << 16);
 	}
 	else
 	{
@@ -170,9 +189,9 @@ static int add_midi_event(preprocess_state *state, uint8_t status, uint8_t byte1
 			{
 				// time_division is assumed to be positive (ticks per beat / PPQN - Pulses (i.e. clocks) Per Quarter Note)
 
-				event.event = (((uint32_t)MEVT_TEMPO) << 24) | (((uint32_t)(data_ptr[0])) << 16) | (((uint32_t)(data_ptr[1])) << 8) | ((uint32_t)(data_ptr[2]));
+				event.data_or_len = (((uint32_t)MEVT_TEMPO) << 24) | (((uint32_t)(data_ptr[0])) << 16) | (((uint32_t)(data_ptr[1])) << 8) | ((uint32_t)(data_ptr[2]));
 
-				state->tempo = MEVT_EVENTPARM(event.event);
+				state->tempo = MEVT_EVENTPARM(event.data_or_len);
 				state->tempo_tick = state->last_tick;
 				state->tempo_time = state->last_time;
 			}
@@ -180,19 +199,19 @@ static int add_midi_event(preprocess_state *state, uint8_t status, uint8_t byte1
 		}
 		else if ((status == 0xf0) || (status == 0xf7)) // sysex
 		{
-			event.event = data_len + ((status == 0xf0)?1:0);
-			if (event.event == 0) return 0;
-			if ((event.event > 0xffffff) || (offsetof(MIDIEVENT, dwParms) + ((event.event + 3) & ~3) > sizeof(midi_queue_send->buffer))) return 0;
+			event.data_or_len = data_len + ((status == 0xf0)?1:0);
+			if (event.data_or_len == 0) return 0;
+			if ((event.data_or_len > 0xffffff) || (offsetof(MIDIEVENT, dwParms) + ((event.data_or_len + 3) & ~3) > sizeof(midi_queue_send->buffer))) return 0;
 
-			event.sysex = (uint8_t *) malloc(event.event);
+			event.sysex = malloc(event.data_or_len);
 			if (event.sysex == NULL) return 12;
 
-			event.event |= MEVT_F_LONG;
+			event.data_or_len |= MEVT_F_LONG;
 
 			if (status == 0xf0)
 			{
-				event.sysex[0] = 0xf0;
-				memcpy(event.sysex + 1, data_ptr, data_len);
+				((uint8_t *)event.sysex)[0] = 0xf0;
+				memcpy(((uint8_t *)event.sysex) + 1, data_ptr, data_len);
 			}
 			else
 			{
@@ -211,12 +230,12 @@ static int add_midi_event(preprocess_state *state, uint8_t status, uint8_t byte1
 					event.time = state->event_time;
 				}
 
-				state->next_sysex_time = event.time + (40 + 10 + ((MEVT_EVENTPARM(event.event) * 10000 + 31249) / 31250));
+				state->next_sysex_time = event.time + (40 + 10 + ((MEVT_EVENTPARM(event.data_or_len) * 10000 + 31249) / 31250));
 			}
 		}
 		else if ((status == 0xf4) && mt32_delay) // extra event
 		{
-			event.event = MEVT_NOP << 24;
+			event.data_or_len = MEVT_NOP << 24;
 		}
 		else return 0;
 	}
@@ -234,7 +253,7 @@ static int add_midi_event(preprocess_state *state, uint8_t status, uint8_t byte1
 
 	state->num_events++;
 	state->events[state->num_events] = event;
-	state->events[0].event = state->num_events;
+	state->events[0].data_or_len = state->num_events;
 
 	return 0;
 }
@@ -245,7 +264,7 @@ static void free_midi_data(midi_event_info *data)
 
 	if (data != NULL)
 	{
-		for (index = data[0].event; index != 0; index--)
+		for (index = data[0].data_or_len; index != 0; index--)
 		{
 			if (data[index].sysex != NULL)
 			{
@@ -343,7 +362,7 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 
 			if ((current_notification_events & NOTIFY_NEWDEVICE) && !midi_stream_exists)
 			{
-				int numDevices, devid;
+				UINT numDevices, devid;
 				MIDIOUTCAPS midicaps;
 				UINT uDeviceID;
 				MIDIPROPTEMPO miditempo;
@@ -518,7 +537,7 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 		current_event = midi_current_event;
 		base_time = midi_base_time;
 
-		num_events = events[0].event;
+		num_events = events[0].data_or_len;
 
 		current_queue_wait = (midi_queue_info *) midi_queue_wait;
 		if (current_queue_wait->header.dwFlags & MHDR_DONE)
@@ -673,7 +692,7 @@ static DWORD WINAPI MidiThreadProc(LPVOID lpParameter)
 			event = (MIDIEVENT *) &(current_queue_send->buffer[current_queue_send->header.dwBytesRecorded]);
 			event->dwDeltaTime = events[current_event].tick - events[current_event - 1].tick;
 			event->dwStreamID = 0;
-			event->dwEvent = events[current_event].event;
+			event->dwEvent = events[current_event].data_or_len;
 
 			if (events[current_event].sysex != NULL)
 			{
@@ -1047,7 +1066,7 @@ static void close_midi(void)
 
 static void load_windows_dlls(void)
 {
-	hAvrt = LoadLibraryW(L"avrt.dll");
+	hAvrt = LoadLibraryExW(L"avrt.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
 	if (hAvrt != NULL)
 	{
 		dyn_AvSetMmThreadCharacteristicsW = (AvSetMmThreadCharacteristicsWFunc)GetProcAddress(hAvrt, "AvSetMmThreadCharacteristicsW");
@@ -1059,7 +1078,7 @@ static void load_windows_dlls(void)
 		}
 	}
 
-	hCfgmgr32 = LoadLibraryW(L"cfgmgr32.dll");
+	hCfgmgr32 = LoadLibraryExW(L"cfgmgr32.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
 	if (hCfgmgr32 != NULL)
 	{
 		dyn_CM_Register_Notification = (CM_Register_Notification_Func)GetProcAddress(hCfgmgr32, "CM_Register_Notification");
@@ -1302,7 +1321,7 @@ static int MIDI_PLUGIN2_API play(void const *midibuffer, long int size, int loop
 		MMTIME mmtime;
 		int chan;
 
-		if (preprocessmidi(midibuffer, size, &timediv, &dataptr))
+		if (preprocessmidi((const uint8_t *)midibuffer, size, &timediv, &dataptr))
 		{
 			return -4;
 		}
@@ -1519,6 +1538,26 @@ static int MIDI_PLUGIN2_API set_loop_count(int loop_count) // -1 = unlimited
     return 0;
 }
 
+#ifdef PLUGIN_ENABLED
+static void shutdown_plugin_common(void)
+{
+	if (hAvrt != NULL)
+	{
+		FreeLibrary(hAvrt);
+		hAvrt = NULL;
+	}
+
+	if (hCfgmgr32 != NULL)
+	{
+		FreeLibrary(hCfgmgr32);
+		hCfgmgr32 = NULL;
+	}
+
+	DeleteCriticalSection(&notification_critical_section);
+	DeleteCriticalSection(&midi_critical_section);
+}
+#endif
+
 static void MIDI_PLUGIN2_API shutdown_plugin(void)
 {
 #ifdef PLUGIN_ENABLED
@@ -1553,18 +1592,6 @@ static void MIDI_PLUGIN2_API shutdown_plugin(void)
 		CloseHandle(midi_thread_handle);
 		midi_thread_handle = NULL;
 		midi_quit = 0;
-	}
-
-	if (hAvrt != NULL)
-	{
-		FreeLibrary(hAvrt);
-		hAvrt = NULL;
-	}
-
-	if (hCfgmgr32 != NULL)
-	{
-		FreeLibrary(hCfgmgr32);
-		hCfgmgr32 = NULL;
 	}
 
 	if (hStream != NULL)
@@ -1610,12 +1637,14 @@ static void MIDI_PLUGIN2_API shutdown_plugin(void)
 		initial_sysex_events = NULL;
 	}
 
-	DeleteCriticalSection(&notification_critical_section);
-	DeleteCriticalSection(&midi_critical_section);
+	shutdown_plugin_common();
 #endif
 }
 
 
+#ifdef __cplusplus
+extern "C"
+#endif
 EXPORT
 int MIDI_PLUGIN2_API initialize_midi_plugin2(midi_plugin2_parameters const *parameters, midi_plugin2_functions *functions)
 {
@@ -1636,7 +1665,7 @@ int MIDI_PLUGIN2_API initialize_midi_plugin2(midi_plugin2_parameters const *para
 	char const *device_name;
 	unsigned char const *sysex_events, *controller_events;
 	int events_len;
-	int numDevices, devid;
+	UINT numDevices, devid;
 	MIDIOUTCAPS midicaps;
 	UINT uDeviceID;
 
@@ -1658,6 +1687,13 @@ int MIDI_PLUGIN2_API initialize_midi_plugin2(midi_plugin2_parameters const *para
 
 	load_windows_dlls();
 
+#ifdef _WIN64
+	if (0 == midi2_initialize_midi_plugin2(parameters, functions)) return 0;
+
+	dyn_add_midi_event = add_midi_event;
+	dyn_send_initial_sysex_events = send_initial_sysex_events;
+#endif
+
 	numDevices = midiOutGetNumDevs();
 	if (numDevices == 0)
 	{
@@ -1672,7 +1708,7 @@ int MIDI_PLUGIN2_API initialize_midi_plugin2(midi_plugin2_parameters const *para
 	else
 	{
 		uDeviceID = numDevices;
-		for (devid = -1; devid < numDevices; devid++)
+		for (devid = 0; devid < numDevices; devid++)
 		{
 			if (MMSYSERR_NOERROR != midiOutGetDevCaps(devid, &midicaps, sizeof(midicaps))) continue;
 
@@ -1686,12 +1722,24 @@ int MIDI_PLUGIN2_API initialize_midi_plugin2(midi_plugin2_parameters const *para
 
 		if (uDeviceID == numDevices)
 		{
+			if (MMSYSERR_NOERROR == midiOutGetDevCaps(MIDI_MAPPER, &midicaps, sizeof(midicaps)))
+			{
+				if (0 == strcmp(device_name, midicaps.szPname))
+				{
+					uDeviceID = MIDI_MAPPER;
+					midi_stream_name = strdup(midicaps.szPname);
+				}
+			}
+		}
+
+		if (uDeviceID == numDevices)
+		{
 			long device_num;
 			char *endptr;
 
 			errno = 0;
 			device_num = strtol(device_name, &endptr, 10);
-			if ((errno == 0) && (*endptr == 0) && (device_num >= 0) && (device_num < numDevices))
+			if ((errno == 0) && (*endptr == 0) && (device_num >= 0) && ((unsigned long)device_num < numDevices))
 			{
 				if (MMSYSERR_NOERROR == midiOutGetDevCaps(device_num, &midicaps, sizeof(midicaps)))
 				{

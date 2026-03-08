@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -296,7 +296,7 @@ static int preprocessmidi(const uint8_t *midi, unsigned int midilen, unsigned in
         if (curtrack->delta != 0)
         for (index = 0; index < number_of_tracks; index++)
         {
-            if ((!tracks[index].eot) && (index != lasttracknum))
+            if ((!tracks[index].eot) && (index != (unsigned int)lasttracknum))
             {
                 tracks[index].delta -= curtrack->delta;
             }

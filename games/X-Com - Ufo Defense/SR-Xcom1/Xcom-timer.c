@@ -133,7 +133,7 @@ int Game_TimerThread(void *data)
     VSyncTickCounter = TimerTickCounter = 0;
     VSyncAction = TimerAction = SkipDelay = 0;
 
-    while (1)
+    for (;;)
     {
         if (SkipDelay)
         {
@@ -202,7 +202,7 @@ int Game_TimerThread(void *data)
 
         if (Thread_Exit && Thread_Exited)
         {
-            return 0;
+            break;
         }
 
         if (TimerAction)

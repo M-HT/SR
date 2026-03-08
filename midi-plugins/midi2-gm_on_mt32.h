@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2024-2025 Roman Pauer
+ *  Copyright (C) 2024-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -195,6 +195,10 @@ const static struct {
     { 127, 100,  7, 1 }, // Key# 108
 };
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4200)
+#endif
 typedef struct {
     struct {
         uint8_t timbre_name[10]; // 32-127 (ASCII)
@@ -265,6 +269,9 @@ typedef struct {
         uint8_t tva_env_sustain_level; // 0-100
     } partial_parameter[];
 } mt32_timbre_parameter;
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 const static mt32_timbre_parameter mt32_timbre_0 = { // "AcouPiano "
     { { 'A',  'c',  'o',  'u',  'P',  'i',  'a',  'n',  'o',  ' ' }, 1, 5, MT32_TIMBRE_NUM_PARTIALS_4, 0 },
@@ -2023,7 +2030,7 @@ static void mt32_init_vars_and_install_timbres(unsigned int number_of_tracks, co
         if (curtrack->delta != 0)
         for (index = 0; index < number_of_tracks; index++)
         {
-            if ((!tracks[index].eot) && (index != lasttracknum))
+            if ((!tracks[index].eot) && (index != (unsigned int)lasttracknum))
             {
                 tracks[index].delta -= curtrack->delta;
             }

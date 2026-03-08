@@ -2237,7 +2237,7 @@ void CCALL Game_save_screenshot(const char *filename)
     else if (Game_ScreenshotFormat == 4)
     {
         // write file size (32-bit Little Endian)
-        write_32le(chunk_size_ptr[0], curptr - buffer);
+        write_32le(chunk_size_ptr[0], (uint32_t)(curptr - buffer));
     }
     else if (Game_ScreenshotFormat == 5)
     {

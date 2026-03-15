@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2021-2023  Roman Pauer
+// Copyright (C) 2021-2026  Roman Pauer
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -368,14 +368,22 @@ calculate_pattern:
 
 // end procedure calculate_pattern
 
-#elif defined(ARMV8)
+#elif defined(ARMV8) && !(defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
 
+#if defined(__APPLE__)
+.global _calculate_pattern
+#else
 .global calculate_pattern
+#endif
 
 .align 4
+#if defined(__APPLE__)
+_calculate_pattern:
+#else
 .hidden calculate_pattern
 .type calculate_pattern, %function
 calculate_pattern:
+#endif
 
 // r0     = const uint32_t *yuvsrc1  (aligned to 8 bytes (64 bits))
 // r1     = const uint32_t *yuvsrc2  (aligned to 8 bytes (64 bits))
@@ -671,7 +679,7 @@ calculate_pattern:
 
 #endif
 
-#if !((defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__)))
+#if !((defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__)) || defined(__APPLE__))
 .section .note.GNU-stack,"",%progbits
 #endif
 

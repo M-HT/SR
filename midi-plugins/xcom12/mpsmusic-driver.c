@@ -31,7 +31,6 @@
 #endif
 
 #include <stdio.h>
-#include <malloc.h>
 #include <stdlib.h>
 #include "midi-plugins.h"
 #include "emu_x86.h"

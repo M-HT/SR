@@ -4,7 +4,7 @@ set CXX=g++
 
 %CC% -c -m32 -O2 -Wall scaler-hqx.c
 cd hqx
-%CC% -c -m32 -march=x86-64 -O3 -Wall *.c *.S
+%CC% -c -m32 -march=x86-64 -O3 -Wall *.c
 cd ..
 %CC% -s -shared -o scaler-hqx.dll -m32 scaler-hqx.o hqx/*.o scaler.def
 

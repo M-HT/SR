@@ -34,7 +34,7 @@
 #endif
 
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include "midi-plugins.h"
 #include "bass.h"

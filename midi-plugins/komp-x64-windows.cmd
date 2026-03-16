@@ -52,10 +52,11 @@ gcc -c -m64 -O3 -Wall -Wno-maybe-uninitialized -DDRIVER=ROLAND %SPEEXDSP_COMPILE
 g++ -c -m64 -O2 -Wall -fno-exceptions emu_mt32.cpp -I./munt-2.7.0
 cd munt-2.7.0/mt32emu
 g++ -c -m64 -O3 -Wall -fno-exceptions *.cpp
+del FileStream.o* MidiStreamParser.o* SampleRateConverter.o* VersionTagging.o*
 cd sha1
 g++ -c -m64 -O3 -Wall -fno-exceptions sha1.cpp
 cd ../../../..
-gcc -s -shared -static-libgcc -o mt32-munt.dll -m64 *.o src/*.o src/munt-2.7.0/mt32emu/*.o src/munt-2.7.0/mt32emu/sha1/*.o ../midi.def -lstdc++ -lm %SPEEXDSP_LINK% -L../lib/x64
+g++ -s -shared -static-libgcc -static-libstdc++ -o mt32-munt.dll -m64 *.o src/*.o src/munt-2.7.0/mt32emu/*.o src/munt-2.7.0/mt32emu/sha1/*.o ../midi.def -lm %SPEEXDSP_LINK% -L../lib/x64
 
 del src\*.o
 del src\munt-2.7.0\mt32emu\*.o

@@ -52,6 +52,7 @@ cc -c -fpic -fvisibility=hidden -O3 -Wall -Wno-maybe-uninitialized -march=rv64gc
 c++ -c -fpic -fvisibility=hidden -O2 -Wall -march=rv64gc -fno-exceptions emu_mt32.cpp -I$CURDIR/src/munt-2.7.0
 cd munt-2.7.0/mt32emu
 c++ -c -fpic -fvisibility=hidden -O3 -Wall -march=rv64gc -fno-exceptions *.cpp
+rm FileStream.o* MidiStreamParser.o* SampleRateConverter.o* VersionTagging.o*
 cd sha1
 c++ -c -fpic -fvisibility=hidden -O3 -Wall -march=rv64gc -fno-exceptions sha1.cpp
 cd ../../../..

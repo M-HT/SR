@@ -52,6 +52,7 @@ cc -c -fpic -fvisibility=hidden -m64 -O3 -Wall -Wno-maybe-uninitialized -DDRIVER
 c++ -c -fpic -fvisibility=hidden -m64 -O2 -Wall -fno-exceptions emu_mt32.cpp -I$CURDIR/src/munt-2.7.0
 cd munt-2.7.0/mt32emu
 c++ -c -fpic -fvisibility=hidden -m64 -O3 -Wall -fno-exceptions *.cpp
+rm FileStream.o* MidiStreamParser.o* SampleRateConverter.o* VersionTagging.o*
 cd sha1
 c++ -c -fpic -fvisibility=hidden -m64 -O3 -Wall -fno-exceptions sha1.cpp
 cd ../../../..

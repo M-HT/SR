@@ -58,6 +58,7 @@ cl /nologo /c /O2 /W3 /MD /DDRIVER=ROLAND %SPEEXDSP_COMPILE% emu_x86.c /I.\inclu
 cl /nologo /c /O2 /W3 /MD /EHsc emu_mt32.cpp /I.\munt-2.7.0 /D_CRT_SECURE_NO_WARNINGS
 cd munt-2.7.0/mt32emu
 cl /nologo /c /O2 /W3 /MD /EHsc *.cpp /D_CRT_SECURE_NO_WARNINGS
+del FileStream.o* MidiStreamParser.o* SampleRateConverter.o* VersionTagging.o*
 cd sha1
 cl /nologo /c /O2 /W3 /MD sha1.cpp
 cd ../../../..

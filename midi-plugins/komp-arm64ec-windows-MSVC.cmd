@@ -55,18 +55,18 @@ del src\nuked_opl3\*.obj
 
 cd src
 cl /nologo /c /O2 /W3 /MD /arm64EC /DDRIVER=ROLAND %SPEEXDSP_COMPILE% emu_x86.c /I.\include /I..\..\include /D_CRT_SECURE_NO_WARNINGS
-cl /nologo /c /O2 /W3 /MD /arm64EC /EHsc emu_mt32.cpp /I.\munt-2.7.0 /D_CRT_SECURE_NO_WARNINGS
-cd munt-2.7.0/mt32emu
-cl /nologo /c /O2 /W3 /MD /arm64EC /EHsc *.cpp /D_CRT_SECURE_NO_WARNINGS
+cl /nologo /c /O2 /W3 /MD /arm64EC /EHsc emu_mt32.cpp /I.\munt-2.8 /D_CRT_SECURE_NO_WARNINGS
+cd munt-2.8/mt32emu
+cl /nologo /c /O2 /W3 /MD /arm64EC /EHsc /D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1 *.cpp
 del FileStream.o* MidiStreamParser.o* SampleRateConverter.o* VersionTagging.o*
 cd sha1
 cl /nologo /c /O2 /W3 /MD /arm64EC sha1.cpp
 cd ../../../..
-link /NOLOGO /DLL /OUT:mt32-munt.dll *.obj src/*.obj src/munt-2.7.0/mt32emu/*.obj src/munt-2.7.0/mt32emu/sha1/*.obj /DEF:..\midi.def /MACHINE:ARM64EC %SPEEXDSP_LINK% /LIBPATH:..\lib\arm64ec
+link /NOLOGO /DLL /OUT:mt32-munt.dll *.obj src/*.obj src/munt-2.8/mt32emu/*.obj src/munt-2.8/mt32emu/sha1/*.obj /DEF:..\midi.def /MACHINE:ARM64EC %SPEEXDSP_LINK% /LIBPATH:..\lib\arm64ec
 
 del src\*.obj
-del src\munt-2.7.0\mt32emu\*.obj
-del src\munt-2.7.0\mt32emu\sha1\*.obj
+del src\munt-2.8\mt32emu\*.obj
+del src\munt-2.8\mt32emu\sha1\*.obj
 
 cd src
 cl /nologo /c /O2 /W3 /MD /arm64EC /DDRIVER=EMU8000 %SPEEXDSP_COMPILE% emu_x86.c /I.\include /I..\..\include /D_CRT_SECURE_NO_WARNINGS

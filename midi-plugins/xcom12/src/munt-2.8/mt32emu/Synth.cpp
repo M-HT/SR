@@ -1,5 +1,5 @@
 /* Copyright (C) 2003, 2004, 2005, 2006, 2008, 2009 Dean Beeler, Jerome Fisher
- * Copyright (C) 2011-2022 Dean Beeler, Jerome Fisher, Sergey V. Mikayev
+ * Copyright (C) 2011-2026 Dean Beeler, Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -42,6 +42,8 @@ namespace MT32Emu {
 // MIDI interface data transfer rate in samples. Used to simulate the transfer delay.
 static const double MIDI_DATA_TRANSFER_RATE = double(SAMPLE_RATE) / 31250.0 * 8.0;
 
+static const Bit8u DEFAULT_MASTER_VOLUME = 100; // Confirmed
+
 static const ControlROMFeatureSet OLD_MT32_ELDER = {
 	true,  // quirkBasePitchOverflow
 	true,  // quirkPitchEnvelopeOverflow
@@ -53,6 +55,7 @@ static const ControlROMFeatureSet OLD_MT32_ELDER = {
 	false, // quirkFastPitchChanges
 	true,  // quirkDisplayCustomMessagePriority
 	true,  // oldMT32DisplayFeatures
+	false, // newGenNoteCancellation
 	true,  // defaultReverbMT32Compatible
 	true   // oldMT32AnalogLPF
 };
@@ -67,6 +70,7 @@ static const ControlROMFeatureSet OLD_MT32_LATER = {
 	false, // quirkFastPitchChanges
 	false, // quirkDisplayCustomMessagePriority
 	true,  // oldMT32DisplayFeatures
+	false, // newGenNoteCancellation
 	true,  // defaultReverbMT32Compatible
 	true   // oldMT32AnalogLPF
 };
@@ -81,6 +85,7 @@ static const ControlROMFeatureSet NEW_MT32_COMPATIBLE = {
 	false, // quirkFastPitchChanges
 	false, // quirkDisplayCustomMessagePriority
 	false, // oldMT32DisplayFeatures
+	true,  // newGenNoteCancellation
 	false, // defaultReverbMT32Compatible
 	false  // oldMT32AnalogLPF
 };
@@ -95,6 +100,7 @@ static const ControlROMFeatureSet CM32LN_COMPATIBLE = {
 	true,  // quirkFastPitchChanges
 	false, // quirkDisplayCustomMessagePriority
 	false, // oldMT32DisplayFeatures
+	true,  // newGenNoteCancellation
 	false, // defaultReverbMT32Compatible
 	false  // oldMT32AnalogLPF
 };
@@ -115,6 +121,15 @@ static const ControlROMMap ControlROMMaps[] = {
 	{"ctrl_cm32ln_1_00", CM32LN_COMPATIBLE,  0x8100, 256, 0x8000, 0x8000, true,  0x8080, 0x8000, true,  0x8500, 64, 0x8580, 85, 0x4EC7, 0x4EE2, 0x4ED0, 0x47FF, 0x4803, 0x481C, 0x4833, 0x55A2, 19, 0x1F59, 0x3F7C}
 	// (Note that old MT-32 ROMs actually have 86 entries for rhythmTemp)
 };
+
+static const ControlROMMap *getControlROMMap(const char *shortName) {
+	for (unsigned int i = 0; i < sizeof(ControlROMMaps) / sizeof(ControlROMMaps[0]); i++) {
+		if (strcmp(shortName, ControlROMMaps[i].shortName) == 0) {
+			return &ControlROMMaps[i];
+		}
+	}
+	return NULL;
+}
 
 static const PartialState PARTIAL_PHASE_TO_STATE[8] = {
 	PartialState_ATTACK, PartialState_ATTACK, PartialState_ATTACK, PartialState_ATTACK,
@@ -234,6 +249,7 @@ class Extensions {
 public:
 	RendererType selectedRendererType;
 	Bit32s masterTunePitchDelta;
+	Bit8u masterVolumeOverride;
 	bool niceAmpRamp;
 	bool nicePanning;
 	bool nicePartialMixing;
@@ -253,8 +269,9 @@ public:
 	Display *display;
 	bool oldMT32DisplayFeatures;
 
-	ReportHandler2 defaultReportHandler;
+	ReportHandler3 defaultReportHandler;
 	ReportHandler2 *reportHandler2;
+	ReportHandler3 *reportHandler3;
 };
 
 Bit32u Synth::getLibraryVersionInt() {
@@ -292,6 +309,7 @@ Synth::Synth(ReportHandler *useReportHandler) :
 
 	reportHandler = useReportHandler != NULL ? useReportHandler : &extensions.defaultReportHandler;
 	extensions.reportHandler2 = &extensions.defaultReportHandler;
+	extensions.reportHandler3 = &extensions.defaultReportHandler;
 
 	extensions.preallocatedReverbMemory = false;
 	for (int i = REVERB_MODE_ROOM; i <= REVERB_MODE_TAP_DELAY; i++) {
@@ -305,6 +323,7 @@ Synth::Synth(ReportHandler *useReportHandler) :
 	setOutputGain(1.0f);
 	setReverbOutputGain(1.0f);
 	setReversedStereoEnabled(false);
+	setMasterVolumeOverride(255);
 	setNiceAmpRampEnabled(true);
 	setNicePanningEnabled(false);
 	setNicePartialMixingEnabled(false);
@@ -349,6 +368,23 @@ void Synth::setReportHandler2(ReportHandler2 *reportHandler2) {
 		reportHandler = &extensions.defaultReportHandler;
 		extensions.reportHandler2 = &extensions.defaultReportHandler;
 	}
+	extensions.reportHandler3 = &extensions.defaultReportHandler;
+}
+
+void Synth::setReportHandler3(ReportHandler3 *reportHandler3) {
+	if (reportHandler3 != NULL) {
+		reportHandler = reportHandler3;
+		extensions.reportHandler2 = reportHandler3;
+		extensions.reportHandler3 = reportHandler3;
+	} else {
+		reportHandler = &extensions.defaultReportHandler;
+		extensions.reportHandler2 = &extensions.defaultReportHandler;
+		extensions.reportHandler3 = &extensions.defaultReportHandler;
+	}
+}
+
+ReportHandler3 *Synth::getReportHandler3() {
+	return extensions.reportHandler3;
 }
 
 void ReportHandler::showLCDMessage(const char *data) {
@@ -512,6 +548,18 @@ float Synth::getReverbOutputGain() const {
 	return reverbOutputGain;
 }
 
+void Synth::setMasterVolumeOverride(Bit8u volumeOverride) {
+	extensions.masterVolumeOverride = volumeOverride;
+	if (opened && volumeOverride <= DEFAULT_MASTER_VOLUME) {
+		mt32ram.system.masterVol = volumeOverride;
+		refreshSystemMasterVol();
+	}
+}
+
+Bit8u Synth::getMasterVolumeOverride() const {
+	return extensions.masterVolumeOverride;
+}
+
 void Synth::setPartVolumeOverride(Bit8u partNumber, Bit8u volumeOverride) {
 	if (opened && partNumber < 9) {
 		parts[partNumber]->setVolumeOverride(volumeOverride);
@@ -573,19 +621,16 @@ bool Synth::loadControlROM(const ROMImage &controlROMImage) {
 	memcpy(controlROMData, fileData, CONTROL_ROM_SIZE);
 
 	// Control ROM successfully loaded, now check whether it's a known type
-	controlROMMap = NULL;
-	controlROMFeatures = NULL;
-	for (unsigned int i = 0; i < sizeof(ControlROMMaps) / sizeof(ControlROMMaps[0]); i++) {
-		if (strcmp(controlROMInfo->shortName, ControlROMMaps[i].shortName) == 0) {
-			controlROMMap = &ControlROMMaps[i];
-			controlROMFeatures = &controlROMMap->featureSet;
-			return true;
-		}
-	}
+	controlROMMap = getControlROMMap(controlROMInfo->shortName);
+	if (controlROMMap == NULL) {
+		controlROMFeatures = NULL;
 #if MT32EMU_MONITOR_INIT
-	printDebug("Control ROM failed to load");
+		printDebug("Control ROM failed to load");
 #endif
-	return false;
+		return false;
+	}
+	controlROMFeatures = &controlROMMap->featureSet;
+	return true;
 }
 
 bool Synth::loadPCMROM(const ROMImage &pcmROMImage) {
@@ -805,7 +850,7 @@ bool Synth::open(const ROMImage &controlROMImage, const ROMImage &pcmROMImage, B
 	// CM-64 seems to initialise all bytes in this bank to 0.
 	memset(&mt32ram.timbres[128], 0, sizeof(mt32ram.timbres[128]) * 64);
 
-	partialManager = new PartialManager(this, parts);
+	partialManager = new PartialManager(this);
 
 	pcmWaves = new PCMWaveEntry[controlROMMap->pcmCount];
 
@@ -850,7 +895,7 @@ bool Synth::open(const ROMImage &controlROMImage, const ROMImage &pcmROMImage, B
 		// The channel assignment is then {0, 1, 2, 3, 4, 5, 6, 7, 9}
 		mt32ram.system.chanAssign[i] = i + 1;
 	}
-	mt32ram.system.masterVol = 100; // Confirmed
+	mt32ram.system.masterVol = DEFAULT_MASTER_VOLUME;
 
 	bool oldReverbOverridden = reverbOverridden;
 	reverbOverridden = false;
@@ -900,6 +945,11 @@ bool Synth::open(const ROMImage &controlROMImage, const ROMImage &pcmROMImage, B
 #endif
 	setOutputGain(outputGain);
 	setReverbOutputGain(reverbOutputGain);
+
+	if (extensions.masterVolumeOverride < DEFAULT_MASTER_VOLUME) {
+		mt32ram.system.masterVol = extensions.masterVolumeOverride;
+		refreshSystemMasterVol();
+	}
 
 	switch (getSelectedRendererType()) {
 		case RendererType_BIT16S:
@@ -1107,24 +1157,30 @@ void Synth::playMsgNow(Bit32u msg) {
 	// NOTE: Active sense IS implemented in real hardware. However, realtime processing is clearly out of the library scope.
 	//       It is assumed that realtime consumers of the library respond to these MIDI events as appropriate.
 
-	Bit8u code = Bit8u((msg & 0x0000F0) >> 4);
+	Bit8u command = Bit8u((msg & 0x0000F0) >> 4);
 	Bit8u chan = Bit8u(msg & 0x00000F);
-	Bit8u note = Bit8u((msg & 0x007F00) >> 8);
-	Bit8u velocity = Bit8u((msg & 0x7F0000) >> 16);
+	Bit8u data1 = Bit8u((msg & 0x00FF00) >> 8);
+	Bit8u data2 = Bit8u((msg & 0xFF0000) >> 16);
 
-	//printDebug("Playing chan %d, code 0x%01x note: 0x%02x", chan, code, note);
+	if (data1 > 127 || data2 > 127) {
+#if MT32EMU_MONITOR_MIDI > 0
+		printDebug("playMsgNow for msg=0x%08x with invalid data bytes: chan=%d, command=0x%01x, data1=%d, data2=%d",
+			msg, chan, command, data1, data2);
+#endif
+		return;
+	}
 
 	Bit8u *chanParts = extensions.chantable[chan];
 	if (*chanParts > 8) {
 #if MT32EMU_MONITOR_MIDI > 0
-		printDebug("Play msg on unreg chan %d (%d): code=0x%01x, vel=%d", chan, *chanParts, code, velocity);
+		printDebug("Play msg on unreg chan %d: command=0x%01x, data1=%d, data2=%d", chan, command, data1, data2);
 #endif
 		return;
 	}
 	for (Bit32u i = extensions.abortingPartIx; i <= 8; i++) {
 		const Bit32u partNum = chanParts[i];
 		if (partNum > 8) break;
-		playMsgOnPart(partNum, code, note, velocity);
+		playUnpackedShortMessage(partNum, command, data1, data2);
 		if (isAbortingPoly()) {
 			extensions.abortingPartIx = i;
 			break;
@@ -1134,73 +1190,72 @@ void Synth::playMsgNow(Bit32u msg) {
 	}
 }
 
-void Synth::playMsgOnPart(Bit8u part, Bit8u code, Bit8u note, Bit8u velocity) {
+void Synth::playMsgOnPart(Bit8u partNum, Bit8u command, Bit8u data1, Bit8u data2) {
 	if (!opened) return;
 
-	Bit32u bend;
+	if (partNum > 8 || data1 > 127 || data2 > 127) {
+#if MT32EMU_MONITOR_MIDI > 0
+		printDebug("playMsgOnPart with invalid params: part=%d, command=0x%01x, data1=%d, data2=%d", partNum, command, data1, data2);
+#endif
+		return;
+	}
+	playUnpackedShortMessage(partNum, command, data1, data2);
+}
 
+void Synth::playUnpackedShortMessage(Bit8u partNum, Bit8u command, Bit8u data1, Bit8u data2) {
 	if (!activated) activated = true;
-	//printDebug("Synth::playMsgOnPart(%02x, %02x, %02x, %02x)", part, code, note, velocity);
-	switch (code) {
+
+	switch (command) {
 	case 0x8:
-		//printDebug("Note OFF - Part %d", part);
 		// The MT-32 ignores velocity for note off
-		parts[part]->noteOff(note);
+		parts[partNum]->noteOff(data1);
 		break;
 	case 0x9:
-		//printDebug("Note ON - Part %d, Note %d Vel %d", part, note, velocity);
-		if (velocity == 0) {
+		if (data2 == 0) {
 			// MIDI defines note-on with velocity 0 as being the same as note-off with velocity 40
-			parts[part]->noteOff(note);
-		} else if (parts[part]->getVolumeOverride() > 0) {
-			parts[part]->noteOn(note, velocity);
+			parts[partNum]->noteOff(data1);
+		} else if (parts[partNum]->getVolumeOverride() > 0) {
+			parts[partNum]->noteOn(data1, data2);
 		}
 		break;
 	case 0xB: // Control change
-		switch (note) {
+		switch (data1) {
 		case 0x01:  // Modulation
-			//printDebug("Modulation: %d", velocity);
-			parts[part]->setModulation(velocity);
+			parts[partNum]->setModulation(data2);
 			break;
 		case 0x06:
-			parts[part]->setDataEntryMSB(velocity);
+			parts[partNum]->setDataEntryMSB(data2);
 			break;
 		case 0x07:  // Set volume
-			//printDebug("Volume set: %d", velocity);
-			parts[part]->setVolume(velocity);
+			parts[partNum]->setVolume(data2);
 			break;
 		case 0x0A:  // Pan
-			//printDebug("Pan set: %d", velocity);
-			parts[part]->setPan(velocity);
+			parts[partNum]->setPan(data2);
 			break;
 		case 0x0B:
-			//printDebug("Expression set: %d", velocity);
-			parts[part]->setExpression(velocity);
+			parts[partNum]->setExpression(data2);
 			break;
 		case 0x40: // Hold (sustain) pedal
-			//printDebug("Hold pedal set: %d", velocity);
-			parts[part]->setHoldPedal(velocity >= 64);
+			parts[partNum]->setHoldPedal(data2 >= 64);
 			break;
 
 		case 0x62:
 		case 0x63:
-			parts[part]->setNRPN();
+			parts[partNum]->setNRPN();
 			break;
 		case 0x64:
-			parts[part]->setRPNLSB(velocity);
+			parts[partNum]->setRPNLSB(data2);
 			break;
 		case 0x65:
-			parts[part]->setRPNMSB(velocity);
+			parts[partNum]->setRPNMSB(data2);
 			break;
 
 		case 0x79: // Reset all controllers
-			//printDebug("Reset all controllers");
-			parts[part]->resetAllControllers();
+			parts[partNum]->resetAllControllers();
 			break;
 
 		case 0x7B: // All notes off
-			//printDebug("All notes off");
-			parts[part]->allNotesOff();
+			parts[partNum]->allNotesOff();
 			break;
 
 		case 0x7C:
@@ -1208,35 +1263,32 @@ void Synth::playMsgOnPart(Bit8u part, Bit8u code, Bit8u note, Bit8u velocity) {
 		case 0x7E:
 		case 0x7F:
 			// CONFIRMED:Mok: A real LAPC-I responds to these controllers as follows:
-			parts[part]->setHoldPedal(false);
-			parts[part]->allNotesOff();
+			parts[partNum]->setHoldPedal(false);
+			parts[partNum]->allNotesOff();
 			break;
 
 		default:
 #if MT32EMU_MONITOR_MIDI > 0
-			printDebug("Unknown MIDI Control code: 0x%02x - vel 0x%02x", note, velocity);
+			printDebug("Unknown MIDI Control code: 0x%02x - data2: 0x%02x", data1, data2);
 #endif
 			return;
 		}
 		extensions.display->midiMessagePlayed();
 		break;
 	case 0xC: // Program change
-		//printDebug("Program change %01x", note);
-		parts[part]->setProgram(note);
-		if (part < 8) {
+		parts[partNum]->setProgram(data1);
+		if (partNum < 8) {
 			extensions.display->midiMessagePlayed();
-			extensions.display->programChanged(part);
+			extensions.display->programChanged(partNum);
 		}
 		break;
 	case 0xE: // Pitch bender
-		bend = (velocity << 7) | (note);
-		//printDebug("Pitch bender %02x", bend);
-		parts[part]->setBend(bend);
+		parts[partNum]->setBend((data2 << 7) | data1);
 		extensions.display->midiMessagePlayed();
 		break;
 	default:
 #if MT32EMU_MONITOR_MIDI > 0
-		printDebug("Unknown Midi code: 0x%01x - %02x - %02x", code, note, velocity);
+		printDebug("Unknown Midi command: 0x%01x - %02x - %02x", command, data1, data2);
 #endif
 		return;
 	}
@@ -1492,14 +1544,14 @@ void Synth::initMemoryRegions() {
 		pos += sizeof(TimbreParam::PartialParam);
 	}
 	memset(&paddedTimbreMaxTable[pos], 0, 10); // Padding
-	patchTempMemoryRegion = new PatchTempMemoryRegion(this, reinterpret_cast<Bit8u *>(&mt32ram.patchTemp[0]), &controlROMData[controlROMMap->patchMaxTable]);
-	rhythmTempMemoryRegion = new RhythmTempMemoryRegion(this, reinterpret_cast<Bit8u *>(&mt32ram.rhythmTemp[0]), &controlROMData[controlROMMap->rhythmMaxTable]);
-	timbreTempMemoryRegion = new TimbreTempMemoryRegion(this, reinterpret_cast<Bit8u *>(&mt32ram.timbreTemp[0]), paddedTimbreMaxTable);
-	patchesMemoryRegion = new PatchesMemoryRegion(this, reinterpret_cast<Bit8u *>(&mt32ram.patches[0]), &controlROMData[controlROMMap->patchMaxTable]);
-	timbresMemoryRegion = new TimbresMemoryRegion(this, reinterpret_cast<Bit8u *>(&mt32ram.timbres[0]), paddedTimbreMaxTable);
-	systemMemoryRegion = new SystemMemoryRegion(this, reinterpret_cast<Bit8u *>(&mt32ram.system), &controlROMData[controlROMMap->systemMaxTable]);
-	displayMemoryRegion = new DisplayMemoryRegion(this);
-	resetMemoryRegion = new ResetMemoryRegion(this);
+	patchTempMemoryRegion = new PatchTempMemoryRegion(reinterpret_cast<Bit8u *>(&mt32ram.patchTemp[0]), &controlROMData[controlROMMap->patchMaxTable]);
+	rhythmTempMemoryRegion = new RhythmTempMemoryRegion(reinterpret_cast<Bit8u *>(&mt32ram.rhythmTemp[0]), &controlROMData[controlROMMap->rhythmMaxTable]);
+	timbreTempMemoryRegion = new TimbreTempMemoryRegion(reinterpret_cast<Bit8u *>(&mt32ram.timbreTemp[0]), paddedTimbreMaxTable);
+	patchesMemoryRegion = new PatchesMemoryRegion(reinterpret_cast<Bit8u *>(&mt32ram.patches[0]), &controlROMData[controlROMMap->patchMaxTable]);
+	timbresMemoryRegion = new TimbresMemoryRegion(reinterpret_cast<Bit8u *>(&mt32ram.timbres[0]), paddedTimbreMaxTable);
+	systemMemoryRegion = new SystemMemoryRegion(reinterpret_cast<Bit8u *>(&mt32ram.system), &controlROMData[controlROMMap->systemMaxTable]);
+	displayMemoryRegion = new DisplayMemoryRegion();
+	resetMemoryRegion = new ResetMemoryRegion();
 }
 
 void Synth::deleteMemoryRegions() {
@@ -1591,7 +1643,7 @@ void Synth::writeMemoryRegion(const MemoryRegion *region, Bit32u addr, Bit32u le
 						printDebug(" (Not updating timbre, since those values weren't touched)");
 #endif
 					} else {
-						parts[i]->setTimbre(&mt32ram.timbres[parts[i]->getAbsTimbreNum()].timbre);
+						parts[i]->resetTimbre();
 					}
 				}
 				parts[i]->refresh();
@@ -1772,7 +1824,14 @@ void Synth::writeMemoryRegion(const MemoryRegion *region, Bit32u addr, Bit32u le
 			refreshSystemChanAssign(Bit8u(firstPart), Bit8u(lastPart));
 		}
 		if (off <= SYSTEM_MASTER_VOL_OFF && off + len > SYSTEM_MASTER_VOL_OFF) {
-			refreshSystemMasterVol();
+			if (extensions.masterVolumeOverride <= DEFAULT_MASTER_VOLUME) {
+#if MT32EMU_MONITOR_SYSEX > 0
+				printDebug(" Master volume overridden, wanted: %d - ignoring", mt32ram.system.masterVol);
+#endif
+				mt32ram.system.masterVol = extensions.masterVolumeOverride;
+			} else {
+				refreshSystemMasterVol();
+			}
 		}
 		break;
 	case MR_Display:
@@ -1917,6 +1976,9 @@ void Synth::reset() {
 		} else {
 			parts[8]->refresh();
 		}
+	}
+	if (extensions.masterVolumeOverride < DEFAULT_MASTER_VOLUME) {
+		mt32ram.system.masterVol = extensions.masterVolumeOverride;
 	}
 	refreshSystem();
 	resetMasterTunePitchDelta();
@@ -2727,3 +2789,15 @@ void MemoryRegion::write(unsigned int entry, unsigned int off, const Bit8u *src,
 }
 
 } // namespace MT32Emu
+
+#ifdef MT32EMU_WITH_TESTING
+
+#include "test/TestAccessors.h"
+
+using namespace MT32Emu;
+
+const ControlROMMap *Test::getControlROMMap(const char *shortName) {
+	return MT32Emu::getControlROMMap(shortName);
+}
+
+#endif // #ifdef MT32EMU_WITH_TESTING

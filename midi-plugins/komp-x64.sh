@@ -25,7 +25,7 @@ fi
 
 cc -shared -Wl,-soname,midi-wildmidi.so -o midi-wildmidi.so -fpic -fvisibility=hidden -m64 -O2 -Wall $SPEEXDSP_COMPILE midi-wildmidi.c -I`pwd`/include -lWildMidi $SPEEXDSP_LINK -L`pwd`/lib/x64
 cc -shared -Wl,-soname,midi-bassmidi.so -o midi-bassmidi.so -fpic -fvisibility=hidden -m64 -O2 -Wall midi-bassmidi.c -I`pwd`/include -lbassmidi -lbass -L`pwd`/lib/x64
-cc -shared -Wl,-soname,midi-adlmidi.so -o midi-adlmidi.so -fpic -fvisibility=hidden -m64 -O2 -Wall $SPEEXDSP_COMPILE midi-adlmidi.c -I`pwd`/include -lADLMIDI $SPEEXDSP_LINK -lstdc++ -L`pwd`/lib/x64
+cc -shared -Wl,-soname,midi-adlmidi.so -o midi-adlmidi.so -fpic -fvisibility=hidden -m64 -O2 -Wall $SPEEXDSP_COMPILE midi-adlmidi.c -I`pwd`/include -lADLMIDI $SPEEXDSP_LINK -L`pwd`/lib/x64
 cc -shared -Wl,-soname,midi2-alsa.so -o midi2-alsa.so -fpic -fvisibility=hidden -m64 -O2 -Wall midi2-alsa.c -lasound -lpthread
 
 cd xcom12
@@ -49,18 +49,18 @@ rm src/nuked_opl3/*.o
 
 cd src
 cc -c -fpic -fvisibility=hidden -m64 -O3 -Wall -Wno-maybe-uninitialized -DDRIVER=ROLAND $SPEEXDSP_COMPILE emu_x86.c -I$CURDIR/include -I../../include
-c++ -c -fpic -fvisibility=hidden -m64 -O2 -Wall -fno-exceptions emu_mt32.cpp -I$CURDIR/src/munt-2.7.0
-cd munt-2.7.0/mt32emu
-c++ -c -fpic -fvisibility=hidden -m64 -O3 -Wall -fno-exceptions *.cpp
+c++ -c -fpic -fvisibility=hidden -m64 -O2 -Wall -fno-exceptions emu_mt32.cpp -I$CURDIR/src/munt-2.8
+cd munt-2.8/mt32emu
+c++ -c -fpic -fvisibility=hidden -m64 -O3 -Wall -fno-exceptions -DMT32EMU_WITH_STD_SNPRINTF *.cpp
 rm FileStream.o* MidiStreamParser.o* SampleRateConverter.o* VersionTagging.o*
 cd sha1
 c++ -c -fpic -fvisibility=hidden -m64 -O3 -Wall -fno-exceptions sha1.cpp
 cd ../../../..
-cc -shared -Wl,-soname,mt32-munt.so -o mt32-munt.so -m64 *.o src/*.o src/munt-2.7.0/mt32emu/*.o src/munt-2.7.0/mt32emu/sha1/*.o -lm $SPEEXDSP_LINK -lstdc++ -L../lib/x64
+cc -shared -Wl,-soname,mt32-munt.so -o mt32-munt.so -m64 *.o src/*.o src/munt-2.8/mt32emu/*.o src/munt-2.8/mt32emu/sha1/*.o -lm $SPEEXDSP_LINK -lstdc++ -L../lib/x64
 
 rm src/*.o
-rm src/munt-2.7.0/mt32emu/*.o
-rm src/munt-2.7.0/mt32emu/sha1/*.o
+rm src/munt-2.8/mt32emu/*.o
+rm src/munt-2.8/mt32emu/sha1/*.o
 
 cd src
 cc -c -fpic -fvisibility=hidden -m64 -O3 -Wall -Wno-maybe-uninitialized -DDRIVER=EMU8000 $SPEEXDSP_COMPILE emu_x86.c -I$CURDIR/include -I../../include

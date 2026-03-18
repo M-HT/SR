@@ -49,18 +49,18 @@ del src\nuked_opl3\*.o
 
 cd src
 gcc -c -m64 -O3 -Wall -Wno-maybe-uninitialized -DDRIVER=ROLAND %SPEEXDSP_COMPILE% emu_x86.c -I./include -I../../include
-g++ -c -m64 -O2 -Wall -fno-exceptions emu_mt32.cpp -I./munt-2.7.0
-cd munt-2.7.0/mt32emu
+g++ -c -m64 -O2 -Wall -fno-exceptions emu_mt32.cpp -I./munt-2.8
+cd munt-2.8/mt32emu
 g++ -c -m64 -O3 -Wall -fno-exceptions *.cpp
 del FileStream.o* MidiStreamParser.o* SampleRateConverter.o* VersionTagging.o*
 cd sha1
 g++ -c -m64 -O3 -Wall -fno-exceptions sha1.cpp
 cd ../../../..
-g++ -s -shared -static-libgcc -static-libstdc++ -o mt32-munt.dll -m64 *.o src/*.o src/munt-2.7.0/mt32emu/*.o src/munt-2.7.0/mt32emu/sha1/*.o ../midi.def -lm %SPEEXDSP_LINK% -L../lib/x64
+g++ -s -shared -static-libgcc -static-libstdc++ -o mt32-munt.dll -m64 *.o src/*.o src/munt-2.8/mt32emu/*.o src/munt-2.8/mt32emu/sha1/*.o ../midi.def -lm %SPEEXDSP_LINK% -L../lib/x64
 
 del src\*.o
-del src\munt-2.7.0\mt32emu\*.o
-del src\munt-2.7.0\mt32emu\sha1\*.o
+del src\munt-2.8\mt32emu\*.o
+del src\munt-2.8\mt32emu\sha1\*.o
 
 cd src
 gcc -c -m64 -O3 -Wall -Wno-maybe-uninitialized -DDRIVER=EMU8000 %SPEEXDSP_COMPILE% emu_x86.c -I./include -I../../include

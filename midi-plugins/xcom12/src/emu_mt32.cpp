@@ -283,7 +283,6 @@ int emu_mt32_init(unsigned int samplerate, char const *mt32_roms)
     return_data[0] = 0;
     return_data[1] = OUT_READY;
     lastmidimode = midimode = 0;
-    message_data[2] = 0;
     message_data[3] = 0;
     message_offset = 1;
     sysex_offset = 1;
@@ -365,6 +364,7 @@ restart_switch:
                 case 0x0c: // Program Change Event
                 case 0x0d: // Channel Aftertouch Event
                     message_data[0] = value;
+                    message_data[2] = 0;
                     lastmidimode = midimode = 1;
                     return;
 

@@ -5075,7 +5075,7 @@ public int main(string[] args)
         {
             if (!position_independent_code || label.isglobal)
             {
-                add_output_line("@" ~ label.name ~ " = " ~ (label.isglobal?"":"private ") ~ "alias " ~ get_load_type("i8") ~ " getelementptr (" ~ get_load_type("i8") ~ " bitcast (%_" ~ dataseg_name ~ "* @" ~ dataseg_name ~ " to i8*), i32 " ~ to!string(label.offset) ~ ")");
+                add_output_line("@" ~ label.name ~ " = " ~ (label.isglobal?"protected":"private") ~ " alias " ~ get_load_type("i8") ~ " getelementptr (" ~ get_load_type("i8") ~ " bitcast (%_" ~ dataseg_name ~ "* @" ~ dataseg_name ~ " to i8*), i32 " ~ to!string(label.offset) ~ ")");
             }
         }
     }
@@ -5118,7 +5118,7 @@ public int main(string[] args)
             func_args ~= datatype;
         }
 
-        add_output_line("declare external ccc " ~ (func.has_return_value?(func.return_value_is_pointer?"i8*":"i32"):"void") ~ " @" ~ func.real_name ~ "(" ~ func_args ~ ") nounwind");
+        add_output_line("declare ccc " ~ (func.has_return_value?(func.return_value_is_pointer?"i8*":"i32"):"void") ~ " @" ~ func.real_name ~ "(" ~ func_args ~ ") nounwind");
     }
 
 
@@ -5130,7 +5130,7 @@ public int main(string[] args)
 
         if (!proc.isexternal) continue;
 
-        add_output_line("declare external fastcc " ~ ((no_tail_calls)?"i8*":"void") ~ " @" ~ proc_name ~ "(%_cpu*) nounwind");
+        add_output_line("declare hidden fastcc " ~ ((no_tail_calls)?"i8*":"void") ~ " @" ~ proc_name ~ "(%_cpu*) nounwind");
         if (proc.alias_name != "")
         {
             //add_output_line("@" ~ proc.alias_name ~ " = external alias void(%_cpu*)* @" ~ proc_name);
@@ -5194,7 +5194,7 @@ public int main(string[] args)
     {
         auto proc = proc_list[proc_name];
 
-        add_output_line("define " ~ ((proc.ispublic || proc.isglobal)?"":"private ") ~ "fastcc " ~ ((no_tail_calls)?"i8*":"void") ~ " @" ~ proc_name ~ "(%_cpu* %cpu) nounwind {");
+        add_output_line("define " ~ ((proc.isglobal)?"protected":((proc.ispublic)?"hidden":"private")) ~ " fastcc " ~ ((no_tail_calls)?"i8*":"void") ~ " @" ~ proc_name ~ "(%_cpu* %cpu) nounwind {");
 
         if (!process_proc_body(proc_name))
         {
@@ -5270,7 +5270,7 @@ public int main(string[] args)
                 add_output_line("}");
             }
 
-            add_output_line("define ccc void @" ~ proc.global_name ~ "(%_cpu* %cpu) nounwind {");
+            add_output_line("define protected ccc void @" ~ proc.global_name ~ "(%_cpu* %cpu) nounwind {");
 
             if (no_tail_calls)
             {

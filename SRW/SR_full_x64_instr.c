@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -736,6 +736,10 @@ int SR_disassemble_x64_instruction(unsigned int Entry, output_data *output, regi
             cOutput[0] = 'm';
             cOutput[1] = 'o';
             cOutput[2] = 'v';
+            if (strcmp(pOutput, output->str) == 0)
+            {
+                cOutput[0] = 0;
+            }
 
             break;
         case UD_Imov:
@@ -831,6 +835,26 @@ int SR_disassemble_x64_instruction(unsigned int Entry, output_data *output, regi
                         OUTPUT_STRING("CALL x86_read_fs_dword\n");
                         OUTPUT_PARAMSTRING("mov %s, r9d", X86REGSTR(ud_obj.operand[0].base));
                     }
+                    else if (ud_obj.operand[0].base >= UD_R_AH && ud_obj.operand[0].base <= UD_R_BH &&
+                             ud_obj.operand[1].type == UD_OP_MEM &&
+                             (ud_obj.operand[1].base == UD_R_ESP || ud_obj.operand[1].index == UD_R_ESP)
+                            )
+                    {
+                        // mov .h, [esp+...]
+                        int len1;
+
+                        OUTPUT_PARAMSTRING("xchg %s, %s\n", HIGH2LOWREGSTR(ud_obj.operand[0].base), X86REGSTR(ud_obj.operand[0].base));
+
+                        len1 = strlen(pOutput);
+                        if (!SR_replace_stack_register(pOutput + len1, output->str, COPY_ALWAYS))
+                        {
+                            fprintf(stderr, "Error: stack variable replacement - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
+                            return 7;
+                        }
+                        pOutput[len1 + 5] = 'l';
+
+                        OUTPUT_PARAMSTRING("\nxchg %s, %s", HIGH2LOWREGSTR(ud_obj.operand[0].base), X86REGSTR(ud_obj.operand[0].base));
+                    }
                 }
                 else if (ud_obj.operand[0].type == UD_OP_MEM)
                 {
@@ -916,6 +940,24 @@ int SR_disassemble_x64_instruction(unsigned int Entry, output_data *output, regi
                         OUTPUT_PARAMSTRING("mov r10d, %s\n", X86REGSTR(ud_obj.operand[0].base));
                         OUTPUT_PARAMSTRING("mov r9d, %s\n", X86REGSTR(ud_obj.operand[1].base));
                         OUTPUT_STRING("CALL x86_write_fs_dword");
+                    }
+                    else if ((ud_obj.operand[0].base == UD_R_ESP || ud_obj.operand[0].index == UD_R_ESP) &&
+                             ud_obj.operand[1].type == UD_OP_REG &&
+                             ud_obj.operand[1].base >= UD_R_AH && ud_obj.operand[1].base <= UD_R_BH
+                            )
+                    {
+                        // mov [esp+...], .h
+
+                        OUTPUT_PARAMSTRING("xchg %s, %s\n", HIGH2LOWREGSTR(ud_obj.operand[1].base), X86REGSTR(ud_obj.operand[1].base));
+
+                        if (!SR_replace_stack_register(pOutput + strlen(pOutput), output->str, COPY_ALWAYS))
+                        {
+                            fprintf(stderr, "Error: stack variable replacement - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
+                            return 7;
+                        }
+                        strcpy(strrchr(pOutput, ',') + 2, HIGH2LOWREGSTR(ud_obj.operand[1].base));
+
+                        OUTPUT_PARAMSTRING("\nxchg %s, %s\n", HIGH2LOWREGSTR(ud_obj.operand[1].base), X86REGSTR(ud_obj.operand[1].base));
                     }
                 }
 

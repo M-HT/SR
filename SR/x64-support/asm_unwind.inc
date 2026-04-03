@@ -1,7 +1,7 @@
 ;part of static recompiler -- do not edit
 
 ;;
-;;  Copyright (C) 2016-2025 Roman Pauer
+;;  Copyright (C) 2016-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -33,7 +33,11 @@
     .prolog_3:
         push rbx ; save non-volatile register on stack
     .prolog_4:
-        sub rsp, 5*8 ; align stack to 16 bytes (which also reserves space for fifth function parameter) and reserve slots for four function parameters
+        push r13 ; save non-volatile register on stack
+    .prolog_5:
+        sub rsp, 4*8 ; reserve slots for four function parameters (stack is aligned to 16 bytes)
+    .prolog_6:
+        mov r13, rsp ; set frame pointer
     .end_prolog: ; end of prolog for unwinding
 %endm
 
@@ -41,7 +45,8 @@
 
 %macro SECTION_EPILOG 0
     ; start of epilog for unwinding
-        add rsp, 5*8 ; deallocate stack
+        add rsp, 4*8 ; deallocate stack
+        pop r13 ; restore non-volatile register from stack
         pop rbx ; restore non-volatile register from stack
         pop rbp ; restore non-volatile register from stack
         pop rdi ; restore non-volatile register from stack
@@ -59,11 +64,15 @@
     ; UNWIND_INFO
         db 1 ; Version (1) & Flags (0)
         db %1.end_prolog - %1 ; Size of prolog
-        db 5 ; Count of unwind codes
-        db 0 ; Frame Register (0) & Frame Register offset (scaled) (0)
-    ; UNWIND_CODE[5]
+        db 7 ; Count of unwind codes
+        db 0x0d ; Frame Register (13 = r13) & Frame Register offset (scaled) (0)
+    ; UNWIND_CODE[7]
         db %1.end_prolog - %1 ; Offset in prolog
-        db 0x42 ; Unwind operation code (2 = UWOP_ALLOC_SMALL) & Operation info (4 = 8*4+8)
+        db 0x03 ; Unwind operation code (3 = UWOP_SET_FPREG)
+        db %1.prolog_6 - %1 ; Offset in prolog
+        db 0x32 ; Unwind operation code (2 = UWOP_ALLOC_SMALL) & Operation info (3 = 8*3+8)
+        db %1.prolog_5 - %1 ; Offset in prolog
+        db 0xd0 ; Unwind operation code (0 = UWOP_PUSH_NONVOL) & Operation info (13 = r13)
         db %1.prolog_4 - %1 ; Offset in prolog
         db 0x30 ; Unwind operation code (0 = UWOP_PUSH_NONVOL) & Operation info (3 = rbx)
         db %1.prolog_3 - %1 ; Offset in prolog

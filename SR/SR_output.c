@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -475,6 +475,9 @@ int SR_write_output(const char *fname)
     #elif (OUTPUT_TYPE == OUT_ARM_LINUX)
             fprintf(EF.fout, "%s\n", ".ifdef DEBUG");
             fprintf(EF.fout, "%s\n", ".include \"data_all.inc\"");
+    #elif (OUTPUT_TYPE == OUT_X64)
+            //fprintf(EF.fout, "%s\n", "%ifdef DEBUG");
+            //fprintf(EF.fout, "%s\n", "%include \"data_all.inc\"");
     #else
             fprintf(EF.fout, "%s\n", "%ifdef DEBUG");
             fprintf(EF.fout, "%s\n", "%include \"data_all.inc\"");
@@ -514,6 +517,8 @@ int SR_write_output(const char *fname)
             //fprintf(EF.fout, "%s\n", ".endif");
     #elif (OUTPUT_TYPE == OUT_ARM_LINUX)
             fprintf(EF.fout, "%s\n", ".endif");
+    #elif (OUTPUT_TYPE == OUT_X64)
+            //fprintf(EF.fout, "%s\n", "%endif");
     #else
             fprintf(EF.fout, "%s\n", "%endif");
     #endif
@@ -528,6 +533,9 @@ int SR_write_output(const char *fname)
             fprintf(EF.fout, "%s\n", ".ifdef DEBUG");
             fprintf(EF.fout, "%s\n", ".include \"code_armlinux.inc\"");
             fprintf(EF.fout, "%s\n", ".endif");
+    #elif (OUTPUT_TYPE == OUT_X64)
+            //fprintf(EF.fout, "%s\n", "%ifdef DEBUG");
+            //fprintf(EF.fout, "%s\n", "%endif");
     #else
             fprintf(EF.fout, "%s\n", "%ifdef DEBUG");
         #if (OUTPUT_TYPE == OUT_DOS)

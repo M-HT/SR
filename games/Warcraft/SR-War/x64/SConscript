@@ -1,0 +1,79 @@
+#
+#  Copyright (C) 2016-2026 Roman Pauer
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy of
+#  this software and associated documentation files (the "Software"), to deal in
+#  the Software without restriction, including without limitation the rights to
+#  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+#  of the Software, and to permit persons to whom the Software is furnished to do
+#  so, subject to the following conditions:
+#
+#  The above copyright notice and this permission notice shall be included in all
+#  copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#  SOFTWARE.
+#
+
+import os
+import re
+import shutil
+import sys
+
+Import('device', 'env', 'version')
+
+include_re = re.compile(r'^%include\s+"(\S+)"\r?$', re.M)
+
+def nasmfile_scan(node, env, path):
+    contents = node.get_text_contents()
+    includes = include_re.findall(contents)
+    return includes
+
+nasmscan = Scanner(function = nasmfile_scan,
+                   skeys = ['.asm'],
+                   recursive = True)
+
+SourceFileScanner.add_scanner('.asm', nasmscan)
+
+env1 = Environment(tools=['nasm'], ASFLAGS = ('-felf64' if device == 'pc64-linux' else '-fwin64') + ' -w+orphan-labels -w-number-overflow -ix64/')
+env1_path = env1['ENV']['PATH'].split(os.pathsep)
+if sys.version_info >= (3, 3):
+    nasm_path = shutil.which('nasm')
+    if nasm_path is not None:
+        nasm_dir = os.path.dirname(nasm_path)
+        if nasm_dir not in env1_path:
+            env1_path.append(nasm_dir)
+else:
+    for path_dir in os.environ['PATH'].split(os.pathsep):
+        if path_dir not in env1_path:
+            env1_path.append(path_dir)
+env1['ENV']['PATH'] = os.pathsep.join(env1_path)
+env2 = env1.Clone()
+env1.Append(ASFLAGS = ' -Ox')
+env2.Append(ASFLAGS = ' -O1')
+if env['CC'] == 'cl':
+    env1.Append(ASFLAGS = ' -dstrncasecmp=_strnicmp')
+
+obj = env.Object(Glob('*.c'))
+
+if version == 'cdgog':
+    obj += env2.Object('war-asm-cdgog.asm')
+elif version == 'cd':
+    obj += env2.Object('war-asm-cd.asm')
+else:
+    obj += env2.Object('war-asm.asm')
+
+asm_sources = Glob('*.asm', strings = True)
+if 'war-asm.asm' in asm_sources:
+    asm_sources.remove('war-asm.asm')
+asm_sources.remove('war-asm-cd.asm')
+asm_sources.remove('war-asm-cdgog.asm')
+
+obj += env1.Object(asm_sources)
+
+Return('obj')

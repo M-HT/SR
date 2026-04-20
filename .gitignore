@@ -6,6 +6,8 @@
 *.EXE
 *.obj
 *.OBJ
+*.pdb
+*.PDB
 *.so
 .sconsign.dblite
 llasm/llasm

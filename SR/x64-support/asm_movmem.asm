@@ -1,7 +1,7 @@
 ;part of static recompiler -- do not edit
 
 ;;
-;;  Copyright (C) 2016-2025 Roman Pauer
+;;  Copyright (C) 2016-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -22,8 +22,6 @@
 ;;  SOFTWARE.
 ;;
 
-%include "asm_call.inc"
-%include "asm_pushx.inc"
 %include "asm_unwind.inc"
 
 extern X86_ReadMemProcedure
@@ -36,6 +34,76 @@ global x86_mov_reg_mem_32
 global x86_mov_mem_reg_8
 global x86_mov_mem_reg_16
 global x86_mov_mem_reg_32
+
+%macro  Call_Prologue 0
+
+%ifidn __OUTPUT_FORMAT__, win64
+    ; store registers
+        pushf
+        pop r8
+
+        mov [rsp+FIRST_PARAMETER_OFFSET+8], r8
+        mov [rsp+FIRST_PARAMETER_OFFSET+2*8], eax
+        mov [rsp+FIRST_PARAMETER_OFFSET+2*8+4], ecx
+        mov [rsp+FIRST_PARAMETER_OFFSET+2*8+8], edx
+
+    ; store original esp value
+        mov r8, [rsp+FIRST_PARAMETER_OFFSET]
+        mov [r8], r11d
+%else
+    ; store registers
+        pushf
+        push rax
+
+        sub r11d, byte 4*4
+        mov [r11d], ecx
+        mov [r11d+4], edx
+        mov [r11d+2*4], esi
+        mov [r11d+3*4], edi
+
+    ; store original esp value
+        mov r8, [rsp+2*8]
+        mov [r8], r11d
+%endif
+
+%endmacro
+
+%macro  Call_Epilogue 0
+
+%ifidn __OUTPUT_FORMAT__, win64
+    ; restore original esp value
+        mov r8, [rsp+FIRST_PARAMETER_OFFSET]
+        mov r11d, [r8]
+
+    ; restore registers
+        mov r8, [rsp+FIRST_PARAMETER_OFFSET+8]
+        mov eax, [rsp+FIRST_PARAMETER_OFFSET+2*8]
+        mov ecx, [rsp+FIRST_PARAMETER_OFFSET+2*8+4]
+        mov edx, [rsp+FIRST_PARAMETER_OFFSET+2*8+8]
+        push r8
+
+        mov r8d, [r11d]
+        add r11d, byte 4
+
+        popf
+%else
+    ; restore original esp value
+        mov r8, [rsp+2*8]
+        mov r11d, [r8]
+
+    ; restore registers
+        mov ecx, [r11d]
+        mov edx, [r11d+4]
+        mov esi, [r11d+2*4]
+        mov edi, [r11d+3*4]
+        mov r8d, [r11d+4*4]
+        add r11d, byte 5*4
+
+        pop rax
+        popf
+%endif
+
+%endmacro
 
 %ifidn __OUTPUT_FORMAT__, elf64
 section .note.GNU-stack noalloc noexec nowrite progbits
@@ -54,25 +122,14 @@ x86_mov_reg_mem_8:
 ; r10d = address
 ; [esp] = return address
 
-        PUSHFD
+        Call_Prologue
+
 %ifidn __OUTPUT_FORMAT__, win64
-        PUSH32 eax, ecx, edx
-
-    ; store original esp value
-        mov r8, [rsp+FIRST_PARAMETER_OFFSET]
-        mov [r8], r11d
-
     ; first function argument
         mov ecx, r10d ; address
     ; second function argument
         mov edx, 1 ; mem size
 %else
-        PUSH32 eax, ecx, edx, esi, edi
-
-    ; store original esp value
-        mov r8, [rsp]
-        mov [r8], r11d
-
     ; first function argument
         mov edi, r10d ; address
     ; second function argument
@@ -85,23 +142,10 @@ x86_mov_reg_mem_8:
     ; return value
         mov r9, rax
 
-%ifidn __OUTPUT_FORMAT__, win64
-    ; restore original esp value
-        mov r8, [rsp+FIRST_PARAMETER_OFFSET]
-        mov r11d, [r8]
-
-        POP32 eax, ecx, edx
-%else
-    ; restore original esp value
-        mov r8, [rsp]
-        mov r11d, [r8]
-
-        POP32 eax, ecx, edx, esi, edi
-%endif
-        POPFD
+        Call_Epilogue
 
 ; r9b = value
-        RET
+        jmp r8
 
 ; end procedure x86_mov_reg_mem_8
 
@@ -111,25 +155,14 @@ x86_mov_reg_mem_16:
 ; r10d = address
 ; [esp] = return address
 
-        PUSHFD
+        Call_Prologue
+
 %ifidn __OUTPUT_FORMAT__, win64
-        PUSH32 eax, ecx, edx
-
-    ; store original esp value
-        mov r8, [rsp+FIRST_PARAMETER_OFFSET]
-        mov [r8], r11d
-
     ; first function argument
         mov ecx, r10d ; address
     ; second function argument
         mov edx, 2 ; mem size
 %else
-        PUSH32 eax, ecx, edx, esi, edi
-
-    ; store original esp value
-        mov r8, [rsp]
-        mov [r8], r11d
-
     ; first function argument
         mov edi, r10d ; address
     ; second function argument
@@ -142,23 +175,10 @@ x86_mov_reg_mem_16:
     ; return value
         mov r9, rax
 
-%ifidn __OUTPUT_FORMAT__, win64
-    ; restore original esp value
-        mov r8, [rsp+FIRST_PARAMETER_OFFSET]
-        mov r11d, [r8]
-
-        POP32 eax, ecx, edx
-%else
-    ; restore original esp value
-        mov r8, [rsp]
-        mov r11d, [r8]
-
-        POP32 eax, ecx, edx, esi, edi
-%endif
-        POPFD
+        Call_Epilogue
 
 ; r9w = value
-        RET
+        jmp r8
 
 ; end procedure x86_mov_reg_mem_16
 
@@ -168,25 +188,14 @@ x86_mov_reg_mem_32:
 ; r10d = address
 ; [esp] = return address
 
-        PUSHFD
+        Call_Prologue
+
 %ifidn __OUTPUT_FORMAT__, win64
-        PUSH32 eax, ecx, edx
-
-    ; store original esp value
-        mov r8, [rsp+FIRST_PARAMETER_OFFSET]
-        mov [r8], r11d
-
     ; first function argument
         mov ecx, r10d ; address
     ; second function argument
         mov edx, 4 ; mem size
 %else
-        PUSH32 eax, ecx, edx, esi, edi
-
-    ; store original esp value
-        mov r8, [rsp]
-        mov [r8], r11d
-
     ; first function argument
         mov edi, r10d ; address
     ; second function argument
@@ -199,23 +208,10 @@ x86_mov_reg_mem_32:
     ; return value
         mov r9, rax
 
-%ifidn __OUTPUT_FORMAT__, win64
-    ; restore original esp value
-        mov r8, [rsp+FIRST_PARAMETER_OFFSET]
-        mov r11d, [r8]
-
-        POP32 eax, ecx, edx
-%else
-    ; restore original esp value
-        mov r8, [rsp]
-        mov r11d, [r8]
-
-        POP32 eax, ecx, edx, esi, edi
-%endif
-        POPFD
+        Call_Epilogue
 
 ; r9d = value
-        RET
+        jmp r8
 
 ; end procedure x86_mov_reg_mem_32
 
@@ -227,14 +223,9 @@ x86_mov_mem_reg_8:
 ; r10d = address
 ; [esp] = return address
 
-        PUSHFD
+        Call_Prologue
+
 %ifidn __OUTPUT_FORMAT__, win64
-        PUSH32 eax, ecx, edx
-
-    ; store original esp value
-        mov r8, [rsp+FIRST_PARAMETER_OFFSET]
-        mov [r8], r11d
-
     ; first function argument
         mov ecx, r10d ; address
     ; second function argument
@@ -242,12 +233,6 @@ x86_mov_mem_reg_8:
     ; third function argument
         movzx r8, r9b
 %else
-        PUSH32 eax, ecx, edx, esi, edi
-
-    ; store original esp value
-        mov r8, [rsp]
-        mov [r8], r11d
-
     ; first function argument
         mov edi, r10d ; address
     ; second function argument
@@ -259,22 +244,9 @@ x86_mov_mem_reg_8:
     ; stack is aligned to 16 bytes
         call X86_WriteMemProcedure
 
-%ifidn __OUTPUT_FORMAT__, win64
-    ; restore original esp value
-        mov r8, [rsp+FIRST_PARAMETER_OFFSET]
-        mov r11d, [r8]
+        Call_Epilogue
 
-        POP32 eax, ecx, edx
-%else
-    ; restore original esp value
-        mov r8, [rsp]
-        mov r11d, [r8]
-
-        POP32 eax, ecx, edx, esi, edi
-%endif
-        POPFD
-
-        RET
+        jmp r8
 
 ; end procedure x86_mov_mem_reg_8
 
@@ -285,14 +257,9 @@ x86_mov_mem_reg_16:
 ; r10d = address
 ; [esp] = return address
 
-        PUSHFD
+        Call_Prologue
+
 %ifidn __OUTPUT_FORMAT__, win64
-        PUSH32 eax, ecx, edx
-
-    ; store original esp value
-        mov r8, [rsp+FIRST_PARAMETER_OFFSET]
-        mov [r8], r11d
-
     ; first function argument
         mov ecx, r10d ; address
     ; second function argument
@@ -300,12 +267,6 @@ x86_mov_mem_reg_16:
     ; third function argument
         movzx r8, r9w
 %else
-        PUSH32 eax, ecx, edx, esi, edi
-
-    ; store original esp value
-        mov r8, [rsp]
-        mov [r8], r11d
-
     ; first function argument
         mov edi, r10d ; address
     ; second function argument
@@ -317,22 +278,9 @@ x86_mov_mem_reg_16:
     ; stack is aligned to 16 bytes
         call X86_WriteMemProcedure
 
-%ifidn __OUTPUT_FORMAT__, win64
-    ; restore original esp value
-        mov r8, [rsp+FIRST_PARAMETER_OFFSET]
-        mov r11d, [r8]
+        Call_Epilogue
 
-        POP32 eax, ecx, edx
-%else
-    ; restore original esp value
-        mov r8, [rsp]
-        mov r11d, [r8]
-
-        POP32 eax, ecx, edx, esi, edi
-%endif
-        POPFD
-
-        RET
+        jmp r8
 
 ; end procedure x86_mov_mem_reg_16
 
@@ -343,14 +291,9 @@ x86_mov_mem_reg_32:
 ; r10d = address
 ; [esp] = return address
 
-        PUSHFD
+        Call_Prologue
+
 %ifidn __OUTPUT_FORMAT__, win64
-        PUSH32 eax, ecx, edx
-
-    ; store original esp value
-        mov r8, [rsp+FIRST_PARAMETER_OFFSET]
-        mov [r8], r11d
-
     ; first function argument
         mov ecx, r10d ; address
     ; second function argument
@@ -358,12 +301,6 @@ x86_mov_mem_reg_32:
     ; third function argument
         mov r8d, r9d
 %else
-        PUSH32 eax, ecx, edx, esi, edi
-
-    ; store original esp value
-        mov r8, [rsp]
-        mov [r8], r11d
-
     ; first function argument
         mov edi, r10d ; address
     ; second function argument
@@ -375,22 +312,9 @@ x86_mov_mem_reg_32:
     ; stack is aligned to 16 bytes
         call X86_WriteMemProcedure
 
-%ifidn __OUTPUT_FORMAT__, win64
-    ; restore original esp value
-        mov r8, [rsp+FIRST_PARAMETER_OFFSET]
-        mov r11d, [r8]
+        Call_Epilogue
 
-        POP32 eax, ecx, edx
-%else
-    ; restore original esp value
-        mov r8, [rsp]
-        mov r11d, [r8]
-
-        POP32 eax, ecx, edx, esi, edi
-%endif
-        POPFD
-
-        RET
+        jmp r8
 
 ; end procedure x86_mov_mem_reg_32
 

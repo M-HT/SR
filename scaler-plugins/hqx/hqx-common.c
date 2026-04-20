@@ -96,14 +96,14 @@ static INLINE uint32_t yuv_diff(uint32_t yuv1, uint32_t yuv2)
     asm (
         "usub8 %[tmp2], %[value2], %[value1]    \n\t"   // tmp2 = value2 - value1           // tmp2 = yuv2 - yuv1
         "sel %[tmp2], %[tmp2], %[tmp1]          \n\t"   // tmp2 = (tmp2 >= 0)?tmp2:tmp1     // tmp2 = abs(yuv1 - yuv2)
-        : [tmp2] "=r" (tmp2)
+        : [tmp2] "=&r" (tmp2)
         : [value1] "r" (yuv1), [value2] "r" (yuv2), [tmp1] "r" (tmp1)
         : "cc"
     );
     asm (
         "usub8 %[tmp1], %[dist], %[tmp2]        \n\t"   // tmp1 = dist - tmp2               // tmp1 = 0x300706 - abs(yuv1 - yuv2)
         "sel %[tmp1], %[zero], %[dist]          \n\t"   // tmp1 = (tmp1 >= 0)?zero:dist     // tmp1 = (0x300706 >= abs(yuv1 - yuv2))?0:0x300706
-        : [tmp1] "=r" (tmp1)
+        : [tmp1] "=&r" (tmp1)
         : [zero] "r" (zero), [dist] "r" (dist), [tmp2] "r" (tmp2)
         : "cc"
     );

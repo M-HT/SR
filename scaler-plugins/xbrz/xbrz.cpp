@@ -335,7 +335,7 @@ real_t distYCbCrBuffered(uint32_t pix1, uint32_t pix2, real_t /*testAttribute*/)
     asm (
         "usub8 %[tmp2], %[value2], %[value1]    \n\t"   // tmp2 = ?,r2-r1,g2-g1,b2-b1
         "sel %[tmp2], %[tmp2], %[tmp1]          \n\t"   // tmp2 = ?,abs(r1-r2),abs(g1-g2),abs(b1-b2)
-        : [tmp2] "=r" (tmp2)
+        : [tmp2] "=&r" (tmp2)
         : [value1] "r" (pix1), [value2] "r" (pix2), [tmp1] "r" (tmp1)
         : "cc"
     );

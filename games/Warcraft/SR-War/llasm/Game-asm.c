@@ -287,6 +287,7 @@ void CCALL Game_RunAILcallback_Asm(AIL_sample_CB callback, AIL_sample *sample)
 {
     _cpu *cpu;
     uint32_t old_eax, old_ecx, old_edx, old_ebx, old_ebp, old_esi, old_edi;
+    uint32_t old_InterruptFlag, old_eflags;
 
     cpu = x86_initialize_cpu();
 
@@ -297,6 +298,10 @@ void CCALL Game_RunAILcallback_Asm(AIL_sample_CB callback, AIL_sample *sample)
     old_ebp = ebp;
     old_esi = esi;
     old_edi = edi;
+
+    old_InterruptFlag = X86_InterruptFlag;
+    old_eflags = eflags;
+    eflags = 0x3202;
 
     esp -= 4;
     *((uint32_t *)REG2PTR(esp)) = PTR2REG(sample);
@@ -313,5 +318,8 @@ void CCALL Game_RunAILcallback_Asm(AIL_sample_CB callback, AIL_sample *sample)
     ebp = old_ebp;
     esi = old_esi;
     edi = old_edi;
+
+    eflags = old_eflags;
+    X86_InterruptFlag = old_InterruptFlag;
 }
 

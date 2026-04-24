@@ -960,7 +960,6 @@ SR__fmemcmp:
 
 align 16
 SR__fmemcpy:
-todo:
 
 ; eax = void *dst
 ;  dx = segment of dst

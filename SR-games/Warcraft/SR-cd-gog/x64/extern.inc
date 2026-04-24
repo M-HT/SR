@@ -20,17 +20,6 @@
 ;;  SOFTWARE.
 ;;
 
-%ifidn __OUTPUT_FORMAT__, win32
-    %define Game_ScreenWindow _Game_ScreenWindow
-    %define Game_Sound _Game_Sound
-    %define Game_Music _Game_Music
-    %define Game_VSyncTick _Game_VSyncTick
-    %define Game_stdin _Game_stdin
-    %define Game_stdout _Game_stdout
-    %define Game_stderr _Game_stderr
-
-%endif
-
 extern Game_ScreenWindow
 extern Game_Sound
 extern Game_Music

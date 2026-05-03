@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2026 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,42 +22,16 @@
  *
  */
 
-#include "llasm_cpu.h"
+#include <math.h>
+#include "SR-proc-float2.h"
 
-EXTERNCVAR volatile uint32_t Game_SDLTicks;
-EXTERNCVAR volatile uint32_t Game_LastAudio;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern void CCALL Game_RunTimer(void);
-extern void CCALL Game_RunTimerDelay(void);
-extern void CCALL Game_SlowDownMainLoop(void);
-extern void CCALL Game_SlowDownScrolling(void);
-
-#ifdef __cplusplus
-}
-#endif
-
-
-EXTERNC void CCALL SR_CheckTimer(void)
+void CCALL Game_acos2(double *x)
 {
-    if (Game_SDLTicks != Game_LastAudio) Game_RunTimer();
+    *x = acos(*x);
 }
 
-EXTERNC void CCALL SR_RunTimerDelay(void)
+void CCALL Game_asin2(double *x)
 {
-    Game_RunTimerDelay();
-}
-
-EXTERNC void CCALL SR_SlowDownMainLoop(void)
-{
-    Game_SlowDownMainLoop();
-}
-
-EXTERNC void CCALL SR_SlowDownScrolling(void)
-{
-    Game_SlowDownScrolling();
+    *x = asin(*x);
 }
 

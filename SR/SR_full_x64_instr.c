@@ -508,13 +508,69 @@ int SR_disassemble_x64_instruction(unsigned int Entry, output_data *output, regi
             /* clear interrupt flag */
         case UD_Icmc:
             /* CF - inverted */
-        case UD_Icmp:
-            /* OS,SF,ZF,AF,PF,CF - modified */
 
             if (!SR_replace_stack_register(pOutput, output->str, ONLY_COPY_UNCHANGED))
             {
                 fprintf(stderr, "Error: stack variable replacement - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
                 return 7;
+            }
+
+            break;
+        case UD_Icmp:
+            /* OS,SF,ZF,AF,PF,CF - modified */
+
+            if (ud_obj.operand[0].type == UD_OP_REG)
+            {
+                if (ud_obj.operand[0].base >= UD_R_AH && ud_obj.operand[0].base <= UD_R_BH &&
+                    ud_obj.operand[1].type == UD_OP_MEM &&
+                    (ud_obj.operand[1].base == UD_R_ESP || ud_obj.operand[1].index == UD_R_ESP)
+                   )
+                {
+                    // cmp .h, [esp+...]
+                    int len1;
+
+                    OUTPUT_PARAMSTRING("xchg %s, %s\n", HIGH2LOWREGSTR(ud_obj.operand[0].base), X86REGSTR(ud_obj.operand[0].base));
+
+                    len1 = strlen(pOutput);
+                    if (!SR_replace_stack_register(pOutput + len1, output->str, COPY_ALWAYS))
+                    {
+                        fprintf(stderr, "Error: stack variable replacement - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
+                        return 7;
+                    }
+                    pOutput[len1 + 5] = 'l';
+
+                    OUTPUT_PARAMSTRING("\nxchg %s, %s", HIGH2LOWREGSTR(ud_obj.operand[0].base), X86REGSTR(ud_obj.operand[0].base));
+                }
+            }
+            else if (ud_obj.operand[0].type == UD_OP_MEM)
+            {
+                if ((ud_obj.operand[0].base == UD_R_ESP || ud_obj.operand[0].index == UD_R_ESP) &&
+                    ud_obj.operand[1].type == UD_OP_REG &&
+                    ud_obj.operand[1].base >= UD_R_AH && ud_obj.operand[1].base <= UD_R_BH
+                   )
+                {
+                    // cmp [esp+...], .h
+
+                    OUTPUT_PARAMSTRING("xchg %s, %s\n", HIGH2LOWREGSTR(ud_obj.operand[1].base), X86REGSTR(ud_obj.operand[1].base));
+
+                    if (!SR_replace_stack_register(pOutput + strlen(pOutput), output->str, COPY_ALWAYS))
+                    {
+                        fprintf(stderr, "Error: stack variable replacement - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
+                        return 7;
+                    }
+                    strcpy(strrchr(pOutput, ',') + 2, HIGH2LOWREGSTR(ud_obj.operand[1].base));
+
+                    OUTPUT_PARAMSTRING("\nxchg %s, %s\n", HIGH2LOWREGSTR(ud_obj.operand[1].base), X86REGSTR(ud_obj.operand[1].base));
+                }
+            }
+
+            if (cOutput[0] == 0)
+            {
+                if (!SR_replace_stack_register(pOutput, output->str, ONLY_COPY_UNCHANGED))
+                {
+                    fprintf(stderr, "Error: stack variable replacement - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
+                    return 7;
+                }
             }
 
             break;
@@ -1580,6 +1636,8 @@ int SR_disassemble_x64_instruction(unsigned int Entry, output_data *output, regi
             /* no flags affected */
         case UD_Ifnstcw:
         case UD_Ifnstsw:
+            /* no flags affected */
+        case UD_Ifrndint:
             /* no flags affected */
         case UD_Ifst:
         case UD_Ifstp:

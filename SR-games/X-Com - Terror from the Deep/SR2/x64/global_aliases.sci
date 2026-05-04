@@ -1,0 +1,10 @@
+loc_31530,tactical_main_
+loc_A34F4,tactical_errno_val
+loc_12548,tactical_update_timer
+
+loc_70000,tactical_data_begin
+loc_75B54,tactical_data_end
+loc_75CA4,tactical_bss_begin
+loc_A34F8,tactical_bss_end
+
+loc_A4530,tactical_stack_start

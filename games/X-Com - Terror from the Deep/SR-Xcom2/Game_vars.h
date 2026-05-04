@@ -189,8 +189,8 @@ EXTERNAL_VARIABLE volatile uint32_t Game_VSyncTick;	/* VSync tick counter */
 EXTERNAL_VARIABLE volatile uint32_t Thread_Exited;	/* did main thread exit ? */
 EXTERNAL_VARIABLE volatile uint32_t Thread_Exit;	/* should thread exit ? */
 EXTERNAL_VARIABLE volatile uint32_t VK_Visible;		/* is virtual keyboard visible ? */
-EXTERNAL_VARIABLE volatile uint32_t Game_SDLTicks;	/* value of SDL_GetTicks - set in timer thread */
-EXTERNAL_VARIABLE volatile uint32_t Game_LastAudio;	/* time of last call to Game_ProcessAudio */
+EXTERNAL_CVAR_BGN volatile uint32_t Game_SDLTicks;	/* value of SDL_GetTicks - set in timer thread */ EXTERNAL_CVAR_END
+EXTERNAL_CVAR_BGN volatile uint32_t Game_LastAudio;	/* time of last call to Game_ProcessAudio */ EXTERNAL_CVAR_END
 
 EXTERNAL_VARIABLE SDL_sem *Game_DisplaySem;
 EXTERNAL_VARIABLE SDL_sem *Game_FlipSem;

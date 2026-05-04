@@ -1,6 +1,8 @@
+//part of static recompiler -- do not edit
+
 /**
  *
- *  Copyright (C) 2016-2026 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,42 +24,22 @@
  *
  */
 
-#include "llasm_cpu.h"
-
-EXTERNCVAR volatile uint32_t Game_SDLTicks;
-EXTERNCVAR volatile uint32_t Game_LastAudio;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern void CCALL Game_RunTimer(void);
-extern void CCALL Game_RunTimerDelay(void);
-extern void CCALL Game_SlowDownMainLoop(void);
-extern void CCALL Game_SlowDownScrolling(void);
+typedef struct {
+    void *esp;
+    void *stack_bottom, *stack_top;
+} _stack;
 
 #ifdef __cplusplus
-}
+#define EXTERNC extern "C"
+#else
+#define EXTERNC
 #endif
 
-
-EXTERNC void CCALL SR_CheckTimer(void)
-{
-    if (Game_SDLTicks != Game_LastAudio) Game_RunTimer();
-}
-
-EXTERNC void CCALL SR_RunTimerDelay(void)
-{
-    Game_RunTimerDelay();
-}
-
-EXTERNC void CCALL SR_SlowDownMainLoop(void)
-{
-    Game_SlowDownMainLoop();
-}
-
-EXTERNC void CCALL SR_SlowDownScrolling(void)
-{
-    Game_SlowDownScrolling();
-}
+#if defined(__GNUC__) && (defined(__i386) || (defined(__x86_64) && defined(_WIN32)))
+    #define CCALL __attribute__ ((__cdecl__))
+#elif defined(_MSC_VER)
+    #define CCALL __cdecl
+#else
+    #define CCALL
+#endif
 

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2025 Roman Pauer
+ *  Copyright (C) 2025-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -297,6 +297,18 @@ void UMap_Free(void **PMap)
     *PMap = nullptr;
 }
 
+void UMap_ForEach(void **PMap, void (*proc)(Word_t value, void *data), void *data)
+{
+    auto UMap = static_cast<std::unordered_map<Word_t,Word_t> *>(*PMap);
+
+    if (UNLIKELY_COND(UMap == nullptr)) UNLIKELY_ATTR return;
+
+    for (auto iter = UMap->begin(); iter != UMap->end(); iter++)
+    {
+        proc(iter->second, data);
+    }
+}
+
 
 void OSet_Set(void **PSet, Word_t Index)
 {
@@ -570,8 +582,8 @@ static void section_iflags_list_FreeCallback(Word_t value, void *data)
 
 void section_iflags_list_Free(unsigned int SecNum)
 {
-    OMap_ForEach(&section[SecNum].iflags_list, section_iflags_list_FreeCallback, nullptr);
-    OMap_Free(&section[SecNum].iflags_list);
+    UMap_ForEach(&section[SecNum].iflags_list, section_iflags_list_FreeCallback, nullptr);
+    UMap_Free(&section[SecNum].iflags_list);
 }
 
 

@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2025 Roman Pauer
+ *  Copyright (C) 2025-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -44,6 +44,7 @@ void OMap_ForEach(void **PMap, void (*proc)(Word_t value, void *data), void *dat
 Word_t *UMap_Ins(void **PMap, Word_t Index);
 Word_t *UMap_Get(void **PMap, Word_t Index);
 void UMap_Free(void **PMap);
+void UMap_ForEach(void **PMap, void (*proc)(Word_t value, void *data), void *data);
 
 void OSet_Set(void **PSet, Word_t Index);
 void OSet_Unset(void **PSet, Word_t Index);

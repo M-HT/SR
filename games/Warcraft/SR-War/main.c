@@ -1410,6 +1410,12 @@ static void Game_Event_Loop(void)
 
 int main (int argc, char *argv[])
 {
+    if (sizeof(PTR32(void)) != 4)
+    {
+        fprintf(stderr, "Error: The program wasn't compiled correctly for %i-bits\n", (int) (8 * sizeof(void*)));
+        return 0;
+    }
+
 #ifdef PTROFS_64BIT
     if (0 != initialize_pointer_offset())
     {

@@ -434,12 +434,13 @@
 		Game_Call_Prologue_0
 
 %ifidn __OUTPUT_FORMAT__, win64
+		sub rsp, byte 16
 		mov r9d, ecx ; 4th parameter
 		mov ecx, eax
 		mov edx, edx
 		mov r8d, ebx
 		mov eax, [r11d+4]
-		mov [rsp], eax
+		mov [rsp+4*8], rax
 %else
 		mov edi, eax
 		mov esi, edx
@@ -449,6 +450,11 @@
 %endif
 
 		call %1
+
+%ifidn __OUTPUT_FORMAT__, win64
+		add rsp, byte 16
+%else
+%endif
 
 		Game_Call_Epilogue_0 %2,4
 

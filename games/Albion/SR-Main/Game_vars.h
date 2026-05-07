@@ -181,8 +181,8 @@ EXTERNAL_VARIABLE Albion_Lang Albion_Font_Lang;		/* albion font language */
 
 
 EXTERNAL_VARIABLE volatile uint32_t Game_TimerRunning;	/* is timer interrupt running ? */
-EXTERNAL_VARIABLE volatile uint32_t Game_TimerTick;	/* Timer tick counter */
-EXTERNAL_VARIABLE volatile uint32_t Game_TimerRun;	/* Timer number of runs counter */
+EXTERNAL_CVAR_BGN volatile uint32_t Game_TimerTick;	/* Timer tick counter */ EXTERNAL_CVAR_END
+EXTERNAL_CVAR_BGN volatile uint32_t Game_TimerRun;	/* Timer number of runs counter */ EXTERNAL_CVAR_END
 EXTERNAL_CVAR_BGN volatile uint32_t Game_VSyncTick;	/* VSync tick counter */ EXTERNAL_CVAR_END
 EXTERNAL_VARIABLE volatile uint32_t Thread_Exited;	/* did main thread exit ? */
 EXTERNAL_VARIABLE volatile uint32_t Thread_Exit;	/* should thread exit ? */

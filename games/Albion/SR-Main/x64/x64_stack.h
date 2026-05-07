@@ -1,6 +1,8 @@
+//part of static recompiler -- do not edit
+
 /**
  *
- *  Copyright (C) 2016-2026 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -22,24 +24,22 @@
  *
  */
 
-#include "llasm_cpu.h"
-
-EXTERNCVAR volatile uint32_t Game_TimerTick;
-EXTERNCVAR volatile uint32_t Game_TimerRun;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern void Game_RunTimer(void);
+typedef struct {
+    void *esp;
+    void *stack_bottom, *stack_top;
+} _stack;
 
 #ifdef __cplusplus
-}
+#define EXTERNC extern "C"
+#else
+#define EXTERNC
 #endif
 
-
-EXTERNC void SR_CheckTimer(void)
-{
-    if (Game_TimerRun != Game_TimerTick) Game_RunTimer();
-}
+#if defined(__GNUC__) && (defined(__i386) || (defined(__x86_64) && defined(_WIN32)))
+    #define CCALL __attribute__ ((__cdecl__))
+#elif defined(_MSC_VER)
+    #define CCALL __cdecl
+#else
+    #define CCALL
+#endif
 

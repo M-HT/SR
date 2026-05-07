@@ -1,0 +1,209 @@
+;;
+;;  Copyright (C) 2016-2026 Roman Pauer
+;;
+;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
+;;  this software and associated documentation files (the "Software"), to deal in
+;;  the Software without restriction, including without limitation the rights to
+;;  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+;;  of the Software, and to permit persons to whom the Software is furnished to do
+;;  so, subject to the following conditions:
+;;
+;;  The above copyright notice and this permission notice shall be included in all
+;;  copies or substantial portions of the Software.
+;;
+;;  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;  SOFTWARE.
+;;
+
+extern Game_ScreenWindow
+extern Game_Sound
+extern Game_Music
+extern Game_VSyncTick
+extern Game_stdin
+extern Game_stdout
+extern Game_stderr
+extern self_mod_width
+extern Game_FloatProcSin
+extern Game_FloatProcSin2
+extern Game_FloatProcSin3
+extern Game_FloatProcSin4
+extern Game_FloatProcCos
+extern Game_FloatProcCos2
+extern Game_FloatProcSqrt
+extern Game_FloatProcSqrt2
+extern Game_FloatProcSqrt3
+extern Game_FloatProcSqrt4
+extern Game_FloatProcSqrt5
+extern Game_FloatProcSqrt6
+extern Game_FloatProcSqrt7
+extern Game_FloatProcSqrt8
+extern Game_FloatProcCosSin
+extern Game_FloatProcAtan
+extern Game_FloatProcSinCos
+
+
+extern draw_3dscene_proc
+extern Game_UseEnhanced3DEngine
+extern Game_ScreenshotEnabled
+extern Game_ScreenshotAutomaticFilename
+
+extern SR_Call_Asm_Float1
+
+extern SR_Sync
+extern SR_CheckTimer
+
+; null procedures
+extern SR___CHK
+extern SR___GETDS
+extern SR_nosound
+extern SR_sound
+extern SR__harderr
+; stack params
+extern SR_fprintf
+extern SR_printf
+extern SR__bprintf
+extern SR_sprintf
+
+extern SR_AIL_mem_use_malloc
+extern SR_AIL_mem_use_free
+extern SR_AIL_startup
+extern SR_AIL_register_timer
+extern SR_AIL_set_timer_frequency
+extern SR_AIL_start_timer
+extern SR_AIL_stop_timer
+extern SR_AIL_release_timer_handle
+extern SR_AIL_shutdown
+extern SR_AIL_set_GTL_filename_prefix
+extern SR_AIL_install_MDI_INI
+extern SR_AIL_set_preference
+extern SR_AIL_install_DIG_INI
+extern SR_AIL_uninstall_DIG_driver
+extern SR_AIL_uninstall_MDI_driver
+
+extern SR_AIL_allocate_sample_handle
+extern SR_AIL_end_sample
+extern SR_AIL_init_sample
+extern SR_AIL_release_sample_handle
+extern SR_AIL_sample_status
+extern SR_AIL_set_digital_master_volume
+extern SR_AIL_set_sample_address
+extern SR_AIL_set_sample_loop_count
+extern SR_AIL_set_sample_pan
+extern SR_AIL_set_sample_playback_rate
+extern SR_AIL_set_sample_type
+extern SR_AIL_set_sample_volume
+extern SR_AIL_start_sample
+
+extern SR_AIL_allocate_sequence_handle
+extern SR_AIL_create_wave_synthesizer
+extern SR_AIL_destroy_wave_synthesizer
+extern SR_AIL_end_sequence
+extern SR_AIL_init_sequence
+extern SR_AIL_release_sequence_handle
+extern SR_AIL_resume_sequence
+extern SR_AIL_sequence_status
+extern SR_AIL_set_sequence_loop_count
+extern SR_AIL_set_sequence_volume
+extern SR_AIL_start_sequence
+extern SR_AIL_stop_sequence
+
+extern SR_SMK_ShowMenu
+extern SR_SMK_PlayIntro
+extern SR_SMK_PlayCredits
+
+extern SR_ERROR_Init
+extern SR_ERROR_ClearStack
+extern SR_ERROR_PushError
+extern SR_ERROR_PopError
+extern SR_ERROR_IsStackEmpty
+extern SR_ERROR_PrintAllErrors
+
+extern SR_BASEMEM_Init
+extern SR_BASEMEM_Exit
+extern SR_BASEMEM_GetFreeMemSize
+extern SR_BASEMEM_Alloc
+extern SR_BASEMEM_Free
+extern SR_BASEMEM_LockRegion
+extern SR_BASEMEM_UnlockRegion
+extern SR_BASEMEM_FillMemByte
+extern SR_BASEMEM_FillMemLong
+extern SR_BASEMEM_CopyMem
+extern SR_BASEMEM_AlignMemptr
+extern SR_BASEMEM_PrintReport
+
+extern SR_DOS_Init
+extern SR_DOS_Exit
+extern SR_DOS_Open
+extern SR_DOS_Close
+extern SR_DOS_Read
+extern SR_DOS_Write
+extern SR_DOS_Seek
+extern SR_DOS_GetFileLength
+extern SR_DOS_exists
+extern SR_DOS_setcurrentdir
+extern SR_DOS_GetSeekPosition
+
+extern SR_OPM_New
+extern SR_OPM_Del
+extern SR_OPM_SetVirtualClipStart
+extern SR_OPM_CreateVirtualOPM
+extern SR_OPM_SetPixel
+extern SR_OPM_HorLine
+extern SR_OPM_VerLine
+extern SR_OPM_Box
+extern SR_OPM_FillBox
+extern SR_OPM_CopyOPMOPM
+; 0 params
+extern SR_fcloseall
+extern SR_WaitAfterVerticalRetrace
+extern SR_WaitForVerticalRetrace
+extern SR_WaitAfter2ndVerticalRetrace
+extern SR_WaitFor2ndVerticalRetrace
+; 1 param
+extern SR_closedir
+extern SR_ctime
+extern SR__dos_findclose
+extern SR__dos_findnext
+extern SR__dos_getvect
+extern SR_exit
+extern SR_fclose
+extern SR_ftime
+extern SR_opendir
+extern SR__setjmp
+extern SR_strlen
+extern SR_unlink
+extern SR_j_unlink
+extern SR_WaitTimerTicks
+extern SR_save_screenshot
+; 2 params
+extern SR_fopen
+extern SR_fputs
+extern SR_getcwd
+extern SR_longjmp
+extern SR_outp
+extern SR_rename
+extern SR_strchr
+extern SR_strcpy
+extern SR_strcspn
+extern SR_strspn
+; 2/3 params
+extern SR__dos_setvect
+; 3 params
+extern SR__dos_findfirst
+extern SR_fgets
+extern SR_memcpy
+extern SR_memmove
+extern SR_memset
+extern SR_strncmp
+extern SR_strncpy
+extern SR_strnicmp
+; 4 params
+extern SR_int386x
+extern SR__vbprintf
+; 5 params
+extern SR__splitpath

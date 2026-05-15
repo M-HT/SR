@@ -36,6 +36,9 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#if !defined(KEY_WOW64_32KEY)
+#define KEY_WOW64_32KEY 0x200
+#endif
 #else
 #include "CLIB.h"
 #endif

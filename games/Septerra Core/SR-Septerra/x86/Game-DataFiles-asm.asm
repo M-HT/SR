@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -110,8 +110,6 @@ OpenGameDataFiles_asm2c:
 
         Call_Asm_Stack3 OpenGameDataFiles
 
-        retn
-
 ; end procedure OpenGameDataFiles_asm2c
 
 
@@ -121,8 +119,6 @@ CloseGameDataFiles_asm2c:
 ; [esp] = return address
 
         Call_Asm_Stack0 CloseGameDataFiles
-
-        retn
 
 ; end procedure CloseGameDataFiles_asm2c
 
@@ -135,8 +131,6 @@ RecordOpen_asm2c:
 
         Call_Asm_Stack1 RecordOpen
 
-        retn
-
 ; end procedure RecordOpen_asm2c
 
 
@@ -147,8 +141,6 @@ RecordTryOpen_asm2c:
 ; [esp    ] = return address
 
         Call_Asm_Stack1 RecordTryOpen
-
-        retn
 
 ; end procedure RecordTryOpen_asm2c
 
@@ -161,8 +153,6 @@ RecordGetDataFilePathAndOffset_asm2c:
 ; [esp      ] = return address
 
         Call_Asm_Stack2 RecordGetDataFilePathAndOffset
-
-        retn
 
 ; end procedure RecordGetDataFilePathAndOffset_asm2c
 
@@ -177,8 +167,6 @@ RecordSeek_asm2c:
 
         Call_Asm_Stack3 RecordSeek
 
-        retn
-
 ; end procedure RecordSeek_asm2c
 
 
@@ -192,8 +180,6 @@ RecordRead_asm2c:
 
         Call_Asm_Stack3 RecordRead
 
-        retn
-
 ; end procedure RecordRead_asm2c
 
 
@@ -204,8 +190,6 @@ RecordClose_asm2c:
 ; [esp    ] = return address
 
         Call_Asm_Stack1 RecordClose
-
-        retn
 
 ; end procedure RecordClose_asm2c
 
@@ -218,8 +202,6 @@ RecordGetSize_asm2c:
 
         Call_Asm_Stack1 RecordGetSize
 
-        retn
-
 ; end procedure RecordGetSize_asm2c
 
 
@@ -230,8 +212,6 @@ GetFirstLevelRecordKey_asm2c:
 
         Call_Asm_Stack0 GetFirstLevelRecordKey
 
-        retn
-
 ; end procedure GetFirstLevelRecordKey_asm2c
 
 
@@ -241,8 +221,6 @@ GetNextLevelRecordKey_asm2c:
 ; [esp] = return address
 
         Call_Asm_Stack0 GetNextLevelRecordKey
-
-        retn
 
 ; end procedure GetNextLevelRecordKey_asm2c
 

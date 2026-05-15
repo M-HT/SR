@@ -1127,15 +1127,18 @@ error1:
     while (num0 < pointer_offset + UINT64_C(0x80000000))
     {
         num_matches = fscanf(f, "%" SCNxMAX "%*[ -]%" SCNxMAX " %*[^\n^\r]%*[\n\r]", &num1, &num2);
-        if ((num_matches == EOF) || (num_matches < 2)) break;
+        if (num_matches == EOF) break;
+
+        if (num_matches < 2)
+        {
+            num0 = pointer_offset + UINT64_C(0x80000000);
+            break;
+        }
 
         // num1-num2 block is used
         // num0-num1 block is not used
 
-        if (num1 > pointer_offset + UINT64_C(0x80000000))
-        {
-            num1 = pointer_offset + UINT64_C(0x80000000);
-        }
+        if (num1 >= pointer_offset + UINT64_C(0x80000000)) break;
 
         // num0-num1 block is below 2GB
 

@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -134,9 +134,7 @@ Beep_asm2c:
 ; [esp +   4] = DWORD dwFreq
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 Beep_c
-
-        retn 2*4
+        Call_Asm_Stack2 Beep_c,2
 
 ; end procedure Beep_asm2c
 
@@ -147,9 +145,7 @@ CloseHandle_asm2c:
 ; [esp +   4] = HANDLE hObject
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 CloseHandle_c
-
-        retn 4
+        Call_Asm_Stack1 CloseHandle_c,1
 
 ; end procedure CloseHandle_asm2c
 
@@ -161,9 +157,7 @@ CreateDirectoryA_asm2c:
 ; [esp +   4] = LPCSTR                lpPathName
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 CreateDirectoryA_c
-
-        retn 2*4
+        Call_Asm_Stack2 CreateDirectoryA_c,2
 
 ; end procedure CreateDirectoryA_asm2c
 
@@ -180,9 +174,7 @@ CreateFileA_asm2c:
 ; [esp +   4] = LPCSTR                lpFileName
 ; [esp      ] = return address
 
-        Call_Asm_Stack7 CreateFileA_c
-
-        retn 7*4
+        Call_Asm_Stack7 CreateFileA_c,7
 
 ; end procedure CreateFileA_asm2c
 
@@ -195,9 +187,7 @@ CreateMutexA_asm2c:
 ; [esp +   4] = LPSECURITY_ATTRIBUTES lpMutexAttributes
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 CreateMutexA_c
-
-        retn 3*4
+        Call_Asm_Stack3 CreateMutexA_c,3
 
 ; end procedure CreateMutexA_asm2c
 
@@ -211,9 +201,7 @@ CreatePipe_asm2c:
 ; [esp +   4] = HDC    hdc
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 CreatePipe_c
-
-        retn 4*4
+        Call_Asm_Stack4 CreatePipe_c,4
 
 ; end procedure CreatePipe_asm2c
 
@@ -224,9 +212,7 @@ DeleteCriticalSection_asm2c:
 ; [esp +   4] = LPCRITICAL_SECTION lpCriticalSection
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 DeleteCriticalSection_c
-
-        retn 4
+        Call_Asm_Stack1 DeleteCriticalSection_c,1
 
 ; end procedure DeleteCriticalSection_asm2c
 
@@ -237,9 +223,7 @@ DeleteFileA_asm2c:
 ; [esp +   4] = LPCSTR lpFileName
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 DeleteFileA_c
-
-        retn 4
+        Call_Asm_Stack1 DeleteFileA_c,1
 
 ; end procedure DeleteFileA_asm2c
 
@@ -250,9 +234,7 @@ EnterCriticalSection_asm2c:
 ; [esp +   4] = HDC   hdc
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 EnterCriticalSection_c
-
-        retn 4
+        Call_Asm_Stack1 EnterCriticalSection_c,1
 
 ; end procedure EnterCriticalSection_asm2c
 
@@ -263,9 +245,7 @@ ExitProcess_asm2c:
 ; [esp +   4] = UINT uExitCode
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 ExitProcess_c
-
-        retn 4
+        Call_Asm_Stack1 ExitProcess_c,1
 
 ; end procedure ExitProcess_asm2c
 
@@ -277,9 +257,7 @@ FileTimeToLocalFileTime_asm2c:
 ; [esp +   4] = const FILETIME *lpFileTime
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 FileTimeToLocalFileTime_c
-
-        retn 2*4
+        Call_Asm_Stack2 FileTimeToLocalFileTime_c,2
 
 ; end procedure FileTimeToLocalFileTime_asm2c
 
@@ -291,9 +269,7 @@ FileTimeToSystemTime_asm2c:
 ; [esp +   4] = const FILETIME *lpFileTime
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 FileTimeToSystemTime_c
-
-        retn 2*4
+        Call_Asm_Stack2 FileTimeToSystemTime_c,2
 
 ; end procedure FileTimeToSystemTime_asm2c
 
@@ -304,9 +280,7 @@ FindClose_asm2c:
 ; [esp +   4] = HANDLE hFindFile
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 FindClose_c
-
-        retn 4
+        Call_Asm_Stack1 FindClose_c,1
 
 ; end procedure FindClose_asm2c
 
@@ -318,9 +292,7 @@ FindFirstFileA_asm2c:
 ; [esp +   4] = LPCSTR             lpFileName
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 FindFirstFileA_c
-
-        retn 2*4
+        Call_Asm_Stack2 FindFirstFileA_c,2
 
 ; end procedure FindFirstFileA_asm2c
 
@@ -332,9 +304,7 @@ FindNextFileA_asm2c:
 ; [esp +   4] = HANDLE             hFindFile
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 FindNextFileA_c
-
-        retn 2*4
+        Call_Asm_Stack2 FindNextFileA_c,2
 
 ; end procedure FindNextFileA_asm2c
 
@@ -346,8 +316,6 @@ GetCurrentProcess_asm2c:
 
         Call_Asm_Stack0 GetCurrentProcess_c
 
-        retn
-
 ; end procedure GetCurrentProcess_asm2c
 
 
@@ -357,8 +325,6 @@ GetCurrentThread_asm2c:
 ; [esp      ] = return address
 
         Call_Asm_Stack0 GetCurrentThread_c
-
-        retn
 
 ; end procedure GetCurrentThread_asm2c
 
@@ -372,9 +338,7 @@ GetFullPathNameA_asm2c:
 ; [esp +   4] = LPCSTR lpFileName
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 GetFullPathNameA_c
-
-        retn 4*4
+        Call_Asm_Stack4 GetFullPathNameA_c,4
 
 ; end procedure GetFullPathNameA_asm2c
 
@@ -385,8 +349,6 @@ GetLastError_asm2c:
 ; [esp      ] = return address
 
         Call_Asm_Stack0 GetLastError_c
-
-        retn
 
 ; end procedure GetLastError_asm2c
 
@@ -402,9 +364,7 @@ GetPrivateProfileStringA_asm2c:
 ; [esp +   4] = HDC   hdc
 ; [esp      ] = return address
 
-        Call_Asm_Stack6 GetPrivateProfileStringA_c
-
-        retn 6*4
+        Call_Asm_Stack6 GetPrivateProfileStringA_c,6
 
 ; end procedure GetPrivateProfileStringA_asm2c
 
@@ -415,9 +375,7 @@ InitializeCriticalSection_asm2c:
 ; [esp +   4] = LPCRITICAL_SECTION lpCriticalSection
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 InitializeCriticalSection_c
-
-        retn 4
+        Call_Asm_Stack1 InitializeCriticalSection_c,1
 
 ; end procedure InitializeCriticalSection_asm2c
 
@@ -428,9 +386,7 @@ LeaveCriticalSection_asm2c:
 ; [esp +   4] = LPCRITICAL_SECTION lpCriticalSection
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 LeaveCriticalSection_c
-
-        retn 4
+        Call_Asm_Stack1 LeaveCriticalSection_c,1
 
 ; end procedure LeaveCriticalSection_asm2c
 
@@ -441,9 +397,7 @@ QueryPerformanceCounter_asm2c:
 ; [esp +   4] = LARGE_INTEGER *lpPerformanceCount
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 QueryPerformanceCounter_c
-
-        retn 4
+        Call_Asm_Stack1 QueryPerformanceCounter_c,1
 
 ; end procedure QueryPerformanceCounter_asm2c
 
@@ -454,9 +408,7 @@ QueryPerformanceFrequency_asm2c:
 ; [esp +   4] = LARGE_INTEGER *lpFrequency
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 QueryPerformanceFrequency_c
-
-        retn 4
+        Call_Asm_Stack1 QueryPerformanceFrequency_c,1
 
 ; end procedure QueryPerformanceFrequency_asm2c
 
@@ -471,9 +423,7 @@ ReadFile_asm2c:
 ; [esp +   4] = HANDLE       hFile
 ; [esp      ] = return address
 
-        Call_Asm_Stack5 ReadFile_c
-
-        retn 5*4
+        Call_Asm_Stack5 ReadFile_c,5
 
 ; end procedure ReadFile_asm2c
 
@@ -484,9 +434,7 @@ SetErrorMode_asm2c:
 ; [esp +   4] = UINT uMode
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 SetErrorMode_c
-
-        retn 4
+        Call_Asm_Stack1 SetErrorMode_c,1
 
 ; end procedure SetErrorMode_asm2c
 
@@ -500,9 +448,7 @@ SetFilePointer_asm2c:
 ; [esp +   4] = HANDLE hFile
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 SetFilePointer_c
-
-        retn 4*4
+        Call_Asm_Stack4 SetFilePointer_c,4
 
 ; end procedure SetFilePointer_asm2c
 
@@ -514,9 +460,7 @@ SetPriorityClass_asm2c:
 ; [esp +   4] = HANDLE hProcess
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 SetPriorityClass_c
-
-        retn 2*4
+        Call_Asm_Stack2 SetPriorityClass_c,2
 
 ; end procedure SetPriorityClass_asm2c
 
@@ -528,9 +472,7 @@ SetThreadPriority_asm2c:
 ; [esp +   4] = HANDLE hThread
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 SetThreadPriority_c
-
-        retn 2*4
+        Call_Asm_Stack2 SetThreadPriority_c,2
 
 ; end procedure SetThreadPriority_asm2c
 
@@ -541,9 +483,7 @@ Sleep_asm2c:
 ; [esp +   4] = DWORD dwMilliseconds
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 Sleep_c
-
-        retn 4
+        Call_Asm_Stack1 Sleep_c,1
 
 ; end procedure Sleep_asm2c
 
@@ -558,9 +498,7 @@ WriteFile_asm2c:
 ; [esp +   4] = HANDLE       hFile
 ; [esp      ] = return address
 
-        Call_Asm_Stack5 WriteFile_c
-
-        retn 5*4
+        Call_Asm_Stack5 WriteFile_c,5
 
 ; end procedure WriteFile_asm2c
 

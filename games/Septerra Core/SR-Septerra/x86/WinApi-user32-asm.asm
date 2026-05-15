@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019-2023 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -165,9 +165,7 @@ AdjustWindowRectEx_asm2c:
 ; [esp +   4] = LPRECT lpRect
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 AdjustWindowRectEx_c
-
-        retn 4*4
+        Call_Asm_Stack4 AdjustWindowRectEx_c,4
 
 ; end procedure AdjustWindowRectEx_asm2c
 
@@ -178,9 +176,7 @@ ClipCursor_asm2c:
 ; [esp +   4] = const RECT *lpRect
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 ClipCursor_c
-
-        retn 4
+        Call_Asm_Stack1 ClipCursor_c,1
 
 ; end procedure ClipCursor_asm2c
 
@@ -202,9 +198,7 @@ CreateWindowExA_asm2c:
 ; [esp +    4] = DWORD     dwExStyle
 ; [esp       ] = return address
 
-        Call_Asm_Stack12 CreateWindowExA_c
-
-        retn 12*4
+        Call_Asm_Stack12 CreateWindowExA_c,12
 
 ; end procedure CreateWindowExA_asm2c
 
@@ -218,9 +212,7 @@ DefWindowProcA_asm2c:
 ; [esp +   4] = HWND   hWnd
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 DefWindowProcA_c
-
-        retn 4*4
+        Call_Asm_Stack4 DefWindowProcA_c,4
 
 ; end procedure DefWindowProcA_asm2c
 
@@ -231,9 +223,7 @@ DestroyWindow_asm2c:
 ; [esp +   4] = HWND hWnd
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 DestroyWindow_c
-
-        retn 4
+        Call_Asm_Stack1 DestroyWindow_c,1
 
 ; end procedure DestroyWindow_asm2c
 
@@ -244,9 +234,7 @@ DispatchMessageA_asm2c:
 ; [esp +   4] = const MSG *lpMsg
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 DispatchMessageA_c
-
-        retn 4
+        Call_Asm_Stack1 DispatchMessageA_c,1
 
 ; end procedure DispatchMessageA_asm2c
 
@@ -259,9 +247,7 @@ GetAsyncKeyState_asm2c:
 
 ; note: return value is not expected by callers in the original asm code to have been extended to 32 bits
 
-        Call_Asm_Stack1 GetAsyncKeyState_c
-
-        retn 4
+        Call_Asm_Stack1 GetAsyncKeyState_c,1
 
 ; end procedure GetAsyncKeyState_asm2c
 
@@ -272,9 +258,7 @@ GetCursorPos_asm2c:
 ; [esp +   4] = LPPOINT lpPoint
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 GetCursorPos_c
-
-        retn 4
+        Call_Asm_Stack1 GetCursorPos_c,1
 
 ; end procedure GetCursorPos_asm2c
 
@@ -287,9 +271,7 @@ GetKeyState_asm2c:
 
 ; note: return value is not expected by callers in the original asm code to have been extended to 32 bits
 
-        Call_Asm_Stack1 GetKeyState_c
-
-        retn 4
+        Call_Asm_Stack1 GetKeyState_c,1
 
 ; end procedure GetKeyState_asm2c
 
@@ -303,9 +285,7 @@ GetMessageA_asm2c:
 ; [esp +   4] = LPMSG lpMsg
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 GetMessageA_c
-
-        retn 4*4
+        Call_Asm_Stack4 GetMessageA_c,4
 
 ; end procedure GetMessageA_asm2c
 
@@ -317,8 +297,6 @@ GetMessagePos_asm2c:
 
         Call_Asm_Stack0 GetMessagePos_c
 
-        retn
-
 ; end procedure GetMessagePos_asm2c
 
 
@@ -329,8 +307,6 @@ GetMessageTime_asm2c:
 
         Call_Asm_Stack0 GetMessageTime_c
 
-        retn
-
 ; end procedure GetMessageTime_asm2c
 
 
@@ -340,9 +316,7 @@ GetSystemMetrics_asm2c:
 ; [esp +   4] = int nIndex
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 GetSystemMetrics_c
-
-        retn 4
+        Call_Asm_Stack1 GetSystemMetrics_c,1
 
 ; end procedure GetSystemMetrics_asm2c
 
@@ -354,9 +328,7 @@ LoadCursorA_asm2c:
 ; [esp +   4] = HINSTANCE hInstance
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 LoadCursorA_c
-
-        retn 2*4
+        Call_Asm_Stack2 LoadCursorA_c,2
 
 ; end procedure LoadCursorA_asm2c
 
@@ -368,9 +340,7 @@ LoadIconA_asm2c:
 ; [esp +   4] = HINSTANCE hInstance
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 LoadIconA_c
-
-        retn 2*4
+        Call_Asm_Stack2 LoadIconA_c,2
 
 ; end procedure LoadIconA_asm2c
 
@@ -386,9 +356,7 @@ LoadImageA_asm2c:
 ; [esp +   4] = HINSTANCE hInst
 ; [esp      ] = return address
 
-        Call_Asm_Stack6 LoadImageA_c
-
-        retn 6*4
+        Call_Asm_Stack6 LoadImageA_c,6
 
 ; end procedure LoadImageA_asm2c
 
@@ -402,9 +370,7 @@ MessageBoxA_asm2c:
 ; [esp +   4] = HWND   hWnd
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 MessageBoxA_c
-
-        retn 4*4
+        Call_Asm_Stack4 MessageBoxA_c,4
 
 ; end procedure MessageBoxA_asm2c
 
@@ -417,9 +383,7 @@ OffsetRect_asm2c:
 ; [esp +   4] = LPRECT lprc
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 OffsetRect_c
-
-        retn 3*4
+        Call_Asm_Stack3 OffsetRect_c,3
 
 ; end procedure OffsetRect_asm2c
 
@@ -434,9 +398,7 @@ PeekMessageA_asm2c:
 ; [esp +   4] = LPMSG lpMsg
 ; [esp      ] = return address
 
-        Call_Asm_Stack5 PeekMessageA_c
-
-        retn 5*4
+        Call_Asm_Stack5 PeekMessageA_c,5
 
 ; end procedure PeekMessageA_asm2c
 
@@ -450,9 +412,7 @@ PostMessageA_asm2c:
 ; [esp +   4] = HWND   hWnd
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 PostMessageA_c
-
-        retn 4*4
+        Call_Asm_Stack4 PostMessageA_c,4
 
 ; end procedure PostMessageA_asm2c
 
@@ -463,9 +423,7 @@ PostQuitMessage_asm2c:
 ; [esp +   4] = int nExitCode
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 PostQuitMessage_c
-
-        retn 4
+        Call_Asm_Stack1 PostQuitMessage_c,1
 
 ; end procedure PostQuitMessage_asm2c
 
@@ -478,9 +436,7 @@ PtInRect_asm2c:
 ; [esp +   4] = const RECT *lprc
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 PtInRect_c
-
-        retn 3*4
+        Call_Asm_Stack3 PtInRect_c,3
 
 ; end procedure PtInRect_asm2c
 
@@ -491,9 +447,7 @@ RegisterClassA_asm2c:
 ; [esp +   4] = const WNDCLASSA *lpWndClass
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 RegisterClassA_c
-
-        retn 4
+        Call_Asm_Stack1 RegisterClassA_c,1
 
 ; end procedure RegisterClassA_asm2c
 
@@ -504,9 +458,7 @@ SetCursor_asm2c:
 ; [esp +   4] = HCURSOR hCursor
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 SetCursor_c
-
-        retn 4
+        Call_Asm_Stack1 SetCursor_c,1
 
 ; end procedure SetCursor_asm2c
 
@@ -518,9 +470,7 @@ SetCursorPos_asm2c:
 ; [esp +   4] = int X
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 SetCursorPos_c
-
-        retn 2*4
+        Call_Asm_Stack2 SetCursorPos_c,2
 
 ; end procedure SetCursorPos_asm2c
 
@@ -531,9 +481,7 @@ SetFocus_asm2c:
 ; [esp +   4] = HWND hWnd
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 SetFocus_c
-
-        retn 4
+        Call_Asm_Stack1 SetFocus_c,1
 
 ; end procedure SetFocus_asm2c
 
@@ -544,9 +492,7 @@ ShowCursor_asm2c:
 ; [esp +   4] = BOOL bShow
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 ShowCursor_c
-
-        retn 4
+        Call_Asm_Stack1 ShowCursor_c,1
 
 ; end procedure ShowCursor_asm2c
 
@@ -558,9 +504,7 @@ ShowWindow_asm2c:
 ; [esp +   4] = HWND hWnd
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 ShowWindow_c
-
-        retn 2*4
+        Call_Asm_Stack2 ShowWindow_c,2
 
 ; end procedure ShowWindow_asm2c
 
@@ -571,9 +515,7 @@ TranslateMessage_asm2c:
 ; [esp +   4] = const MSG *lpMsg
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 TranslateMessage_c
-
-        retn 4
+        Call_Asm_Stack1 TranslateMessage_c,1
 
 ; end procedure TranslateMessage_asm2c
 
@@ -584,9 +526,7 @@ UpdateWindow_asm2c:
 ; [esp +   4] = HWND hWnd
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 UpdateWindow_c
-
-        retn 4
+        Call_Asm_Stack1 UpdateWindow_c,1
 
 ; end procedure UpdateWindow_asm2c
 
@@ -598,9 +538,7 @@ ValidateRect_asm2c:
 ; [esp +   4] = HWND       hWnd
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 ValidateRect_c
-
-        retn 2*4
+        Call_Asm_Stack2 ValidateRect_c,2
 
 ; end procedure ValidateRect_asm2c
 
@@ -611,8 +549,6 @@ WaitMessage_asm2c:
 ; [esp      ] = return address
 
         Call_Asm_Stack0 WaitMessage_c
-
-        retn
 
 ; end procedure WaitMessage_asm2c
 

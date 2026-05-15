@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -90,9 +90,7 @@ BitBlt_asm2c:
 ; [esp +   4] = HDC   hdc
 ; [esp      ] = return address
 
-        Call_Asm_Stack9 BitBlt_c
-
-        retn 9*4
+        Call_Asm_Stack9 BitBlt_c,9
 
 ; end procedure BitBlt_asm2c
 
@@ -103,9 +101,7 @@ CreateCompatibleDC_asm2c:
 ; [esp +   4] = HDC   hdc
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 CreateCompatibleDC_c
-
-        retn 4
+        Call_Asm_Stack1 CreateCompatibleDC_c,1
 
 ; end procedure CreateCompatibleDC_asm2c
 
@@ -116,9 +112,7 @@ CreateFontIndirectA_asm2c:
 ; [esp +   4] = const LOGFONTA *lplf
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 CreateFontIndirectA_c
-
-        retn 4
+        Call_Asm_Stack1 CreateFontIndirectA_c,1
 
 ; end procedure CreateFontIndirectA_asm2c
 
@@ -131,9 +125,7 @@ CreatePolygonRgn_asm2c:
 ; [esp +   4] = const POINT *pptl
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 CreatePolygonRgn_c
-
-        retn 3*4
+        Call_Asm_Stack3 CreatePolygonRgn_c,3
 
 ; end procedure CreatePolygonRgn_asm2c
 
@@ -144,9 +136,7 @@ CreateSolidBrush_asm2c:
 ; [esp +   4] = COLORREF color
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 CreateSolidBrush_c
-
-        retn 4
+        Call_Asm_Stack1 CreateSolidBrush_c,1
 
 ; end procedure CreateSolidBrush_asm2c
 
@@ -157,9 +147,7 @@ DeleteDC_asm2c:
 ; [esp +   4] = HDC hdc
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 DeleteDC_c
-
-        retn 4
+        Call_Asm_Stack1 DeleteDC_c,1
 
 ; end procedure DeleteDC_asm2c
 
@@ -170,9 +158,7 @@ DeleteObject_asm2c:
 ; [esp +   4] = HGDIOBJ ho
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 DeleteObject_c
-
-        retn 4
+        Call_Asm_Stack1 DeleteObject_c,1
 
 ; end procedure DeleteObject_asm2c
 
@@ -185,9 +171,7 @@ FillRgn_asm2c:
 ; [esp +   4] = HDC    hdc
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 FillRgn_c
-
-        retn 3*4
+        Call_Asm_Stack3 FillRgn_c,3
 
 ; end procedure FillRgn_asm2c
 
@@ -198,9 +182,7 @@ GetStockObject_asm2c:
 ; [esp +   4] = int i
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 GetStockObject_c
-
-        retn 4
+        Call_Asm_Stack1 GetStockObject_c,1
 
 ; end procedure GetStockObject_asm2c
 
@@ -213,9 +195,7 @@ OffsetRgn_asm2c:
 ; [esp +   4] = HRGN hrgn
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 OffsetRgn_c
-
-        retn 3*4
+        Call_Asm_Stack3 OffsetRgn_c,3
 
 ; end procedure OffsetRgn_asm2c
 
@@ -227,9 +207,7 @@ SelectObject_asm2c:
 ; [esp +   4] = HDC     hdc
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 SelectObject_c
-
-        retn 2*4
+        Call_Asm_Stack2 SelectObject_c,2
 
 ; end procedure SelectObject_asm2c
 
@@ -241,9 +219,7 @@ SetBkMode_asm2c:
 ; [esp +   4] = HDC hdc
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 SetBkMode_c
-
-        retn 2*4
+        Call_Asm_Stack2 SetBkMode_c,2
 
 ; end procedure SetBkMode_asm2c
 
@@ -255,9 +231,7 @@ SetTextColor_asm2c:
 ; [esp +   4] = HDC      hdc
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 SetTextColor_c
-
-        retn 2*4
+        Call_Asm_Stack2 SetTextColor_c,2
 
 ; end procedure SetTextColor_asm2c
 
@@ -272,9 +246,7 @@ TextOutA_asm2c:
 ; [esp +   4] = HDC    hdc
 ; [esp      ] = return address
 
-        Call_Asm_Stack5 TextOutA_c
-
-        retn 5*4
+        Call_Asm_Stack5 TextOutA_c,5
 
 ; end procedure TextOutA_asm2c
 

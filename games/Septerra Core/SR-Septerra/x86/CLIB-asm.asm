@@ -203,8 +203,6 @@ memset_asm2c:
 
         Call_Asm_Stack3 memset_c
 
-        retn
-
 ; end procedure memset_asm2c
 
 
@@ -218,8 +216,6 @@ memcpy_asm2c:
 
         Call_Asm_Stack3 memcpy_c
 
-        retn
-
 ; end procedure memcpy_asm2c
 
 
@@ -231,8 +227,6 @@ _stricmp_asm2c:
 ; [esp      ] = return address
 
         Call_Asm_Stack2 _stricmp_c
-
-        retn
 
 ; end procedure _stricmp_asm2c
 
@@ -247,8 +241,6 @@ strncpy_asm2c:
 
         Call_Asm_Stack3 strncpy_c
 
-        retn
-
 ; end procedure strncpy_asm2c
 
 
@@ -261,8 +253,6 @@ strncmp_asm2c:
 ; [esp      ] = return address
 
         Call_Asm_Stack3 strncmp_c
-
-        retn
 
 ; end procedure strncmp_asm2c
 
@@ -277,8 +267,6 @@ strncat_asm2c:
 
         Call_Asm_Stack3 strncat_c
 
-        retn
-
 ; end procedure strncat_asm2c
 
 
@@ -290,8 +278,6 @@ malloc_asm2c:
 
         Call_Asm_Stack1 malloc_c
 
-        retn
-
 ; end procedure malloc_asm2c
 
 align 16
@@ -301,8 +287,6 @@ free_asm2c:
 ; [esp    ] = return address
 
         Call_Asm_Stack1 free_c
-
-        retn
 
 ; end procedure free_asm2c
 
@@ -315,8 +299,6 @@ calloc_asm2c:
 ; [esp      ] = return address
 
         Call_Asm_Stack2 calloc_c
-
-        retn
 
 ; end procedure calloc_asm2c
 
@@ -375,8 +357,6 @@ atol_asm2c:
 
         Call_Asm_Stack1 atol_c
 
-        retn
-
 ; end procedure atol_asm2c
 
 
@@ -387,8 +367,6 @@ toupper_asm2c:
 ; [esp    ] = return address
 
         Call_Asm_Stack1 toupper_c
-
-        retn
 
 ; end procedure toupper_asm2c
 
@@ -403,8 +381,6 @@ sprintf_asm2c:
 
         Call_Asm_VariableStack2 sprintf2_c
 
-        retn
-
 ; end procedure sprintf_asm2c
 
 
@@ -418,8 +394,6 @@ sscanf_asm2c:
 
         Call_Asm_VariableStack2 sscanf2_c
 
-        retn
-
 ; end procedure sscanf_asm2c
 
 
@@ -430,8 +404,6 @@ system_asm2c:
 ; [esp    ] = return address
 
         Call_Asm_Stack1 system_c
-
-        retn
 
 ; end procedure system_asm2c
 
@@ -444,8 +416,6 @@ srand_asm2c:
 
         Call_Asm_Stack1 srand_c
 
-        retn
-
 ; end procedure srand_asm2c
 
 
@@ -455,8 +425,6 @@ rand_asm2c:
 ; [esp] = return address
 
         Call_Asm_Stack0 rand_c
-
-        retn
 
 ; end procedure rand_asm2c
 
@@ -470,9 +438,7 @@ _aulldiv_asm2c:
 ; [esp +   4] = uint64_t x
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 _aulldiv_c
-
-        retn 4*4
+        Call_Asm_Stack4 _aulldiv_c,4
 
 ; end procedure _aulldiv_asm2c
 
@@ -486,9 +452,7 @@ _alldiv_asm2c:
 ; [esp +   4] = int64_t x
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 _alldiv_c
-
-        retn 4*4
+        Call_Asm_Stack4 _alldiv_c,4
 
 ; end procedure _alldiv_asm2c
 
@@ -500,8 +464,6 @@ _time64_asm2c:
 ; [esp    ] = return address
 
         Call_Asm_Stack1 _time64_c
-
-        retn
 
 ; end procedure _time64_asm2c
 
@@ -518,8 +480,6 @@ _check_security_cookie_asm2c:
     .1:
         Call_Asm_Stack0 __report_gsfailure_c
 
-        retn
-
 ; end procedure _check_security_cookie_asm2c
 
 
@@ -532,8 +492,6 @@ _except_handler4_asm2c:
 ; [esp      ] = return address
 
         Call_Asm_Stack3 _except_handler4_c
-
-        retn
 
 ; end procedure _except_handler4_asm2c
 
@@ -548,8 +506,6 @@ _beginthread_asm2c:
 
         Call_Asm_Stack3 _beginthread_c
 
-        retn
-
 ; end procedure _beginthread_asm2c
 
 
@@ -559,8 +515,6 @@ sync_asm2c:
 ; [esp] = return address
 
         Call_Asm_Stack0 sync_c
-
-        retn
 
 ; end procedure sync_asm2c
 
@@ -573,8 +527,6 @@ _ftol2_sse_asm2c:
 
         Call_Asm_Float1_Int _ftol2_sse_c
 
-        retn
-
 ; end procedure _ftol2_sse_asm2c
 
 
@@ -585,8 +537,6 @@ _ftol2_asm2c:
 ; [esp] = return address
 
         Call_Asm_Float1_Int _ftol2_c
-
-        retn
 
 ; end procedure _ftol2_asm2c
 
@@ -599,8 +549,6 @@ _ftol_asm2c:
 
         Call_Asm_Float1_Int _ftol_c
 
-        retn
-
 ; end procedure _ftol_asm2c
 
 
@@ -612,8 +560,6 @@ _CIcos_asm2c:
 
         Call_Asm_Float1_Float _CIcos_c
 
-        retn
-
 ; end procedure _CIcos_asm2c
 
 
@@ -624,8 +570,6 @@ _CIsin_asm2c:
 ; [esp] = return address
 
         Call_Asm_Float1_Float _CIsin_c
-
-        retn
 
 ; end procedure _CIsin_asm2c
 
@@ -639,8 +583,6 @@ _CIatan2_asm2c:
 
         Call_Asm_Float2_Float _CIatan2_c
 
-        retn
-
 ; end procedure _CIatan2_asm2c
 
 
@@ -651,8 +593,6 @@ _CIsqrt_asm2c:
 ; [esp] = return address
 
         Call_Asm_Float1_Float _CIsqrt_c
-
-        retn
 
 ; end procedure _CIsqrt_asm2c
 
@@ -666,8 +606,6 @@ _CIfmod_asm2c:
 
         Call_Asm_Float2_Float _CIfmod_c
 
-        retn
-
 ; end procedure _CIfmod_asm2c
 
 
@@ -678,8 +616,6 @@ _CItan_asm2c:
 ; [esp] = return address
 
         Call_Asm_Float1_Float _CItan_c
-
-        retn
 
 ; end procedure _CItan_asm2c
 
@@ -692,8 +628,6 @@ _CIpow_asm2c:
 ; [esp] = return address
 
         Call_Asm_Float2_Float _CIpow_c
-
-        retn
 
 ; end procedure _CIpow_asm2c
 

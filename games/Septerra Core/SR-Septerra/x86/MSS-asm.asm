@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -54,8 +54,6 @@ ASI_startup_asm2c:
 
         Call_Asm_Stack0 ASI_startup_c
 
-        retn
-
 ; end procedure ASI_startup_asm2c
 
 
@@ -66,8 +64,6 @@ ASI_shutdown_asm2c:
 
         Call_Asm_Stack0 ASI_shutdown_c
 
-        retn
-
 ; end procedure ASI_shutdown_asm2c
 
 
@@ -77,10 +73,7 @@ ASI_stream_close_asm2c:
 ; [esp + 4] = void *stream
 ; [esp    ] = return address
 
-
-        Call_Asm_Stack1 ASI_stream_close_c
-
-        retn 4
+        Call_Asm_Stack1 ASI_stream_close_c,1
 
 ; end procedure ASI_stream_close_asm2c
 
@@ -93,10 +86,7 @@ ASI_stream_process_asm2c:
 ; [esp +   4] = void *stream
 ; [esp      ] = return address
 
-
-        Call_Asm_Stack3 ASI_stream_process_c
-
-        retn 3*4
+        Call_Asm_Stack3 ASI_stream_process_c,3
 
 ; end procedure ASI_stream_process_asm2c
 

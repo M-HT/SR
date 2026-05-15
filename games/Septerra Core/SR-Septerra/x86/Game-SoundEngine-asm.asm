@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -53,8 +53,6 @@ SoundEngine_StartTimer_asm2c:
 
         Call_Asm_Stack0 SoundEngine_StartTimer
 
-        retn
-
 ; end procedure SoundEngine_StartTimer_asm2c
 
 
@@ -65,8 +63,6 @@ SoundEngine_StopTimer_asm2c:
 ; [esp      ] = return address
 
         Call_Asm_Stack1 SoundEngine_StopTimer
-
-        retn
 
 ; end procedure SoundEngine_StopTimer_asm2c
 
@@ -79,8 +75,6 @@ SoundEngine_DecodeMP3Stream_asm2c:
 
         Call_Asm_Stack1 SoundEngine_DecodeMP3Stream
 
-        retn
-
 ; end procedure SoundEngine_DecodeMP3Stream_asm2c
 
 
@@ -91,8 +85,6 @@ SoundEngine_OpenMP3Stream_asm2c:
 ; [esp      ] = return address
 
         Call_Asm_Stack1 SoundEngine_OpenMP3Stream
-
-        retn
 
 ; end procedure SoundEngine_OpenMP3Stream_asm2c
 

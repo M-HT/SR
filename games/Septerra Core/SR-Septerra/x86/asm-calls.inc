@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -20,7 +20,15 @@
 ;;  SOFTWARE.
 ;;
 
-%macro  Call_Asm_Float1_Int 1
+%macro  Call_Asm_Return 1
+    %if %1 > 0
+        retn %1*4
+    %else
+        retn
+    %endif
+%endmacro
+
+%macro  Call_Asm_Float1_Int 1-2 0
 
 ; st0   = num
 ; [esp] = return address
@@ -43,9 +51,11 @@
     ; restore original esp value from stack
         mov esp, [esp + 4]
 
+    Call_Asm_Return %2
+
 %endmacro
 
-%macro  Call_Asm_Float1_Float 1
+%macro  Call_Asm_Float1_Float 1-2 0
 
 ; st0   = num
 ; [esp] = return address
@@ -70,9 +80,11 @@
     ; restore original esp value from stack
         mov esp, [esp + 4]
 
+    Call_Asm_Return %2
+
 %endmacro
 
-%macro  Call_Asm_Float2_Float 1
+%macro  Call_Asm_Float2_Float 1-2 0
 
 ; st1   = num2
 ; st0   = num1
@@ -99,9 +111,11 @@
     ; restore original esp value from stack
         mov esp, [esp + 4]
 
+    Call_Asm_Return %2
+
 %endmacro
 
-%macro  Call_Asm_VariableStack2 1
+%macro  Call_Asm_VariableStack2 1-2 0
 
 ; [esp + 3*4] = ...
 ; [esp + 2*4] = 2nd parameter
@@ -127,9 +141,11 @@
     ; restore original esp value from stack
         mov esp, [esp + 3*4]
 
+    Call_Asm_Return %2
+
 %endmacro
 
-%macro  Call_Asm_Stack0 1
+%macro  Call_Asm_Stack0 1-2 0
 
 ; [esp      ] = return address
 
@@ -149,9 +165,11 @@
     ; restore original esp value from stack
         mov esp, [esp]
 
+    Call_Asm_Return %2
+
 %endmacro
 
-%macro  Call_Asm_Stack1 1
+%macro  Call_Asm_Stack1 1-2 0
 
 ; [esp +   4] = 1st parameter
 ; [esp      ] = return address
@@ -176,9 +194,11 @@
     ; restore original esp value from stack
         mov esp, [esp + 1*4]
 
+    Call_Asm_Return %2
+
 %endmacro
 
-%macro  Call_Asm_Stack2 1
+%macro  Call_Asm_Stack2 1-2 0
 
 ; [esp + 2*4] = 2nd parameter
 ; [esp +   4] = 1st parameter
@@ -205,9 +225,11 @@
     ; restore original esp value from stack
         mov esp, [esp + 2*4]
 
+    Call_Asm_Return %2
+
 %endmacro
 
-%macro  Call_Asm_Stack3 1
+%macro  Call_Asm_Stack3 1-2 0
 
 ; [esp + 3*4] = 3rd parameter
 ; ...
@@ -232,9 +254,11 @@
     ; restore original esp value from stack
         mov esp, [esp + 3*4]
 
+    Call_Asm_Return %2
+
 %endmacro
 
-%macro  Call_Asm_Stack4 1
+%macro  Call_Asm_Stack4 1-2 0
 
 ; [esp + 4*4] = 4th parameter
 ; ...
@@ -263,9 +287,11 @@
     ; restore original esp value from stack
         mov esp, [esp + 4*4]
 
+    Call_Asm_Return %2
+
 %endmacro
 
-%macro  Call_Asm_Stack5 1
+%macro  Call_Asm_Stack5 1-2 0
 
 ; [esp + 5*4] = 5th parameter
 ; ...
@@ -297,9 +323,11 @@
     ; restore original esp value from stack
         mov esp, [esp + 5*4]
 
+    Call_Asm_Return %2
+
 %endmacro
 
-%macro  Call_Asm_Stack6 1
+%macro  Call_Asm_Stack6 1-2 0
 
 ; [esp + 6*4] = 6th parameter
 ; ...
@@ -332,9 +360,11 @@
     ; restore original esp value from stack
         mov esp, [esp + 6*4]
 
+    Call_Asm_Return %2
+
 %endmacro
 
-%macro  Call_Asm_Stack7 1
+%macro  Call_Asm_Stack7 1-2 0
 
 ; [esp + 7*4] = 7th parameter
 ; ...
@@ -364,9 +394,11 @@
     ; restore original esp value from stack
         mov esp, [esp + 7*4]
 
+    Call_Asm_Return %2
+
 %endmacro
 
-%macro  Call_Asm_Stack8 1
+%macro  Call_Asm_Stack8 1-2 0
 
 ; [esp + 8*4] = 8th parameter
 ; ...
@@ -400,9 +432,11 @@
     ; restore original esp value from stack
         mov esp, [esp + 8*4]
 
+    Call_Asm_Return %2
+
 %endmacro
 
-%macro  Call_Asm_Stack9 1
+%macro  Call_Asm_Stack9 1-2 0
 
 ; [esp + 9*4] = 9th parameter
 ; ...
@@ -439,9 +473,11 @@
     ; restore original esp value from stack
         mov esp, [esp + 9*4]
 
+    Call_Asm_Return %2
+
 %endmacro
 
-%macro  Call_Asm_Stack12 1
+%macro  Call_Asm_Stack12 1-2 0
 
 ; [esp + 12*4] = 12th parameter
 ; ...
@@ -479,6 +515,8 @@
 
     ; restore original esp value from stack
         mov esp, [esp + 12*4]
+
+    Call_Asm_Return %2
 
 %endmacro
 

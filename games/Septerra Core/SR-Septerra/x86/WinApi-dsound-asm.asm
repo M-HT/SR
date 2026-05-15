@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -119,9 +119,7 @@ DirectSoundCreate_asm2c:
 ; [esp +   4] = LPGUID lpGuid
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 DirectSoundCreate_c
-
-        retn 3*4
+        Call_Asm_Stack3 DirectSoundCreate_c,3
 
 ; end procedure DirectSoundCreate_asm2c
 
@@ -134,9 +132,7 @@ IDirectSound_QueryInterface_asm2c:
 ; [esp +   4] = struct IDirectSound *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectSound_QueryInterface_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectSound_QueryInterface_c,3
 
 ; end procedure IDirectSound_QueryInterface_asm2c
 
@@ -147,9 +143,7 @@ IDirectSound_AddRef_asm2c:
 ; [esp +   4] = struct IDirectSound *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 IDirectSound_AddRef_c
-
-        retn 4
+        Call_Asm_Stack1 IDirectSound_AddRef_c,1
 
 ; end procedure IDirectSound_AddRef_asm2c
 
@@ -160,9 +154,7 @@ IDirectSound_Release_asm2c:
 ; [esp +   4] = struct IDirectSound *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 IDirectSound_Release_c
-
-        retn 4
+        Call_Asm_Stack1 IDirectSound_Release_c,1
 
 ; end procedure IDirectSound_Release_asm2c
 
@@ -176,9 +168,7 @@ IDirectSound_CreateSoundBuffer_asm2c:
 ; [esp +   4] = struct IDirectSound *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 IDirectSound_CreateSoundBuffer_c
-
-        retn 4*4
+        Call_Asm_Stack4 IDirectSound_CreateSoundBuffer_c,4
 
 ; end procedure IDirectSound_CreateSoundBuffer_asm2c
 
@@ -190,9 +180,7 @@ IDirectSound_GetCaps_asm2c:
 ; [esp +   4] = struct IDirectSound *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectSound_GetCaps_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectSound_GetCaps_c,2
 
 ; end procedure IDirectSound_GetCaps_asm2c
 
@@ -205,9 +193,7 @@ IDirectSound_DuplicateSoundBuffer_asm2c:
 ; [esp +   4] = struct IDirectSound *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectSound_DuplicateSoundBuffer_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectSound_DuplicateSoundBuffer_c,3
 
 ; end procedure IDirectSound_DuplicateSoundBuffer_asm2c
 
@@ -220,9 +206,7 @@ IDirectSound_SetCooperativeLevel_asm2c:
 ; [esp +   4] = struct IDirectSound *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectSound_SetCooperativeLevel_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectSound_SetCooperativeLevel_c,3
 
 ; end procedure IDirectSound_SetCooperativeLevel_asm2c
 
@@ -233,9 +217,7 @@ IDirectSound_Compact_asm2c:
 ; [esp +   4] = struct IDirectSound *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 IDirectSound_Compact_c
-
-        retn 4
+        Call_Asm_Stack1 IDirectSound_Compact_c,1
 
 ; end procedure IDirectSound_Compact_asm2c
 
@@ -247,9 +229,7 @@ IDirectSound_GetSpeakerConfig_asm2c:
 ; [esp +   4] = struct IDirectSound *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectSound_GetSpeakerConfig_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectSound_GetSpeakerConfig_c,2
 
 ; end procedure IDirectSound_GetSpeakerConfig_asm2c
 
@@ -261,9 +241,7 @@ IDirectSound_SetSpeakerConfig_asm2c:
 ; [esp +   4] = struct IDirectSound *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectSound_SetSpeakerConfig_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectSound_SetSpeakerConfig_c,2
 
 ; end procedure IDirectSound_SetSpeakerConfig_asm2c
 
@@ -275,9 +253,7 @@ IDirectSound_Initialize_asm2c:
 ; [esp +   4] = struct IDirectSound *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectSound_Initialize_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectSound_Initialize_c,2
 
 ; end procedure IDirectSound_Initialize_asm2c
 
@@ -290,9 +266,7 @@ IDirectSoundBuffer_QueryInterface_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectSoundBuffer_QueryInterface_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectSoundBuffer_QueryInterface_c,3
 
 ; end procedure IDirectSoundBuffer_QueryInterface_asm2c
 
@@ -303,9 +277,7 @@ IDirectSoundBuffer_AddRef_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 IDirectSoundBuffer_AddRef_c
-
-        retn 4
+        Call_Asm_Stack1 IDirectSoundBuffer_AddRef_c,1
 
 ; end procedure IDirectSoundBuffer_AddRef_asm2c
 
@@ -316,9 +288,7 @@ IDirectSoundBuffer_Release_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 IDirectSoundBuffer_Release_c
-
-        retn 4
+        Call_Asm_Stack1 IDirectSoundBuffer_Release_c,1
 
 ; end procedure IDirectSoundBuffer_Release_asm2c
 
@@ -330,9 +300,7 @@ IDirectSoundBuffer_GetCaps_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectSoundBuffer_GetCaps_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectSoundBuffer_GetCaps_c,2
 
 ; end procedure IDirectSoundBuffer_GetCaps_asm2c
 
@@ -345,9 +313,7 @@ IDirectSoundBuffer_GetCurrentPosition_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectSoundBuffer_GetCurrentPosition_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectSoundBuffer_GetCurrentPosition_c,3
 
 ; end procedure IDirectSoundBuffer_GetCurrentPosition_asm2c
 
@@ -361,9 +327,7 @@ IDirectSoundBuffer_GetFormat_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 IDirectSoundBuffer_GetFormat_c
-
-        retn 4*4
+        Call_Asm_Stack4 IDirectSoundBuffer_GetFormat_c,4
 
 ; end procedure IDirectSoundBuffer_GetFormat_asm2c
 
@@ -375,9 +339,7 @@ IDirectSoundBuffer_GetVolume_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectSoundBuffer_GetVolume_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectSoundBuffer_GetVolume_c,2
 
 ; end procedure IDirectSoundBuffer_GetVolume_asm2c
 
@@ -389,9 +351,7 @@ IDirectSoundBuffer_GetPan_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectSoundBuffer_GetPan_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectSoundBuffer_GetPan_c,2
 
 ; end procedure IDirectSoundBuffer_GetPan_asm2c
 
@@ -403,9 +363,7 @@ IDirectSoundBuffer_GetFrequency_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectSoundBuffer_GetFrequency_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectSoundBuffer_GetFrequency_c,2
 
 ; end procedure IDirectSoundBuffer_GetFrequency_asm2c
 
@@ -417,9 +375,7 @@ IDirectSoundBuffer_GetStatus_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectSoundBuffer_GetStatus_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectSoundBuffer_GetStatus_c,2
 
 ; end procedure IDirectSoundBuffer_GetStatus_asm2c
 
@@ -432,9 +388,7 @@ IDirectSoundBuffer_Initialize_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectSoundBuffer_Initialize_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectSoundBuffer_Initialize_c,3
 
 ; end procedure IDirectSoundBuffer_Initialize_asm2c
 
@@ -452,9 +406,7 @@ IDirectSoundBuffer_Lock_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack8 IDirectSoundBuffer_Lock_c
-
-        retn 8*4
+        Call_Asm_Stack8 IDirectSoundBuffer_Lock_c,8
 
 ; end procedure IDirectSoundBuffer_Lock_asm2c
 
@@ -468,9 +420,7 @@ IDirectSoundBuffer_Play_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 IDirectSoundBuffer_Play_c
-
-        retn 4*4
+        Call_Asm_Stack4 IDirectSoundBuffer_Play_c,4
 
 ; end procedure IDirectSoundBuffer_Play_asm2c
 
@@ -482,9 +432,7 @@ IDirectSoundBuffer_SetCurrentPosition_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectSoundBuffer_SetCurrentPosition_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectSoundBuffer_SetCurrentPosition_c,2
 
 ; end procedure IDirectSoundBuffer_SetCurrentPosition_asm2c
 
@@ -496,9 +444,7 @@ IDirectSoundBuffer_SetFormat_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectSoundBuffer_SetFormat_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectSoundBuffer_SetFormat_c,2
 
 ; end procedure IDirectSoundBuffer_SetFormat_asm2c
 
@@ -510,9 +456,7 @@ IDirectSoundBuffer_SetVolume_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectSoundBuffer_SetVolume_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectSoundBuffer_SetVolume_c,2
 
 ; end procedure IDirectSoundBuffer_SetVolume_asm2c
 
@@ -524,9 +468,7 @@ IDirectSoundBuffer_SetPan_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectSoundBuffer_SetPan_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectSoundBuffer_SetPan_c,2
 
 ; end procedure IDirectSoundBuffer_SetPan_asm2c
 
@@ -538,9 +480,7 @@ IDirectSoundBuffer_SetFrequency_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectSoundBuffer_SetFrequency_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectSoundBuffer_SetFrequency_c,2
 
 ; end procedure IDirectSoundBuffer_SetFrequency_asm2c
 
@@ -551,9 +491,7 @@ IDirectSoundBuffer_Stop_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 IDirectSoundBuffer_Stop_c
-
-        retn 4
+        Call_Asm_Stack1 IDirectSoundBuffer_Stop_c,1
 
 ; end procedure IDirectSoundBuffer_Stop_asm2c
 
@@ -568,9 +506,7 @@ IDirectSoundBuffer_Unlock_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack5 IDirectSoundBuffer_Unlock_c
-
-        retn 5*4
+        Call_Asm_Stack5 IDirectSoundBuffer_Unlock_c,5
 
 ; end procedure IDirectSoundBuffer_Unlock_asm2c
 
@@ -581,9 +517,7 @@ IDirectSoundBuffer_Restore_asm2c:
 ; [esp +   4] = struct IDirectSoundBuffer *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 IDirectSoundBuffer_Restore_c
-
-        retn 4
+        Call_Asm_Stack1 IDirectSoundBuffer_Restore_c,1
 
 ; end procedure IDirectSoundBuffer_Restore_asm2c
 

@@ -896,7 +896,7 @@ int SR_disassemble_x64_instruction(unsigned int Entry, output_data *output, regi
                     {
                         // mov reg, fs:[const]
 
-                        OUTPUT_PARAMSTRING("mod r10d, 0x%x\n", ud_obj.operand[1].lval.udword);
+                        OUTPUT_PARAMSTRING("mov r10d, 0x%x\n", ud_obj.operand[1].lval.udword);
                         OUTPUT_STRING("CALL x86_read_fs_dword\n");
                         OUTPUT_PARAMSTRING("mov %s, r9d", X86REGSTR(ud_obj.operand[0].base));
                     }

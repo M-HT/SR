@@ -24,9 +24,17 @@
 
 #define _FILE_OFFSET_BITS 64
 #define _TIME_BITS 64
+#ifdef DEBUG_CLIB
 #include <inttypes.h>
+#endif
 #include "CLIB-asm-x86.h"
+#if (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+#include <malloc.h>
+#elif defined(__linux__)
+#include <alloca.h>
+#else
 #include <stdlib.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <math.h>

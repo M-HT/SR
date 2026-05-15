@@ -62,13 +62,13 @@ WINAPI_STORAGE __declspec(thread) unsigned int Winapi_LastError;
 #define ERROR_FILE_EXISTS 80
 #define ERROR_INVALID_PARAMETER 87
 #define ERROR_ALREADY_EXISTS 183
+#endif
 
 
 #ifdef PTROFS_64BIT
-#define INVALID_HANDLE_VALUE (handle)(pointer_offset + 0xfffffffful)
+#define INVALID_HANDLE32_VALUE (handle)(pointer_offset + 0xfffffffful)
 #else
-#define INVALID_HANDLE_VALUE (handle)(0xfffffffful)
-#endif
+#define INVALID_HANDLE32_VALUE (handle)(0xfffffffful)
 #endif
 
 

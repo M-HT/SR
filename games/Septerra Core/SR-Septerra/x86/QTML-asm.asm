@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019-2023 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -136,8 +136,6 @@ InitializeQTML_asm2c:
 
         Call_Asm_Stack1 InitializeQTML_c
 
-        retn
-
 ; end procedure InitializeQTML_asm2c
 
 
@@ -147,8 +145,6 @@ TerminateQTML_asm2c:
 ; [esp] = return address
 
         Call_Asm_Stack0 TerminateQTML_c
-
-        retn
 
 ; end procedure TerminateQTML_asm2c
 
@@ -163,8 +159,6 @@ CreatePortAssociation_asm2c:
 
         Call_Asm_Stack3 CreatePortAssociation_c
 
-        retn
-
 ; end procedure CreatePortAssociation_asm2c
 
 
@@ -175,8 +169,6 @@ DestroyPortAssociation_asm2c:
 ; [esp    ] = return address
 
         Call_Asm_Stack1 DestroyPortAssociation_c
-
-        retn
 
 ; end procedure DestroyPortAssociation_asm2c
 
@@ -190,8 +182,6 @@ SetGWorld_asm2c:
 
         Call_Asm_Stack2 SetGWorld_c
 
-        retn
-
 ; end procedure SetGWorld_asm2c
 
 
@@ -202,8 +192,6 @@ c2pstr_asm2c:
 ; [esp    ] = return address
 
         Call_Asm_Stack1 c2pstr_c
-
-        retn
 
 ; end procedure c2pstr_asm2c
 
@@ -219,8 +207,6 @@ PtrToHand_asm2c:
 ; note: return value is not expected by callers in the original asm code to have been extended to 32 bits
 
         Call_Asm_Stack3 PtrToHand_c
-
-        retn
 
 ; end procedure PtrToHand_asm2c
 
@@ -239,8 +225,6 @@ FSMakeFSSpec_asm2c:
 
         Call_Asm_Stack4 FSMakeFSSpec_c
 
-        retn
-
 ; end procedure FSMakeFSSpec_asm2c
 
 
@@ -255,8 +239,6 @@ QTSetDDPrimarySurface_asm2c:
 
         Call_Asm_Stack2 QTSetDDPrimarySurface_c
 
-        retn
-
 ; end procedure QTSetDDPrimarySurface_asm2c
 
 
@@ -268,8 +250,6 @@ NativeEventToMacEvent_asm2c:
 ; [esp      ] = return address
 
         Call_Asm_Stack2 NativeEventToMacEvent_c
-
-        retn
 
 ; end procedure NativeEventToMacEvent_asm2c
 
@@ -283,8 +263,6 @@ EnterMovies_asm2c:
 
         Call_Asm_Stack0 EnterMovies_c
 
-        retn
-
 ; end procedure EnterMovies_asm2c
 
 
@@ -294,8 +272,6 @@ ExitMovies_asm2c:
 ; [esp] = return address
 
         Call_Asm_Stack0 ExitMovies_c
-
-        retn
 
 ; end procedure ExitMovies_asm2c
 
@@ -308,8 +284,6 @@ StartMovie_asm2c:
 
         Call_Asm_Stack1 StartMovie_c
 
-        retn
-
 ; end procedure StartMovie_asm2c
 
 
@@ -320,8 +294,6 @@ StopMovie_asm2c:
 ; [esp    ] = return address
 
         Call_Asm_Stack1 StopMovie_c
-
-        retn
 
 ; end procedure StopMovie_asm2c
 
@@ -334,8 +306,6 @@ IsMovieDone_asm2c:
 
         Call_Asm_Stack1 IsMovieDone_c
 
-        retn
-
 ; end procedure IsMovieDone_asm2c
 
 
@@ -346,8 +316,6 @@ DisposeMovie_asm2c:
 ; [esp    ] = return address
 
         Call_Asm_Stack1 DisposeMovie_c
-
-        retn
 
 ; end procedure DisposeMovie_asm2c
 
@@ -365,8 +333,6 @@ OpenMovieFile_asm2c:
 
         Call_Asm_Stack3 OpenMovieFile_c
 
-        retn
-
 ; end procedure OpenMovieFile_asm2c
 
 
@@ -383,8 +349,6 @@ CloseMovieFile_asm2c:
 ; note: return value is not expected by callers in the original asm code to have been extended to 32 bits
 
         Call_Asm_Stack1 CloseMovieFile_c
-
-        retn
 
 ; end procedure CloseMovieFile_asm2c
 
@@ -409,8 +373,6 @@ NewMovieFromFile_asm2c:
 
         Call_Asm_Stack6 NewMovieFromFile_c
 
-        retn
-
 ; end procedure NewMovieFromFile_asm2c
 
 
@@ -422,8 +384,6 @@ GetMovieBox_asm2c:
 ; [esp      ] = return address
 
         Call_Asm_Stack2 GetMovieBox_c
-
-        retn
 
 ; end procedure GetMovieBox_asm2c
 
@@ -438,8 +398,6 @@ NewMovieController_asm2c:
 
         Call_Asm_Stack3 NewMovieController_c
 
-        retn
-
 ; end procedure NewMovieController_asm2c
 
 
@@ -450,8 +408,6 @@ DisposeMovieController_asm2c:
 ; [esp    ] = return address
 
         Call_Asm_Stack1 DisposeMovieController_c
-
-        retn
 
 ; end procedure DisposeMovieController_asm2c
 
@@ -468,8 +424,6 @@ QTRegisterAccessKey_asm2c:
 
         Call_Asm_Stack3 QTRegisterAccessKey_c
 
-        retn
-
 ; end procedure QTRegisterAccessKey_asm2c
 
 
@@ -485,8 +439,6 @@ QTUnregisterAccessKey_asm2c:
 
         Call_Asm_Stack3 QTUnregisterAccessKey_c
 
-        retn
-
 ; end procedure QTUnregisterAccessKey_asm2c
 
 
@@ -498,8 +450,6 @@ MCIsPlayerEvent_asm2c:
 ; [esp      ] = return address
 
         Call_Asm_Stack2 MCIsPlayerEvent_c
-
-        retn
 
 ; end procedure MCIsPlayerEvent_asm2c
 
@@ -515,8 +465,6 @@ MCDoAction_asm2c:
 ; note: parameter action is extended to 32 bits by callers in the original asm code
 
         Call_Asm_Stack3 MCDoAction_c
-
-        retn
 
 ; end procedure MCDoAction_asm2c
 

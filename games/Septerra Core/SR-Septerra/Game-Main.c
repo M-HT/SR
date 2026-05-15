@@ -182,15 +182,6 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Error initializing pointer offset\n");
         return 1;
     }
-#else
-    if (sizeof(void*) != 4)
-    {
-        if ((uintptr_t)argv > UINT32_MAX)
-        {
-            fprintf(stderr, "Error: The program must be run with the loader for %i-bits\n", (int) (8 * sizeof(void*)));
-            return 0;
-        }
-    }
 #endif
 
 #if !defined(x86_malloc)

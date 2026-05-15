@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2023 Roman Pauer
+;;  Copyright (C) 2023-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -43,9 +43,7 @@ Patch_PushKeyEvent_asm2c:
 ; [esp +   4] = uint32_t key
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 Patch_PushKeyEvent
-
-        retn 4
+        Call_Asm_Stack1 Patch_PushKeyEvent,1
 
 ; end procedure Patch_PushKeyEvent_asm2c
 

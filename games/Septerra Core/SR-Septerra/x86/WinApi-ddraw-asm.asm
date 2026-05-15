@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -173,9 +173,7 @@ DirectDrawCreate_asm2c:
 ; [esp +   4] = GUID         *lpGUID
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 DirectDrawCreate_c
-
-        retn 3*4
+        Call_Asm_Stack3 DirectDrawCreate_c,3
 
 ; end procedure DirectDrawCreate_asm2c
 
@@ -188,9 +186,7 @@ IDirectDraw_QueryInterface_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDraw_QueryInterface_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDraw_QueryInterface_c,3
 
 ; end procedure IDirectDraw_QueryInterface_asm2c
 
@@ -201,9 +197,7 @@ IDirectDraw_AddRef_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 IDirectDraw_AddRef_c
-
-        retn 4
+        Call_Asm_Stack1 IDirectDraw_AddRef_c,1
 
 ; end procedure IDirectDraw_AddRef_asm2c
 
@@ -214,9 +208,7 @@ IDirectDraw_Release_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 IDirectDraw_Release_c
-
-        retn 4
+        Call_Asm_Stack1 IDirectDraw_Release_c,1
 
 ; end procedure IDirectDraw_Release_asm2c
 
@@ -227,9 +219,7 @@ IDirectDraw_Compact_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 IDirectDraw_Compact_c
-
-        retn 4
+        Call_Asm_Stack1 IDirectDraw_Compact_c,1
 
 ; end procedure IDirectDraw_Compact_asm2c
 
@@ -243,9 +233,7 @@ IDirectDraw_CreateClipper_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 IDirectDraw_CreateClipper_c
-
-        retn 4*4
+        Call_Asm_Stack4 IDirectDraw_CreateClipper_c,4
 
 ; end procedure IDirectDraw_CreateClipper_asm2c
 
@@ -260,9 +248,7 @@ IDirectDraw_CreatePalette_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack5 IDirectDraw_CreatePalette_c
-
-        retn 5*4
+        Call_Asm_Stack5 IDirectDraw_CreatePalette_c,5
 
 ; end procedure IDirectDraw_CreatePalette_asm2c
 
@@ -276,9 +262,7 @@ IDirectDraw_CreateSurface_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 IDirectDraw_CreateSurface_c
-
-        retn 4*4
+        Call_Asm_Stack4 IDirectDraw_CreateSurface_c,4
 
 ; end procedure IDirectDraw_CreateSurface_asm2c
 
@@ -291,9 +275,7 @@ IDirectDraw_DuplicateSurface_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDraw_DuplicateSurface_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDraw_DuplicateSurface_c,3
 
 ; end procedure IDirectDraw_DuplicateSurface_asm2c
 
@@ -308,9 +290,7 @@ IDirectDraw_EnumDisplayModes_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack5 IDirectDraw_EnumDisplayModes_c
-
-        retn 5*4
+        Call_Asm_Stack5 IDirectDraw_EnumDisplayModes_c,5
 
 ; end procedure IDirectDraw_EnumDisplayModes_asm2c
 
@@ -325,9 +305,7 @@ IDirectDraw_EnumSurfaces_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack5 IDirectDraw_EnumSurfaces_c
-
-        retn 5*4
+        Call_Asm_Stack5 IDirectDraw_EnumSurfaces_c,5
 
 ; end procedure IDirectDraw_EnumSurfaces_asm2c
 
@@ -338,9 +316,7 @@ IDirectDraw_FlipToGDISurface_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 IDirectDraw_FlipToGDISurface_c
-
-        retn 4
+        Call_Asm_Stack1 IDirectDraw_FlipToGDISurface_c,1
 
 ; end procedure IDirectDraw_FlipToGDISurface_asm2c
 
@@ -353,9 +329,7 @@ IDirectDraw_GetCaps_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDraw_GetCaps_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDraw_GetCaps_c,3
 
 ; end procedure IDirectDraw_GetCaps_asm2c
 
@@ -367,9 +341,7 @@ IDirectDraw_GetDisplayMode_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDraw_GetDisplayMode_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDraw_GetDisplayMode_c,2
 
 ; end procedure IDirectDraw_GetDisplayMode_asm2c
 
@@ -382,9 +354,7 @@ IDirectDraw_GetFourCCCodes_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDraw_GetFourCCCodes_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDraw_GetFourCCCodes_c,3
 
 ; end procedure IDirectDraw_GetFourCCCodes_asm2c
 
@@ -396,9 +366,7 @@ IDirectDraw_GetGDISurface_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDraw_GetGDISurface_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDraw_GetGDISurface_c,2
 
 ; end procedure IDirectDraw_GetGDISurface_asm2c
 
@@ -410,9 +378,7 @@ IDirectDraw_GetMonitorFrequency_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDraw_GetMonitorFrequency_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDraw_GetMonitorFrequency_c,2
 
 ; end procedure IDirectDraw_GetMonitorFrequency_asm2c
 
@@ -424,9 +390,7 @@ IDirectDraw_GetScanLine_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDraw_GetScanLine_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDraw_GetScanLine_c,2
 
 ; end procedure IDirectDraw_GetScanLine_asm2c
 
@@ -438,9 +402,7 @@ IDirectDraw_GetVerticalBlankStatus_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDraw_GetVerticalBlankStatus_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDraw_GetVerticalBlankStatus_c,2
 
 ; end procedure IDirectDraw_GetVerticalBlankStatus_asm2c
 
@@ -452,9 +414,7 @@ IDirectDraw_Initialize_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDraw_Initialize_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDraw_Initialize_c,2
 
 ; end procedure IDirectDraw_Initialize_asm2c
 
@@ -465,9 +425,7 @@ IDirectDraw_RestoreDisplayMode_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 IDirectDraw_RestoreDisplayMode_c
-
-        retn 4
+        Call_Asm_Stack1 IDirectDraw_RestoreDisplayMode_c,1
 
 ; end procedure IDirectDraw_RestoreDisplayMode_asm2c
 
@@ -480,9 +438,7 @@ IDirectDraw_SetCooperativeLevel_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDraw_SetCooperativeLevel_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDraw_SetCooperativeLevel_c,3
 
 ; end procedure IDirectDraw_SetCooperativeLevel_asm2c
 
@@ -496,9 +452,7 @@ IDirectDraw_SetDisplayMode_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 IDirectDraw_SetDisplayMode_c
-
-        retn 4*4
+        Call_Asm_Stack4 IDirectDraw_SetDisplayMode_c,4
 
 ; end procedure IDirectDraw_SetDisplayMode_asm2c
 
@@ -511,9 +465,7 @@ IDirectDraw_WaitForVerticalBlank_asm2c:
 ; [esp +   4] = struct IDirectDraw *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDraw_WaitForVerticalBlank_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDraw_WaitForVerticalBlank_c,3
 
 ; end procedure IDirectDraw_WaitForVerticalBlank_asm2c
 
@@ -526,9 +478,7 @@ IDirectDrawSurface_QueryInterface_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDrawSurface_QueryInterface_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDrawSurface_QueryInterface_c,3
 
 ; end procedure IDirectDrawSurface_QueryInterface_asm2c
 
@@ -539,9 +489,7 @@ IDirectDrawSurface_AddRef_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 IDirectDrawSurface_AddRef_c
-
-        retn 4
+        Call_Asm_Stack1 IDirectDrawSurface_AddRef_c,1
 
 ; end procedure IDirectDrawSurface_AddRef_asm2c
 
@@ -552,9 +500,7 @@ IDirectDrawSurface_Release_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 IDirectDrawSurface_Release_c
-
-        retn 4
+        Call_Asm_Stack1 IDirectDrawSurface_Release_c,1
 
 ; end procedure IDirectDrawSurface_Release_asm2c
 
@@ -566,9 +512,7 @@ IDirectDrawSurface_AddAttachedSurface_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDrawSurface_AddAttachedSurface_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDrawSurface_AddAttachedSurface_c,2
 
 ; end procedure IDirectDrawSurface_AddAttachedSurface_asm2c
 
@@ -580,9 +524,7 @@ IDirectDrawSurface_AddOverlayDirtyRect_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDrawSurface_AddOverlayDirtyRect_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDrawSurface_AddOverlayDirtyRect_c,2
 
 ; end procedure IDirectDrawSurface_AddOverlayDirtyRect_asm2c
 
@@ -598,9 +540,7 @@ IDirectDrawSurface_Blt_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack6 IDirectDrawSurface_Blt_c
-
-        retn 6*4
+        Call_Asm_Stack6 IDirectDrawSurface_Blt_c,6
 
 ; end procedure IDirectDrawSurface_Blt_asm2c
 
@@ -614,9 +554,7 @@ IDirectDrawSurface_BltBatch_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 IDirectDrawSurface_BltBatch_c
-
-        retn 4*4
+        Call_Asm_Stack4 IDirectDrawSurface_BltBatch_c,4
 
 ; end procedure IDirectDrawSurface_BltBatch_asm2c
 
@@ -632,9 +570,7 @@ IDirectDrawSurface_BltFast_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack6 IDirectDrawSurface_BltFast_c
-
-        retn 6*4
+        Call_Asm_Stack6 IDirectDrawSurface_BltFast_c,6
 
 ; end procedure IDirectDrawSurface_BltFast_asm2c
 
@@ -647,9 +583,7 @@ IDirectDrawSurface_DeleteAttachedSurface_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDrawSurface_DeleteAttachedSurface_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDrawSurface_DeleteAttachedSurface_c,3
 
 ; end procedure IDirectDrawSurface_DeleteAttachedSurface_asm2c
 
@@ -662,9 +596,7 @@ IDirectDrawSurface_EnumAttachedSurfaces_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDrawSurface_EnumAttachedSurfaces_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDrawSurface_EnumAttachedSurfaces_c,3
 
 ; end procedure IDirectDrawSurface_EnumAttachedSurfaces_asm2c
 
@@ -678,9 +610,7 @@ IDirectDrawSurface_EnumOverlayZOrders_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack4 IDirectDrawSurface_EnumOverlayZOrders_c
-
-        retn 4*4
+        Call_Asm_Stack4 IDirectDrawSurface_EnumOverlayZOrders_c,4
 
 ; end procedure IDirectDrawSurface_EnumOverlayZOrders_asm2c
 
@@ -693,9 +623,7 @@ IDirectDrawSurface_Flip_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDrawSurface_Flip_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDrawSurface_Flip_c,3
 
 ; end procedure IDirectDrawSurface_Flip_asm2c
 
@@ -708,9 +636,7 @@ IDirectDrawSurface_GetAttachedSurface_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDrawSurface_GetAttachedSurface_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDrawSurface_GetAttachedSurface_c,3
 
 ; end procedure IDirectDrawSurface_GetAttachedSurface_asm2c
 
@@ -722,9 +648,7 @@ IDirectDrawSurface_GetBltStatus_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDrawSurface_GetBltStatus_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDrawSurface_GetBltStatus_c,2
 
 ; end procedure IDirectDrawSurface_GetBltStatus_asm2c
 
@@ -736,9 +660,7 @@ IDirectDrawSurface_GetCaps_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDrawSurface_GetCaps_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDrawSurface_GetCaps_c,2
 
 ; end procedure IDirectDrawSurface_GetCaps_asm2c
 
@@ -750,9 +672,7 @@ IDirectDrawSurface_GetClipper_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDrawSurface_GetClipper_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDrawSurface_GetClipper_c,2
 
 ; end procedure IDirectDrawSurface_GetClipper_asm2c
 
@@ -765,9 +685,7 @@ IDirectDrawSurface_GetColorKey_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDrawSurface_GetColorKey_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDrawSurface_GetColorKey_c,3
 
 ; end procedure IDirectDrawSurface_GetColorKey_asm2c
 
@@ -779,9 +697,7 @@ IDirectDrawSurface_GetDC_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDrawSurface_GetDC_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDrawSurface_GetDC_c,2
 
 ; end procedure IDirectDrawSurface_GetDC_asm2c
 
@@ -793,9 +709,7 @@ IDirectDrawSurface_GetFlipStatus_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDrawSurface_GetFlipStatus_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDrawSurface_GetFlipStatus_c,2
 
 ; end procedure IDirectDrawSurface_GetFlipStatus_asm2c
 
@@ -808,9 +722,7 @@ IDirectDrawSurface_GetOverlayPosition_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDrawSurface_GetOverlayPosition_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDrawSurface_GetOverlayPosition_c,3
 
 ; end procedure IDirectDrawSurface_GetOverlayPosition_asm2c
 
@@ -822,9 +734,7 @@ IDirectDrawSurface_GetPalette_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDrawSurface_GetPalette_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDrawSurface_GetPalette_c,2
 
 ; end procedure IDirectDrawSurface_GetPalette_asm2c
 
@@ -836,9 +746,7 @@ IDirectDrawSurface_GetPixelFormat_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDrawSurface_GetPixelFormat_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDrawSurface_GetPixelFormat_c,2
 
 ; end procedure IDirectDrawSurface_GetPixelFormat_asm2c
 
@@ -850,9 +758,7 @@ IDirectDrawSurface_GetSurfaceDesc_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDrawSurface_GetSurfaceDesc_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDrawSurface_GetSurfaceDesc_c,2
 
 ; end procedure IDirectDrawSurface_GetSurfaceDesc_asm2c
 
@@ -865,9 +771,7 @@ IDirectDrawSurface_Initialize_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDrawSurface_Initialize_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDrawSurface_Initialize_c,3
 
 ; end procedure IDirectDrawSurface_Initialize_asm2c
 
@@ -878,9 +782,7 @@ IDirectDrawSurface_IsLost_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 IDirectDrawSurface_IsLost_c
-
-        retn 4
+        Call_Asm_Stack1 IDirectDrawSurface_IsLost_c,1
 
 ; end procedure IDirectDrawSurface_IsLost_asm2c
 
@@ -895,9 +797,7 @@ IDirectDrawSurface_Lock_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack5 IDirectDrawSurface_Lock_c
-
-        retn 5*4
+        Call_Asm_Stack5 IDirectDrawSurface_Lock_c,5
 
 ; end procedure IDirectDrawSurface_Lock_asm2c
 
@@ -909,9 +809,7 @@ IDirectDrawSurface_ReleaseDC_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDrawSurface_ReleaseDC_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDrawSurface_ReleaseDC_c,2
 
 ; end procedure IDirectDrawSurface_ReleaseDC_asm2c
 
@@ -922,9 +820,7 @@ IDirectDrawSurface_Restore_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack1 IDirectDrawSurface_Restore_c
-
-        retn 4
+        Call_Asm_Stack1 IDirectDrawSurface_Restore_c,1
 
 ; end procedure IDirectDrawSurface_Restore_asm2c
 
@@ -936,9 +832,7 @@ IDirectDrawSurface_SetClipper_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDrawSurface_SetClipper_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDrawSurface_SetClipper_c,2
 
 ; end procedure IDirectDrawSurface_SetClipper_asm2c
 
@@ -951,9 +845,7 @@ IDirectDrawSurface_SetColorKey_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDrawSurface_SetColorKey_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDrawSurface_SetColorKey_c,3
 
 ; end procedure IDirectDrawSurface_SetColorKey_asm2c
 
@@ -966,9 +858,7 @@ IDirectDrawSurface_SetOverlayPosition_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDrawSurface_SetOverlayPosition_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDrawSurface_SetOverlayPosition_c,3
 
 ; end procedure IDirectDrawSurface_SetOverlayPosition_asm2c
 
@@ -980,9 +870,7 @@ IDirectDrawSurface_SetPalette_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDrawSurface_SetPalette_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDrawSurface_SetPalette_c,2
 
 ; end procedure IDirectDrawSurface_SetPalette_asm2c
 
@@ -994,9 +882,7 @@ IDirectDrawSurface_Unlock_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDrawSurface_Unlock_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDrawSurface_Unlock_c,2
 
 ; end procedure IDirectDrawSurface_Unlock_asm2c
 
@@ -1012,9 +898,7 @@ IDirectDrawSurface_UpdateOverlay_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack6 IDirectDrawSurface_UpdateOverlay_c
-
-        retn 6*4
+        Call_Asm_Stack6 IDirectDrawSurface_UpdateOverlay_c,6
 
 ; end procedure IDirectDrawSurface_UpdateOverlay_asm2c
 
@@ -1026,9 +910,7 @@ IDirectDrawSurface_UpdateOverlayDisplay_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack2 IDirectDrawSurface_UpdateOverlayDisplay_c
-
-        retn 2*4
+        Call_Asm_Stack2 IDirectDrawSurface_UpdateOverlayDisplay_c,2
 
 ; end procedure IDirectDrawSurface_UpdateOverlayDisplay_asm2c
 
@@ -1041,9 +923,7 @@ IDirectDrawSurface_UpdateOverlayZOrder_asm2c:
 ; [esp +   4] = struct IDirectDrawSurface *lpThis
 ; [esp      ] = return address
 
-        Call_Asm_Stack3 IDirectDrawSurface_UpdateOverlayZOrder_c
-
-        retn 3*4
+        Call_Asm_Stack3 IDirectDrawSurface_UpdateOverlayZOrder_c,3
 
 ; end procedure IDirectDrawSurface_UpdateOverlayZOrder_asm2c
 

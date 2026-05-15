@@ -164,6 +164,7 @@ struct IDirectDrawSurface_c {
     SDL_Renderer *Renderer;
     SDL_Texture *Texture[3];
     SDL_Surface *Surface;
+    uint8_t *surface_pixels;
     int primary, backbuffer, mustlock, was_flipped;
     struct IDirectDrawSurface_c *lpBackbuffer;
 };
@@ -462,6 +463,7 @@ uint32_t CCALL IDirectDraw_CreatePalette_c(struct IDirectDraw_c *lpThis, uint32_
 uint32_t CCALL IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct _ddsurfacedesc *lpDDSurfaceDesc, PTR32(struct IDirectDrawSurface_c)* lplpDDSurface, void * pUnkOuter)
 {
     struct IDirectDrawSurface_c *lpDDS_c;
+    int pitch, alignment;
 
 #ifdef DEBUG_DDRAW
     eprintf("IDirectDraw_CreateSurface: 0x%" PRIxPTR ", 0x%" PRIxPTR ", 0x%" PRIxPTR ", 0x%" PRIxPTR " - ", (uintptr_t)lpThis, (uintptr_t)lpDDSurfaceDesc, (uintptr_t)lplpDDSurface, (uintptr_t)pUnkOuter);
@@ -521,6 +523,7 @@ uint32_t CCALL IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct 
         lpDDS_c->Texture[1] = lpThis->Texture[1];
         lpDDS_c->Texture[2] = lpThis->Texture[2];
         lpDDS_c->Surface = NULL;
+        lpDDS_c->surface_pixels = NULL;
         lpDDS_c->mustlock = 1;
 
         lpDDS_c->lpBackbuffer = (struct IDirectDrawSurface_c *)x86_malloc(sizeof(struct IDirectDrawSurface_c));
@@ -539,6 +542,8 @@ uint32_t CCALL IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct 
         lpDDS_c->lpBackbuffer->primary = 0;
         lpDDS_c->lpBackbuffer->backbuffer = 1;
         lpDDS_c->lpBackbuffer->was_flipped = 0;
+        lpDDS_c->lpBackbuffer->Surface = NULL;
+        lpDDS_c->lpBackbuffer->surface_pixels = NULL;
         lpDDS_c->lpBackbuffer->lpBackbuffer = NULL;
 
         {
@@ -551,16 +556,37 @@ uint32_t CCALL IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct 
                 Uint32 Rmask, Gmask, Bmask, Amask;
                 if (SDL_PixelFormatEnumToMasks(format, &bpp, &Rmask, &Gmask, &Bmask, &Amask))
                 {
-                    lpDDS_c->lpBackbuffer->Surface = SDL_CreateRGBSurface(
-                        SDL_SWSURFACE,
-                        width,
-                        height,
-                        bpp,
-                        Rmask,
-                        Gmask,
-                        Bmask,
-                        Amask
-                    );
+                    pitch = width * (bpp >> 3);
+                    pitch = (pitch + 3) & ~3;
+
+                    alignment = 16;
+#if SDL_VERSION_ATLEAST(2,0,10)
+                    if (sdl_versionnum >= SDL_VERSIONNUM(2,0,10))
+                    {
+                        alignment = (int)SDL_SIMDGetAlignment();
+                    }
+#endif
+
+                    lpDDS_c->lpBackbuffer->surface_pixels = (uint8_t *)x86_malloc((height * pitch + alignment + alignment - 1) & ~(alignment - 1));
+                    if (lpDDS_c->lpBackbuffer->surface_pixels != NULL)
+                    {
+                        lpDDS_c->lpBackbuffer->Surface = SDL_CreateRGBSurfaceFrom(
+                            (void *)(((uintptr_t)lpDDS_c->lpBackbuffer->surface_pixels + (alignment - 1)) & ~(alignment - 1)),
+                            width,
+                            height,
+                            bpp,
+                            pitch,
+                            Rmask,
+                            Gmask,
+                            Bmask,
+                            Amask
+                        );
+
+                        if (lpDDS_c->lpBackbuffer->Surface == NULL)
+                        {
+                            x86_free(lpDDS_c->lpBackbuffer->surface_pixels);
+                        }
+                    }
                 }
             }
         }
@@ -592,6 +618,7 @@ uint32_t CCALL IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct 
         if (lpDDS_c->Surface == NULL)
         {
             SDL_FreeSurface(lpDDS_c->lpBackbuffer->Surface);
+            x86_free(lpDDS_c->lpBackbuffer->surface_pixels);
             x86_free(lpDDS_c->lpBackbuffer);
             x86_free(lpDDS_c);
 #ifdef DEBUG_DDRAW
@@ -649,11 +676,33 @@ uint32_t CCALL IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct 
         lpDDS_c->was_flipped = 0;
         lpDDS_c->lpBackbuffer = NULL;
 
-        lpDDS_c->Surface = SDL_CreateRGBSurface(
-            SDL_SWSURFACE,
+        pitch = lpDDSurfaceDesc->dwWidth * (lpDDSurfaceDesc->ddpfPixelFormat.dwRGBBitCount >> 3);
+        pitch = (pitch + 3) & ~3;
+
+        alignment = 16;
+#if SDL_VERSION_ATLEAST(2,0,10)
+        if (sdl_versionnum >= SDL_VERSIONNUM(2,0,10))
+        {
+            alignment = (int)SDL_SIMDGetAlignment();
+        }
+#endif
+
+        lpDDS_c->surface_pixels = (uint8_t *)x86_malloc((lpDDSurfaceDesc->dwHeight * pitch + alignment + alignment - 1) & ~(alignment - 1));
+        if (lpDDS_c->surface_pixels == NULL)
+        {
+            x86_free(lpDDS_c);
+#ifdef DEBUG_DDRAW
+            eprintf("error\n");
+#endif
+            return DDERR_OUTOFVIDEOMEMORY;
+        }
+
+        lpDDS_c->Surface = SDL_CreateRGBSurfaceFrom(
+            (void *)(((uintptr_t)lpDDS_c->surface_pixels + (alignment - 1)) & ~(alignment - 1)),
             lpDDSurfaceDesc->dwWidth,
             lpDDSurfaceDesc->dwHeight,
             lpDDSurfaceDesc->ddpfPixelFormat.dwRGBBitCount,
+            pitch,
             lpDDSurfaceDesc->ddpfPixelFormat.dwRBitMask,
             lpDDSurfaceDesc->ddpfPixelFormat.dwGBitMask,
             lpDDSurfaceDesc->ddpfPixelFormat.dwBBitMask,
@@ -662,6 +711,7 @@ uint32_t CCALL IDirectDraw_CreateSurface_c(struct IDirectDraw_c *lpThis, struct 
 
         if (lpDDS_c->Surface == NULL)
         {
+            x86_free(lpDDS_c->surface_pixels);
             x86_free(lpDDS_c);
 #ifdef DEBUG_DDRAW
             eprintf("error\n");
@@ -990,6 +1040,11 @@ uint32_t CCALL IDirectDrawSurface_Release_c(struct IDirectDrawSurface_c *lpThis)
         {
             SDL_FreeSurface(lpThis->Surface);
             lpThis->Surface = NULL;
+        }
+        if (lpThis->surface_pixels != NULL)
+        {
+            x86_free(lpThis->surface_pixels);
+            lpThis->surface_pixels = NULL;
         }
         if (lpThis->lpBackbuffer != NULL)
         {

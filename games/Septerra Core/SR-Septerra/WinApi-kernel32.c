@@ -491,7 +491,7 @@ void * CCALL CreateFileA_c(const char *lpFileName, uint32_t dwDesiredAccess, uin
         eprintf("error\n");
 #endif
         Winapi_SetLastError(ERROR_INVALID_PARAMETER);
-        return INVALID_HANDLE_VALUE;
+        return INVALID_HANDLE32_VALUE;
     }
 
     if (dwDesiredAccess == 0 || hTemplateFile != 0)
@@ -500,7 +500,7 @@ void * CCALL CreateFileA_c(const char *lpFileName, uint32_t dwDesiredAccess, uin
         eprintf("error\n");
 #endif
         Winapi_SetLastError(ERROR_NOT_SUPPORTED);
-        return INVALID_HANDLE_VALUE;
+        return INVALID_HANDLE32_VALUE;
     }
 
 #ifdef _WIN32
@@ -521,7 +521,7 @@ void * CCALL CreateFileA_c(const char *lpFileName, uint32_t dwDesiredAccess, uin
                 eprintf("error\n");
 #endif
                 Winapi_SetLastError(ERROR_FILE_EXISTS);
-                return INVALID_HANDLE_VALUE;
+                return INVALID_HANDLE32_VALUE;
             }
 
             mode[0] = 'w';
@@ -546,7 +546,7 @@ void * CCALL CreateFileA_c(const char *lpFileName, uint32_t dwDesiredAccess, uin
                 eprintf("error\n");
 #endif
                 Winapi_SetLastError(ERROR_FILE_NOT_FOUND);
-                return INVALID_HANDLE_VALUE;
+                return INVALID_HANDLE32_VALUE;
             }
 
             if (dwDesiredAccess & GENERIC_READ)
@@ -603,7 +603,7 @@ void * CCALL CreateFileA_c(const char *lpFileName, uint32_t dwDesiredAccess, uin
                     eprintf("error\n");
 #endif
                     Winapi_SetLastError(ERROR_FILE_NOT_FOUND);
-                    return INVALID_HANDLE_VALUE;
+                    return INVALID_HANDLE32_VALUE;
                 }
 
                 mode[0] = 'w';
@@ -622,7 +622,7 @@ void * CCALL CreateFileA_c(const char *lpFileName, uint32_t dwDesiredAccess, uin
         eprintf("error\n");
 #endif
         Winapi_SetLastError(ERROR_INVALID_PARAMETER);
-        return INVALID_HANDLE_VALUE;
+        return INVALID_HANDLE32_VALUE;
     }
 
     ret = Winapi_AllocHandle();
@@ -648,7 +648,7 @@ void * CCALL CreateFileA_c(const char *lpFileName, uint32_t dwDesiredAccess, uin
         eprintf("error\n");
 #endif
         Winapi_SetLastError(ERROR_ACCESS_DENIED);
-        return INVALID_HANDLE_VALUE;
+        return INVALID_HANDLE32_VALUE;
     }
 
     if (SeekToStart)
@@ -763,11 +763,24 @@ void CCALL DeleteCriticalSection_c(void *lpCriticalSection)
 #endif
 
 #ifdef _WIN32
-    DeleteCriticalSection((LPCRITICAL_SECTION)lpCriticalSection);
+    if (sizeof(void *) == 4)
+    {
+        DeleteCriticalSection((LPCRITICAL_SECTION)lpCriticalSection);
+    }
+    else
+    {
+        if (*(LPCRITICAL_SECTION *)lpCriticalSection != NULL)
+        {
+            DeleteCriticalSection(*(LPCRITICAL_SECTION *)lpCriticalSection);
+            free(*(LPCRITICAL_SECTION *)lpCriticalSection);
+            *(LPCRITICAL_SECTION *)lpCriticalSection = NULL;
+        }
+    }
 #else
     if (*(pthread_mutex_t **)lpCriticalSection != NULL)
     {
         pthread_mutex_destroy(*(pthread_mutex_t **)lpCriticalSection);
+        free(*(pthread_mutex_t **)lpCriticalSection);
         *(pthread_mutex_t **)lpCriticalSection = NULL;
     }
 #endif
@@ -787,7 +800,14 @@ void CCALL EnterCriticalSection_c(void *lpCriticalSection)
 #endif
 
 #ifdef _WIN32
-    EnterCriticalSection((LPCRITICAL_SECTION)lpCriticalSection);
+    if (sizeof(void *) == 4)
+    {
+        EnterCriticalSection((LPCRITICAL_SECTION)lpCriticalSection);
+    }
+    else
+    {
+        EnterCriticalSection(*(LPCRITICAL_SECTION *)lpCriticalSection);
+    }
 #else
     pthread_mutex_lock(*(pthread_mutex_t **)lpCriticalSection);
 #endif
@@ -936,14 +956,14 @@ void * CCALL FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
     if ((lpFileName == NULL) || (lpFindFileData == NULL))
     {
         Winapi_SetLastError(ERROR_INVALID_PARAMETER);
-        return INVALID_HANDLE_VALUE;
+        return INVALID_HANDLE32_VALUE;
     }
 
 #ifdef _WIN32
     ret = Winapi_AllocHandle();
     if (ret == NULL)
     {
-        return INVALID_HANDLE_VALUE;
+        return INVALID_HANDLE32_VALUE;
     }
 
     ret->handle_type = HT_SEARCH;
@@ -952,7 +972,7 @@ void * CCALL FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
     if (ret->sh.d == INVALID_HANDLE_VALUE)
     {
         x86_free(ret);
-        return INVALID_HANDLE_VALUE;
+        return INVALID_HANDLE32_VALUE;
     }
 
     return ret;
@@ -988,13 +1008,13 @@ void * CCALL FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
         if (!CLIB_FindFile(lpFileName, buf))
         {
             Winapi_SetLastError(ERROR_FILE_NOT_FOUND);
-            return INVALID_HANDLE_VALUE;
+            return INVALID_HANDLE32_VALUE;
         }
 
         if (0 != stat(buf, &filestat))
         {
             Winapi_SetLastError(ERROR_ACCESS_DENIED);
-            return INVALID_HANDLE_VALUE;
+            return INVALID_HANDLE32_VALUE;
         }
 
         if (S_ISDIR(filestat.st_mode))
@@ -1004,7 +1024,7 @@ void * CCALL FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
             if (dirinfo == NULL)
             {
                 Winapi_SetLastError(ERROR_ACCESS_DENIED);
-                return INVALID_HANDLE_VALUE;
+                return INVALID_HANDLE32_VALUE;
             }
 
             direntry = readdir(dirinfo);
@@ -1012,7 +1032,7 @@ void * CCALL FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
             {
                 closedir(dirinfo);
                 Winapi_SetLastError(ERROR_FILE_NOT_FOUND);
-                return INVALID_HANDLE_VALUE;
+                return INVALID_HANDLE32_VALUE;
             }
         }
         else
@@ -1066,14 +1086,14 @@ void * CCALL FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
         if (!CLIB_FindFile(orig_directory, buf))
         {
             Winapi_SetLastError(ERROR_FILE_NOT_FOUND);
-            return INVALID_HANDLE_VALUE;
+            return INVALID_HANDLE32_VALUE;
         }
 
         dirinfo = opendir(buf);
         if (dirinfo == NULL)
         {
             Winapi_SetLastError(ERROR_ACCESS_DENIED);
-            return INVALID_HANDLE_VALUE;
+            return INVALID_HANDLE32_VALUE;
         }
 
         // copy pattern to orig_directory
@@ -1098,7 +1118,7 @@ void * CCALL FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
         {
             closedir(dirinfo);
             Winapi_SetLastError(ERROR_FILE_NOT_FOUND);
-            return INVALID_HANDLE_VALUE;
+            return INVALID_HANDLE32_VALUE;
         }
     }
 
@@ -1108,7 +1128,7 @@ void * CCALL FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
     {
         if (dirinfo != NULL) closedir(dirinfo);
         Winapi_SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return INVALID_HANDLE_VALUE;
+        return INVALID_HANDLE32_VALUE;
     }
 
     state = (find_file_state *) malloc(sizeof(find_file_state));
@@ -1117,7 +1137,7 @@ void * CCALL FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
         x86_free(ret);
         if (dirinfo != NULL) closedir(dirinfo);
         Winapi_SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return INVALID_HANDLE_VALUE;
+        return INVALID_HANDLE32_VALUE;
     }
 
     ret->handle_type = HT_SEARCH;
@@ -1137,7 +1157,7 @@ void * CCALL FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
             x86_free(ret);
             if (dirinfo != NULL) closedir(dirinfo);
             Winapi_SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-            return INVALID_HANDLE_VALUE;
+            return INVALID_HANDLE32_VALUE;
         }
 
         if (readdirtype)
@@ -1151,7 +1171,7 @@ void * CCALL FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
                 x86_free(ret);
                 if (dirinfo != NULL) closedir(dirinfo);
                 Winapi_SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-                return INVALID_HANDLE_VALUE;
+                return INVALID_HANDLE32_VALUE;
             }
         }
 
@@ -1165,7 +1185,7 @@ void * CCALL FindFirstFileA_c(const char *lpFileName, void *lpFindFileData)
             x86_free(ret);
             if (dirinfo != NULL) closedir(dirinfo);
             Winapi_SetLastError(ERROR_ACCESS_DENIED);
-            return INVALID_HANDLE_VALUE;
+            return INVALID_HANDLE32_VALUE;
         }
     }
 
@@ -1632,7 +1652,25 @@ void CCALL InitializeCriticalSection_c(void *lpCriticalSection)
 #endif
 
 #ifdef _WIN32
-    InitializeCriticalSection((LPCRITICAL_SECTION)lpCriticalSection);
+    if (sizeof(void *) == 4)
+    {
+        InitializeCriticalSection((LPCRITICAL_SECTION)lpCriticalSection);
+    }
+    else
+    {
+        LPCRITICAL_SECTION critical_section;
+
+        critical_section = (LPCRITICAL_SECTION)malloc(sizeof(CRITICAL_SECTION));
+        if (critical_section == NULL)
+        {
+            eprintf("InitializeCriticalSection: critical section not created\n");
+            exit(6);
+        }
+
+        InitializeCriticalSection(critical_section);
+
+        *(LPCRITICAL_SECTION *)lpCriticalSection = critical_section;
+    }
 #else
     pthread_mutexattr_t attr;
     pthread_mutex_t *mutex;
@@ -1662,7 +1700,14 @@ void CCALL LeaveCriticalSection_c(void *lpCriticalSection)
 #endif
 
 #ifdef _WIN32
-    LeaveCriticalSection((LPCRITICAL_SECTION)lpCriticalSection);
+    if (sizeof(void *) == 4)
+    {
+        LeaveCriticalSection((LPCRITICAL_SECTION)lpCriticalSection);
+    }
+    else
+    {
+        LeaveCriticalSection(*(LPCRITICAL_SECTION *)lpCriticalSection);
+    }
 #else
     pthread_mutex_unlock(*(pthread_mutex_t **)lpCriticalSection);
 #endif

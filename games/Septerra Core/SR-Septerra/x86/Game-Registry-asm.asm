@@ -1,5 +1,5 @@
 ;;
-;;  Copyright (C) 2019 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -52,8 +52,6 @@ Registry_SetValueDword_asm2c:
 
         Call_Asm_Stack2 Registry_SetValueDword
 
-        retn
-
 ; end procedure Registry_SetValueDword_asm2c
 
 
@@ -66,8 +64,6 @@ Registry_GetValueDword_asm2c:
 
         Call_Asm_Stack2 Registry_GetValueDword
 
-        retn
-
 ; end procedure Registry_GetValueDword_asm2c
 
 
@@ -79,8 +75,6 @@ Registry_GetValueString_asm2c:
 ; [esp      ] = return address
 
         Call_Asm_Stack2 Registry_GetValueString
-
-        retn
 
 ; end procedure Registry_GetValueString_asm2c
 

@@ -189,7 +189,10 @@ class ConfigFile:
         self.AddEntry("Audio_Sample_Rate", "11025-384000", ("44100" if platform == "pc" else "22050"))
         self.AddEntry("Audio_Resampling_Quality", "0/1", ("1" if platform == "pc" else "0"))
 
-        midi_values = "alsa/wildmidi/bassmidi/adlmidi/sdl_mixer"
+        midi_values = "alsa/wildmidi"
+        if os.uname()[4] != "riscv64":
+            midi_values += "/bassmidi"
+        midi_values += "/adlmidi/sdl_mixer"
         if game == "xcom1" or game == "xcom2":
             midi_values += "/adlib-dosbox_opl/mt32-munt/awe32-emu8k"
         midi_values += "/mt32-alsa"
@@ -429,7 +432,10 @@ class ConfigGUI:
             description = "Select library for music playback."
 
             if "adlib-dosbox_opl" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
-                description += "\nGeneral MIDI music (ALSA sequencer or WildMIDI, BASSMIDI, ADLMIDI, SDL_mixer library),\n  Adlib music or MT-32 music"
+                description += "\nGeneral MIDI music (ALSA sequencer or WildMIDI"
+                if "bassmidi" in self.CfgFile.GetEntryFormat("Audio_MIDI_Subsystem"):
+                    description += ", BASSMIDI"
+                description += ", ADLMIDI, SDL_mixer library),\n  Adlib music or MT-32 music"
                 if self.CfgFile.HasEntry("Audio_MT32_Roms_Path"):
                     description += " (MUNT emulator or ALSA sequencer)."
                 else:

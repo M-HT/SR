@@ -16,9 +16,11 @@ To compile the plugins with SpeexDSP support either run the compilation script w
 
 **midi-adlmidi** plays General MIDI music using [libADLMIDI](https://github.com/Wohlstand/libADLMIDI/ "A Software MIDI Synthesizer library with OPL3 (YMF262) emulator") library. libADLMIDI uses an OPL3 emulator to play MIDI music.
 
-**midi2-windows** plays General MIDI and MT-32 music using [Windows API](https://learn.microsoft.com/en-us/windows/win32/multimedia/midi-reference "MIDI Reference"). Windows API can use hardware or software synth. The default software synth doesn't require additional files to play MIDI music. Plugin can also play General MIDI music on MT-32 synth.
+**midi2-windows** plays General MIDI and MT-32 music using [Windows API](https://learn.microsoft.com/en-us/windows/win32/multimedia/midi-reference "MIDI Reference") or the new [Windows MIDI Services](https://microsoft.github.io/MIDI/ "Windows MIDI Services") (if the SDK is installed). Windows API and Windows MIDI Services can use hardware or software synth. The default software synth doesn't require additional files to play MIDI music. Plugin can also play General MIDI music on MT-32 synth.
 
 **midi2-alsa** plays General MIDI and MT-32 music using [ALSA sequencer API](https://www.alsa-project.org/alsa-doc/alsa-lib/group___sequencer.html "MIDI Sequencer"). ALSA sequencer can use hardware or software synth (like [FluidSynth](https://www.fluidsynth.org/ "A SoundFont Synthesizer") or [TiMidity++](https://timidity.sourceforge.net/ "TiMidity++")). Plugin can also play General MIDI music on MT-32 synth.
+
+**midi2-coremidi** plays General MIDI and MT-32 music using [Core MIDI API](https://developer.apple.com/documentation/coremidi "Core MIDI"). Core MIDI can use hardware or software synth. Plugin can also play General MIDI music on MT-32 synth.
 
 ## Game-specific plugins
 

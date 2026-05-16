@@ -1,6 +1,6 @@
 # SR
 
-A project to [statically recompile](https://en.wikipedia.org/wiki/Binary_translation "Static binary translation") DOS and Windows game executables to create Windows or Linux (x86 or arm) versions of the games.
+A project to [statically recompile](https://en.wikipedia.org/wiki/Binary_translation "Static binary translation") DOS and Windows game executables to create Windows (x86/x64) or Linux (x86/x64/arm/arm64/riscv64) or MacOS (x64/arm64) versions of the games.
 
 Following DOS games are supported:
 
@@ -37,24 +37,21 @@ The projects consists of following subprojects (read the readme files in subproj
   * The information about the original Windows executables.
 * **games**
   * Game specific source code.
-  * Together with the generated assembler versions of the executables, these files can be used to build Windows or Linux (x86 or arm) versions of the games.
-  * Uses plugins to play (or play better) music.
+  * Together with the generated assembler versions of the executables, these files can be used to build Windows (x86/x64) or Linux (x86/x64/arm/arm64/riscv64) or MacOS (x64/arm64) versions of the games.
+  * Uses plugins to play (or play better) music or to enhance the displayed image in DOS games.
 * **midi-plugins**
   * Plugins used by the games to play MIDI (and other types) music.
 * **scaler-plugins**
-  * Plugins used by the DOS games to enlarge/enhance the displayed image.
+  * Plugins used by the DOS games to enhance the displayed image.
 * **pycfg**
-  * A configuration utility that can be used on Linux (sorry Windows users) to change settings in the configuration files (without editing the files).
+  * A configuration utility that can be used on Linux (sorry Windows/MacOS users) to change settings in the configuration files (without editing the files).
 * **SR64-loader**
-  * Loader for 64-bit versions.
+  * Loader for older 64-bit versions. It's no longer needed.
 
 <hr/>
 
 Some notes:
 
-* The project supports creating 32-bit, Windows or Linux versions of the games.
-* The generated arm version is little-endian, not big-endian.
+* The project supports creating 32-bit or 64-bit, Windows or Linux or MacOS versions of the games.
+* The generated versions are little-endian, not big-endian.
 * The generated arm version supports softfp and hardfp calling conventions.
-* Creating 64-bit versions is experimental.
-  * Only Linux (x64, arm64) versions of Albion, Septerra Core, X-COM 1,2 and Warcraft are working at the moment.
-  * 64-bit versions require a loader.

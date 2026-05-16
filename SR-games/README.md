@@ -2,9 +2,9 @@
 
 The information about the original DOS executables.
 
-To generate an assembler version of the original executable, put the static recompiler (*SR.exe*) and the original executable in the appropriate subdirectory and run *build-x86.sh* (or *build-arm.sh* or *build-llasm.sh*).
+To generate an assembler version of the original executable, put the static recompiler (*SR.exe*) and the original executable in the appropriate subdirectory and run *build-x86.sh* (or *build-arm.sh* or *build-llasm.sh* or *build-x64.sh*).
 
-[NASM](https://www.nasm.us/) (Netwide Assembler) is needed to generate (and to compile) the x86 assembler version. Versions 2.15.03 -- 2.15.05 contain a bug which prevents them from working with the static recompiler. Use a later (or earlier) version.
+[NASM](https://www.nasm.us/) (Netwide Assembler) is needed to generate (and to compile) the x86 and x64 assembler versions. Versions 2.15.03 -- 2.15.05 contain a bug which prevents them from working with the static recompiler. Use a later (or earlier) version.
 
 The generated assembler version consists of *.asm* (or *.s*) and *.inc* files (or *.llasm* and *.llinc* files). Move these files into the appropriate subdirectory in the *games* subproject.
 
@@ -19,7 +19,7 @@ The original executable is *MAIN.EXE* from the English version 1.38.
 * sha1: e8f3a6df8909f8e6bc54bcced643cd4a6e2dd3cc
 * sha256: 476227b0391cf3452166b7a1d52b012ccf6c86bc9e46886dafbed343e9140710
 
-The generated files should be moved to *Albion/SR-Main/x86* (or *arm* or *llasm*) subdirectory in *games* subproject.
+The generated files should be moved to *Albion/SR-Main/x86* (or *arm* or *llasm* or *x64*) subdirectory in *games* subproject.
 
 ## X-Com: UFO Defense (UFO: Enemy Unknown)
 
@@ -39,7 +39,7 @@ Or the executable *GEOSCAPE.EXE* from the DOS English version from GOG.com.
 * sha1: e650dc3fc53190b3ff9188c9b480b747c677cb9b
 * sha256: c776a2ae2da108eb48eb98b113079501b367c44ba8b0eeb32a5b5a269736ef96
 
-The generated files should be moved to *X-Com - Ufo Defense/SR-Xcom1/x86/geoscape* (or *arm/geoscape*) subdirectory in *games* subproject.
+The generated files should be moved to *X-Com - Ufo Defense/SR-Xcom1/x86/geoscape* (or *arm/geoscape* or *llasm/geoscape* or *x64/geoscape*) subdirectory in *games* subproject.
 
 #### SR2
 
@@ -50,7 +50,7 @@ The original executable is *TACTICAL.EXE* from the DOS English version 1.4.
 * sha1: bb6a845cc577213ed8ad57e4e4b576222d218f45
 * sha256: e9e3a6dcc52598a07903050ee2697b71204df9d04eb71f8559aa7e163967f797
 
-The generated files should be moved to *X-Com - Ufo Defense/SR-Xcom1/x86/tactical* (or *arm/tactical*) subdirectory in *games* subproject.
+The generated files should be moved to *X-Com - Ufo Defense/SR-Xcom1/x86/tactical* (or *arm/tactical* or *llasm/tactical* or *x64/tactical*) subdirectory in *games* subproject.
 
 #### SR3
 
@@ -61,7 +61,7 @@ The original executable is *INTRO.EXE* from the DOS English version 1.4.
 * sha1: 927f0896dc91eea3b948ad60ed71870843ce5ad0
 * sha256: 513569ceea82ee0b265cad3605b82324ac1adcd98adbff7f6ce0fbef7af4da30
 
-The generated files should be moved to *X-Com - Ufo Defense/SR-Xcom1/x86/intro* (or *arm/intro*) subdirectory in *games* subproject.
+The generated files should be moved to *X-Com - Ufo Defense/SR-Xcom1/x86/intro* (or *arm/intro* or *llasm/intro* or *x64/intro*) subdirectory in *games* subproject.
 
 ## X-Com: Terror from the Deep
 
@@ -74,7 +74,7 @@ The original executable is *GEOSCAPE.EXE* from the DOS English version 2.1.
 * sha1: 898636a3b4c7b11266a1fbf4c7a4467e6ec412a9
 * sha256: 02f1a492bf237333e795623502e4fb5cb88fa77d54f567fec7c905e6b390c2a7
 
-The generated files should be moved to *X-Com - Terror from the Deep/SR-Xcom2/x86/geoscape* (or *arm/geoscape*) subdirectory in *games* subproject.
+The generated files should be moved to *X-Com - Terror from the Deep/SR-Xcom2/x86/geoscape* (or *arm/geoscape* or *llasm/geoscape* or *x64/geoscape*) subdirectory in *games* subproject.
 
 #### SR1-gog
 
@@ -85,9 +85,9 @@ The original executable is *GEOSCAPE.EXE* from the DOS English version from GOG.
 * sha1: 26cf5b2c96e53064a086be181a8c6edc6f791ccf
 * sha256: 490f8d271dda18c7ea1e9aff42b235ba62a9965ca9e26141c93a57c675ed6894
 
-The generated *.inc* files should be moved to *X-Com - Terror from the Deep/SR-Xcom2/x86/geoscape/gogver* (or *arm/geoscape/gogver*) subdirectory in *games* subproject.
+The generated *.inc* files should be moved to *X-Com - Terror from the Deep/SR-Xcom2/x86/geoscape/gogver* (or *arm/geoscape/gogver* or *llasm/geoscape/gogver* or *x64/geoscape/gogver*) subdirectory in *games* subproject.
 
-The generated *.asm* (or *.s*) files should be modified (change the path to *.inc* files) according to existing files and then moved to *X-Com - Terror from the Deep/SR-Xcom2/x86/geoscape* (or *arm/geoscape*) subdirectory in *games* subproject.
+The generated *.asm* (or *.s*) files should be modified (change the path to *.inc* files) according to existing files and then moved to *X-Com - Terror from the Deep/SR-Xcom2/x86/geoscape* (or *arm/geoscape* or *llasm/geoscape* or *x64/geoscape*) subdirectory in *games* subproject.
 
 #### SR2
 
@@ -98,7 +98,7 @@ The original executable is *TACTICAL.EXE* from the DOS English version 2.1.
 * sha1: 61130d090b84eb3263dd30d65090077b2f648479
 * sha256: c3b340e94aee2f3690eaade4cd990e3c8ba0bc9c5b6b1d122f28ae4eef24ca8c
 
-The generated files should be moved to *X-Com - Terror from the Deep/SR-Xcom2/x86/tactical* (or *arm/tactical*) subdirectory in *games* subproject.
+The generated files should be moved to *X-Com - Terror from the Deep/SR-Xcom2/x86/tactical* (or *arm/tactical* or *llasm/tactical* or *x64/tactical*) subdirectory in *games* subproject.
 
 #### SR1-gog
 
@@ -109,9 +109,9 @@ The original executable is *TACTICAL.EXE* from the DOS English version from GOG.
 * sha1: 3a3e2268a7355951f6594efe7ad98ab2b969431f
 * sha256: 983f1c0d748049c3914cc595ebbd54f86d1f9709348c8b1945fa1b5584de7bad
 
-The generated *.inc* files should be moved to *X-Com - Terror from the Deep/SR-Xcom2/x86/tactical/gogver* (or *arm/tactical/gogver*) subdirectory in *games* subproject.
+The generated *.inc* files should be moved to *X-Com - Terror from the Deep/SR-Xcom2/x86/tactical/gogver* (or *arm/tactical/gogver* or *llasm/tactical/gogver* or *x64/tactical/gogver*) subdirectory in *games* subproject.
 
-The generated *.asm* (or *.s*) files should be modified (change the path to *.inc* files) according to existing files and then moved to *X-Com - Terror from the Deep/SR-Xcom2/x86/tactical* (or *arm/tactical*) subdirectory in *games* subproject.
+The generated *.asm* (or *.s*) files should be modified (change the path to *.inc* files) according to existing files and then moved to *X-Com - Terror from the Deep/SR-Xcom2/x86/tactical* (or *arm/tactical* or *llasm/tactical* or *x64/tactical*) subdirectory in *games* subproject.
 
 ## Warcraft: Orcs & Humans
 
@@ -124,7 +124,7 @@ The original executable is *WAR.EXE* from the DOS Floppy English version 1.21.
 * sha1: 656aeb0d2d1384ad4442e8d63911701ba5885e81
 * sha256: 43c07a258cb3044a7e39211830c837567e17201a494718fab678b17253b77639
 
-The generated files should be moved to *Warcraft/SR-War/x86* (or *arm* or or *llasm*) subdirectory in *games* subproject.
+The generated files should be moved to *Warcraft/SR-War/x86* (or *arm* or *llasm* or *x64*) subdirectory in *games* subproject.
 
 #### SR-cd
 
@@ -135,9 +135,9 @@ The original executable is *WAR.EXE* from the DOS CD English version 1.21.
 * sha1: 35761741340cd8fb64caadd8eb7565e65d779b33
 * sha256: aac8ae8d2a9e27039851147433d3365a61d7633acf003fc409ef5e5df5434dd5
 
-The generated *.inc* files should be moved to *Warcraft/SR-War/x86/cdver* (or *arm/cdver* or *llasm/cdver*) subdirectory in *games* subproject.
+The generated *.inc* files should be moved to *Warcraft/SR-War/x86/cdver* (or *arm/cdver* or *llasm/cdver* or *x64/cdver*) subdirectory in *games* subproject.
 
-The generated *.asm* (or *.s* or *.llasm*) files should be modified (change the path to *.inc* (or *.llinc*) files) according to existing files and then moved to *Warcraft/SR-War/x86* (or *arm* or *llasm*) subdirectory in *games* subproject.
+The generated *.asm* (or *.s* or *.llasm*) files should be modified (change the path to *.inc* (or *.llinc*) files) according to existing files and then moved to *Warcraft/SR-War/x86* (or *arm* or *llasm* or *x64*) subdirectory in *games* subproject.
 
 #### SR-cd-gog
 
@@ -148,7 +148,7 @@ The original executable is *WAR.EXE* from the DOS CD English version 1.22 (from 
 * sha1: b32ef7d87d1e51f3f0b20ce7911053f32a0d509a
 * sha256: 1e966220bf09ab007c49c5ea5ebc42eb494f5cf2f74f894d3969b6115df8d8a9
 
-The generated *.inc* files should be moved to *Warcraft/SR-War/x86/cdgogver* (or *arm/cdgogver* or *llasm/cdgogver*) subdirectory in *games* subproject.
+The generated *.inc* files should be moved to *Warcraft/SR-War/x86/cdgogver* (or *arm/cdgogver* or *llasm/cdgogver* or *x64/cdgogver*) subdirectory in *games* subproject.
 
-The generated *.asm* (or *.s* or *.llasm*) files should be modified (change the path to *.inc* (or *.llinc* files) according to existing files and then moved to *Warcraft/SR-War/x86* (or *arm* or *llasm*) subdirectory in *games* subproject.
+The generated *.asm* (or *.s* or *.llasm*) files should be modified (change the path to *.inc* (or *.llinc* files) according to existing files and then moved to *Warcraft/SR-War/x86* (or *arm* or *llasm* or *x64*) subdirectory in *games* subproject.
 

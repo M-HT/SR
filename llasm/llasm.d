@@ -3759,7 +3759,7 @@ public int main(string[] args)
     inline_idiv_instr = false;
     inline_float_instr = false;
     inline_float2_instr = false;
-    function_names = new string[string];
+    function_names = (string[string]).init;
     for (int i = 1; i < args.length; i++)
     {
         switch(args[i])

@@ -1,16 +1,14 @@
 Warcraft: Orcs & Humans for Linux (arm-aarch64)
-Version 1.4.1
+Version 1.4.2
 
 Original DOS Warcraft CD version is required for playing.
 (version from GOG.com can be used for playing)
 
 Libraries
 ---------
-The game (SDL2 version) requires following 64-bit libraries: SDL2, SDL2_mixer
-On debian based distributions these libraries are in following packages: libsdl2-2.0-0 libsdl2-mixer-2.0-0
 
-The game (SDL1 version) requires following 64-bit libraries: SDL, SDL_mixer, OpenGL
-On debian based distributions these libraries are in following packages: libsdl1.2debian libsdl-mixer1.2 libgl1
+The game requires following 64-bit libraries: SDL2, SDL2_mixer
+On debian based distributions these libraries are in following packages: libsdl2-2.0-0 libsdl2-mixer-2.0-0
 
 Some midi plugins may require additional libraries.
 
@@ -21,7 +19,7 @@ Installation
 Put files from this archive into the installed game's directory.
 
 Simple instructions:
-1) install Warcraft on your PC
+1) install Warcraft on your PC (or copy installed game from another computer)
 2) copy the files from this archive into the game's directory
 3) run the game using Warcraft.sh
 
@@ -114,6 +112,10 @@ Nuked OPL3 emulator uses neon instructions.
 
 Changes
 -------
+
+v1.4.2 (2026-05-24)
+* use newer library versions
+* bug fixes
 
 v1.4.1 (2024-12-16)
 * add option to play music on MT-32 synth

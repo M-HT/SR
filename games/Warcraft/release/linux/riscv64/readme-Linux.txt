@@ -1,4 +1,4 @@
-Warcraft: Orcs & Humans for Linux (x86)
+Warcraft: Orcs & Humans for Linux (riscv64)
 Version 1.4.2
 
 Original DOS Warcraft CD version is required for playing.
@@ -7,8 +7,8 @@ Original DOS Warcraft CD version is required for playing.
 Libraries
 ---------
 
-The game requires following 32-bit libraries: SDL2, SDL2_mixer
-On debian based distributions these libraries are in following packages: libsdl2-2.0-0:i386 libsdl2-mixer-2.0-0:i386
+The game requires following 64-bit libraries: SDL2, SDL2_mixer
+On debian based distributions these libraries are in following packages: libsdl2-2.0-0 libsdl2-mixer-2.0-0
 
 Some midi plugins may require additional libraries.
 
@@ -44,13 +44,12 @@ Music
 -----
 
 The game's MIDI music can be played using one of following libraries:
-ALSA sequencer, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
+ALSA sequencer, WildMIDI, libADLMIDI, SDL_mixer
 
 libADLMIDI is the default library, others can be selected in the configuration file.
 ALSA sequencer can use hardware or software synth (like Fluidsynth or TiMidity++).
 libADLMIDI requires no additional files for MIDI playback,
 WildMIDI requires GUS patches for MIDI playback,
-BASSMIDI requires a soundfont for MIDI playback,
 libADLMIDI uses OPL3 emulator for MIDI playback.
 Music can be played on MT-32 synth using ALSA sequencer.
 
@@ -59,10 +58,6 @@ ALSA sequencer can detect usable synth automatically or it can be selected in th
 GUS patches can be installed anywhere, but the file timidity.cfg must be
 either in the game's directory or in /etc/timidity/timidity.cfg
 EawPats is a good sounding set of patches.
-
-Soundfont (for BASSMIDI) can be either copied to the game's directory
-or it can be stored anywhere, but the soundfont location must be written
-in the configuration file.
 
 
 Configuration
@@ -110,27 +105,5 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 Changes
 -------
 
-v1.4.2 (2026-05-24)
-* use newer library versions
-* bug fixes
-
-v1.4.1 (2024-12-16)
-* add option to play music on MT-32 synth
-* bug fixes
-
-v1.4.0 (2024-09-21)
-* add option to use higher quality audio resampling
-* remove option to interpolate audio when resampling
-* add support for higher sampling rates
-* add support for using gamepad or joystick as mouse/keyboard
-* use latest versions of libADLMIDI, WildMIDI libraries
-* change setting volume in libADLMIDI
-* modify ALSA midi plugin to try all ports with the same client number when looking for midi port based on client name
-* minor bug fixes
-
-v1.3.1 (2023-11-15)
-* fix aspect ratio in fullscreen
-* minor bug fixes
-
-v1.3.0 (2023-08-13)
-first Linux (x86) version
+v1.4.2 (2026-0?-??)
+first Linux (riscv64) version

@@ -1,5 +1,5 @@
 Warcraft: Orcs & Humans for Windows (x86)
-Version 1.4.1
+Version 1.4.2
 
 Original DOS Warcraft CD version is required for playing.
 (version from GOG.com can be used for playing)
@@ -10,7 +10,7 @@ Installation
 Put files from this archive into the installed game's directory.
 
 Simple instructions:
-1) install Warcraft on your PC
+1) install Warcraft on your PC (or copy installed game from another computer)
 2) copy the files from this archive into the game's directory
 3) run the game using Warcraft.cmd or SR-War.exe
 
@@ -38,7 +38,7 @@ The game's MIDI music can be played using one of following libraries:
 NativeWindows, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
 
 libADLMIDI is the default library, others can be selected in the configuration file.
-NativeWindows and libADLMIDI dond't require additional files for MIDI playback,
+NativeWindows and libADLMIDI don't require additional files for MIDI playback,
 WildMIDI requires GUS patches for MIDI playback,
 BASSMIDI requires a soundfont for MIDI playback,
 libADLMIDI uses OPL3 emulator for MIDI playback.
@@ -96,6 +96,10 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 
 Changes
 -------
+
+v1.4.2 (2026-05-24)
+* use newer library versions
+* bug fixes
 
 v1.4.1 (2024-12-16)
 * add option to play music on MT-32 synth

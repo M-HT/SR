@@ -1,17 +1,8 @@
-Warcraft: Orcs & Humans for Linux (x86)
+Warcraft: Orcs & Humans for Windows (x64)
 Version 1.4.2
 
 Original DOS Warcraft CD version is required for playing.
 (version from GOG.com can be used for playing)
-
-Libraries
----------
-
-The game requires following 32-bit libraries: SDL2, SDL2_mixer
-On debian based distributions these libraries are in following packages: libsdl2-2.0-0:i386 libsdl2-mixer-2.0-0:i386
-
-Some midi plugins may require additional libraries.
-
 
 Installation
 ------------
@@ -21,43 +12,42 @@ Put files from this archive into the installed game's directory.
 Simple instructions:
 1) install Warcraft on your PC (or copy installed game from another computer)
 2) copy the files from this archive into the game's directory
-3) run the game using Warcraft.sh
+3) run the game using Warcraft.cmd or SR-War.exe
 
 Example (Detailed instructions):
 1) install Warcraft on your PC
-    - create directory ~/Games
+    - create directory C:\Games
     - if you have original DOS version then install Warcraft using DOSBox
-      - in dosbox: mount ~/Games as C:
+      - in dosbox: mount C:\Games as C:
       - in dosbox: install Warcraft into C:\WARCRAFT
       - in dosbox: if necessary, then install patch(es) for Warcraft
-    - if you have version from GOG.com then extract Warcraft from GOG.com windows installer
-      - extract Warcraft using innoextract into ~/Games/WARCRAFT
+    - if you have version from GOG.com then install Warcraft using GOG.com windows installer
+      - install Warcraft into C:\Games\WARCRAFT
 
 2) copy the files from this archive into the game's directory
-    - copy the content of this archive into ~/Games/WARCRAFT
+    - copy the content of this archive into C:\Games\WARCRAFT
 
-3) run the game using Warcraft.sh
-    - run Warcraft.sh in the game's directory: ~/Games/WARCRAFT/Warcraft.sh
+3) run the game using Warcraft.cmd or SR-War.exe
+    - run Warcraft.cmd or SR-War.exe in the game's directory: C:\Games\WARCRAFT\Warcraft.cmd
 
 
 Music
 -----
 
 The game's MIDI music can be played using one of following libraries:
-ALSA sequencer, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
+NativeWindows, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
 
 libADLMIDI is the default library, others can be selected in the configuration file.
-ALSA sequencer can use hardware or software synth (like Fluidsynth or TiMidity++).
-libADLMIDI requires no additional files for MIDI playback,
+NativeWindows and libADLMIDI don't require additional files for MIDI playback,
 WildMIDI requires GUS patches for MIDI playback,
 BASSMIDI requires a soundfont for MIDI playback,
 libADLMIDI uses OPL3 emulator for MIDI playback.
-Music can be played on MT-32 synth using ALSA sequencer.
+Music can be played on MT-32 synth using NativeWindows.
 
-ALSA sequencer can detect usable synth automatically or it can be selected in the configuration file.
+NativeWindows can use the default synth or it can be selected in the configuration file.
 
 GUS patches can be installed anywhere, but the file timidity.cfg must be
-either in the game's directory or in /etc/timidity/timidity.cfg
+either in the game's directory or in C:\TIMIDITY\timidity.cfg
 EawPats is a good sounding set of patches.
 
 Soundfont (for BASSMIDI) can be either copied to the game's directory
@@ -69,9 +59,6 @@ Configuration
 -------------
 
 Configuration is stored in the file Warcraft.cfg.
-
-Configuration can be changed either by editing the configuration file directly,
-or by configuration editor (Warcraft-setup.sh).
 
 
 Controls
@@ -111,26 +98,4 @@ Changes
 -------
 
 v1.4.2 (2026-05-24)
-* use newer library versions
-* bug fixes
-
-v1.4.1 (2024-12-16)
-* add option to play music on MT-32 synth
-* bug fixes
-
-v1.4.0 (2024-09-21)
-* add option to use higher quality audio resampling
-* remove option to interpolate audio when resampling
-* add support for higher sampling rates
-* add support for using gamepad or joystick as mouse/keyboard
-* use latest versions of libADLMIDI, WildMIDI libraries
-* change setting volume in libADLMIDI
-* modify ALSA midi plugin to try all ports with the same client number when looking for midi port based on client name
-* minor bug fixes
-
-v1.3.1 (2023-11-15)
-* fix aspect ratio in fullscreen
-* minor bug fixes
-
-v1.3.0 (2023-08-13)
-first Linux (x86) version
+first Windows (x64) version

@@ -1,5 +1,5 @@
 X-COM: UFO Defense for Linux (arm-aarch64)
-Version 1.6.1
+Version 1.6.2
 
 Original DOS X-COM: UFO Defense version 1.4 is required for playing.
 (Gold version for Windows should also work)
@@ -8,11 +8,8 @@ Original DOS X-COM: UFO Defense version 1.4 is required for playing.
 Libraries
 ---------
 
-The game (SDL2 version) requires following 64-bit libraries: SDL2, SDL2_mixer
+The game requires following 64-bit libraries: SDL2, SDL2_mixer
 On debian based distributions these libraries are in following packages: libsdl2-2.0-0 libsdl2-mixer-2.0-0
-
-The game (SDL1 version) requires following 64-bit libraries: SDL, SDL_mixer, OpenGL
-On debian based distributions these libraries are in following packages: libsdl1.2debian libsdl-mixer1.2 libgl1
 
 Some midi plugins may require additional libraries.
 
@@ -23,7 +20,7 @@ Installation
 Put files from this archive into the installed game's directory.
 
 Simple instructions:
-1) install X-COM: UFO Defense on your PC
+1) install X-COM: UFO Defense on your PC (or copy installed game from another computer)
 2) copy the files from this archive into the game's directory
 3) run the game using xcom1.sh
 
@@ -128,6 +125,10 @@ Nuked OPL3 emulator uses neon instructions.
 
 Changes
 -------
+
+v1.6.2 (2026-05-25)
+* use newer library versions
+* bug fixes
 
 v1.6.1 (2024-12-17)
 * add option to play General MIDI music using AWE32 emulator (DOS game version)

@@ -1,35 +1,15 @@
-X-COM: UFO Defense for Windows (x86)
+X-COM: UFO Defense for MacOS (x64)
 Version 1.6.2
 
 Original DOS X-COM: UFO Defense version 1.4 is required for playing.
 (Gold version for Windows should also work)
 (version from GOG.com can be used for playing)
 
-Installation
-------------
+Game path
+---------
 
-Put files from this archive into the installed game's directory.
-
-Simple instructions:
-1) install X-COM: UFO Defense on your PC (or copy installed game from another computer)
-2) copy the files from this archive into the game's directory
-3) run the game using xcom1.cmd or SR-Xcom1.exe
-
-Example (Detailed instructions):
-1) install X-COM: UFO Defense on your PC
-    - create directory C:\Games
-    - if you have original DOS version then install X-COM: UFO Defense using DOSBox
-      - in dosbox: mount C:\Games as C:
-      - in dosbox: install X-COM: UFO Defense into C:\UFO
-      - in dosbox: if necessary, then install patch(es) for X-COM
-    - if you have version from GOG.com then install X-COM: UFO Defense using GOG.com windows installer
-      - install X-COM: UFO Defense into C:\Games\UFO
-
-2) copy the files from this archive into the game's directory
-    - copy the content of this archive into C:\Games\UFO
-
-3) run the game using xcom1.cmd or SR-Xcom1.exe
-    - run xcom1.cmd or SR-Xcom1.exe in the game's directory: C:\Games\UFO\xcom1.cmd
+Game path must be selected before launching the game.
+Selected path must contain a directory "GEODATA" and a directory "UFOGRAPH".
 
 
 Music
@@ -37,28 +17,33 @@ Music
 
 The game can play General MIDI music (Windows and DOS game versions) or Adlib/MT-32 music (DOS game version).
 The General MIDI music can be played using one of following libraries:
-NativeWindows, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
+CoreMIDI, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
 
-NativeWindows is the default library, others can be selected in the configuration file.
-NativeWindows and libADLMIDI don't require additional files for MIDI playback,
+libADLMIDI is the default library, others can be selected in the configuration file.
+CoreMIDI can use hardware or software synth.
+libADLMIDI requires no additional files for MIDI playback,
 WildMIDI requires GUS patches for MIDI playback,
 BASSMIDI requires a soundfont for MIDI playback,
 libADLMIDI uses OPL3 emulator for MIDI playback.
 General MIDI music can be played using AWE32 emulator (DOS game version).
-Music can be played on MT-32 synth using NativeWindows (MT-32 music in DOS game version / General MIDI music in Gold edition).
+Music can be played on MT-32 synth using CoreMIDI (MT-32 music in DOS game version / General MIDI music in Gold edition).
 
-NativeWindows can use the default synth or it can be selected in the configuration file.
+CoreMIDI can detect usable synth automatically or it can be selected in the configuration file.
 
 GUS patches can be installed anywhere, but the file timidity.cfg must be
-either in the game's directory or in C:\TIMIDITY\timidity.cfg
+either in SR-Xcom1.app/Contents/Resources directory or in one of these locations:
+ /etc/timidity/timidity.cfg
+ /etc/timidity.cfg
+ /usr/share/timidity/timidity.cfg
+ /usr/local/lib/timidity/timidity.cfg
 EawPats is a good sounding set of patches.
 
-Soundfont (for BASSMIDI) can be either copied to the game's directory
+Soundfont (for BASSMIDI) can be either copied to SR-Xcom1.app/Contents/Resources directory
 or it can be stored anywhere, but the soundfont location must be written
 in the configuration file.
 
 Adlib music can be played without additional files.
-MT-32 music can be played using MUNT emulator or ALSA sequencer.
+MT-32 music can be played using MUNT emulator or CoreMIDI.
 MUNT emulator requires Control and PCM roms from MT-32 or CM-32L/LAPC-I.
 AWE32 emulator requires AWE32 rom.
 
@@ -111,28 +96,4 @@ Changes
 -------
 
 v1.6.2 (2026-05-25)
-* use newer library versions
-* bug fixes
-
-v1.6.1 (2024-12-17)
-* add option to play General MIDI music using AWE32 emulator (DOS game version)
-* add support for playing General MIDI music on MT-32 synth (Gold edition)
-* fix playing sound effects at non-standard frequencies
-* bug fixes
-
-v1.6.0 (2024-09-22)
-* add option to use higher quality audio resampling
-* remove option to interpolate audio when resampling
-* add support for higher sampling rates
-* add support for using gamepad or joystick as mouse/keyboard
-* use latest versions of libADLMIDI, WildMIDI libraries
-* change setting volume in libADLMIDI
-* modify NativeWindows midi plugin to reopen midi device after device reset
-* minor bug fixes
-
-v1.5.1 (2023-11-17)
-* fix aspect ratio in fullscreen
-* minor bug fixes
-
-v1.5.0 (2023-08-12)
-first Windows (x86) version
+first MacOS (x64) version

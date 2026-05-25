@@ -1,5 +1,5 @@
 X-COM: Terror from the Deep for Windows (x86)
-Version 1.6.1
+Version 1.6.2
 
 Original DOS X-COM: Terror from the Deep is required for playing.
 (Gold version for Windows should also work)
@@ -12,7 +12,7 @@ Installation
 Put files from this archive into the installed game's directory.
 
 Simple instructions:
-1) install X-COM: Terror from the Deep on your PC
+1) install X-COM: Terror from the Deep on your PC (or copy installed game from another computer)
 2) copy the files from this archive into the game's directory
 3) run the game using xcom2.cmd or SR-Xcom2.exe
 
@@ -112,6 +112,10 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 
 Changes
 -------
+
+v1.6.2 (2026-05-25)
+* use newer library versions
+* bug fixes
 
 v1.6.1 (2024-12-17)
 * add option to play General MIDI music using AWE32 emulator (DOS game version)

@@ -1,9 +1,10 @@
-X-COM: UFO Defense for Linux (x64)
+X-COM: Terror from the Deep for Linux (riscv64)
 Version 1.6.2
 
-Original DOS X-COM: UFO Defense version 1.4 is required for playing.
+Original DOS X-COM: Terror from the Deep is required for playing.
 (Gold version for Windows should also work)
 (version from GOG.com can be used for playing)
+The game should be patched to version 2.1.
 
 Libraries
 ---------
@@ -20,25 +21,27 @@ Installation
 Put files from this archive into the installed game's directory.
 
 Simple instructions:
-1) install X-COM: UFO Defense on your PC (or copy installed game from another computer)
+1) install X-COM: Terror from the Deep on your PC (or copy installed game from another computer)
 2) copy the files from this archive into the game's directory
-3) run the game using xcom1.sh
+3) run the game using xcom2.sh
 
 Example (Detailed instructions):
-1) install X-COM: UFO Defense on your PC
+1) install X-COM: Terror from the Deep on your PC
     - create directory ~/Games
-    - if you have original DOS version then install X-COM: UFO Defense using DOSBox
+    - if you have original DOS version then install X-COM: Terror from the Deep using DOSBox
       - in dosbox: mount ~/Games as C:
-      - in dosbox: install X-COM: UFO Defense into C:\UFO
+      - in dosbox: install X-COM: Terror from the Deep into C:\UFO2
       - in dosbox: if necessary, then install patch(es) for X-COM
-    - if you have version from GOG.com then extract X-COM: UFO Defense from GOG.com windows installer
-      - extract X-COM: UFO Defense using innoextract into ~/Games/UFO
+    - if you have version from GOG.com then extract X-COM: Terror from the Deep from GOG.com windows installer
+      - extract X-COM: Terror from the Deep using innoextract into ~/Games/UFO2
+    - if the game isn't patched to version 2.1 (version from GOG.com isn't)
+      - copy file patch/OBDATA.DAT into ~/Games/UFO2/GEODATA (overwrite existing file)
 
 2) copy the files from this archive into the game's directory
-    - copy the content of this archive into ~/Games/UFO
+    - copy the content of this archive into ~/Games/UFO2
 
-3) run the game using xcom1.sh
-    - run xcom1.sh in the game's directory: ~/Games/UFO/xcom1.sh
+3) run the game using xcom2.sh
+    - run xcom2.sh in the game's directory: ~/Games/UFO2/xcom2.sh
 
 
 Music
@@ -46,13 +49,12 @@ Music
 
 The game can play General MIDI music (Windows and DOS game versions) or Adlib/MT-32 music (DOS game version).
 The General MIDI music can be played using one of following libraries:
-ALSA sequencer, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
+ALSA sequencer, WildMIDI, libADLMIDI, SDL_mixer
 
 libADLMIDI is the default library, others can be selected in the configuration file.
 ALSA sequencer can use hardware or software synth (like Fluidsynth or TiMidity++).
 libADLMIDI requires no additional files for MIDI playback,
 WildMIDI requires GUS patches for MIDI playback,
-BASSMIDI requires a soundfont for MIDI playback,
 libADLMIDI uses OPL3 emulator for MIDI playback.
 General MIDI music can be played using AWE32 emulator (DOS game version).
 Music can be played on MT-32 synth using ALSA sequencer (MT-32 music in DOS game version / General MIDI music in Gold edition).
@@ -62,10 +64,6 @@ ALSA sequencer can detect usable synth automatically or it can be selected in th
 GUS patches can be installed anywhere, but the file timidity.cfg must be
 either in the game's directory or in /etc/timidity/timidity.cfg
 EawPats is a good sounding set of patches.
-
-Soundfont (for BASSMIDI) can be either copied to the game's directory
-or it can be stored anywhere, but the soundfont location must be written
-in the configuration file.
 
 Adlib music can be played without additional files.
 MT-32 music can be played using MUNT emulator or ALSA sequencer.
@@ -79,7 +77,7 @@ Configuration
 Configuration is stored in the file Ufo.cfg.
 
 Configuration can be changed either by editing the configuration file directly,
-or by configuration editor (xcom1-setup.sh).
+or by configuration editor (xcom2-setup.sh).
 
 
 Controls
@@ -101,7 +99,7 @@ Back / 4th joystick button: enter key
 Misc
 ----
 
-The executable contains fix for the "Difficulty bug".
+The file patch/OBDATA.DAT is from the official version 2.1 patch.
 
 WildMIDI library uses version 3 of the GNU Lesser General Public License (LGPLv3).
 libADLMIDI library uses version 3 of the GNU Lesser General Public License (LGPLv3).
@@ -124,29 +122,4 @@ Changes
 -------
 
 v1.6.2 (2026-05-25)
-* use newer library versions
-* bug fixes
-
-v1.6.1 (2024-12-17)
-* add option to play General MIDI music using AWE32 emulator (DOS game version)
-* add support for playing General MIDI music on MT-32 synth (Gold edition)
-* fix playing sound effects at non-standard frequencies
-* bug fixes
-
-v1.6.0 (2024-09-22)
-* add option to use higher quality audio resampling
-* remove option to interpolate audio when resampling
-* add support for higher sampling rates
-* add support for using gamepad or joystick as mouse/keyboard
-* use latest versions of libADLMIDI, WildMIDI libraries
-* change setting volume in libADLMIDI
-* modify ALSA midi plugin to try all ports with the same client number when looking for midi port based on client name
-* minor bug fixes
-
-v1.5.1 (2023-11-17)
-* fix aspect ratio in fullscreen
-* optimize floating point instructions
-* minor bug fixes
-
-v1.5.0 (2023-08-12)
-first Linux (x64) version
+first Linux (riscv64) version

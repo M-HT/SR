@@ -1,5 +1,5 @@
 X-COM: Terror from the Deep for Linux (x86)
-Version 1.6.1
+Version 1.6.2
 
 Original DOS X-COM: Terror from the Deep is required for playing.
 (Gold version for Windows should also work)
@@ -9,11 +9,8 @@ The game should be patched to version 2.1.
 Libraries
 ---------
 
-The game (SDL2 version) requires following 32-bit libraries: SDL2, SDL2_mixer
+The game requires following 32-bit libraries: SDL2, SDL2_mixer
 On debian based distributions these libraries are in following packages: libsdl2-2.0-0:i386 libsdl2-mixer-2.0-0:i386
-
-The game (SDL1 version) requires following 32-bit libraries: SDL, SDL_mixer, OpenGL
-On debian based distributions these libraries are in following packages: libsdl1.2debian:i386 libsdl-mixer1.2:i386 libgl1:i386
 
 Some midi plugins may require additional libraries.
 
@@ -24,7 +21,7 @@ Installation
 Put files from this archive into the installed game's directory.
 
 Simple instructions:
-1) install X-COM: Terror from the Deep on your PC
+1) install X-COM: Terror from the Deep on your PC (or copy installed game from another computer)
 2) copy the files from this archive into the game's directory
 3) run the game using xcom2.sh
 
@@ -128,6 +125,10 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 
 Changes
 -------
+
+v1.6.2 (2026-05-25)
+* use newer library versions
+* bug fixes
 
 v1.6.1 (2024-12-17)
 * add option to play General MIDI music using AWE32 emulator (DOS game version)

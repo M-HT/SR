@@ -31,6 +31,7 @@
 #include "PartialManager.h"
 #include "Poly.h"
 #include "ROMInfo.h"
+#include "SysexBuilder.h"
 #include "TVA.h"
 
 #if MT32EMU_MONITOR_SYSEX > 0
@@ -694,14 +695,15 @@ bool Synth::initPCMList(Bit16u mapAddress, Bit16u count) {
 	return false;
 }
 
-bool Synth::initCompressedTimbre(Bit16u timbreNum, const Bit8u *src, Bit32u srcLen) {
+bool Synth::initCompressedTimbre(TimbresMemoryRegion &tempRegion, Bit16u absTimbreNum, const Bit8u *src, Bit32u srcLen) {
 	// "Compressed" here means that muted partials aren't present in ROM (except in the case of partial 0 being muted).
 	// Instead the data from the previous unmuted partial is used.
 	if (srcLen < sizeof(TimbreParam::CommonParam)) {
 		return false;
 	}
-	TimbreParam *timbre = &mt32ram.timbres[timbreNum].timbre;
-	timbresMemoryRegion->write(timbreNum, 0, src, sizeof(TimbreParam::CommonParam), true);
+	TimbreParam *timbre = &mt32ram.timbres[absTimbreNum].timbre;
+	Bit32u timbreNum = absTimbreNum & 0x3F;
+	tempRegion.write(timbreNum, 0, src, sizeof(TimbreParam::CommonParam), true);
 	unsigned int srcPos = sizeof(TimbreParam::CommonParam);
 	unsigned int memPos = sizeof(TimbreParam::CommonParam);
 	for (int t = 0; t < 4; t++) {
@@ -711,7 +713,7 @@ bool Synth::initCompressedTimbre(Bit16u timbreNum, const Bit8u *src, Bit32u srcL
 		} else if (srcPos + sizeof(TimbreParam::PartialParam) >= srcLen) {
 			return false;
 		}
-		timbresMemoryRegion->write(timbreNum, memPos, src + srcPos, sizeof(TimbreParam::PartialParam));
+		tempRegion.write(timbreNum, memPos, src + srcPos, sizeof(TimbreParam::PartialParam));
 		srcPos += sizeof(TimbreParam::PartialParam);
 		memPos += sizeof(TimbreParam::PartialParam);
 	}
@@ -720,22 +722,26 @@ bool Synth::initCompressedTimbre(Bit16u timbreNum, const Bit8u *src, Bit32u srcL
 
 bool Synth::initTimbres(Bit16u mapAddress, Bit16u offset, Bit16u count, Bit16u startTimbre, bool compressed) {
 	const Bit8u *timbreMap = &controlROMData[mapAddress];
+	// We abuse TimbresMemoryRegion with the sole purpose of clamping the timbre parameters by the max table.
+	TimbresMemoryRegion tempRegion(reinterpret_cast<Bit8u *>(mt32ram.timbres + startTimbre), paddedTimbreMaxTable);
+	Bit16u timbreNum = 0;
 	for (Bit16u i = 0; i < count * 2; i += 2) {
+		Bit16u absTimbreNum = startTimbre + timbreNum;
 		Bit16u address = (timbreMap[i + 1] << 8) | timbreMap[i];
 		if (!compressed && (address + offset + sizeof(TimbreParam) > CONTROL_ROM_SIZE)) {
-			printDebug("Control ROM error: Timbre map entry 0x%04x for timbre %d points to invalid timbre address 0x%04x", i, startTimbre, address);
+			printDebug("Control ROM error: Timbre map entry 0x%04x for timbre %d points to invalid timbre address 0x%04x", i, absTimbreNum, address);
 			return false;
 		}
 		address += offset;
 		if (compressed) {
-			if (!initCompressedTimbre(startTimbre, &controlROMData[address], CONTROL_ROM_SIZE - address)) {
-				printDebug("Control ROM error: Timbre map entry 0x%04x for timbre %d points to invalid timbre at 0x%04x", i, startTimbre, address);
+			if (!initCompressedTimbre(tempRegion, absTimbreNum, &controlROMData[address], CONTROL_ROM_SIZE - address)) {
+				printDebug("Control ROM error: Timbre map entry 0x%04x for timbre %d points to invalid timbre at 0x%04x", i, absTimbreNum, address);
 				return false;
 			}
 		} else {
-			timbresMemoryRegion->write(startTimbre, 0, &controlROMData[address], sizeof(TimbreParam), true);
+			tempRegion.write(timbreNum, 0, &controlROMData[address], sizeof(TimbreParam), true);
 		}
-		startTimbre++;
+		timbreNum++;
 	}
 	return true;
 }
@@ -1396,6 +1402,107 @@ void Synth::playSysexWithoutHeader(Bit8u device, Bit8u command, const Bit8u *sys
 	}
 }
 
+bool SysexBuilder::appendSysex(Bit32u sysexAddress, const Bit8u *data, Bit32u dataLength) {
+	static const Bit8u SYSEX_HEADER[] = { 0xF0, SYSEX_MANUFACTURER_ROLAND, 0x10, SYSEX_MDL_MT32, SYSEX_CMD_DT1 };
+	static const Bit8u SYSEX_TERMINATOR = 0xF7;
+
+	if ((data == NULL && dataLength > 0) || (&writePtr[dataLength + 10] > endPtr)) return false;
+
+	memcpy(writePtr, SYSEX_HEADER, sizeof SYSEX_HEADER);
+	writePtr += sizeof SYSEX_HEADER;
+	const Bit8u *headerEndPtr = writePtr;
+	*(writePtr++) = (sysexAddress >> 16) & 0xFF;
+	*(writePtr++) = (sysexAddress >> 8) & 0xFF;
+	*(writePtr++) = sysexAddress & 0xFF;
+	if (dataLength > 0) {
+		memcpy(writePtr, data, dataLength);
+		writePtr += dataLength;
+	}
+	*(writePtr++) = Synth::calcSysexChecksum(headerEndPtr, dataLength + 3);
+	*(writePtr++) = SYSEX_TERMINATOR;
+	return true;
+}
+
+struct SysexBankBuilder : SysexBuilder {
+	SysexBankBuilder(Bit8u *sysexBank, Bit32u size) : SysexBuilder(sysexBank, size) {}
+
+	bool appendTimbreMemorySysexes(MemParams::PaddedTimbre *timbreMemory) {
+		for (Bit32u timbreIx = 0; timbreIx < 64; timbreIx++) {
+			if (!appendSysex(0x80000 + timbreIx * 0x200, reinterpret_cast<Bit8u *>(&timbreMemory[timbreIx + 128]), sizeof(TimbreParam))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	bool appendPatchMemorySysexes(PatchParam *patchMemory) {
+		for (Bit32u patchBlockIx = 0; patchBlockIx < 4; patchBlockIx++) {
+			if (!appendSysex(0x50000 + patchBlockIx * 0x200, &patchMemory[patchBlockIx * 32].timbreGroup, sizeof(PatchParam) * 32))
+				return false;
+		}
+		return true;
+	}
+
+	bool appendRhythmSetupSysexes(MemParams::RhythmTemp *rhythmSetup) {
+		return appendSysex(0x30110, &rhythmSetup->timbre, sizeof(MemParams::RhythmTemp) * 64)
+			&& appendSysex(0x30310, &rhythmSetup->timbre, sizeof(MemParams::RhythmTemp) * 21);
+	}
+
+	bool appendTimbreTempSysexes(TimbreParam *timbreTemp) {
+		for (Bit32u timbreIx = 0; timbreIx < 8; timbreIx++) {
+			if (!appendSysex(0x40000 + MT32EMU_SYSEXMEMADDR(timbreIx * 0xF6), reinterpret_cast<Bit8u *>(&timbreTemp[timbreIx]),
+				sizeof(TimbreParam))) return false;
+		}
+		return true;
+	}
+};
+
+Bit32u Synth::dumpSysexBank(Bit8u *sysexBank, Bit32u size) const {
+	static const Bit32u maxBankSize = Bit32u(
+		10 // Reset SysEx, no data.
+		+ sizeof(MemParams::System) + 10
+		+ 64 * (sizeof(TimbreParam) + 10)
+		+ 4 * (32 * sizeof(PatchParam) + 10)
+		+ 64 * sizeof(MemParams::RhythmTemp) + 10
+		+ 21 * sizeof(MemParams::RhythmTemp) + 10
+		+ 9 * sizeof(MemParams::PatchTemp) + 10
+		+ 8 * (sizeof(TimbreParam) + 10)
+	);
+
+	if (!opened) return 0;
+
+	if (sysexBank && size) {
+		SysexBankBuilder builder(sysexBank, size);
+		builder.appendSysex(0x7F0000, NULL, 0)
+			&& builder.appendSysex(0x100000, &mt32ram.system.masterTune, sizeof(MemParams::System))
+			&& builder.appendTimbreMemorySysexes(mt32ram.timbres)
+			&& builder.appendPatchMemorySysexes(mt32ram.patches)
+			&& builder.appendRhythmSetupSysexes(mt32ram.rhythmTemp)
+			&& builder.appendSysex(0x030000, &mt32ram.patchTemp->patch.timbreGroup, sizeof mt32ram.patchTemp)
+			&& builder.appendTimbreTempSysexes(mt32ram.timbreTemp);
+	}
+	return maxBankSize;
+}
+
+Bit32u Synth::applySysexBank(const Bit8u *sysexBank, Bit32u size) {
+	if (!opened) return 0;
+
+	Bit32u sysexesPlayed = 0;
+	const Bit8u *sysexBeginPtr = NULL;
+	const Bit8u *sysexBankEndPtr = sysexBank + size;
+	for (const Bit8u *p = sysexBank; p < sysexBankEndPtr; p++) {
+		if (*p == 0xF0) {
+			sysexBeginPtr = p;
+		} else if (*p == 0xF7 && sysexBeginPtr) {
+			Bit32u sysexLength = Bit32u(p - sysexBeginPtr) + 1;
+			playSysexNow(sysexBeginPtr, sysexLength);
+			sysexBeginPtr = NULL;
+			sysexesPlayed++;
+		}
+	}
+	return sysexesPlayed;
+}
+
 void Synth::readSysex(Bit8u /*device*/, const Bit8u * /*sysex*/, Bit32u /*len*/) const {
 	// NYI
 }
@@ -1548,7 +1655,7 @@ void Synth::initMemoryRegions() {
 	rhythmTempMemoryRegion = new RhythmTempMemoryRegion(reinterpret_cast<Bit8u *>(&mt32ram.rhythmTemp[0]), &controlROMData[controlROMMap->rhythmMaxTable]);
 	timbreTempMemoryRegion = new TimbreTempMemoryRegion(reinterpret_cast<Bit8u *>(&mt32ram.timbreTemp[0]), paddedTimbreMaxTable);
 	patchesMemoryRegion = new PatchesMemoryRegion(reinterpret_cast<Bit8u *>(&mt32ram.patches[0]), &controlROMData[controlROMMap->patchMaxTable]);
-	timbresMemoryRegion = new TimbresMemoryRegion(reinterpret_cast<Bit8u *>(&mt32ram.timbres[0]), paddedTimbreMaxTable);
+	timbresMemoryRegion = new TimbresMemoryRegion(reinterpret_cast<Bit8u *>(&mt32ram.timbres[/* Bank M */ 128]), paddedTimbreMaxTable);
 	systemMemoryRegion = new SystemMemoryRegion(reinterpret_cast<Bit8u *>(&mt32ram.system), &controlROMData[controlROMMap->systemMaxTable]);
 	displayMemoryRegion = new DisplayMemoryRegion();
 	resetMemoryRegion = new ResetMemoryRegion();
@@ -1699,8 +1806,6 @@ void Synth::writeMemoryRegion(const MemoryRegion *region, Bit32u addr, Bit32u le
 		break;
 	case MR_Timbres:
 		// Timbres
-		first += 128;
-		last += 128;
 		region->write(first, off, data, len);
 		for (unsigned int i = first; i <= last; i++) {
 #if MT32EMU_MONITOR_TIMBRES >= 1

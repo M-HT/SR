@@ -239,7 +239,7 @@ private:
 
 	bool initPCMList(Bit16u mapAddress, Bit16u count);
 	bool initTimbres(Bit16u mapAddress, Bit16u offset, Bit16u timbreCount, Bit16u startTimbre, bool compressed);
-	bool initCompressedTimbre(Bit16u drumNum, const Bit8u *mem, Bit32u memLen);
+	bool initCompressedTimbre(TimbresMemoryRegion &tempRegion, Bit16u absTimbreNum, const Bit8u *src, Bit32u srcLen);
 	void initReverbModels(bool mt32CompatibleMode);
 	void initSoundGroups(char newSoundGroupNames[][9]);
 
@@ -415,6 +415,18 @@ public:
 	// Sends inner body of a System Exclusive MIDI message for direct processing. The length is in bytes.
 	// See the WARNING above.
 	MT32EMU_EXPORT void writeSysex(Bit8u channel, const Bit8u *sysex, Bit32u len);
+
+	// Stores internal state of the emulated synth into the provided array. The messages within the SysEx bank are ordered so that
+	// they can be replayed back in the same sequence without data loss, provided that the given array has sufficient size.
+	// The SysEx messages written in the array can be re-played using applySysexBank() function or even sent to a real device.
+	// Returns the full length of the SysEx bank in bytes that is needed to fit all the available data.
+	// This function can be used to retrieve the required size of the SysEx bank by supplying NULL sysexBank or zero size arguments,
+	// in which case it does nothing else.
+	MT32EMU_EXPORT_V(2.8) Bit32u dumpSysexBank(Bit8u *sysexBank, Bit32u size) const;
+	// Applies the content of the given SysEx bank to the emulated synth from the provided array. All complete SysEx messages
+	// contained within the sysexBank are played in sequence, any other data is ignored.
+	// Returns the number of played SysEx messages.
+	MT32EMU_EXPORT_V(2.8) Bit32u applySysexBank(const Bit8u *sysexBank, Bit32u size);
 
 	// Allows to disable wet reverb output altogether.
 	MT32EMU_EXPORT void setReverbEnabled(bool reverbEnabled);
@@ -618,6 +630,7 @@ public:
 	MT32EMU_EXPORT_V(2.7) bool getSoundName(char *soundName, Bit8u timbreGroup, Bit8u timbreNumber) const;
 
 	// Stores internal state of emulated synth into an array provided (as it would be acquired from hardware).
+	// Note, addr parameter is expressed in the linear space and *not* the SysEx address space.
 	MT32EMU_EXPORT void readMemory(Bit32u addr, Bit32u len, Bit8u *data);
 
 	// Retrieves the current state of the emulated MT-32 display facilities.

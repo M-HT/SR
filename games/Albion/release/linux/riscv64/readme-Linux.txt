@@ -1,4 +1,4 @@
-Albion for Linux (x86)
+Albion for Linux (riscv64)
 Version 1.8.2
 
 Original Albion version 1.38 is required for playing.
@@ -8,11 +8,11 @@ Original Albion version 1.38 is required for playing.
 Libraries
 ---------
 
-The game requires following 32-bit libraries: SDL2, SDL2_mixer
-On debian based distributions these libraries are in following packages: libsdl2-2.0-0:i386 libsdl2-mixer-2.0-0:i386
+The game requires following 64-bit libraries: SDL2, SDL2_mixer
+On debian based distributions these libraries are in following packages: libsdl2-2.0-0 libsdl2-mixer-2.0-0
 
-Following optional 32-bit library is needed only to create screenshots in PNG format (selectable in configuration file): zlib
-On debian based distributions this library is in following package: zlib1g:i386
+Following optional 64-bit library is needed only to create screenshots in PNG format (selectable in configuration file): zlib
+On debian based distributions this library is in following package: zlib1g
 
 Some midi plugins may require additional libraries.
 
@@ -61,13 +61,12 @@ Music
 -----
 
 The game's MIDI music can be played using one of following libraries:
-ALSA sequencer, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
+ALSA sequencer, WildMIDI, libADLMIDI, SDL_mixer
 
 libADLMIDI is the default library, others can be selected in the configuration file.
 ALSA sequencer can use hardware or software synth (like Fluidsynth or TiMidity++).
 libADLMIDI requires no additional files for MIDI playback,
 WildMIDI requires GUS patches for MIDI playback,
-BASSMIDI requires a soundfont for MIDI playback,
 libADLMIDI uses OPL3 emulator for MIDI playback.
 Music can be played on MT-32 synth using ALSA sequencer.
 
@@ -76,10 +75,6 @@ ALSA sequencer can detect usable synth automatically or it can be selected in th
 GUS patches can be installed anywhere, but the file timidity.cfg must be
 either in the game's directory or in /etc/timidity/timidity.cfg
 EawPats is a good sounding set of patches.
-
-Soundfont (for BASSMIDI) can be either copied to the game's directory
-or it can be stored anywhere, but the soundfont location must be written
-in the configuration file.
 
 
 Enhanced 3D rendering
@@ -140,92 +135,4 @@ Changes
 -------
 
 v1.8.2 (2026-05-28)
-* use newer library versions
-* bug fixes
-
-
-v1.8.1 (2024-12-18)
-* add option to play music on MT-32 synth
-* bug fixes
-
-
-v1.8.0 (2024-09-26)
-* add option to use higher quality audio resampling
-* remove option to interpolate audio when resampling
-* add support for higher sampling rates
-* add support for using gamepad or joystick as mouse/keyboard
-* use latest versions of libADLMIDI, WildMIDI libraries
-* change setting volume in libADLMIDI
-* modify ALSA midi plugin to try all ports with the same client number when looking for midi port based on client name
-* minor bug fixes
-
-
-v1.7.4 (2023-11-18)
-* fix aspect ratio in fullscreen
-* fix bug in original code
-* minor bug fixes
-
-
-v1.7.3 (2023-03-26)
-* optimize HQX and xBRZ scalers for more speed
-* use more threads for advanced scaling (HQX and xBRZ)
-* use latest versions of libADLMIDI, WildMIDI, BASSMIDI libraries
-* add support for using Nuked OPL3 emulator in libADLMIDI
-* fix moving mouse cursor outside the game area in fullscreen
-* minor bug fixes
-
-
-v1.7.2 (2022-01-30)
-* ignore repeated keys when using SDL2
-* fix Shift+Key ascii codes
-* add support for inputing characters using Alt codes
-* screen redraw 60 times per second
-* minor bug fixes
-
-
-v1.7.1 (2021-01-23)
-* add options to switch WSAD and arrow keys
-* fix audio when using SDL2
-* fix rendering when using SDL2
-
-
-v1.7.0 (2021-01-13)
-* add advanced scaling options - nearest neighbour, scaler plugins: hqx, xbrz
-* integrate video playing (intro and credits) into main executable
-* change how fullscreen works
-* add several options for making screenshots
-* fix bug in the original code
-* minor bug fixes
-
-
-v1.6.1 (2018-01-01)
-* add new MIDI plugin: adlmidi - it plays MIDI music using OPL3 emulator
-  and also plays background sound/music effects
-* fix for filesystems with 64-bit inodes
-* modify ALSA midi plugin to select volume by changing volume of all channels instead of changing note velocity
-
-
-v1.6.0 (2016-10-11)
-* rework keyboard input for ASCII characters
-* add keyboard input for language specific characters
-  (works with English, French, German and Czech versions of Albion)
-* MIDI playback using ALSA sequencer
-  (ALSA sequencer can use hardware or software synth - like Fluidsynth or TiMidity++)
-* add option to select the shape of SDL mouse cursor in window mode
-  (normal cursor, minimal cursor or no cursor)
-* minor bug fixes
-
-
-v1.5.5 (2015-08-26)
-* limit the maximum number of sold items to 99
-* fix bug in the original code
-
-
-v1.5.4 (2015-08-15)
-* fix bug in the original code
-* fix F11 and F12 keys
-* add configuration option to select screenshot format
-
-
-v1.5.1 (2015-01-03)
-first Linux (x86) version
+* first Linux (riscv64) version

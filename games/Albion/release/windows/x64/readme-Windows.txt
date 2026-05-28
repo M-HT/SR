@@ -1,21 +1,9 @@
-Albion for Linux (x64)
+Albion for Windows (x64)
 Version 1.8.2
 
 Original Albion version 1.38 is required for playing.
 (English version preferred, but other languages should also work)
 (version from GOG.com can be used for playing)
-
-Libraries
----------
-
-The game requires following 64-bit libraries: SDL2, SDL2_mixer
-On debian based distributions these libraries are in following packages: libsdl2-2.0-0 libsdl2-mixer-2.0-0
-
-Following optional 64-bit library is needed only to create screenshots in PNG format (selectable in configuration file): zlib
-On debian based distributions this library is in following package: zlib1g
-
-Some midi plugins may require additional libraries.
-
 
 Installation
 ------------
@@ -27,54 +15,52 @@ Simple instructions:
 2) copy the ALBION subdirectory from CD onto harddisk (into the Albion directory tree)
 3) in file SETUP.INI change the path (SOURCE_PATH) from CD to the copied directory on disk (using relative path)
 4) copy the files from this archive into the game's directory
-5) run the game using Albion.sh
+5) run the game using Albion.cmd or SR-Main.exe
 
 Example (Detailed instructions):
 1) install Albion on your PC
-    - create directory ~/Games
+    - create directory C:\Games
     - if you have original DOS version then install Albion using DOSBox
-      - in dosbox: mount ~/Games as C:, mount cdrom as D:
+      - in dosbox: mount C:\Games as C:, mount cdrom as D:
       - in dosbox: install Albion into C:\ALBION
-    - if you have version from GOG.com then extract Albion from GOG.com windows installer
-      - extract Albion using innoextract (tested with version 1.4) into ~/Games/ALBION
-      - move everything from ~/Games/ALBION/app into ~/Games/ALBION
+    - if you have version from GOG.com then install Albion using GOG.com windows installer
+      - install Albion into C:\Games\ALBION
 
 2) copy the ALBION subdirectory from CD onto harddisk (into the Albion directory tree)
-    - create directory ~/Games/ALBION/ALBIONCD (that's C:\ALBION\ALBIONCD in dosbox)
+    - create directory C:\Games\ALBION\ALBIONCD (that's C:\ALBION\ALBIONCD in dosbox)
       (directory name must be DOS name - uppercase, at most 8 characters, no spaces, ...)
     - if you have version from GOG.com then the file game.gog is the image of the CD in BIN format
-      - you can mount it using gCDEmu for example
-    - copy the content of directory cdrom:/ALBION into ~/Games/ALBION/ALBIONCD
+      - you can mount it using SlySoft Virtual CloneDrive for example
+    - copy the content of directory cdrom:\ALBION into C:\Games\ALBION\ALBIONCD
 
 3) in file SETUP.INI change the path (SOURCE_PATH) from CD to the copied directory on disk (using relative path)
-    - in file ~/Games/ALBION/SETUP.INI find line which begins with SOURCE_PATH=
+    - in file C:\Games\ALBION\SETUP.INI find line which begins with SOURCE_PATH=
     - replace it with line SOURCE_PATH=ALBIONCD\
 
 4) copy the files from this archive into the game's directory
-    - copy the content of this archive into ~/Games/ALBION
+    - copy the content of this archive into C:\Games\ALBION
 
-5) run the game using Albion.sh
-    - run Albion.sh in the game's directory: ~/Games/ALBION/Albion.sh
+5) run the game using Albion.cmd or SR-Main.exe
+    - run Albion.cmd or SR-Main.exe in the game's directory: C:\Games\ALBION\Albion.cmd
 
 
 Music
 -----
 
 The game's MIDI music can be played using one of following libraries:
-ALSA sequencer, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
+NativeWindows, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
 
 libADLMIDI is the default library, others can be selected in the configuration file.
-ALSA sequencer can use hardware or software synth (like Fluidsynth or TiMidity++).
-libADLMIDI requires no additional files for MIDI playback,
+libADLMIDI and NativeWindows don't require additional files for MIDI playback,
 WildMIDI requires GUS patches for MIDI playback,
 BASSMIDI requires a soundfont for MIDI playback,
 libADLMIDI uses OPL3 emulator for MIDI playback.
-Music can be played on MT-32 synth using ALSA sequencer.
+Music can be played on MT-32 synth using NativeWindows.
 
-ALSA sequencer can detect usable synth automatically or it can be selected in the configuration file.
+NativeWindows can use the default synth or it can be selected in the configuration file.
 
 GUS patches can be installed anywhere, but the file timidity.cfg must be
-either in the game's directory or in /etc/timidity/timidity.cfg
+either in the game's directory or in C:\TIMIDITY\timidity.cfg
 EawPats is a good sounding set of patches.
 
 Soundfont (for BASSMIDI) can be either copied to the game's directory
@@ -93,16 +79,13 @@ There are some minor issues:
  - when toggling scaling or enhanced 3D rendering and the game is in 3D mode
    and a message, dialog or popup menu is displayed, the 3D part may not be displayed correctly
    (until the message, dialog or popup menu is closed)
-Enhanced 3D rendering can be turned off in the configuration file (or using the configurator).
+Enhanced 3D rendering can be turned off in the configuration file.
 
 
 Configuration
 -------------
 
 Configuration is stored in the file Albion.cfg.
-
-Configuration can be changed either by editing the configuration file directly,
-or by configuration editor (Albion-setup.sh).
 
 
 Controls
@@ -140,31 +123,4 @@ Changes
 -------
 
 v1.8.2 (2026-05-28)
-* use newer library versions
-* bug fixes
-
-
-v1.8.1 (2024-12-18)
-* add option to play music on MT-32 synth
-* bug fixes
-
-
-v1.8.0 (2024-09-26)
-* add option to use higher quality audio resampling
-* remove option to interpolate audio when resampling
-* add support for higher sampling rates
-* add support for using gamepad or joystick as mouse/keyboard
-* use latest versions of libADLMIDI, WildMIDI libraries
-* change setting volume in libADLMIDI
-* modify ALSA midi plugin to try all ports with the same client number when looking for midi port based on client name
-* minor bug fixes
-
-
-v1.7.4 (2023-11-18)
-* fix aspect ratio in fullscreen
-* fix bug in original code
-* minor bug fixes
-
-
-v1.7.3a (2023-05-21)
-* first Linux (x64) version
+first Windows (x64) version

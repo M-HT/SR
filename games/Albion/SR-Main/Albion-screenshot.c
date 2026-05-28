@@ -967,7 +967,11 @@ void CCALL Game_save_screenshot(const char *filename)
         if (zlib_state < 0) return;
         else if (zlib_state == 0)
         {
+#if defined(__APPLE__)
+            static const char *zlib_libraries[2] = {"libz.1.dylib", "./libz.dylib"};
+#else
             static const char *zlib_libraries[2] = {"libz.so.1", "./libz.so"};
+#endif
             int zindex;
 
             for (zindex = 0; zindex < 2; zindex++)

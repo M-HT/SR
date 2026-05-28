@@ -1,5 +1,5 @@
 Albion for Linux (armv7-gnueabihf)
-Version 1.8.1
+Version 1.8.2
 
 Original Albion version 1.38 is required for playing.
 (English version preferred, but other languages should also work)
@@ -8,10 +8,7 @@ Original Albion version 1.38 is required for playing.
 Libraries
 ---------
 
-The game (SDL1 version) requires following 32-bit libraries: SDL, SDL_mixer, OpenGL
-On debian based distributions these libraries are in following packages: libsdl1.2debian libsdl-mixer1.2 libgl1
-
-The game (SDL2 version) requires following 32-bit libraries: SDL2, SDL2_mixer
+The game requires following 32-bit libraries: SDL2, SDL2_mixer
 On debian based distributions these libraries are in following packages: libsdl2-2.0-0 libsdl2-mixer-2.0-0
 
 Following optional 32-bit library is needed only to create screenshots in PNG format (selectable in configuration file): zlib
@@ -26,7 +23,7 @@ Installation
 Put files from this archive into the installed game's directory.
 
 Simple instructions:
-1) install Albion on your PC
+1) install Albion on your PC (or copy installed game from another computer)
 2) copy the ALBION subdirectory from CD onto harddisk (into the Albion directory tree)
 3) in file SETUP.INI change the path (SOURCE_PATH) from CD to the copied directory on disk (using relative path)
 4) copy the files from this archive into the game's directory
@@ -69,7 +66,7 @@ ALSA sequencer, WildMIDI, BASSMIDI, libADLMIDI, SDL_mixer
 libADLMIDI is the default library, others can be selected in the configuration file.
 ALSA sequencer can use hardware or software synth (like Fluidsynth or TiMidity++).
 libADLMIDI requires no additional files for MIDI playback,
-WildMIDI and SDL_mixer require GUS patches for MIDI playback,
+WildMIDI requires GUS patches for MIDI playback,
 BASSMIDI requires a soundfont for MIDI playback,
 libADLMIDI uses OPL3 emulator for MIDI playback.
 Music can be played on MT-32 synth using ALSA sequencer.
@@ -143,6 +140,11 @@ HQX scaler uses neon instructions.
 
 Changes
 -------
+
+v1.8.2 (2026-05-28)
+* use newer library versions
+* bug fixes
+
 
 v1.8.1 (2024-12-18)
 * add option to play music on MT-32 synth

@@ -59,19 +59,19 @@ static char *trim_string(char *buf)
     return buf;
 }
 
-void ReadConfiguration(void)
+void ReadConfiguration(int argc, char *argv[])
 {
     FILE *f;
     char buf[8192];
-    char *str, *param;
+    char *str, *param, *config_file;
     int items, num_int;
 
-    Game_Installation = 0;
+    Game_Installation = 1;
 
     Intro_Play = 1;
 
     Display_Mode = 0;
-    Display_VSync = 0;
+    Display_VSync = 1;
     Display_Width = 0;
     Display_Height = 0;
     Display_Resizable = 0;
@@ -105,13 +105,37 @@ void ReadConfiguration(void)
 
     CPU_SleepMode = 0;
 
-#ifdef _WIN32
-    f = fopen(CONFIG_FILE, "rt");
-#else
-    if (!CLIB_FindFile(CONFIG_FILE, buf)) return;
+    config_file = NULL;
+    if (argc > 1)
+    {
+        for (argc--, argv++; argc != 0; argc--, argv++)
+        {
+            if (strncmp(*argv, "--config-file", 13) == 0)
+            {
+                param = *argv + 14; // skip space or equals
+                param = trim_string(param);
+                if (*param != 0)
+                {
+                    config_file = param;
+                }
+            }
+        }
+    }
 
-    f = fopen(buf, "rt");
+    if (config_file != NULL)
+    {
+        f = fopen(config_file, "rt");
+    }
+    else
+    {
+#ifdef _WIN32
+        f = fopen(CONFIG_FILE, "rt");
+#else
+        if (!CLIB_FindFile(CONFIG_FILE, buf)) return;
+
+        f = fopen(buf, "rt");
 #endif
+    }
     if (f == NULL) return;
 
 

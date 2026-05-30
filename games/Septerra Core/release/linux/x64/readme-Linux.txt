@@ -1,5 +1,5 @@
 Septerra Core for Linux (x64)
-Version 1.04.0.12
+Version 1.04.0.13
 
 Original Septerra Core version 1.04 is required for playing.
 (version from GOG.com can be used for playing)
@@ -7,6 +7,7 @@ Original Septerra Core version 1.04 is required for playing.
 Installation
 ------------
 
+Install game (or copy installed game from another computer).
 Put files from this archive into the installed game's directory.
 Run Septerra.sh in the installed game's directory.
 
@@ -35,8 +36,8 @@ Back / 4th joystick button: tab key
 Misc
 ----
 
-The game requires following 64-bit libraries: SDL2, mpg123
-On debian based distributions these libraries are in following packages: libsdl2-2.0-0 libmpg123-0
+The game requires following 64-bit libraries: SDL2, mpg123, zlib
+On debian based distributions these libraries are in following packages: libsdl2-2.0-0 libmpg123-0, zlib1g
 
 The game uses following libraries for playing video:
 quicktime2 (http://libquicktime.sourceforge.net/)
@@ -49,6 +50,10 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 
 Changes
 -------
+
+v1.04.0.13 (2026-05-30)
+* use newer library versions
+* bug fixes
 
 v1.04.0.12 (2024-09-24)
 * fix problem with higher mouse polling rates

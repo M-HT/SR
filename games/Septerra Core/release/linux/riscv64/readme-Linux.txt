@@ -1,4 +1,4 @@
-Septerra Core for Linux (arm-aarch64)
+Septerra Core for Linux (riscv64)
 Version 1.04.0.13
 
 Original Septerra Core version 1.04 is required for playing.
@@ -51,25 +51,4 @@ Changes
 -------
 
 v1.04.0.13 (2026-05-30)
-* use newer library versions
-* bug fixes
-
-v1.04.0.12 (2024-09-24)
-* fix problem with higher mouse polling rates
-* add option to use higher quality audio resampling
-* add option to select audio sampling rate
-* optimize audio conversion and mixing
-* add support for higher sampling rates
-* add support for using gamepad or joystick as mouse/keyboard
-* minor bug fixes
-
-v1.04.0.11 (2023-11-14)
-* use bundled quicktime2 and ffmpeg libraries instead of system libraries
-* optimize floating point instructions
-* minor bug fixes
-
-v1.04.0.10 (2023-05-23)
-* fix repositioning mouse cursor
-
-v1.04.0.9 (2023-05-19)
-first Linux (arm-aarch64) version
+first Linux (riscv64) version

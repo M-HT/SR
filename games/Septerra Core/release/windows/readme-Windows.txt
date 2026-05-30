@@ -1,5 +1,5 @@
 Septerra Core for Windows (x86)
-Version 1.04.0.12
+Version 1.04.0.13
 
 Original Septerra Core version 1.04 is required for playing.
 (version from GOG.com can be used for playing)
@@ -7,7 +7,7 @@ Original Septerra Core version 1.04 is required for playing.
 Installation
 ------------
 
-Install game.
+Install game (or copy installed game from another computer).
 Put files from this archive into the installed game's directory.
 Run SR-Septerra.exe in the installed game's directory.
 
@@ -42,7 +42,8 @@ mpg123 (https://www.mpg123.de/)
 quicktime2 (http://libquicktime.sourceforge.net/)
 dlfcn-win32 (https://github.com/dlfcn-win32/dlfcn-win32)
 ffmpeg (https://www.ffmpeg.org/)
-intl from gettext (https://www.gnu.org/software/gettext/)
+win-iconv (https://github.com/win-iconv/win-iconv)
+zlib (https://zlib.net/)
 
 The game optionally uses SpeexDSP library for audio resampling (https://github.com/xiph/speexdsp).
 
@@ -51,6 +52,10 @@ Source code is available on GitHub: https://github.com/M-HT/SR
 
 Changes
 -------
+
+v1.04.0.13 (2026-05-30)
+* use newer library versions
+* bug fixes
 
 v1.04.0.12 (2024-09-24)
 * fix problem with higher mouse polling rates

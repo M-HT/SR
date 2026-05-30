@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
     init_libquicktime();
 #endif
 
-    ReadConfiguration();
+    ReadConfiguration(argc, argv);
 
 #ifdef _WIN32
     init_sleepmode();

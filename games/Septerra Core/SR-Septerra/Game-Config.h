@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2024 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -70,7 +70,7 @@ GAME_CONFIG_STORAGE int Keys_SwitchArrowKeys;   /* switch arrow keys for WSAD ke
 
 GAME_CONFIG_STORAGE int CPU_SleepMode;          /* cpu sleep mode - 0 = standard; 1 = reduced; 2 = no sleep */
 
-void ReadConfiguration(void);
+void ReadConfiguration(int argc, char *argv[]);
 
 #endif
 

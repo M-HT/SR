@@ -74,11 +74,9 @@ static void Blit_Paletted(uint32_t *dst, const uint8_t *src, uint32_t count, con
 
 static int SceneVisible(int scene_type)
 {
-    uint16_t screen_type = Game_ScreenType();
+    uint16_t screen_type = Game_RootScreenType();
 
-    return (screen_type == (uint16_t) scene_type) ||
-           (screen_type == GAME_SCREEN_NO_SCREEN) ||
-           (screen_type == GAME_SCREEN_DIALOGUE);
+    return (screen_type == scene_type) || (screen_type == GAME_SCREEN_DIALOGUE);
 }
 
 static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, uint32_t *dst2, int *dst2_used)

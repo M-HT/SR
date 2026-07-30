@@ -43,6 +43,11 @@ typedef struct PACKED {
 extern Game_Module loc_179164[8]; // stack of screen modules
 extern uint16_t loc_13EEEE; // stack top
 
+uint16_t Game_ScreenType(void)
+{
+    return loc_179164[loc_13EEEE].Screen_type;
+}
+
 uint16_t Game_RootScreenType(void)
 {
     for (int i = (int) loc_13EEEE; i >= 0; i--)

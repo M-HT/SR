@@ -24,6 +24,7 @@
 
 #include "../Game_defs.h"
 #include "../Game_vars.h"
+#include "../Albion-engine.h"
 #include "palette32bgra.h"
 #include "overlay.h"
 #include <memory.h>
@@ -43,6 +44,43 @@ static void Set_Palette_Value2(uint32_t index, uint32_t r, uint32_t g, uint32_t 
     Game_PaletteAlpha[index].s.a = 255;
 }
 
+static void Blit_Paletted(uint32_t *dst, const uint8_t *src, uint32_t count, const pixel_format_disp *palette)
+{
+    while (count >= 8)
+    {
+        dst[0] = palette[src[0]].pix;
+        dst[1] = palette[src[1]].pix;
+        dst[2] = palette[src[2]].pix;
+        dst[3] = palette[src[3]].pix;
+        dst[4] = palette[src[4]].pix;
+        dst[5] = palette[src[5]].pix;
+        dst[6] = palette[src[6]].pix;
+        dst[7] = palette[src[7]].pix;
+
+        src += 8;
+        dst += 8;
+        count -= 8;
+    }
+
+    while (count != 0)
+    {
+        dst[0] = palette[src[0]].pix;
+
+        src++;
+        dst++;
+        count--;
+    }
+}
+
+static int SceneVisible(int scene_type)
+{
+    uint16_t screen_type = Game_ScreenType();
+
+    return (screen_type == (uint16_t) scene_type) ||
+           (screen_type == GAME_SCREEN_NO_SCREEN) ||
+           (screen_type == GAME_SCREEN_DIALOGUE);
+}
+
 static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, uint32_t *dst2, int *dst2_used)
 {
     int counter, DrawOverlay;
@@ -50,6 +88,9 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
 
     OverlayInfo = Game_OverlayDisplay;
     DrawOverlay = Get_DrawOverlay(src, &OverlayInfo);
+
+    if (!SceneVisible(GAME_SCREEN_MAP_3D)) DrawOverlay = 0;
+
     *dst2_used = DrawOverlay;
 
     if (DrawOverlay)
@@ -61,20 +102,10 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
         // display part above the viewport
         if (OverlayInfo.ViewportY != 0)
         {
-            for (counter = 360 * OverlayInfo.ViewportY; counter != 0; counter -= 8)
-            {
-                dst1[0] = Game_PaletteAlpha[src[0]].pix;
-                dst1[1] = Game_PaletteAlpha[src[1]].pix;
-                dst1[2] = Game_PaletteAlpha[src[2]].pix;
-                dst1[3] = Game_PaletteAlpha[src[3]].pix;
-                dst1[4] = Game_PaletteAlpha[src[4]].pix;
-                dst1[5] = Game_PaletteAlpha[src[5]].pix;
-                dst1[6] = Game_PaletteAlpha[src[6]].pix;
-                dst1[7] = Game_PaletteAlpha[src[7]].pix;
-
-                src += 8;
-                dst1 += 8;
-            }
+            counter = 360 * OverlayInfo.ViewportY;
+            Blit_Paletted(dst1, src, (uint32_t) counter, Game_PaletteAlpha);
+            src += counter;
+            dst1 += counter;
 
             for (counter = Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * OverlayInfo.ViewportY; counter != 0; counter -= 8)
             {
@@ -100,31 +131,9 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
         {
             for (y = OverlayInfo.ViewportHeight; y != 0; y--)
             {
-                for (x = OverlayInfo.ViewportX; x >= 8; x -= 8)
-                {
-                    dst1[0] = Game_PaletteAlpha[src[0]].pix;
-                    dst1[1] = Game_PaletteAlpha[src[1]].pix;
-                    dst1[2] = Game_PaletteAlpha[src[2]].pix;
-                    dst1[3] = Game_PaletteAlpha[src[3]].pix;
-                    dst1[4] = Game_PaletteAlpha[src[4]].pix;
-                    dst1[5] = Game_PaletteAlpha[src[5]].pix;
-                    dst1[6] = Game_PaletteAlpha[src[6]].pix;
-                    dst1[7] = Game_PaletteAlpha[src[7]].pix;
-
-                    src += 8;
-                    dst1 += 8;
-                }
-
-                for (; x != 0; x--)
-                {
-                    dst1[0] = Game_PaletteAlpha[src[0]].pix;
-
-                    src++;
-                    dst1++;
-                }
-
-                src += (360 - OverlayInfo.ViewportX);
-                dst1 += (360 - OverlayInfo.ViewportX);
+                Blit_Paletted(dst1, src, OverlayInfo.ViewportX, Game_PaletteAlpha);
+                src += 360;
+                dst1 += 360;
             }
 
             for (y = Scaler_ScaleFactor * OverlayInfo.ViewportHeight; y != 0; y--)
@@ -164,31 +173,9 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
 
             for (y = OverlayInfo.ViewportHeight; y != 0; y--)
             {
-                for (x = ViewportX2; x >= 8; x -= 8)
-                {
-                    dst1[0] = Game_PaletteAlpha[src[0]].pix;
-                    dst1[1] = Game_PaletteAlpha[src[1]].pix;
-                    dst1[2] = Game_PaletteAlpha[src[2]].pix;
-                    dst1[3] = Game_PaletteAlpha[src[3]].pix;
-                    dst1[4] = Game_PaletteAlpha[src[4]].pix;
-                    dst1[5] = Game_PaletteAlpha[src[5]].pix;
-                    dst1[6] = Game_PaletteAlpha[src[6]].pix;
-                    dst1[7] = Game_PaletteAlpha[src[7]].pix;
-
-                    src += 8;
-                    dst1 += 8;
-                }
-
-                for (; x != 0; x--)
-                {
-                    dst1[0] = Game_PaletteAlpha[src[0]].pix;
-
-                    src++;
-                    dst1++;
-                }
-
-                src += (360 - ViewportX2);
-                dst1 += (360 - ViewportX2);
+                Blit_Paletted(dst1, src, (uint32_t) ViewportX2, Game_PaletteAlpha);
+                src += 360;
+                dst1 += 360;
             }
 
             for (y = Scaler_ScaleFactor * OverlayInfo.ViewportHeight; y != 0; y--)
@@ -223,20 +210,10 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
         dst1 = zaldst1 + (360 * OverlayInfo.ViewportHeight);
         dst2 = zaldst2 + Scaler_ScaleFactor * Scaler_ScaleFactor * (360 * OverlayInfo.ViewportHeight);
 
-        for (counter = 360 * (240 - (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight)); counter != 0; counter -= 8)
-        {
-            dst1[0] = Game_PaletteAlpha[src[0]].pix;
-            dst1[1] = Game_PaletteAlpha[src[1]].pix;
-            dst1[2] = Game_PaletteAlpha[src[2]].pix;
-            dst1[3] = Game_PaletteAlpha[src[3]].pix;
-            dst1[4] = Game_PaletteAlpha[src[4]].pix;
-            dst1[5] = Game_PaletteAlpha[src[5]].pix;
-            dst1[6] = Game_PaletteAlpha[src[6]].pix;
-            dst1[7] = Game_PaletteAlpha[src[7]].pix;
-
-            src += 8;
-            dst1 += 8;
-        }
+        counter = 360 * (240 - (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight));
+        Blit_Paletted(dst1, src, (uint32_t) counter, Game_PaletteAlpha);
+        src += counter;
+        dst1 += counter;
 
         for (counter = Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * (240 - (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight)); counter != 0; counter -= 8)
         {
@@ -389,20 +366,7 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
     }
     else
     {
-        for (counter = 360*240; counter != 0; counter -= 8)
-        {
-            dst1[0] = Game_Palette[src[0]].pix;
-            dst1[1] = Game_Palette[src[1]].pix;
-            dst1[2] = Game_Palette[src[2]].pix;
-            dst1[3] = Game_Palette[src[3]].pix;
-            dst1[4] = Game_Palette[src[4]].pix;
-            dst1[5] = Game_Palette[src[5]].pix;
-            dst1[6] = Game_Palette[src[6]].pix;
-            dst1[7] = Game_Palette[src[7]].pix;
-
-            src += 8;
-            dst1 += 8;
-        }
+        Blit_Paletted(dst1, src, 360 * 240, Game_Palette);
     }
 }
 
@@ -415,6 +379,8 @@ static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
 
     OverlayInfo = Game_OverlayDisplay;
     DrawOverlay = Get_DrawOverlay(src, &OverlayInfo);
+
+    if (!SceneVisible(GAME_SCREEN_MAP_3D)) DrawOverlay = 0;
 
     if (DrawOverlay)
     {

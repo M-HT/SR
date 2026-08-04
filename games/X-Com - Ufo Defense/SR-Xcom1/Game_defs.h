@@ -226,21 +226,9 @@ typedef union _Game_DPMIREGS_ {
 #pragma pack()
 
 
-#pragma pack(4)
-
-typedef union _Game_register_ {
-    uint32_t e;
-    struct {
-        uint16_t x, x2;
-    } w;
-    struct {
-        uint8_t l, h, l2, h2;
-    } b;
-    PTR32(void) p;
-} Game_register;
-
-
 typedef void (*Game_Flip_Procedure)(void *src, void *dst);
+
+#pragma pack(4)
 
 typedef union _pixel_format_orig_ {
     struct {

@@ -31,6 +31,19 @@
 extern "C" {
 #endif
 
+#pragma pack(4)
+
+typedef union _Game_register_ {
+    uint32_t e;
+    struct {
+        uint16_t x, x2;
+    } w;
+    struct {
+        uint8_t l, h, l2, h2;
+    } b;
+    PTR32(void) p;
+} Game_register;
+
 typedef struct {
     Game_register _edi;
     Game_register _esi;
@@ -43,6 +56,8 @@ typedef struct {
     Game_register _eflags;
     const Game_register _eip;
 } _cpu_regs;
+
+#pragma pack()
 
 extern void CCALL X86_InterruptProcedure(
     const uint8_t IntNum,

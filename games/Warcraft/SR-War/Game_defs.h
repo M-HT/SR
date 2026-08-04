@@ -126,17 +126,6 @@
 
 #pragma pack(4)
 
-typedef union _Game_register_ {
-    uint32_t e;
-    struct {
-        uint16_t x, x2;
-    } w;
-    struct {
-        uint8_t l, h, l2, h2;
-    } b;
-    PTR32(void) p;
-} Game_register;
-
 typedef struct _Game_SREGS_ {
   uint16_t es;
   uint16_t cs;

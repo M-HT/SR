@@ -39,7 +39,7 @@ extern uint32_t CCALL X86_InPortProcedure(
 extern void CCALL X86_OutPortProcedure(
     const uint16_t PortNum,
     const uint32_t PortSize,
-    const Game_register _eax
+    const uint32_t _eax
 );
 
 #ifdef __cplusplus

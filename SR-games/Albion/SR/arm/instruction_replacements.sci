@@ -86,7 +86,7 @@ loc_BF442,3,@cmp eax, 1024|cmp eax, #1024|@jb loc_BF481|blo loc_BF481|@test byte
 
 loc_BF3C7,3,@cmp eax, 1024|cmp eax, #1024|@jb loc_BF411|blo loc_BF411|@test byte [eax], 60h|ldrb tmp1, [eax]| andS tmp1, tmp1, #0x60 @ fix reading from NULL pointer ('test byte [eax], 60h' must set flags for 'jz')
 
-loc_4D505,4,@or eax, eax|@je loc_4D509|@mov [eax+0x28], dx|cmp eax, #0|strneh edx, [eax, #40] @ fix reading from NULL pointer
+loc_4D505,4,@or eax, eax|@je loc_4D509|@mov [eax+0x28], dx|cmp eax, #0|strneh edx, [eax, #40] @ fix writing to NULL pointer
 
 loc_3664B,3,@or edx, edx|cmp edx, #0|@je loc_3664E|@mov al, [edx+0x1]|ldrneb eax, [edx, #1]|@loc_3664E: @ fix reading from NULL pointer
 

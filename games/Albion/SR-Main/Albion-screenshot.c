@@ -204,15 +204,16 @@ static uint8_t *fill_png_pixel_data_advanced(uint32_t *src, int remaining, uint8
     return curptr;
 }
 
-static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverlay, int remaining, uint8_t *curptr)
+static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverlay, int remaining, uint8_t *curptr, uint8_t *lines)
 {
     int x, y, ret, overlay_y;
-    int counter, counter2;
+    int counter, counter2, diff;
     uint8_t value;
     uint16_t *dst16;
     uint8_t *dst8, *src2, *orig;
     z_stream strm;
     uint8_t *pixel_data;
+    uint8_t *line0, *line1, *line2, *linetemp;
 
     switch (image_mode)
     {
@@ -536,10 +537,19 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
         }
 
 
+        // the viewport
         orig = Game_OverlayDraw.ScreenViewpartOriginal + 360 * Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportX;
         src2 = Game_OverlayDraw.ScreenViewpartOverlay + Game_OverlayDraw.ViewportY*2 * 720 + Game_OverlayDraw.ViewportX*2;
 
-        // the viewport
+        line0 = lines + 2;
+        line1 = line0 + 364;
+        line2 = line1 + 364;
+        line0[-1] = line0[Game_OverlayDraw.ViewportWidth] = 0;
+        line1[-1] = line1[Game_OverlayDraw.ViewportWidth] = 0;
+        line2[-1] = line2[Game_OverlayDraw.ViewportWidth] = 0;
+        for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line0[x] = 0;
+        for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line1[x] = src[x + Game_OverlayDraw.ViewportX] - orig[x];
+
         for (y = Game_OverlayDraw.ViewportHeight; y != 0; y--)
         {
             dst8 = &(pixel_data[4]);
@@ -553,28 +563,53 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
             }
 
             // the viewport
-            for (x = Game_OverlayDraw.ViewportWidth; x != 0; x--)
+            if (y != 1)
             {
-                if (*src == *orig)
+                for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line2[x] = src[x + 360] - orig[x + 360];
+            }
+            else
+            {
+                for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line2[x] = 0;
+            }
+
+            for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++)
+            {
+                if (line1[x] == 0)
                 {
-                    dst8[0] = src2[0];
-                    dst8[1] = src2[1];
-                    dst8[724] = src2[720];
-                    dst8[724 + 1] = src2[721];
+                    diff = 0;
+                    if (line1[x - 1]) diff++;
+                    if (line1[x + 1]) diff++;
+                    if (line0[x]) diff++;
+                    if (line2[x]) diff++;
                 }
                 else
                 {
-                    dst8[0] = dst8[1] = dst8[724] = dst8[724 + 1] = *src;
+                    diff = 2;
                 }
 
-                dst8 += 2;
-                src++;
-                orig++;
-                src2 += 2;
+                diff--;
+                if (diff <= 0)
+                {
+                    dst8[2 * x] = src2[2 * x];
+                    dst8[2 * x + 1] = src2[2 * x + 1];
+                    dst8[2 * x + 724] = src2[2 * x + 720];
+                    dst8[2 * x + 724 + 1] = src2[2 * x + 721];
+                }
+                else
+                {
+                    dst8[2 * x] = dst8[2 * x + 1] = dst8[2 * x + 724] = dst8[2 * x + 724 + 1] = src[x];
+                }
             }
 
-            orig += 360 - Game_OverlayDraw.ViewportWidth;
-            src2 += 720 + (720 - 2*Game_OverlayDraw.ViewportWidth);
+            dst8 += 2 * Game_OverlayDraw.ViewportWidth;
+            src += Game_OverlayDraw.ViewportWidth;
+            orig += 360;
+            src2 += 2 * 720;
+
+            linetemp = line0;
+            line0 = line1;
+            line1 = line2;
+            line2 = linetemp;
 
             // part right of the viewport
             for (x = 360 - (Game_OverlayDraw.ViewportX + Game_OverlayDraw.ViewportWidth); x != 0; x--)
@@ -749,10 +784,19 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
         }
 
 
+        // the viewport
         orig = Game_OverlayDraw.ScreenViewpartOriginal + 360 * Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportX;
         src2 = Game_OverlayDraw.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * Game_OverlayDraw.ViewportY + Scaler_ScaleFactor * Game_OverlayDraw.ViewportX;
 
-        // the viewport
+        line0 = lines + 2;
+        line1 = line0 + 364;
+        line2 = line1 + 364;
+        line0[-1] = line0[Game_OverlayDraw.ViewportWidth] = 0;
+        line1[-1] = line1[Game_OverlayDraw.ViewportWidth] = 0;
+        line2[-1] = line2[Game_OverlayDraw.ViewportWidth] = 0;
+        for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line0[x] = 0;
+        for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line1[x] = src[x + Game_OverlayDraw.ViewportX] - orig[x];
+
         for (y = Game_OverlayDraw.ViewportHeight; y != 0; y--)
         {
             dst8 = &(pixel_data[4]);
@@ -775,13 +819,32 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
             }
 
             // the viewport
-            for (x = Game_OverlayDraw.ViewportWidth; x != 0; x--)
+            if (y != 1)
             {
-                value = *src;
-                src++;
-                orig++;
+                for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line2[x] = src[x + 360] - orig[x + 360];
+            }
+            else
+            {
+                for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line2[x] = 0;
+            }
 
-                if (value == orig[-1])
+            for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++)
+            {
+                if (line1[x] == 0)
+                {
+                    diff = 0;
+                    if (line1[x - 1]) diff++;
+                    if (line1[x + 1]) diff++;
+                    if (line0[x]) diff++;
+                    if (line2[x]) diff++;
+                }
+                else
+                {
+                    diff = 2;
+                }
+
+                diff--;
+                if (diff <= 0)
                 {
                     for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
                     {
@@ -793,6 +856,7 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
                 }
                 else
                 {
+                    value = src[x];
                     for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
                     {
                         for (counter = 0; counter < Scaler_ScaleFactor; counter++)
@@ -806,8 +870,14 @@ static uint8_t *fill_png_pixel_data(uint8_t *src, int image_mode, int DrawOverla
                 src2 += Scaler_ScaleFactor;
             }
 
-            orig += 360 - Game_OverlayDraw.ViewportWidth;
+            src += Game_OverlayDraw.ViewportWidth;
+            orig += 360;
             src2 += (Scaler_ScaleFactor - 1) * Scaler_ScaleFactor * 360 + Scaler_ScaleFactor * (360 - Game_OverlayDraw.ViewportWidth);
+
+            linetemp = line0;
+            line0 = line1;
+            line1 = line2;
+            line2 = linetemp;
 
             // part right of the viewport
             for (x = 360 - (Game_OverlayDraw.ViewportX + Game_OverlayDraw.ViewportWidth); x != 0; x--)
@@ -957,9 +1027,11 @@ void CCALL Game_save_screenshot(const char *filename)
     char *filename2;
 
     int x, y;
-    int counter, counter2;
+    int counter, counter2, diff;
     uint8_t value;
     uint8_t *src, *orig, *src2, *dst;
+
+    uint8_t *line0, *line1, *line2, lines[364*3], *linetemp;
 
 #ifdef ZLIB_DYNAMIC
     if (Game_ScreenshotFormat == 5)
@@ -1634,9 +1706,18 @@ void CCALL Game_save_screenshot(const char *filename)
                 dst32++;
             }
 
+            // the viewport
             orig = Game_OverlayDraw.ScreenViewpartOriginal + 360 * Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportX;
 
-            // the viewport
+            line0 = lines + 2;
+            line1 = line0 + 364;
+            line2 = line1 + 364;
+            line0[-1] = line0[Game_OverlayDraw.ViewportWidth] = 0;
+            line1[-1] = line1[Game_OverlayDraw.ViewportWidth] = 0;
+            line2[-1] = line2[Game_OverlayDraw.ViewportWidth] = 0;
+            for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line0[x] = 0;
+            for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line1[x] = src[x + Game_OverlayDraw.ViewportX] - orig[x];
+
             for (y = Game_OverlayDraw.ViewportHeight; y != 0; y--)
             {
                 // part left of the viewport
@@ -1648,16 +1729,42 @@ void CCALL Game_save_screenshot(const char *filename)
                 }
 
                 // the viewport
-                for (x = Game_OverlayDraw.ViewportWidth; x != 0; x--)
+                if (y != 1)
                 {
-                    value = *src;
-                    src++;
-                    orig++;
-                    dst32[0] = (value == orig[-1])?0:palette[value];
-                    dst32++;
+                    for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line2[x] = src[x + 360] - orig[x + 360];
+                }
+                else
+                {
+                    for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line2[x] = 0;
                 }
 
-                orig += 360 - Game_OverlayDraw.ViewportWidth;
+                for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++)
+                {
+                    if (line1[x] == 0)
+                    {
+                        diff = 0;
+                        if (line1[x - 1]) diff++;
+                        if (line1[x + 1]) diff++;
+                        if (line0[x]) diff++;
+                        if (line2[x]) diff++;
+                    }
+                    else
+                    {
+                        diff = 2;
+                    }
+
+                    diff--;
+                    dst32[x] = (diff <= 0)?0:palette[src[x]];
+                }
+
+                src += Game_OverlayDraw.ViewportWidth;
+                dst32 += Game_OverlayDraw.ViewportWidth;
+                orig += 360;
+
+                linetemp = line0;
+                line0 = line1;
+                line1 = line2;
+                line2 = linetemp;
 
                 // part right of the viewport
                 for (x = 360 - (Game_OverlayDraw.ViewportX + Game_OverlayDraw.ViewportWidth); x != 0; x--)
@@ -1778,7 +1885,7 @@ void CCALL Game_save_screenshot(const char *filename)
     else
     if (Game_ScreenshotFormat == 5)
     {
-        curptr = fill_png_pixel_data(screenshot_src, image_mode, DrawOverlay, width_in_file * height + (2000 - 16) - (int)(curptr - buffer), curptr);
+        curptr = fill_png_pixel_data(screenshot_src, image_mode, DrawOverlay, width_in_file * height + (2000 - 16) - (int)(curptr - buffer), curptr, lines);
         if (curptr == NULL)
         {
             if (filename2 != NULL) free(filename2);
@@ -1928,10 +2035,19 @@ void CCALL Game_save_screenshot(const char *filename)
                 curptr += width_in_file;
             }
 
+            // the viewport
             orig = Game_OverlayDraw.ScreenViewpartOriginal + 360 * Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportX;
             src2 = Game_OverlayDraw.ScreenViewpartOverlay + Game_OverlayDraw.ViewportY*2 * 720 + Game_OverlayDraw.ViewportX*2;
 
-            // the viewport
+            line0 = lines + 2;
+            line1 = line0 + 364;
+            line2 = line1 + 364;
+            line0[-1] = line0[Game_OverlayDraw.ViewportWidth] = 0;
+            line1[-1] = line1[Game_OverlayDraw.ViewportWidth] = 0;
+            line2[-1] = line2[Game_OverlayDraw.ViewportWidth] = 0;
+            for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line0[x] = 0;
+            for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line1[x] = src[x + Game_OverlayDraw.ViewportX] - orig[x];
+
             for (y = Game_OverlayDraw.ViewportHeight; y != 0; y--)
             {
                 // part left of the viewport
@@ -1943,28 +2059,53 @@ void CCALL Game_save_screenshot(const char *filename)
                 }
 
                 // the viewport
-                for (x = Game_OverlayDraw.ViewportWidth; x != 0; x--)
+                if (y != 1)
                 {
-                    if (*src == *orig)
+                    for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line2[x] = src[x + 360] - orig[x + 360];
+                }
+                else
+                {
+                    for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line2[x] = 0;
+                }
+
+                for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++)
+                {
+                    if (line1[x] == 0)
                     {
-                        curptr[0] = src2[0];
-                        curptr[1] = src2[1];
-                        curptr[width_in_file] = src2[720];
-                        curptr[width_in_file + 1] = src2[721];
+                        diff = 0;
+                        if (line1[x - 1]) diff++;
+                        if (line1[x + 1]) diff++;
+                        if (line0[x]) diff++;
+                        if (line2[x]) diff++;
                     }
                     else
                     {
-                        curptr[0] = curptr[1] = curptr[width_in_file] = curptr[width_in_file + 1] = *src;
+                        diff = 2;
                     }
 
-                    curptr += 2;
-                    src++;
-                    orig++;
-                    src2 += 2;
+                    diff--;
+                    if (diff <= 0)
+                    {
+                        curptr[2 * x] = src2[2 * x];
+                        curptr[2 * x + 1] = src2[2 * x + 1];
+                        curptr[2 * x + width_in_file] = src2[2 * x + 720];
+                        curptr[2 * x + width_in_file + 1] = src2[2 * x + 721];
+                    }
+                    else
+                    {
+                        curptr[2 * x] = curptr[2 * x + 1] = curptr[2 * x + width_in_file] = curptr[2 * x + width_in_file + 1] = src[x];
+                    }
                 }
 
-                orig += 360 - Game_OverlayDraw.ViewportWidth;
-                src2 += 720 + (720 - 2*Game_OverlayDraw.ViewportWidth);
+                curptr += 2 * Game_OverlayDraw.ViewportWidth;
+                src += Game_OverlayDraw.ViewportWidth;
+                orig += 360;
+                src2 += 2 * 720;
+
+                linetemp = line0;
+                line0 = line1;
+                line1 = line2;
+                line2 = linetemp;
 
                 // part right of the viewport
                 for (x = 360 - (Game_OverlayDraw.ViewportX + Game_OverlayDraw.ViewportWidth); x != 0; x--)
@@ -2070,10 +2211,19 @@ void CCALL Game_save_screenshot(const char *filename)
                 curptr += (Scaler_ScaleFactor - 1) * width_in_file;
             }
 
+            // the viewport
             orig = Game_OverlayDraw.ScreenViewpartOriginal + 360 * Game_OverlayDraw.ViewportY + Game_OverlayDraw.ViewportX;
             src2 = Game_OverlayDraw.ScreenViewpartOverlay + Scaler_ScaleFactor * 360 * Scaler_ScaleFactor * Game_OverlayDraw.ViewportY + Scaler_ScaleFactor * Game_OverlayDraw.ViewportX;
 
-            // the viewport
+            line0 = lines + 2;
+            line1 = line0 + 364;
+            line2 = line1 + 364;
+            line0[-1] = line0[Game_OverlayDraw.ViewportWidth] = 0;
+            line1[-1] = line1[Game_OverlayDraw.ViewportWidth] = 0;
+            line2[-1] = line2[Game_OverlayDraw.ViewportWidth] = 0;
+            for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line0[x] = 0;
+            for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line1[x] = src[x + Game_OverlayDraw.ViewportX] - orig[x];
+
             for (y = Game_OverlayDraw.ViewportHeight; y != 0; y--)
             {
                 // part left of the viewport
@@ -2094,13 +2244,32 @@ void CCALL Game_save_screenshot(const char *filename)
                 }
 
                 // the viewport
-                for (x = Game_OverlayDraw.ViewportWidth; x != 0; x--)
+                if (y != 1)
                 {
-                    value = *src;
-                    src++;
-                    orig++;
+                    for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line2[x] = src[x + 360] - orig[x + 360];
+                }
+                else
+                {
+                    for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++) line2[x] = 0;
+                }
 
-                    if (value == orig[-1])
+                for (x = 0; (unsigned int)x < Game_OverlayDraw.ViewportWidth; x++)
+                {
+                    if (line1[x] == 0)
+                    {
+                        diff = 0;
+                        if (line1[x - 1]) diff++;
+                        if (line1[x + 1]) diff++;
+                        if (line0[x]) diff++;
+                        if (line2[x]) diff++;
+                    }
+                    else
+                    {
+                        diff = 2;
+                    }
+
+                    diff--;
+                    if (diff <= 0)
                     {
                         for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
                         {
@@ -2112,6 +2281,7 @@ void CCALL Game_save_screenshot(const char *filename)
                     }
                     else
                     {
+                        value = src[x];
                         for (counter2 = 0; counter2 < Scaler_ScaleFactor; counter2++)
                         {
                             for (counter = 0; counter < Scaler_ScaleFactor; counter++)
@@ -2125,8 +2295,14 @@ void CCALL Game_save_screenshot(const char *filename)
                     src2 += Scaler_ScaleFactor;
                 }
 
-                orig += 360 - Game_OverlayDraw.ViewportWidth;
+                src += Game_OverlayDraw.ViewportWidth;
+                orig += 360;
                 src2 += (Scaler_ScaleFactor - 1 ) * Scaler_ScaleFactor * 360 + Scaler_ScaleFactor * (360 - Game_OverlayDraw.ViewportWidth);
+
+                linetemp = line0;
+                line0 = line1;
+                line1 = line2;
+                line2 = linetemp;
 
                 // part right of the viewport
                 for (x = 360 - (Game_OverlayDraw.ViewportX + Game_OverlayDraw.ViewportWidth); x != 0; x--)

@@ -57,6 +57,7 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
         uint8_t *zalsrc, *src2, *orig;
         uint32_t *zaldst1, *zaldst2;
         int x, y, ViewportX2;
+        uint8_t *line0, *line1, *line2, lines[364*3], *linetemp;
 
         // display part above the viewport
         if (OverlayInfo.ViewportY != 0)
@@ -257,36 +258,55 @@ static void Flip_360x240x8_to_360x240x32_advanced(uint8_t *src, uint32_t *dst1, 
         dst1 = zaldst1 + OverlayInfo.ViewportX;
         orig = OverlayInfo.ScreenViewpartOriginal + 360 * OverlayInfo.ViewportY + OverlayInfo.ViewportX;
 
+        line0 = lines + 2;
+        line1 = line0 + 364;
+        line2 = line1 + 364;
+        line0[-1] = line0[OverlayInfo.ViewportWidth] = 0;
+        line1[-1] = line1[OverlayInfo.ViewportWidth] = 0;
+        line2[-1] = line2[OverlayInfo.ViewportWidth] = 0;
+        for (x = 0; (unsigned int)x < OverlayInfo.ViewportWidth; x++) line0[x] = 0;
+        for (x = 0; (unsigned int)x < OverlayInfo.ViewportWidth; x++) line1[x] = src[x] - orig[x];
+
         for (y = OverlayInfo.ViewportHeight; y != 0; y--)
         {
-            for (x = OverlayInfo.ViewportWidth; x >= 8; x -= 8)
+            if (y != 1)
             {
-                dst1[0] = (src[0] == orig[0])?0:Game_PaletteAlpha[src[0]].pix;
-                dst1[1] = (src[1] == orig[1])?0:Game_PaletteAlpha[src[1]].pix;
-                dst1[2] = (src[2] == orig[2])?0:Game_PaletteAlpha[src[2]].pix;
-                dst1[3] = (src[3] == orig[3])?0:Game_PaletteAlpha[src[3]].pix;
-                dst1[4] = (src[4] == orig[4])?0:Game_PaletteAlpha[src[4]].pix;
-                dst1[5] = (src[5] == orig[5])?0:Game_PaletteAlpha[src[5]].pix;
-                dst1[6] = (src[6] == orig[6])?0:Game_PaletteAlpha[src[6]].pix;
-                dst1[7] = (src[7] == orig[7])?0:Game_PaletteAlpha[src[7]].pix;
-
-                src += 8;
-                orig += 8;
-                dst1 += 8;
+                for (x = 0; (unsigned int)x < OverlayInfo.ViewportWidth; x++) line2[x] = src[x + 360] - orig[x + 360];
+            }
+            else
+            {
+                for (x = 0; (unsigned int)x < OverlayInfo.ViewportWidth; x++) line2[x] = 0;
             }
 
-            for (; x != 0; x--)
+            for (x = 0; (unsigned int)x < OverlayInfo.ViewportWidth; x++)
             {
-                dst1[0] = (src[0] == orig[0])?0:Game_PaletteAlpha[src[0]].pix;
+                int diff;
 
-                src++;
-                orig++;
-                dst1++;
+                if (line1[x] == 0)
+                {
+                    diff = 0;
+                    if (line1[x - 1]) diff++;
+                    if (line1[x + 1]) diff++;
+                    if (line0[x]) diff++;
+                    if (line2[x]) diff++;
+                }
+                else
+                {
+                    diff = 2;
+                }
+
+                diff--;
+                dst1[x] = (diff <= 0)?0:Game_PaletteAlpha[src[x]].pix;
             }
 
-            src += (360 - OverlayInfo.ViewportWidth);
-            orig += (360 - OverlayInfo.ViewportWidth);
-            dst1 += (360 - OverlayInfo.ViewportWidth);
+            src += 360;
+            orig += 360;
+            dst1 += 360;
+
+            linetemp = line0;
+            line0 = line1;
+            line1 = line2;
+            line2 = linetemp;
         }
 
         dst1 = zaldst1 + OverlayInfo.ViewportX;
@@ -420,6 +440,7 @@ static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
     {
         uint8_t *zalsrc, *src2, *orig;
         uint32_t *zaldst;
+        uint8_t *line0, *line1, *line2, lines[364*3], *linetemp;
 
         // display part above the viewport
         for (y = OverlayInfo.ViewportY; y != 0; y--)
@@ -510,31 +531,67 @@ static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
         orig = OverlayInfo.ScreenViewpartOriginal + 360 * OverlayInfo.ViewportY + OverlayInfo.ViewportX;
         dst = zaldst + 2 * OverlayInfo.ViewportX;
         src2 = OverlayInfo.ScreenViewpartOverlay + OverlayInfo.ViewportY*2 * 720 + OverlayInfo.ViewportX*2;
+
+        line0 = lines + 2;
+        line1 = line0 + 364;
+        line2 = line1 + 364;
+        line0[-1] = line0[OverlayInfo.ViewportWidth] = 0;
+        line1[-1] = line1[OverlayInfo.ViewportWidth] = 0;
+        line2[-1] = line2[OverlayInfo.ViewportWidth] = 0;
+        for (x = 0; (unsigned int)x < OverlayInfo.ViewportWidth; x++) line0[x] = 0;
+        for (x = 0; (unsigned int)x < OverlayInfo.ViewportWidth; x++) line1[x] = src[x] - orig[x];
+
         for (y = OverlayInfo.ViewportHeight; y != 0; y--)
         {
-            for (x = OverlayInfo.ViewportWidth; x != 0; x--)
+            if (y != 1)
             {
-                if (*src == *orig)
+                for (x = 0; (unsigned int)x < OverlayInfo.ViewportWidth; x++) line2[x] = src[x + 360] - orig[x + 360];
+            }
+            else
+            {
+                for (x = 0; (unsigned int)x < OverlayInfo.ViewportWidth; x++) line2[x] = 0;
+            }
+
+            for (x = 0; (unsigned int)x < OverlayInfo.ViewportWidth; x++)
+            {
+                int diff;
+
+                if (line1[x] == 0)
                 {
-                    dst[0] = Game_Palette[src2[0]].pix;
-                    dst[1] = Game_Palette[src2[1]].pix;
-                    dst[720] = Game_Palette[src2[720]].pix;
-                    dst[721] = Game_Palette[src2[721]].pix;
+                    diff = 0;
+                    if (line1[x - 1]) diff++;
+                    if (line1[x + 1]) diff++;
+                    if (line0[x]) diff++;
+                    if (line2[x]) diff++;
                 }
                 else
                 {
-                    WRITE_PIXEL2(0)
+                    diff = 2;
                 }
 
-                src++;
-                orig++;
-                src2+=2;
-                dst+=2;
+                diff--;
+                if (diff <= 0)
+                {
+                    dst[2 * x] = Game_Palette[src2[2 * x]].pix;
+                    dst[2 * x + 1] = Game_Palette[src2[2 * x + 1]].pix;
+                    dst[2 * x + 720] = Game_Palette[src2[2 * x + 720]].pix;
+                    dst[2 * x + 721] = Game_Palette[src2[2 * x + 721]].pix;
+                }
+                else
+                {
+                    WRITE_PIXEL2(x)
+                }
             }
-            src+=(360 - OverlayInfo.ViewportWidth);
-            orig+=(360 - OverlayInfo.ViewportWidth);
-            src2+=720 + (720 - 2 * OverlayInfo.ViewportWidth);
-            dst+=720 + (720 - 2 * OverlayInfo.ViewportWidth);
+
+            src += 360;
+            orig += 360;
+            src2 += 2*720;
+            dst += 2*720;
+
+            linetemp = line0;
+            line0 = line1;
+            line1 = line2;
+            line2 = linetemp;
         }
 
         if (DrawOverlay & 1)
@@ -658,7 +715,7 @@ int Config_Display(char *str, char *param)
     {
         str += 8;
 
-        if ( strcasecmp(str, "ScaledWidth") == 0)	// str equals "ScaledWidth"
+        if ( strcasecmp(str, "ScaledWidth") == 0)    // str equals "ScaledWidth"
         {
             num_int = 0;
             if (sscanf(param, "%i", &num_int) > 0)
@@ -669,7 +726,7 @@ int Config_Display(char *str, char *param)
 
             return 1;
         }
-        else if ( strcasecmp(str, "ScaledHeight") == 0)	// str equals "ScaledHeight"
+        else if ( strcasecmp(str, "ScaledHeight") == 0)    // str equals "ScaledHeight"
         {
             num_int = 0;
             if (sscanf(param, "%i", &num_int) > 0)
@@ -680,7 +737,7 @@ int Config_Display(char *str, char *param)
 
             return 1;
         }
-        else if ( strcasecmp(str, "Fullscreen") == 0)	// str equals "Fullscreen"
+        else if ( strcasecmp(str, "Fullscreen") == 0)    // str equals "Fullscreen"
         {
             if ( strcasecmp(param, "yes") == 0 ) // param equals "yes"
             {

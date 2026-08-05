@@ -1072,14 +1072,14 @@ static int Game_Initialize(void)
 
     if (Game_UseEnhanced3DEngineNewValue)
     {
-        Game_ScreenViewpartOverlay[0] = (uint8_t *) x86_malloc(800*384*2);
+        Game_ScreenViewpartOverlay[0] = (uint8_t *) x86_malloc(720*384*2);
         if (Game_ScreenViewpartOverlay[0] == NULL)
         {
             fprintf(stderr, "Error: Not enough memory\n");
             Game_Cleanup();
             return -4;
         }
-        Game_ScreenViewpartOverlay[1] = Game_ScreenViewpartOverlay[0] + 800 * 384;
+        Game_ScreenViewpartOverlay[1] = Game_ScreenViewpartOverlay[0] + 720 * 384;
 
         Game_ScreenViewpartOriginal[0] = (uint8_t *) malloc(360*192*2);
         if (Game_ScreenViewpartOriginal[0] == NULL)

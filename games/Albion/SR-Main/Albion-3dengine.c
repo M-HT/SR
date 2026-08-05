@@ -42,7 +42,7 @@ typedef int bool;
 #define D3_MAXIMUM_NUMBER_OF_MAPGRID_POINTS 2400
 
 // original value = 640
-#define D3_MAXIMUM_VIEWPORT_WIDTH 800
+#define D3_MAXIMUM_VIEWPORT_WIDTH 720
 // original value = 400
 #define D3_MAXIMUM_VIEWPORT_HEIGHT 400
 
@@ -4624,7 +4624,7 @@ void CCALL draw_3dscene(void)
         Engine_RenderHeight = Render_Height;
         Engine_MaximumViewportWidth = D3_MAXIMUM_VIEWPORT_WIDTH;
         Engine_MaximumViewportHeight = D3_MAXIMUM_VIEWPORT_HEIGHT;
-        Game_ScreenWidth = 800;
+        Game_ScreenWidth = 720;
     }
 
     if (Game_stru_1414AC == NULL)

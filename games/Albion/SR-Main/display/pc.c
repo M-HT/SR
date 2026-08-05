@@ -509,7 +509,7 @@ static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
         src = zalsrc + OverlayInfo.ViewportX;
         orig = OverlayInfo.ScreenViewpartOriginal + 360 * OverlayInfo.ViewportY + OverlayInfo.ViewportX;
         dst = zaldst + 2 * OverlayInfo.ViewportX;
-        src2 = OverlayInfo.ScreenViewpartOverlay + OverlayInfo.ViewportY*2 * 800 + OverlayInfo.ViewportX*2;
+        src2 = OverlayInfo.ScreenViewpartOverlay + OverlayInfo.ViewportY*2 * 720 + OverlayInfo.ViewportX*2;
         for (y = OverlayInfo.ViewportHeight; y != 0; y--)
         {
             for (x = OverlayInfo.ViewportWidth; x != 0; x--)
@@ -518,8 +518,8 @@ static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
                 {
                     dst[0] = Game_Palette[src2[0]].pix;
                     dst[1] = Game_Palette[src2[1]].pix;
-                    dst[720] = Game_Palette[src2[800]].pix;
-                    dst[721] = Game_Palette[src2[801]].pix;
+                    dst[720] = Game_Palette[src2[720]].pix;
+                    dst[721] = Game_Palette[src2[721]].pix;
                 }
                 else
                 {
@@ -533,20 +533,20 @@ static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
             }
             src+=(360 - OverlayInfo.ViewportWidth);
             orig+=(360 - OverlayInfo.ViewportWidth);
-            src2+=800 + (800 - 2*OverlayInfo.ViewportWidth);
+            src2+=720 + (720 - 2 * OverlayInfo.ViewportWidth);
             dst+=720 + (720 - 2 * OverlayInfo.ViewportWidth);
         }
 
         if (DrawOverlay & 1)
         {
             dst = zaldst + 720 * 2 * (OverlayInfo.ViewportHeight - 2) + 2 * (OverlayInfo.ViewportX + 1);
-            src2 = OverlayInfo.ScreenViewpartOverlay + (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight - 2)*2 * 800 + (OverlayInfo.ViewportX + 1)*2;
+            src2 = OverlayInfo.ScreenViewpartOverlay + (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight - 2)*2 * 720 + (OverlayInfo.ViewportX + 1)*2;
             for (x = 8; x != 0; x--)
             {
                 dst[0] = Game_Palette[src2[0]].pix;
                 dst[1] = Game_Palette[src2[1]].pix;
-                dst[720] = Game_Palette[src2[800]].pix;
-                dst[721] = Game_Palette[src2[801]].pix;
+                dst[720] = Game_Palette[src2[720]].pix;
+                dst[721] = Game_Palette[src2[721]].pix;
 
                 src2+=2;
                 dst+=2;
@@ -556,13 +556,13 @@ static void Flip_360x240x8_to_720x480x32(uint8_t *src, uint32_t *dst)
         if (DrawOverlay & 2)
         {
             dst = zaldst + 720 * 2 * (OverlayInfo.ViewportHeight - 2) + 2 * OverlayInfo.ViewportX + 2 * (OverlayInfo.ViewportWidth - 10);
-            src2 = OverlayInfo.ScreenViewpartOverlay + (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight - 2)*2 * 800 + OverlayInfo.ViewportX*2 + 2*(OverlayInfo.ViewportWidth - 10);
+            src2 = OverlayInfo.ScreenViewpartOverlay + (OverlayInfo.ViewportY + OverlayInfo.ViewportHeight - 2)*2 * 720 + OverlayInfo.ViewportX*2 + 2*(OverlayInfo.ViewportWidth - 10);
             for (x = 8; x != 0; x--)
             {
                 dst[0] = Game_Palette[src2[0]].pix;
                 dst[1] = Game_Palette[src2[1]].pix;
-                dst[720] = Game_Palette[src2[800]].pix;
-                dst[721] = Game_Palette[src2[801]].pix;
+                dst[720] = Game_Palette[src2[720]].pix;
+                dst[721] = Game_Palette[src2[721]].pix;
 
                 src2+=2;
                 dst+=2;

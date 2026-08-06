@@ -27,9 +27,16 @@
 #include <string.h>
 #include "Game_defs.h"
 #include "Game_vars.h"
+#include "Albion-engine.h"
 #include "Albion-proc-events.h"
 #include "input.h"
 
+int Game_MovementEnabled(void)
+{
+    uint16_t screen_type = Game_RootScreenType();
+    // 2D or 3D
+    return (screen_type == GAME_SCREEN_MAP_2D) || (screen_type == GAME_SCREEN_MAP_3D);
+}
 
 void Game_ProcessKEvents(void)
 {
@@ -121,7 +128,7 @@ void Game_ProcessKEvents(void)
                         ascii_code = 0;
                     }
 
-                    if (Game_SwitchWSAD)
+                    if (Game_SwitchWSAD && Game_MovementEnabled())
                     {
                         switch(ascii_code)
                         {
@@ -243,7 +250,7 @@ void Game_ProcessKEvents(void)
 
                             break;
                         case SDLK_UP:
-                            if (Game_SwitchArrowKeys)
+                            if (Game_SwitchArrowKeys && Game_MovementEnabled())
                             {
                                 ascii_code = 'w';
                                 scancode = scancode_table[ascii_code];
@@ -259,7 +266,7 @@ void Game_ProcessKEvents(void)
 
                             break;
                         case SDLK_DOWN:
-                            if (Game_SwitchArrowKeys)
+                            if (Game_SwitchArrowKeys && Game_MovementEnabled())
                             {
                                 ascii_code = 's';
                                 scancode = scancode_table[ascii_code];
@@ -275,7 +282,7 @@ void Game_ProcessKEvents(void)
 
                             break;
                         case SDLK_RIGHT:
-                            if (Game_SwitchArrowKeys)
+                            if (Game_SwitchArrowKeys && Game_MovementEnabled())
                             {
                                 ascii_code = 'd';
                                 scancode = scancode_table[ascii_code];
@@ -291,7 +298,7 @@ void Game_ProcessKEvents(void)
 
                             break;
                         case SDLK_LEFT:
-                            if (Game_SwitchArrowKeys)
+                            if (Game_SwitchArrowKeys && Game_MovementEnabled())
                             {
                                 ascii_code = 'a';
                                 scancode = scancode_table[ascii_code];

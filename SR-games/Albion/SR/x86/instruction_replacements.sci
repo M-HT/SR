@@ -132,6 +132,12 @@ loc_33A02,6,call SR_SMK_ShowMenu ; play intro video on start in game
 loc_33EB5,18,call SR_SMK_PlayIntro ; play intro video in game
 loc_33F10,18,call SR_SMK_PlayCredits ; play credits video in game
 
+loc_7BDBB,2,mov ebp, esp|mov dword [Game_InEnteringText], 1 ; entering text window - begin
+loc_7C0BE,2,mov dword [Game_InEnteringText], 0|mov esp, ebp ; entering text window - end
+
+loc_33DE8,2,mov ebp, esp|mov dword [Game_InMenuOptions], 1 ; menu options window - begin
+loc_33E6C,2,mov dword [Game_InMenuOptions], 0|mov esp, ebp ; menu options window - end
+
 loc_8151C,2454, ; AIL code 1
 loc_81EB2,183, ; CLIB code 1
 

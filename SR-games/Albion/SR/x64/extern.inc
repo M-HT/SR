@@ -21,6 +21,8 @@
 ;;
 
 extern Game_ScreenWindow
+extern Game_InEnteringText
+extern Game_InMenuOptions
 extern Game_Sound
 extern Game_Music
 extern Game_VSyncTick

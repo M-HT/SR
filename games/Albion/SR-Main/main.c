@@ -947,6 +947,9 @@ static int Game_Initialize(void)
     Game_MouseCursor = 0;
     Game_PlayIntro = 1;
 
+    Game_InEnteringText = 0;
+    Game_InMenuOptions = 0;
+
     Game_FopenList = NULL;
 
     Game_Sound = 0; // sound and music must be disabled here, but must be set to the default value at the end of the function

@@ -22,6 +22,8 @@
 
 %ifidn __OUTPUT_FORMAT__, win32
     %define Game_ScreenWindow _Game_ScreenWindow
+    %define Game_InEnteringText _Game_InEnteringText
+    %define Game_InMenuOptions _Game_InMenuOptions
     %define Game_Sound _Game_Sound
     %define Game_Music _Game_Music
     %define Game_VSyncTick _Game_VSyncTick
@@ -53,6 +55,8 @@
 %endif
 
 extern Game_ScreenWindow
+extern Game_InEnteringText
+extern Game_InMenuOptions
 extern Game_Sound
 extern Game_Music
 extern Game_VSyncTick

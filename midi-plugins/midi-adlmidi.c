@@ -54,29 +54,11 @@ static int16_t resample_samples[2*1024];
 
 
 
-static void send_master_volume_sysex(void)
-{
-    ADL_UInt8 sysex[8];
-
-    sysex[0] = 0xf0;
-    sysex[1] = 0x7f;
-    sysex[2] = 0x7f;
-    sysex[3] = 0x04;
-    sysex[4] = 0x01;
-    sysex[5] = 0x00;
-    sysex[6] = adl_volume;
-    sysex[7] = 0xf7;
-
-    adl_rt_systemExclusive(adl_handle, sysex, 8);
-}
-
 static int MIDI_PLUGIN_API set_master_volume(unsigned char master_volume) // master_volume = 0 - 127
 {
     if (master_volume > 127) master_volume = 127;
 
     adl_volume = master_volume;
-
-    send_master_volume_sysex();
 
     return 0;
 }
@@ -87,8 +69,6 @@ static void * MIDI_PLUGIN_API open_file(char const *midifile)
     if (adl_handle == NULL) return NULL;
 
     if (adl_openFile(adl_handle, midifile)) return NULL;
-
-    send_master_volume_sysex();
 
 #ifdef USE_SPEEXDSP_RESAMPLER
     resample_num_samples = 0;
@@ -105,13 +85,21 @@ static void * MIDI_PLUGIN_API open_buffer(void const *midibuffer, long int size)
 
     if (adl_openData(adl_handle, midibuffer, size)) return NULL;
 
-    send_master_volume_sysex();
-
 #ifdef USE_SPEEXDSP_RESAMPLER
     resample_num_samples = 0;
 #endif
 
     return (void *) 1;
+}
+
+static void apply_volume(short *samples, long int num_samples)
+{
+    if (adl_volume == 127) return;
+
+    for (long int i = 0; i < num_samples; i++)
+    {
+        samples[i] = (short) ((((int) samples[i]) * (int) adl_volume) / 127);
+    }
 }
 
 static long int MIDI_PLUGIN_API get_data(void *handle, void *buffer, long int size)
@@ -121,6 +109,9 @@ static long int MIDI_PLUGIN_API get_data(void *handle, void *buffer, long int si
     if (size < 0) return -4;
     if (size < 4) return 0;
     if (adl_handle == NULL) return -5;
+
+    short * const out_buffer = (short *) buffer;
+    long int result;
 
 #ifdef USE_SPEEXDSP_RESAMPLER
     if (resampler != NULL)
@@ -161,11 +152,17 @@ static long int MIDI_PLUGIN_API get_data(void *handle, void *buffer, long int si
             resample_num_samples -= in_len;
         }
 
-        return ((size >> 2) - num_to_write) << 2;
+        result = ((size >> 2) - num_to_write) << 2;
     }
+    else
 #endif
+    {
+        result = adl_play(adl_handle, size >> 1, (short *) buffer) << 1;
+    }
 
-    return adl_play(adl_handle, size >> 1, (short *) buffer) << 1;
+    apply_volume(out_buffer, result >> 1);
+
+    return result;
 }
 
 static int MIDI_PLUGIN_API rewind_midi(void *handle)

@@ -43,8 +43,21 @@
 #define ADLMIDI_VERSION_ATLEAST(major,minor,patchlevel) defined(ADLMIDI_VERSION_MAJOR) && (ADLMIDI_VERSION_MAJOR > (major) || (ADLMIDI_VERSION_MAJOR == (major) && (ADLMIDI_VERSION_MINOR > (minor) || (ADLMIDI_VERSION_MINOR == (minor) && ADLMIDI_VERSION_PATCHLEVEL >= (patchlevel)))))
 
 
+enum Types
+{
+    T_SPECIAL = 0xFF
+};
+
+enum SubTypes
+{
+    ST_TEXT = 0x01,
+    ST_SONG_BEGIN_HOOK = 0x101
+};
+
+
 static struct ADL_MIDIPlayer *adl_handle = NULL;
 static unsigned char adl_volume = 127;
+static int restore_master_volume = 0;
 #ifdef USE_SPEEXDSP_RESAMPLER
 static SpeexResamplerState *resampler = NULL;
 static uint64_t resample_step;
@@ -70,6 +83,25 @@ static void send_master_volume_sysex(void)
     adl_rt_systemExclusive(adl_handle, sysex, 8);
 }
 
+static void raw_event_hook(void *userdata, ADL_UInt8 type, ADL_UInt8 subtype, ADL_UInt8 channel, const ADL_UInt8 *data, size_t len)
+{
+    // when opening a midi file, libADLMIDI inserts an event at the beginning which resets the midi device, which includes master volume
+    // this hook watches for this event (ST_SONG_BEGIN_HOOK) and restores the master volume with following caveats:
+    //  - this hook executes before the reset so it has to restore the master volume at the next event
+    //  - the subtype value of the event is higher than ADL_UInt8 allows,
+    //    so only the lower byte is checked which has the same value is text metadata event (ST_TEXT)
+    //    that's why data and len parameters are also checked which are usually (always?) non-zero in text metadata event
+    if (type == T_SPECIAL && (subtype == ST_SONG_BEGIN_HOOK || subtype == ST_TEXT) && data == NULL && len == 0)
+    {
+        restore_master_volume = 1;
+    }
+    else if (restore_master_volume)
+    {
+        restore_master_volume = 0;
+        send_master_volume_sysex();
+    }
+}
+
 static int MIDI_PLUGIN_API set_master_volume(unsigned char master_volume) // master_volume = 0 - 127
 {
     if (master_volume > 127) master_volume = 127;
@@ -88,7 +120,7 @@ static void * MIDI_PLUGIN_API open_file(char const *midifile)
 
     if (adl_openFile(adl_handle, midifile)) return NULL;
 
-    send_master_volume_sysex();
+    restore_master_volume = 1;
 
 #ifdef USE_SPEEXDSP_RESAMPLER
     resample_num_samples = 0;
@@ -105,7 +137,7 @@ static void * MIDI_PLUGIN_API open_buffer(void const *midibuffer, long int size)
 
     if (adl_openData(adl_handle, midibuffer, size)) return NULL;
 
-    send_master_volume_sysex();
+    restore_master_volume = 1;
 
 #ifdef USE_SPEEXDSP_RESAMPLER
     resample_num_samples = 0;
@@ -174,6 +206,8 @@ static int MIDI_PLUGIN_API rewind_midi(void *handle)
     if (adl_handle == NULL) return -3;
 
     adl_positionRewind(adl_handle);
+
+    restore_master_volume = 1;
 
 #ifdef USE_SPEEXDSP_RESAMPLER
     resample_num_samples = 0;
@@ -309,6 +343,9 @@ int MIDI_PLUGIN_API initialize_midi_plugin(unsigned short int rate, midi_plugin_
 
     // disable looping
     adl_setLoopEnabled(adl_handle, 0);
+
+    // set hook for raw events
+    adl_setRawEventHook(adl_handle, raw_event_hook, NULL);
 
     return 0;
 }

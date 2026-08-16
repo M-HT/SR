@@ -135,6 +135,9 @@ loc_33F10,18,;call SR_SMK_PlayCredits|CALL SR_SMK_PlayCredits ; play credits vid
 loc_7BDBB,2,;mov ebp, esp|mov ebp, r11d|mov dword [Game_InEnteringText], 1 ; entering text window - begin
 loc_7C0BE,2,mov dword [Game_InEnteringText], 0|;mov esp, ebp|mov r11d, ebp ; entering text window - end
 
+loc_4461C,2,;mov ebp, esp|mov ebp, r11d|mov dword [Game_InKeywords], 1 ; keywords window - begin
+loc_4468A,2,mov dword [Game_InKeywords], 0|;mov esp, ebp|mov r11d, ebp ; keywords window - end
+
 loc_33DE8,2,;mov ebp, esp|mov ebp, r11d|mov dword [Game_InMenuOptions], 1 ; menu options window - begin
 loc_33E6C,2,mov dword [Game_InMenuOptions], 0|;mov esp, ebp|mov r11d, ebp ; menu options window - end
 

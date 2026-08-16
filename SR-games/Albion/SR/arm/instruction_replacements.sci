@@ -137,6 +137,9 @@ loc_33F10,18,@call SR_SMK_PlayCredits|ADR tmp1, loc_33F10_after_call|stmfd esp!,
 loc_7BDBB,2,@mov ebp, esp|mov ebp, esp|@mov dword [Game_InEnteringText], 1|LDR tmpadr, =Game_InEnteringText|mov tmp1, #1|str tmp1, [tmpadr] @ entering text window - begin
 loc_7C0BE,2,@mov dword [Game_InEnteringText], 0|LDR tmpadr, =Game_InEnteringText|mov tmp1, #0|str tmp1, [tmpadr]|@mov esp, ebp|mov esp, ebp @ entering text window - end
 
+loc_4461C,2,@mov ebp, esp|mov ebp, esp|@mov dword [Game_InKeywords], 1|LDR tmpadr, =Game_InKeywords|mov tmp1, #1|str tmp1, [tmpadr] @ keywords window - begin
+loc_4468A,2,@mov dword [Game_InKeywords], 0|LDR tmpadr, =Game_InKeywords|mov tmp1, #0|str tmp1, [tmpadr]|@mov esp, ebp|mov esp, ebp @ keywords window - end
+
 loc_33DE8,2,@mov ebp, esp|mov ebp, esp|@mov dword [Game_InMenuOptions], 1|LDR tmpadr, =Game_InMenuOptions|mov tmp1, #1|str tmp1, [tmpadr] @ menu options window - begin
 loc_33E6C,2,@mov dword [Game_InMenuOptions], 0|LDR tmpadr, =Game_InMenuOptions|mov tmp1, #0|str tmp1, [tmpadr]|@mov esp, ebp|mov esp, ebp @ menu options window - end
 

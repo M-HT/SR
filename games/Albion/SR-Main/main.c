@@ -948,6 +948,7 @@ static int Game_Initialize(void)
     Game_PlayIntro = 1;
 
     Game_InEnteringText = 0;
+    Game_InKeywords = 0;
     Game_InMenuOptions = 0;
 
     Game_FopenList = NULL;

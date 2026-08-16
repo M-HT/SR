@@ -114,6 +114,9 @@ loc_33F10,18,;call SR_SMK_PlayCredits|PUSH loc_33F22|tcall SR_SMK_PlayCredits|en
 loc_7BDBB,2,;mov ebp, esp|mov ebp, esp|;mov dword [Game_InEnteringText], 1|mov tmp1, 1|store tmp1, Game_InEnteringText, 4 ; entering text window - begin
 loc_7C0BE,2,;mov dword [Game_InEnteringText], 0|mov tmp1, 0|store tmp1, Game_InEnteringText, 4|;mov esp, ebp|mov esp, ebp ; entering text window - end
 
+loc_4461C,2,;mov ebp, esp|mov ebp, esp|;mov dword [Game_InKeywords], 1|mov tmp1, 1|store tmp1, Game_InKeywords, 4 ; keywords window - begin
+loc_4468A,2,;mov dword [Game_InKeywords], 0|mov tmp1, 0|store tmp1, Game_InKeywords, 4|;mov esp, ebp|mov esp, ebp ; keywords window - end
+
 loc_33DE8,2,;mov ebp, esp|mov ebp, esp|;mov dword [Game_InMenuOptions], 1|mov tmp1, 1|store tmp1, Game_InMenuOptions, 4 ; menu options window - begin
 loc_33E6C,2,;mov dword [Game_InMenuOptions], 0|mov tmp1, 0|store tmp1, Game_InMenuOptions, 4|;mov esp, ebp|mov esp, ebp ; menu options window - end
 

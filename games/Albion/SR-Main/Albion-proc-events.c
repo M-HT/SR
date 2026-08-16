@@ -121,7 +121,7 @@ void Game_ProcessKEvents(void)
                         ascii_code = 0;
                     }
 
-                    if (Game_SwitchWSAD && !Game_InEnteringText && !Game_InMenuOptions)
+                    if (Game_SwitchWSAD && !Game_InEnteringText && !Game_InKeywords && !Game_InMenuOptions)
                     {
                         switch(ascii_code)
                         {
@@ -243,7 +243,7 @@ void Game_ProcessKEvents(void)
 
                             break;
                         case SDLK_UP:
-                            if (Game_SwitchArrowKeys && !Game_InEnteringText && !Game_InMenuOptions)
+                            if (Game_SwitchArrowKeys && !Game_InEnteringText && !Game_InKeywords && !Game_InMenuOptions)
                             {
                                 ascii_code = 'w';
                                 scancode = scancode_table[ascii_code];
@@ -259,7 +259,7 @@ void Game_ProcessKEvents(void)
 
                             break;
                         case SDLK_DOWN:
-                            if (Game_SwitchArrowKeys && !Game_InEnteringText && !Game_InMenuOptions)
+                            if (Game_SwitchArrowKeys && !Game_InEnteringText && !Game_InKeywords && !Game_InMenuOptions)
                             {
                                 ascii_code = 's';
                                 scancode = scancode_table[ascii_code];
@@ -275,7 +275,7 @@ void Game_ProcessKEvents(void)
 
                             break;
                         case SDLK_RIGHT:
-                            if (Game_SwitchArrowKeys && !Game_InEnteringText && !Game_InMenuOptions)
+                            if (Game_SwitchArrowKeys && !Game_InEnteringText && !Game_InKeywords && !Game_InMenuOptions)
                             {
                                 ascii_code = 'd';
                                 scancode = scancode_table[ascii_code];
@@ -291,7 +291,7 @@ void Game_ProcessKEvents(void)
 
                             break;
                         case SDLK_LEFT:
-                            if (Game_SwitchArrowKeys && !Game_InEnteringText && !Game_InMenuOptions)
+                            if (Game_SwitchArrowKeys && !Game_InEnteringText && !Game_InKeywords && !Game_InMenuOptions)
                             {
                                 ascii_code = 'a';
                                 scancode = scancode_table[ascii_code];

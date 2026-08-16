@@ -176,6 +176,9 @@ uint32_t CCALL Game_MouseButton(uint32_t state, uint32_t action)
         return 1;
     }
 
+    mouse_old_pos[1] = mouse_old_pos[3] = mouse_pos[1];
+    mouse_old_pos[2] = mouse_old_pos[4] = mouse_pos[0];
+
     stack = x86_initialize_stack();
 
     old_InterruptFlag = X86_InterruptFlag;

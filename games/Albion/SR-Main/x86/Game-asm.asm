@@ -286,6 +286,13 @@ __Z16Game_MouseButtonjj:
 %define state esp+5*4
 %define action esp+6*4
 
+        mov ebx, [mouse_pos + 4]		; albion x
+        mov [mouse_old_pos + 2], bx		; my old x
+        mov [mouse_old_pos + 6], bx		; my old x ???
+        mov ebx, [mouse_pos]			; albion y
+        mov [mouse_old_pos + 4], bx		; my old y
+        mov [mouse_old_pos + 8], bx		; my old y ???
+
         mov edi, [mouse_pos]			; vertical mickey count
         mov esi, [mouse_pos + 4]		; horizontal mickey count
         shl eax, cl						; condition mask (action)

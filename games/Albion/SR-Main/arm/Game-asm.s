@@ -222,6 +222,16 @@ __Z16Game_MouseButtonjj:
 
         stmfd sp!, {v1-v8,lr}
 
+        LDR edi, =mouse_pos
+        LDR esi, =mouse_old_pos
+
+        ldr eax, [edi, #4]			@ albion x
+        strh eax, [esi, #2]			@ my old x
+        strh eax, [esi, #6]			@ my old x ???
+        ldr eax, [edi]				@ albion y
+        strh eax, [esi, #4]			@ my old y
+        strh eax, [esi, #8]			@ my old y ???
+
         LDR lr, =mouse_pos
         ldr edi, [lr]			@ vertical mickey count
         ldr esi, [lr, #4]		@ horizontal mickey count

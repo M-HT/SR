@@ -395,7 +395,7 @@ static void fill_audio(void *udata, Uint8 *stream, int len)
             {
                 freq_diff_shift++;
             }
-            if ((current->freq << freq_diff_shift) != PrimaryBuffer->freq)
+            if ((current->freq << freq_diff_shift) != PrimaryBuffer->freq || (num_samples & ((1 << freq_diff_shift) - 1)) != 0)
             {
                 conv_method = 4;
             }

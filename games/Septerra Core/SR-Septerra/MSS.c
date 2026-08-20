@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "MSS.h"
+#include "Game-memory.h"
 
 #include <mpg123.h>
 
@@ -171,6 +172,25 @@ void *ASI_stream_open_mpg123 (void *user, ssize_t (*read_CB)(void *, void *, siz
     mpg123_format_none(stream);
     mpg123_format(stream, 44100, MPG123_MONO, MPG123_ENC_SIGNED_16);
 
+    if (sizeof(void *) > 4)
+    {
+        void **pstream;
+
+        pstream = (void **)x86_malloc(sizeof(void *));
+        if (pstream == NULL)
+        {
+            mpg123_close(stream);
+            mpg123_delete(stream);
+#ifdef DEBUG_MSS
+            eprintf("mpg123 error - x86_malloc\n");
+#endif
+            return NULL;
+        }
+
+        *pstream = stream;
+        stream = (mpg123_handle *)pstream;
+    }
+
     lseek_CB(user, 0, SEEK_SET);
 
 #ifdef DEBUG_MSS
@@ -192,6 +212,20 @@ uint32_t CCALL ASI_stream_close_c (void *stream)
         eprintf("%i (not initialized)\n", ASI_NOT_INIT);
 #endif
         return ASI_NOT_INIT;
+    }
+
+    if (sizeof(void *) > 4 && stream != NULL)
+    {
+        void **pstream;
+
+        pstream = (void **)stream;
+        stream = *pstream;
+
+#ifdef DEBUG_MSS
+        eprintf("0x%" PRIxPTR " - ", (uintptr_t) stream);
+#endif
+
+        x86_free(pstream);
     }
 
     if (stream != NULL)
@@ -222,6 +256,15 @@ int32_t CCALL ASI_stream_process_c (void *stream, void *buffer, int32_t request_
         eprintf("%i (not initialized)\n", 0);
 #endif
         return 0;
+    }
+
+    if (sizeof(void *) > 4 && stream != NULL)
+    {
+        stream = *(void **)stream;
+
+#ifdef DEBUG_MSS
+        eprintf("0x%" PRIxPTR " - ", (uintptr_t) stream);
+#endif
     }
 
     if (stream == NULL)

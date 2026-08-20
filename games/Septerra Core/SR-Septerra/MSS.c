@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "MSS.h"
-#include "Game-memory.h"
+#include "Game-Memory.h"
 
 #include <mpg123.h>
 

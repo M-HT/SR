@@ -623,17 +623,17 @@ static struct struc_7 *d3_sub_C5ED3(int32_t y1, int32_t x1, int32_t y2, int32_t 
 
     if ( d3_param_byte_144E8E )
     {
-        invresized_dword_144EDE_fp8 = (d3_param_dword_144EDE_fp8 * Game_ResizeWidthDiv) / Game_ResizeWidthMult;
-        invresized_dword_144EE2_fp8 = (d3_param_dword_144EE2_fp8 * Game_ResizeWidthDiv) / Game_ResizeWidthMult;
+        invresized_dword_144EDE_fp8 = ((int64_t)d3_param_dword_144EDE_fp8 * Game_ResizeWidthDiv) / Game_ResizeWidthMult;
+        invresized_dword_144EE2_fp8 = ((int64_t)d3_param_dword_144EE2_fp8 * Game_ResizeWidthDiv) / Game_ResizeWidthMult;
 
         l_viewport_mincolumn = Game_ViewportZeroXColumn + Game_ViewportMinimumX;
         l_viewport_maxcolumn = Game_ViewportZeroXColumn + Game_ViewportMaximumX;
-        l_dword_144EC6_fp8 = (((int64_t)((Game_mul_dword_140008_ResizeHeightMult * d3_param_dword_1A5E2C) + y1 * Game_ResizeHeightDiv * d3_param_dword_1A5E10)) << 8) / Game_mul_dword_140008_ResizeHeightMult;
-        l_dword_144ECA_fp8 = (((int64_t)((Game_mul_dword_140008_ResizeHeightMult * d3_param_dword_1A5E30) + y1 * Game_ResizeHeightDiv * d3_param_dword_1A5E14)) << 8) / Game_mul_dword_140008_ResizeHeightMult;
-        l_dword_144ECE = ((y1 << 8) * (int64_t)(d3_param_dword_1A5E18 * Game_ResizeHeightDiv)) / (Game_mul_dword_140008_ResizeHeightMult << 8);
-        l_dword_144ED2_fp8 = (((int64_t)(d3_param_dword_1A5E10 * Game_ResizeHeightDiv)) << 8) / Game_mul_dword_140008_ResizeHeightMult;
-        l_dword_144ED6_fp8 = (((int64_t)(d3_param_dword_1A5E14 * Game_ResizeHeightDiv)) << 8) / Game_mul_dword_140008_ResizeHeightMult;
-        l_dword_144EDA = (((int64_t)(d3_param_dword_1A5E18 * Game_ResizeHeightDiv)) << 8) / (Game_mul_dword_140008_ResizeHeightMult << 8);
+        l_dword_144EC6_fp8 = ((((int64_t)Game_mul_dword_140008_ResizeHeightMult * d3_param_dword_1A5E2C) + (int64_t)y1 * Game_ResizeHeightDiv * d3_param_dword_1A5E10) << 8) / Game_mul_dword_140008_ResizeHeightMult;
+        l_dword_144ECA_fp8 = ((((int64_t)Game_mul_dword_140008_ResizeHeightMult * d3_param_dword_1A5E30) + (int64_t)y1 * Game_ResizeHeightDiv * d3_param_dword_1A5E14) << 8) / Game_mul_dword_140008_ResizeHeightMult;
+        l_dword_144ECE = ((y1 << 8) * ((int64_t)d3_param_dword_1A5E18 * Game_ResizeHeightDiv)) / (Game_mul_dword_140008_ResizeHeightMult << 8);
+        l_dword_144ED2_fp8 = (((int64_t)d3_param_dword_1A5E10 * Game_ResizeHeightDiv) << 8) / Game_mul_dword_140008_ResizeHeightMult;
+        l_dword_144ED6_fp8 = (((int64_t)d3_param_dword_1A5E14 * Game_ResizeHeightDiv) << 8) / Game_mul_dword_140008_ResizeHeightMult;
+        l_dword_144EDA = (((int64_t)d3_param_dword_1A5E18 * Game_ResizeHeightDiv) << 8) / (Game_mul_dword_140008_ResizeHeightMult << 8);
         l_dword_144EF6_fp8 = (1 << (g_dword_13FFC8 + 8)) - 1;
         do
         {
@@ -1572,14 +1572,14 @@ static void sm4_proc(struct struc_2 *tex_info, uint32_t arg2)
     {
         while ( 1 )
         {
-            var11 = (l_dword_143D10_fp16 * (int64_t)((d3_param_dword_1A5E2C * Game_ResizeWidthMult) + ((d3_dword_1A5E1C * (int64_t)(var_C * Game_ResizeWidthDiv)) / g_dword_140004))) / (d3_dword_1A5E34 * Game_ResizeWidthMult);
+            var11 = (l_dword_143D10_fp16 * (((int64_t)d3_param_dword_1A5E2C * Game_ResizeWidthMult) + ((d3_dword_1A5E1C * (int64_t)(var_C * Game_ResizeWidthDiv)) / g_dword_140004))) / ((int64_t)d3_dword_1A5E34 * Game_ResizeWidthMult);
             if ( var11 >= 0 ) break;
             ++var_C;
         }
 
         l_dword_141494_fp16 = var11;
 
-        var13 = (l_dword_143D10_fp16 * (int64_t)((d3_param_dword_1A5E2C * Game_ResizeWidthMult) + ((d3_dword_1A5E1C * (int64_t)(var_10 * Game_ResizeWidthDiv)) / g_dword_140004))) / (d3_dword_1A5E34 * Game_ResizeWidthMult);
+        var13 = (l_dword_143D10_fp16 * (((int64_t)d3_param_dword_1A5E2C * Game_ResizeWidthMult) + ((d3_dword_1A5E1C * (int64_t)(var_10 * Game_ResizeWidthDiv)) / g_dword_140004))) / ((int64_t)d3_dword_1A5E34 * Game_ResizeWidthMult);
         if ( (uint32_t) var13 >= l_dword_143D10_fp16 )
             var13 = l_dword_143D10_fp16 - 1;
         l_dword_141498_fp16 = (var13 - var11) / (l_draw_loop_counter + 1);
@@ -1626,7 +1626,7 @@ static void sm4_proc(struct struc_2 *tex_info, uint32_t arg2)
         var23 = d3_param_texture_height << 16;
         while ( 1 )
         {
-            var24 = (var23 * (int64_t)((d3_param_dword_1A5E30 * Game_ResizeHeightMult) + ((d3_param_dword_1A5E14 * (int64_t)(var_18 * Game_ResizeHeightDiv)) / g_dword_140008))) / (d3_dword_1A5E34 * Game_ResizeHeightMult);
+            var24 = (var23 * (((int64_t)d3_param_dword_1A5E30 * Game_ResizeHeightMult) + ((d3_param_dword_1A5E14 * (int64_t)(var_18 * Game_ResizeHeightDiv)) / g_dword_140008))) / ((int64_t)d3_dword_1A5E34 * Game_ResizeHeightMult);
             if ( var24 >= 0 ) break;
             if ( var_18 >= Game_ViewportMaximumY ) return;
             ++var_18;
@@ -1636,7 +1636,7 @@ static void sm4_proc(struct struc_2 *tex_info, uint32_t arg2)
 
         Game_stru_1414AC[0].texture_y1_fp16 = var24;
 
-        var27 = (var23 * (int64_t)((d3_param_dword_1A5E30 * Game_ResizeHeightMult) + ((d3_param_dword_1A5E14 * (int64_t)(var_1C * Game_ResizeHeightDiv)) / g_dword_140008))) / (d3_dword_1A5E34 * Game_ResizeHeightMult);
+        var27 = (var23 * (((int64_t)d3_param_dword_1A5E30 * Game_ResizeHeightMult) + ((d3_param_dword_1A5E14 * (int64_t)(var_1C * Game_ResizeHeightDiv)) / g_dword_140008))) / ((int64_t)d3_dword_1A5E34 * Game_ResizeHeightMult);
         if ( var27 >= var23 )
             var27 = var23 - 1;
         var_28 = 0;
@@ -1949,10 +1949,10 @@ static void sm123_proc(struct struc_2 *tex_info, int32_t sm123_draw_type)
     var14 = ((var_1C - var_20) << 16) / ((l_draw_loop_counter)?l_draw_loop_counter:1);
 
     l_qword_141484_fp32 = ((int64_t)var14) << 16;
-    d3_sm_dword_143CF4_fp8 = (((int64_t)(d3_param_dword_1A5E14 * Game_ResizeHeightDiv)) << 8) / Game_mul_dword_140008_ResizeHeightMult;
-    d3_sm_dword_143CF8_fp8 = (((int64_t)(d3_dword_1A5E20 * Game_ResizeWidthDiv) << 8)) / Game_mul_dword_140004_ResizeWidthMult;
+    d3_sm_dword_143CF4_fp8 = (((int64_t)d3_param_dword_1A5E14 * Game_ResizeHeightDiv) << 8) / Game_mul_dword_140008_ResizeHeightMult;
+    d3_sm_dword_143CF8_fp8 = (((int64_t)d3_dword_1A5E20 * Game_ResizeWidthDiv) << 8) / Game_mul_dword_140004_ResizeWidthMult;
     l_dword_143D04_fp8 = d3_sm_dword_143D00_fp8 = (d3_param_dword_1A5E30 << 8) + var_C * d3_sm_dword_143CF8_fp8;
-    d3_sm_dword_143CFC_fp8 = (((int64_t)(d3_dword_1A5E24 * Game_ResizeWidthDiv) << 8)) / Game_mul_dword_140004_ResizeWidthMult;
+    d3_sm_dword_143CFC_fp8 = (((int64_t)d3_dword_1A5E24 * Game_ResizeWidthDiv) << 8) / Game_mul_dword_140004_ResizeWidthMult;
     l_dword_143D0C_fp8 = d3_sm_dword_143D08_fp8 = (d3_dword_1A5E34 << 8) + var_C * d3_sm_dword_143CFC_fp8;
     d3_sm_texture_height_fp16 = d3_param_texture_height << 16;
 

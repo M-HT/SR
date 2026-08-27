@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2019-2025 Roman Pauer
+ *  Copyright (C) 2019-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -6009,7 +6009,30 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                     {
                         if (ud_obj.operand[1].type == UD_OP_REG)
                         {
+                            if (flags_to_write)
+                            {
+                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
+                            }
 
+                            SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_RW, ZERO_EXTEND, &memadr);
+
+                            SR_disassemble_read_mem_word(cOutput, &memadr, LR_TMP1);
+
+                            OUTPUT_STRING("and tmp2, ecx, 0x1f\n");
+                            if (ud_obj.mnemonic == UD_Isar)
+                            {
+                                OUTPUT_STRING("ashr tmp1, tmp1, tmp2\n");
+                            }
+                            else if (ud_obj.mnemonic == UD_Ishr)
+                            {
+                                OUTPUT_STRING("lshr tmp1, tmp1, tmp2\n");
+                            }
+                            else
+                            {
+                                OUTPUT_STRING("shl tmp1, tmp1, tmp2\n");
+                            }
+
+                            SR_disassemble_write_mem_word(cOutput, &memadr, LR_TMP1);
                         }
                         else if (ud_obj.operand[1].type == UD_OP_IMM || ud_obj.operand[1].type == UD_OP_CONST)
                         {
@@ -6079,7 +6102,39 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                     {
                         if (ud_obj.operand[1].type == UD_OP_REG)
                         {
+                            if (flags_to_write)
+                            {
+                                fprintf(stderr, "Error: flags not calculated - %i - %i - %s\n", Entry, (unsigned int)cur_ofs, output->str);
+                            }
 
+                            if (ud_obj.mnemonic == UD_Isar)
+                            {
+                                SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_RW, SIGN_EXTEND, &memadr);
+
+                                SR_disassemble_read_mem_byte(cOutput, &memadr, LR_TMP1, READ8TO32SIGN);
+                            }
+                            else
+                            {
+                                SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_RW, ZERO_EXTEND, &memadr);
+
+                                SR_disassemble_read_mem_byte(cOutput, &memadr, LR_TMP1, READ8TO32ZERO);
+                            }
+
+                            OUTPUT_STRING("and tmp2, ecx, 0x1f\n");
+                            if (ud_obj.mnemonic == UD_Isar)
+                            {
+                                OUTPUT_STRING("ashr tmp1, tmp1, tmp2\n");
+                            }
+                            else if (ud_obj.mnemonic == UD_Ishr)
+                            {
+                                OUTPUT_STRING("lshr tmp1, tmp1, tmp2\n");
+                            }
+                            else
+                            {
+                                OUTPUT_STRING("shl tmp1, tmp1, tmp2\n");
+                            }
+
+                            SR_disassemble_write_mem_byte(cOutput, &memadr, LR_TMP1, WRITE8LOW);
                         }
                         else if (ud_obj.operand[1].type == UD_OP_IMM || ud_obj.operand[1].type == UD_OP_CONST)
                         {
@@ -7364,6 +7419,15 @@ int SR_disassemble_llasm_instruction(unsigned int Entry, output_data *output, ui
                 }
             }
             break;
+        case UD_Ifrstor:
+        case UD_Ifnsave:
+            {
+                /* no flags affected */
+
+                SR_disassemble_get_madr(cOutput, &(ud_obj.operand[0]), fixup[0], extrn[0], UD_NONE, MADR_REG, ZERO_EXTEND, &memadr);
+
+                OUTPUT_PARAMSTRING("%s_MEM %s\n", (ud_obj.mnemonic == UD_Ifrstor) ? "FRSTOR" : "FNSAVE", memadr.madr);
+            }
         case UD_Ifnstcw:
         case UD_Ifnstsw:
             {

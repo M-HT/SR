@@ -1608,6 +1608,9 @@ int SR_disassemble_x64_instruction(unsigned int Entry, output_data *output, regi
                 /* no flags affected */
         case UD_Ifldcw:
             /* no flags affected */
+        case UD_Ifrstor:
+        case UD_Ifnsave:
+            /* no flags affected */
         case UD_Ifnstcw:
         case UD_Ifnstsw:
             /* no flags affected */

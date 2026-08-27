@@ -658,6 +658,76 @@ EXTERNC void CCALL x87_fptan_void(CPU)
     CLEAR_X87_FLAGS;
 }
 
+EXTERNC void CCALL x87_frstor_void(CPU, const uint8_t *state)
+{
+    uint32_t sw;
+    int index;
+    double_int value;
+    int_int mantissa;
+    uint32_t exponent, sign;
+
+    st_cw = *(uint32_t *)(state) & 0xffff;
+    sw = *(uint32_t *)(state + 4);
+    st_top = (sw >> 11) & 7;
+    st_sw_cond = sw & X87_CX;
+
+    for (index = 0; index <= 7; index++)
+    {
+        mantissa.low = *(uint32_t *)(state + 28 + index * 10);
+        mantissa.high = *(uint32_t *)(state + 32 + index * 10);
+        exponent = *(uint16_t *)(state + 36 + index * 10);
+
+        mantissa.i = (mantissa.i >> 11) & UINT64_C(0x000fffffffffffff);
+        sign = (exponent & 0x8000) << 16;
+        exponent = (exponent & 0x7fff) + 1023 - 16383; // adjust bias
+        if (exponent >= 2048) exponent = 2047;
+        else if (exponent < 0) exponent = 0;
+
+        value.low = mantissa.low;
+        value.high = mantissa.high | (exponent << 20) | sign;
+
+        ST(index) = value.d;
+    }
+}
+
+EXTERNC void CCALL x87_fnsave_void(CPU, uint8_t *state)
+{
+    int index;
+    double_int value;
+    int_int mantissa;
+    uint32_t exponent, sign;
+
+    *(uint32_t *)(state) = st_cw;
+    *(uint32_t *)(state + 4) = st_sw_cond | (st_top << 11);
+    *(uint32_t *)(state + 8) = 0;
+
+    for (index = 0; index <= 7; index++)
+    {
+        value.d = ST(index);
+
+        mantissa.low = value.low;
+        mantissa.high = value.high;
+
+        mantissa.i = (mantissa.i & UINT64_C(0x000fffffffffffff)) << 11;
+        exponent = (value.high >> 20) & 0x07ff;
+        sign = (value.high >> 16) & 0x8000;
+
+        if (value.d != 0)
+        {
+            mantissa.i |= UINT64_C(0x8000000000000000);
+            exponent = exponent + 16383 - 1023; // adjust bias
+        }
+
+        *(uint32_t *)(state + 28 + index * 10) = mantissa.low;
+        *(uint32_t *)(state + 32 + index * 10) = mantissa.high;
+        *(uint16_t *)(state + 36 + index * 10) = exponent | sign;
+    }
+
+    st_top = 0;
+    st_sw_cond = 0;
+    st_cw = 0x037f;
+}
+
 EXTERNC void CCALL x87_fsin_void(CPU)
 {
     ST0 = sin(ST0);

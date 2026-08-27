@@ -1,6 +1,6 @@
 /**
  *
- *  Copyright (C) 2016-2025 Roman Pauer
+ *  Copyright (C) 2016-2026 Roman Pauer
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of
  *  this software and associated documentation files (the "Software"), to deal in
@@ -589,17 +589,17 @@ int SR_write_output(const char *fname)
         {
 #if (OUTPUT_TYPE == OUT_ORIG || OUTPUT_TYPE == OUT_WINDOWS)
             case ST_CODE:
-                fprintf(EF.fout, "\nsection %s code align=16\n", section[EF.Entry].name);
+                fprintf(EF.fout, "\nsection %s code align=16 use32\n", section[EF.Entry].name);
                 break;
             case ST_DATA:
             case ST_STACK:
-                fprintf(EF.fout, "\nsection %s data align=4\n", section[EF.Entry].name);
+                fprintf(EF.fout, "\nsection %s data align=4 use32\n", section[EF.Entry].name);
                 break;
             case ST_UDATA:
-                fprintf(EF.fout, "\nsection %s bss align=4\n", section[EF.Entry].name);
+                fprintf(EF.fout, "\nsection %s bss align=4 use32\n", section[EF.Entry].name);
                 break;
             case ST_RDATA:
-                fprintf(EF.fout, "\nsection %s rdata align=8\n", section[EF.Entry].name);
+                fprintf(EF.fout, "\nsection %s rdata align=8 use32\n", section[EF.Entry].name);
                 break;
 #elif (OUTPUT_TYPE == OUT_X86 || OUTPUT_TYPE == OUT_X64)
             case ST_CODE:

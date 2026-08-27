@@ -74,7 +74,7 @@ typedef struct {
 #ifdef PTROFS_64BIT
 
 #define REG2PTR(x) ((void *)((uintptr_t)(x) + cpu->_pointer_offset))
-#define PTR2REG(x) ((uint32_t)((uintptr_t)(x) - cpu->_pointer_offset))
+#define PTR2REG(x) ((nullptr == (x)) ? 0 : (uint32_t)((uintptr_t)(x) - cpu->_pointer_offset))
 
 #else
 

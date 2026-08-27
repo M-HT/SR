@@ -1,7 +1,7 @@
 ;part of static recompiler -- do not edit
 
 ;;
-;;  Copyright (C) 2019-2025 Roman Pauer
+;;  Copyright (C) 2019-2026 Roman Pauer
 ;;
 ;;  Permission is hereby granted, free of charge, to any person obtaining a copy of
 ;;  this software and associated documentation files (the "Software"), to deal in
@@ -85,6 +85,10 @@ funcv x87_fmul_to_st $, num
 funcv x87_fmulp_st $, num
 
 funcv x87_fptan_void $
+
+funcv x87_frstor_void $, *state
+funcv x87_fnsave_void $, *state
+
 funcv x87_fsin_void $
 
 funcv x87_fsqrt_void $
@@ -353,6 +357,16 @@ endm
 macro FPTAN_VOID
     call x87_fptan_void $
 endm
+
+
+macro FRSTOR_MEM state
+    call x87_frstor_void $, \state
+endm
+
+macro FNSAVE_MEM state
+    call x87_fnsave_void $, \state
+endm
+
 
 macro FSIN_VOID
     call x87_fsin_void $
